@@ -94,9 +94,6 @@ qagent --help
 OpenMako is best described as an evidence harness for coding agents. It is not
 the coding agent itself, and it is not a general autonomy benchmark.
 
-For broader product notes, see [docs/COMPARISON.md](docs/COMPARISON.md) and
-[docs/LAUNCH_PLAYBOOK.md](docs/LAUNCH_PLAYBOOK.md).
-
 ## Implementation Boundary
 
 OpenMako's project policy is clean-room implementation for closed-source tools:
@@ -131,7 +128,6 @@ evidence remains the focused learning-effect gate above.
 Relevant docs:
 
 - [`docs/UPSTREAM_ATTRIBUTION.md`](docs/UPSTREAM_ATTRIBUTION.md)
-- [`docs/MARKET_TOOL_COPY_SCAN.md`](docs/MARKET_TOOL_COPY_SCAN.md)
 - [`docs/SOURCE_COPY_BORROW_MATRIX.md`](docs/SOURCE_COPY_BORROW_MATRIX.md)
 
 ## Development

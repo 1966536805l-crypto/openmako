@@ -17,6 +17,17 @@ FORBIDDEN_README_CLAIMS = (
     "## What It Proves Today",
     "| Green public CI |",
     "OpenMako does not copy Claude/closed-source code",
+    "docs/COMPARISON.md",
+    "docs/LAUNCH_PLAYBOOK.md",
+    "docs/MARKET_TOOL_COPY_SCAN.md",
+)
+FORBIDDEN_PUBLIC_PROGRESS_CLAIMS = (
+    "112/112",
+    "60/60",
+    "full pytest passed",
+    "level=L5",
+    "SWE-style repository reasoning",
+    "broad unknown NPM repo repair",
 )
 
 
@@ -63,3 +74,13 @@ def test_readme_uses_reviewable_public_claims() -> None:
     assert "OpenMako's project policy is clean-room implementation for closed-source tools" in readme
     for forbidden in FORBIDDEN_README_CLAIMS:
         assert forbidden not in readme
+
+
+def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
+    progress = (ROOT / "PROGRESS.md").read_text(encoding="utf-8")
+
+    assert "public status boundary" in progress
+    assert "https://github.com/1966536805l-crypto/openmako/issues/1" in progress
+    assert "stale internal notes" in progress
+    for forbidden in FORBIDDEN_PUBLIC_PROGRESS_CLAIMS:
+        assert forbidden not in progress
