@@ -11,6 +11,31 @@ cheating by editing tests or hiding failures.
 Today, OpenMako demonstrates one narrow public gate: approved learning must
 beat no-learning on hidden repair tasks while staying inside exact patch scope.
 
+## 10-Second Bad-Run Demo
+
+This fixture shows a coding agent run that edited code, ran validation, and
+failed. OpenMako reports the failure from supplied trajectory, query-event, and
+test-output evidence.
+
+```bash
+python3 -m quantagent.cli --no-trust-prompt agent-autopsy \
+  --project tests/fixtures/agent_autopsy/agent_modified_test_failed \
+  --trajectory tests/fixtures/agent_autopsy/agent_modified_test_failed/trajectory.jsonl \
+  --query-events tests/fixtures/agent_autopsy/agent_modified_test_failed/query_events.jsonl \
+  --failure-file tests/fixtures/agent_autopsy/agent_modified_test_failed/failure.txt \
+  --source-agent codex \
+  --title "10-second bad run demo" \
+  --command "python3 -m unittest"
+```
+
+Expected signal:
+
+```text
+- status: FAILED
+- failure_class: verification_failed
+- evidence_items: 12
+```
+
 ## What The Public Gate Checks
 
 The focused public gate exercises a package-level JavaScript repair task:
