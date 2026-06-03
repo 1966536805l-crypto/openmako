@@ -1,0 +1,55 @@
+name: Evidence Court
+description: Validate and audit a supplied OpenMako Evidence Court record.
+
+inputs:
+  record:
+    description: Path to the Evidence Court run.json record.
+    required: false
+    default: run.json
+  report:
+    description: Path where the JSON audit report will be written.
+    required: false
+    default: evidence-court-report.json
+  fail-on:
+    description: CI failure threshold passed to `openmako evidence-court audit`.
+    required: false
+    default: fail
+  expected-exit:
+    description: Expected exit code from `openmako evidence-court audit --ci`.
+    required: false
+    default: "0"
+
+outputs:
+  audit-exit:
+    description: Exit code returned by `openmako evidence-court audit --ci`.
+    value: ${{ steps.audit.outputs.audit-exit }}
+  report:
+    description: Path to the JSON audit report.
+    value: ${{ inputs.report }}
+
+runs:
+  using: composite
+  steps:
+    - name: Validate audit record
+      shell: bash
+      env:
+        RECORD: ${{ inputs.record }}
+      run: |
+        openmako evidence-court validate "$RECORD"
+
+    - name: Audit supplied record
+      id: audit
+      shell: bash
+      env:
+        RECORD: ${{ inputs.record }}
+        REPORT: ${{ inputs.report }}
+        FAIL_ON: ${{ inputs.fail-on }}
+        EXPECTED_EXIT: ${{ inputs.expected-exit }}
+      run: |
+        set +e
+        openmako evidence-court audit --ci --fail-on "$FAIL_ON" --json "$RECORD" > "$REPORT"
+        audit_exit=$?
+        set -e
+        echo "audit-exit=${audit_exit}" >> "$GITHUB_OUTPUT"
+        echo "audit_exit=${audit_exit}"
+        test "${audit_exit}" -eq "${EXPECTED_EXIT}"

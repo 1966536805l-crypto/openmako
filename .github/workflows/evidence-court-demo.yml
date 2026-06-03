@@ -31,18 +31,12 @@ jobs:
         run: |
           openmako evidence-court record from-jsonl --output run.json examples/evidence_court/simple_events.jsonl
 
-      - name: Validate demo audit record
-        run: |
-          openmako evidence-court validate run.json
-
-      - name: Audit demo bad run
-        run: |
-          set +e
-          openmako evidence-court audit --ci --json run.json > evidence-court-report.json
-          audit_exit=$?
-          set -e
-          echo "audit_exit=${audit_exit}"
-          test "${audit_exit}" -eq 1
+      - name: Run Evidence Court demo check
+        uses: ./.github/actions/evidence-court
+        with:
+          record: run.json
+          report: evidence-court-report.json
+          expected-exit: "1"
 
       - name: Upload Evidence Court report
         if: always()

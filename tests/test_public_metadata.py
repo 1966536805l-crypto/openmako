@@ -147,10 +147,13 @@ def test_github_actions_evidence_court_doc_uses_supported_commands() -> None:
     doc = (ROOT / "docs" / "github_actions_evidence_court.md").read_text(encoding="utf-8")
 
     assert ".github/workflows/evidence-court-demo.yml" in doc
+    assert ".github/actions/evidence-court/action.yml" in doc
+    assert "repository-local action, not a published Marketplace action" in doc
     assert "asserts that `audit --ci --json` exits with `1`" in doc
     assert "test -f run.json" in doc
-    assert "openmako evidence-court validate run.json" in doc
-    assert "openmako evidence-court audit --ci --json run.json > evidence-court-report.json" in doc
+    assert "uses: ./.github/actions/evidence-court" in doc
+    assert "record: run.json" in doc
+    assert "report: evidence-court-report.json" in doc
     assert "actions/upload-artifact@v4" in doc
     assert "openmako evidence-court record from-jsonl --output run.json path/to/events.jsonl" in doc
     assert "openmako evidence-court audit --ci --fail-on suspicious --json run.json" in doc
@@ -165,13 +168,32 @@ def test_evidence_court_demo_workflow_uses_supported_bad_run_commands() -> None:
     assert "workflow_dispatch:" in workflow
     assert "python -m pip install -e ." in workflow
     assert "openmako evidence-court record from-jsonl --output run.json examples/evidence_court/simple_events.jsonl" in workflow
-    assert "openmako evidence-court validate run.json" in workflow
-    assert "openmako evidence-court audit --ci --json run.json > evidence-court-report.json" in workflow
-    assert "test \"${audit_exit}\" -eq 1" in workflow
+    assert "uses: ./.github/actions/evidence-court" in workflow
+    assert "record: run.json" in workflow
+    assert "report: evidence-court-report.json" in workflow
+    assert "expected-exit: \"1\"" in workflow
     assert "actions/upload-artifact@v4" in workflow
     assert "Claude Code" not in workflow
     assert "Codex" not in workflow
     assert "Cursor" not in workflow
+
+
+def test_evidence_court_composite_action_wraps_supported_cli_commands() -> None:
+    action = (ROOT / ".github" / "actions" / "evidence-court" / "action.yml").read_text(encoding="utf-8")
+
+    assert "using: composite" in action
+    assert "record:" in action
+    assert "report:" in action
+    assert "fail-on:" in action
+    assert "expected-exit:" in action
+    assert 'default: "0"' in action
+    assert "openmako evidence-court validate \"$RECORD\"" in action
+    assert "openmako evidence-court audit --ci --fail-on \"$FAIL_ON\" --json \"$RECORD\" > \"$REPORT\"" in action
+    assert "test \"${audit_exit}\" -eq \"${EXPECTED_EXIT}\"" in action
+    assert "Marketplace" not in action
+    assert "Claude Code" not in action
+    assert "Codex" not in action
+    assert "Cursor" not in action
 
 
 def test_readme_uses_reviewable_public_claims() -> None:

@@ -8,6 +8,10 @@ This repository also includes
 which builds a known bad sample from `examples/evidence_court/simple_events.jsonl`
 and asserts that `audit --ci --json` exits with `1`.
 
+Inside this repository, the demo workflow uses the local composite action at
+[`../.github/actions/evidence-court/action.yml`](../.github/actions/evidence-court/action.yml).
+That is a repository-local action, not a published Marketplace action.
+
 ```yaml
 name: Evidence Court
 
@@ -25,10 +29,11 @@ jobs:
       - run: python -m pip install -e .
       - name: Ensure audit record exists
         run: test -f run.json
-      - name: Validate audit record shape
-        run: openmako evidence-court validate run.json
-      - name: Audit supplied record
-        run: openmako evidence-court audit --ci --json run.json > evidence-court-report.json
+      - name: Run Evidence Court
+        uses: ./.github/actions/evidence-court
+        with:
+          record: run.json
+          report: evidence-court-report.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
