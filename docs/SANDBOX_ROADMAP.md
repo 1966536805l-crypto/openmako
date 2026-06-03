@@ -1,5 +1,7 @@
 # QuantAgent Sandbox Roadmap
 
+Internal legacy QuantAgent roadmap. This is not the current public v0.1 capability claim; the current public proof is the focused learning-effect gate linked from README.md and issue #1.
+
 This roadmap adapts sandbox and tool-policy separation concepts from OpenClaw
 under its MIT license. QuantAgent keeps the implementation project-native; this
 file is an architectural plan, not copied runtime code.
@@ -213,4 +215,3 @@ Suggested readiness scoring:
 QuantAgent should not claim hard sandbox readiness above 60 until at least one
 runtime backend enforces filesystem and environment isolation outside Python
 policy code.
-

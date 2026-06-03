@@ -74,6 +74,14 @@ INTERNAL_PLANNING_DOCS = (
     "docs/HERMES_OPENCLAW_SOURCE_SCAN.md",
     "docs/OPENCLAW_HERMES_COPY_WHITELIST.md",
     "docs/SOURCE_COPY_BORROW_MATRIX.md",
+    "docs/SAFETY_POLICY.md",
+    "docs/SANDBOX_ROADMAP.md",
+    "docs/TICK_VALIDATION.md",
+    "docs/OPENAI_COMPATIBLE_SETUP.md",
+)
+FORBIDDEN_PUBLIC_DOC_VENDOR_ENDPOINTS = (
+    "api.xiaoma.best",
+    "lanyiapi.com",
 )
 
 
@@ -182,3 +190,7 @@ def test_high_risk_planning_docs_are_not_public_claims() -> None:
 
     market_scan = (ROOT / "docs" / "MARKET_TOOL_COPY_SCAN.md").read_text(encoding="utf-8")
     assert "Highest-Value Things To Steal Next" not in market_scan
+
+    model_setup = (ROOT / "docs" / "OPENAI_COMPATIBLE_SETUP.md").read_text(encoding="utf-8")
+    for forbidden in FORBIDDEN_PUBLIC_DOC_VENDOR_ENDPOINTS:
+        assert forbidden not in model_setup

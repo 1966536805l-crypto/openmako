@@ -1,5 +1,7 @@
 # QuantAgent Safety Policy
 
+Internal legacy QuantAgent policy note. This is not the current public v0.1 capability claim; the current public proof is the focused learning-effect gate linked from README.md and issue #1.
+
 这套边界模仿 Claude Code 的核心思想，但面向量化项目重写：默认听从用户，只有当动作会破坏用户真实目标时才拦截。
 
 ## 核心原则

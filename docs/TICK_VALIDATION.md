@@ -1,5 +1,7 @@
 # Tick Validation System
 
+Internal legacy quant documentation. This is not the current public v0.1 capability claim; the current public proof is the focused learning-effect gate linked from README.md and issue #1.
+
 ## Overview
 
 The tick validation system provides evidence-based execution validation for quantitative trading strategies. It validates that reported fills can be explained by actual market tick data, ensuring that backtest results are grounded in real market conditions.

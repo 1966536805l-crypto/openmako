@@ -1,5 +1,7 @@
 # OpenAI-Compatible Model Setup
 
+Internal legacy QuantAgent setup note. This is not the current public v0.1 capability claim; the current public proof is the focused learning-effect gate linked from README.md and issue #1.
+
 QuantAgent can call any Chat Completions compatible endpoint.
 
 ## Environment Variables
@@ -13,16 +15,11 @@ export QUANTAGENT_MODEL="gpt-5.5"
 export QUANTAGENT_REASONING_EFFORT="high"
 ```
 
-For OpenAI-compatible gateways, replace the base URL:
+For OpenAI-compatible gateways, replace the base URL with the vendor endpoint
+you are authorized to use:
 
 ```bash
-export QUANTAGENT_OPENAI_BASE_URL="https://api.xiaoma.best/v1"
-```
-
-or:
-
-```bash
-export QUANTAGENT_OPENAI_BASE_URL="https://lanyiapi.com/v1"
+export QUANTAGENT_OPENAI_BASE_URL="https://gateway.example.com/v1"
 ```
 
 ## Test
