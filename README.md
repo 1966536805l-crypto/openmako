@@ -1,18 +1,57 @@
 # OpenMako
 
-Local-first, auditable agent runtime for serious coding and data work.
+Evidence harness for coding agents.
 
-OpenMako is not another chat shell. It gives local agents a runtime they can be measured against: doctor checks, task registry, evidence trails, plugin state, permission policy, worktree isolation, replayable tool logs, and model-error classification.
+OpenMako is for checking whether an AI coding agent actually improved across
+runs, stayed inside the requested patch scope, and passed validation without
+cheating by editing tests or hiding failures.
 
-## 30-Second Pitch
+The current public snapshot is intentionally narrow. Its strongest supported
+claim is not broad SWE-agent autonomy. It is a repeatable learning-effect and
+CodingBench harness around agent repair runs.
+
+## What It Proves Today
+
+The focused public gate exercises a package-level JavaScript repair task:
+
+- `no_learning` must fail the hidden task pack.
+- `approved_learning` must solve the hidden task pack.
+- repeat stability must stay at zero spread.
+- changed files must stay on the exact target source module.
+- protected-test and failure-log cheating must be classified as cheated.
+
+Run the same gate locally:
 
 ```bash
-mako doctor
-# score: 99/100
-# runtime, permissions, plugins, sandbox, task registry, evidence, model errors checked
+python3 -m pytest -p no:cacheprovider \
+  tests/test_agent_planner_contract.py::AgentPlannerContractTest::test_planner_no_seed_repairs_package_level_http_manifest_js_module \
+  tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest::test_package_level_http_manifest_js_trajectory_skill_reuses_on_hidden_tasks \
+  -q
 ```
 
-Use OpenMako when the useful question is not just "can the agent do it?", but "can I inspect what it did, replay the path, and see where the risk is?"
+Expected local result on the public snapshot:
+
+```text
+2 passed
+```
+
+## What It Does Not Claim
+
+- It does not prove broad unknown-repository SWE repair.
+- It does not prove general NPM package repair.
+- It does not replace Claude Code, Codex, Cursor, Devin, or other coding agents.
+- It does not claim desktop L4/L5 autonomy.
+- It does not trust an agent's final message without command, diff, and test evidence.
+
+## Why It Exists
+
+Most coding-agent demos show the happy path. OpenMako focuses on the failure
+boundary: did the agent run the required validation, touch only allowed files,
+reuse an approved repair skill only after eval-gated approval, and fail closed
+when the evidence is missing?
+
+Use OpenMako when the useful question is not just "can the agent do it?", but
+"can I inspect what it did, replay the path, and see where the risk is?"
 
 ## Quick Start
 
