@@ -13,6 +13,11 @@ from quantagent.tick_price_validator import (
     save_validation_json,
 )
 
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR.parent / "data"
+TRADES_CSV = DATA_DIR / "realistic_t1_trades.csv"
+TICK_DIR = BASE_DIR / "tick_data"
+
 
 def example_basic_validation():
     """Basic validation example."""
@@ -22,8 +27,8 @@ def example_basic_validation():
 
     # Validate trade prices against tick data
     result = validate_trade_prices(
-        trades_csv="realistic_t1_trades.csv",
-        tick_dir="tick_data/",
+        trades_csv=TRADES_CSV,
+        tick_dir=TICK_DIR,
         entry_date_col="entry_date",
         exit_date_col="exit_date",
         code_col="code",
@@ -48,8 +53,8 @@ def example_custom_time_window():
 
     # Validate with custom time window (09:30-09:40 instead of default 09:25-09:35)
     result = validate_trade_prices(
-        trades_csv="realistic_t1_trades.csv",
-        tick_dir="tick_data/",
+        trades_csv=TRADES_CSV,
+        tick_dir=TICK_DIR,
         entry_time_window=(time(9, 30), time(9, 40)),
     )
 
@@ -65,8 +70,8 @@ def example_limited_validation():
     print("=" * 70)
 
     result = validate_trade_prices(
-        trades_csv="realistic_t1_trades.csv",
-        tick_dir="tick_data/",
+        trades_csv=TRADES_CSV,
+        tick_dir=TICK_DIR,
         max_trades=100,
     )
 
@@ -83,17 +88,17 @@ def example_report_generation():
     print("=" * 70)
 
     result = validate_trade_prices(
-        trades_csv="realistic_t1_trades.csv",
-        tick_dir="tick_data/",
+        trades_csv=TRADES_CSV,
+        tick_dir=TICK_DIR,
     )
 
     # Save JSON report
-    save_validation_json(result, "validation_report.json")
-    print("JSON report saved to: validation_report.json")
+    save_validation_json(result, BASE_DIR / "validation_report.json")
+    print(f"JSON report saved to: {BASE_DIR / 'validation_report.json'}")
 
     # Generate markdown report
-    generate_validation_report(result, "validation_report.md")
-    print("Markdown report saved to: validation_report.md")
+    generate_validation_report(result, BASE_DIR / "validation_report.md")
+    print(f"Markdown report saved to: {BASE_DIR / 'validation_report.md'}")
     print()
 
 
@@ -104,8 +109,8 @@ def example_inspect_invalid_prices():
     print("=" * 70)
 
     result = validate_trade_prices(
-        trades_csv="realistic_t1_trades.csv",
-        tick_dir="tick_data/",
+        trades_csv=TRADES_CSV,
+        tick_dir=TICK_DIR,
     )
 
     if result.invalid_entries:
@@ -128,8 +133,8 @@ def example_check_missing_data():
     print("=" * 70)
 
     result = validate_trade_prices(
-        trades_csv="realistic_t1_trades.csv",
-        tick_dir="tick_data/",
+        trades_csv=TRADES_CSV,
+        tick_dir=TICK_DIR,
     )
 
     if result.missing_tick_data:
@@ -150,8 +155,8 @@ def example_validation_workflow():
     # Step 1: Validate prices
     print("Step 1: Validating trade prices...")
     result = validate_trade_prices(
-        trades_csv="realistic_t1_trades.csv",
-        tick_dir="tick_data/",
+        trades_csv=TRADES_CSV,
+        tick_dir=TICK_DIR,
     )
 
     # Step 2: Check validation rate
@@ -165,8 +170,8 @@ def example_validation_workflow():
 
     # Step 4: Generate reports
     print("Step 4: Generating reports...")
-    save_validation_json(result, "validation_report.json")
-    generate_validation_report(result, "validation_report.md")
+    save_validation_json(result, BASE_DIR / "validation_report.json")
+    generate_validation_report(result, BASE_DIR / "validation_report.md")
 
     # Step 5: Summary
     print("\nValidation Summary:")
@@ -186,8 +191,8 @@ def main():
     print("\n")
 
     # Note: These examples assume you have:
-    # - realistic_t1_trades.csv with columns: code, entry_date, exit_date, entry_price, exit_price
-    # - tick_data/ directory with tick CSV files
+    # - examples/quant/data/realistic_t1_trades.csv with trade columns
+    # - examples/quant/tick_price/tick_data/ directory with tick CSV files
 
     print("NOTE: These are example code snippets.")
     print("To run them, ensure you have the required data files.\n")

@@ -47,6 +47,12 @@ ARCHIVED_ROOT_QUANT_FILES = (
     "tick_price_validation.json",
     "tick_price_validation.md",
 )
+EXAMPLE_ROOT_QUANT_FILES = (
+    "demo_capacity_comprehensive.py",
+    "demo_capacity_validation.py",
+    "example_tick_price_validator.py",
+    "realistic_t1_trades.csv",
+)
 
 
 def _pyproject_description() -> str:
@@ -122,3 +128,16 @@ def test_quant_reports_are_archived_out_of_repository_root() -> None:
     for filename in ARCHIVED_ROOT_QUANT_FILES:
         assert not (ROOT / filename).exists()
         assert (archive_dir / filename).exists()
+
+
+def test_quant_examples_are_moved_out_of_repository_root() -> None:
+    expected_locations = {
+        "demo_capacity_comprehensive.py": ROOT / "examples" / "quant" / "capacity",
+        "demo_capacity_validation.py": ROOT / "examples" / "quant" / "capacity",
+        "example_tick_price_validator.py": ROOT / "examples" / "quant" / "tick_price",
+        "realistic_t1_trades.csv": ROOT / "examples" / "quant" / "data",
+    }
+
+    for filename in EXAMPLE_ROOT_QUANT_FILES:
+        assert not (ROOT / filename).exists()
+        assert (expected_locations[filename] / filename).exists()

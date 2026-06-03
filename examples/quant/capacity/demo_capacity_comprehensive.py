@@ -13,6 +13,8 @@ from pathlib import Path
 
 from quantagent.tick_capacity_validator import validate_capacity
 
+BASE_DIR = Path(__file__).resolve().parent
+
 
 def create_synthetic_tick_data(output_dir: Path):
     """Create synthetic tick data for demonstration."""
@@ -141,7 +143,7 @@ def main():
     print()
 
     # Setup
-    demo_dir = Path("demo_data")
+    demo_dir = BASE_DIR / "demo_data"
     tick_dir = demo_dir / "ticks"
 
     # Create synthetic data
@@ -225,7 +227,7 @@ def main():
         print(f"  - {len(report.insufficient_capacity_aggressive)} trades exceed 20% of market volume")
 
     print()
-    print("Demo complete. Check the demo_data/ directory for generated files.")
+    print(f"Demo complete. Check {demo_dir}/ for generated files.")
 
 
 if __name__ == "__main__":
