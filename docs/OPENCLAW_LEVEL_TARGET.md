@@ -1,5 +1,7 @@
 # OpenMako Capability Target
 
+Internal planning note. This is not the current public v0.1 capability claim; the current public proof is the focused learning-effect gate linked from `README.md` and issue #1.
+
 North star: reach OpenClaw-class local agent capability.
 
 Current project target is not SWE-bench score chasing. The target is a fast local desktop agent that can:

@@ -66,6 +66,10 @@ INTERNAL_PLANNING_DOCS = (
     "docs/COMPARISON.md",
     "docs/MARKET_TOOL_COPY_SCAN.md",
     "docs/CLAUDE_SRC_ABSORPTION_PLAN.md",
+    "docs/DESKTOP_L5_ROADMAP.md",
+    "docs/OPENCLAW_LEVEL_TARGET.md",
+    "docs/OPENCLAW_HERMES_FULL_PORT_PLAN.md",
+    "docs/AGENT_PORTING_SWARM.md",
 )
 
 
