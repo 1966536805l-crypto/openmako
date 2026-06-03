@@ -1,5 +1,8 @@
 # Tick Price Validation Report
 
+Archived quant demo output. This is not part of the focused OpenMako v0.1
+public evidence gate.
+
 ## Summary
 
 - **Total Trades**: 10

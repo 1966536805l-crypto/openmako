@@ -41,6 +41,12 @@ FORBIDDEN_ROOT_AGENT_NOTES = (
     "OpenClaw, Hermes Agent",
     "desktop_plan.py",
 )
+ARCHIVED_ROOT_QUANT_FILES = (
+    "TICK_CAPACITY_VALIDATOR_GUIDE.md",
+    "capacity_validation_report.json",
+    "tick_price_validation.json",
+    "tick_price_validation.md",
+)
 
 
 def _pyproject_description() -> str:
@@ -108,3 +114,11 @@ def test_root_agent_notes_match_public_evidence_boundary() -> None:
     assert "tests/test_public_metadata.py" in notes
     for forbidden in FORBIDDEN_ROOT_AGENT_NOTES:
         assert forbidden not in notes
+
+
+def test_quant_reports_are_archived_out_of_repository_root() -> None:
+    archive_dir = ROOT / "docs" / "archive" / "quant"
+
+    for filename in ARCHIVED_ROOT_QUANT_FILES:
+        assert not (ROOT / filename).exists()
+        assert (archive_dir / filename).exists()

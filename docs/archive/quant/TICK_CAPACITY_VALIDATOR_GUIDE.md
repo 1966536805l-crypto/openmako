@@ -1,5 +1,8 @@
 # Tick Capacity Validator - Usage Guide
 
+Archived quant demo note. This is not part of the focused OpenMako v0.1 public
+evidence gate.
+
 ## Overview
 
 The `tick_capacity_validator` module validates that strategy trade volumes are within acceptable market capacity limits by comparing against actual tick-level market liquidity data.
