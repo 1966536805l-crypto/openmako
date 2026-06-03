@@ -1,5 +1,7 @@
 # Market Tool Copy Scan
 
+Internal clean-room research note. This is not launch copy, not a public capability claim, and not permission to copy closed-source or license-incompatible code. The current public proof is the focused learning-effect gate linked from `README.md` and issue #1.
+
 Scan date: 2026-05-24.
 
 This is the practical copy map for Mako/QuantAgent. "Copy" here means one of:
@@ -53,7 +55,7 @@ particular, do not read or copy `/Downloads/claude/src.zip`.
 | Claude Code | closed product | n/a | proprietary | product-mechanics clean-room only |
 | Cursor/Windsurf/Devin/Copilot agent | closed products | n/a | proprietary | product-mechanics clean-room only |
 
-## Highest-Value Things To Steal Next
+## Highest-Value Mechanisms To Study Next
 
 1. **Aider repo map and diff loop**
    - What to copy: repository symbol map, ranked context, patch/test/repair loop.

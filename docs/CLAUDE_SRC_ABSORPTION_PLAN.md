@@ -1,5 +1,7 @@
 # OpenMako Clean-Room Absorption Plan
 
+Internal planning note. This is not the current public v0.1 capability claim; the current public proof is the focused learning-effect gate linked from `README.md` and issue #1.
+
 This note is a clean-room synthesis from local architecture inspection. It is
 not a source port and must not be used to copy proprietary source bodies,
 bundled prompts, product strings, minified internals, or private service

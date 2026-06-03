@@ -1,11 +1,14 @@
 # OpenMako Launch Playbook
 
+Internal launch-planning note. This is not the current public v0.1 capability claim; the current public proof is the focused learning-effect gate linked from `README.md` and issue #1.
+
 Goal: convert OpenMako from a strong local codebase into a repo that a developer can understand in 30 seconds, run in 5 minutes, and share after one successful demo.
 
 ## Primary Hook
 
 ```text
-OpenMako is a local-first, auditable agent runtime for serious coding and data work.
+Historical draft, not current public copy: OpenMako is a local-first,
+auditable agent runtime for serious coding and data work.
 ```
 
 The shareable proof is:
