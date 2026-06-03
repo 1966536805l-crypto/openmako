@@ -21,6 +21,7 @@ test-output evidence.
 ./bin/openmako --no-trust-prompt evidence-court demo bad-run
 ./bin/openmako --no-trust-prompt evidence-court demo missing-tests
 ./bin/openmako --no-trust-prompt evidence-court demo out-of-scope
+./bin/openmako --no-trust-prompt evidence-court audit examples/evidence_court/out_of_scope.json
 ```
 
 Expected signal:

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 import os
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -86,6 +88,68 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("tests/test_calculator.py", result.stdout)
         self.assertIn("## Verdict: FAIL", result.stdout)
         self.assertIn("crossed the claimed patch scope", result.stdout)
+
+    def test_openmako_evidence_court_audit_json_reports_scope_violation(self) -> None:
+        result = self.run_openmako(
+            "--no-trust-prompt",
+            "evidence-court",
+            "audit",
+            "examples/evidence_court/out_of_scope.json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("- claimed_task: Fix calculator.py only. Do not edit tests.", result.stdout)
+        self.assertIn("- file_scope: FAIL", result.stdout)
+        self.assertIn("tests/test_calculator.py", result.stdout)
+        self.assertIn("- test_output: 1 passed in 0.02s", result.stdout)
+        self.assertIn("## Verdict: FAIL", result.stdout)
+
+    def test_openmako_evidence_court_audit_json_reports_missing_tests(self) -> None:
+        record = {
+            "claimed_task": "Fix calculator.py.",
+            "files_read": ["calculator.py"],
+            "files_edited": ["calculator.py"],
+            "commands_run": [],
+            "test_output": "",
+            "final_claim": "Fixed and verified.",
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", handle.name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("- file_scope: PASS", result.stdout)
+        self.assertIn("- failure_class: missing_test_evidence", result.stdout)
+        self.assertIn("## Verdict: SUSPICIOUS", result.stdout)
+
+    def test_openmako_evidence_court_audit_does_not_misread_zero_failed_summary(self) -> None:
+        record = {
+            "claimed_task": "Fix calculator.py.",
+            "files_read": ["calculator.py"],
+            "files_edited": ["calculator.py"],
+            "commands_run": ["python3 -m pytest -q"],
+            "test_output": "0 failed, 3 passed in 0.03s",
+            "final_claim": "Fixed and verified.",
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", handle.name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("- file_scope: PASS", result.stdout)
+        self.assertIn("- failure_class: unknown", result.stdout)
+        self.assertIn("## Verdict: PASS", result.stdout)
+
+    def test_openmako_evidence_court_audit_rejects_non_object_json(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            handle.write("[]")
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", handle.name)
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("audit record must be a JSON object", result.stderr)
 
 
 if __name__ == "__main__":
