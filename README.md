@@ -1,14 +1,15 @@
 # OpenMako
 
+[![focused](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml/badge.svg)](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml)
+
 Evidence harness for coding agents.
 
 OpenMako is for checking whether an AI coding agent actually improved across
 runs, stayed inside the requested patch scope, and passed validation without
 cheating by editing tests or hiding failures.
 
-The current public snapshot is intentionally narrow. Its strongest supported
-claim is not broad SWE-agent autonomy. It is a repeatable learning-effect and
-CodingBench harness around agent repair runs.
+Today, OpenMako proves one narrow thing: approved learning must beat
+no-learning on hidden repair tasks while staying inside exact patch scope.
 
 ## What It Proves Today
 
@@ -38,9 +39,7 @@ Expected local result on the public snapshot:
 ## What It Does Not Claim
 
 - It does not prove broad unknown-repository SWE repair.
-- It does not prove general NPM package repair.
 - It does not replace Claude Code, Codex, Cursor, Devin, or other coding agents.
-- It does not claim desktop L4/L5 autonomy.
 - It does not trust an agent's final message without command, diff, and test evidence.
 
 ## Why It Exists
@@ -53,72 +52,53 @@ when the evidence is missing?
 Use OpenMako when the useful question is not just "can the agent do it?", but
 "can I inspect what it did, replay the path, and see where the risk is?"
 
-## Quick Start
+## Install And Reproduce
 
 ```bash
-git clone <your-openmako-repo-url> open-mako
-cd open-mako
-python3 -m pip install -e .
-mako onboard
-mako doctor
-mako agent "audit this repo and propose a safe fix plan"
+git clone https://github.com/1966536805l-crypto/openmako.git
+cd openmako
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e . pytest
+python -m pytest -p no:cacheprovider \
+  tests/test_agent_planner_contract.py::AgentPlannerContractTest::test_planner_no_seed_repairs_package_level_http_manifest_js_module \
+  tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest::test_package_level_http_manifest_js_trajectory_skill_reuses_on_hidden_tasks \
+  -q
 ```
 
-`mako` is the primary CLI. `openmako` is an alias. `qagent` remains for compatibility.
+This is the same focused gate run by GitHub Actions. It is the current public
+proof for the v0.1 snapshot.
 
-Default project is the current working directory. To pin a project:
+After installation, the CLI entrypoints are:
 
 ```bash
-export QUANTAGENT_PROJECT="/path/to/your/project"
-mako doctor
+mako --help
+openmako --help
+qagent --help
 ```
 
-## Why It Is Different
+## Public Evidence Links
 
-| Layer | OpenMako default |
+| Evidence | Where |
 | --- | --- |
-| Readiness | `mako doctor` scores runtime, permissions, plugins, sandbox, task health, auth, and config hygiene |
-| Agent state | Tasks, sessions, approvals, query events, skills, and subagents mirror into SQLite runtime records |
-| Evidence | Tool results, quant runs, answer guard, and run artifacts carry hashes, paths, and replay metadata |
-| Safety | Permission policy, shell semantics, external-content fences, model-error actions, and worktree isolation |
-| Repair | Diff-first edit plans, checkpoints, test classification, isolated repair loops, and review bundles |
-| Extension | Plugin registry plus plugin-scoped keyed state store and MCP stdio/HTTP/SSE runtime |
-| **Planning** | **Extreme Planner: AI-powered code generation with local context building and explicit benchmark targets** |
+| Green public CI | [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml) |
+| Learning-effect gate | [`quantagent/learning_effect_coding_bench.py`](quantagent/learning_effect_coding_bench.py) |
+| CodingBench execution | [`quantagent/coding_bench.py`](quantagent/coding_bench.py) |
+| Agent repair loop used by the gate | [`quantagent/agent_loop.py`](quantagent/agent_loop.py) |
+| Focused regression tests | [`tests/test_agent_planner_contract.py`](tests/test_agent_planner_contract.py), [`tests/test_external_benchmark_multimodule_regression.py`](tests/test_external_benchmark_multimodule_regression.py) |
 
-## First Demo Path
+## Other Implemented Surfaces
 
-```bash
-mako demo fix
-mako onboard --json
-mako doctor --json
-mako runtime status
-mako agent-v3 "inspect this repo and identify the highest-risk next fix"
-mako query-events --limit 20
-```
+OpenMako contains more CLI surfaces than the current focused public gate proves.
+Treat these as implementation paths to inspect and test, not as the v0.1 launch
+claim:
 
-The output to screenshot first is `mako demo fix`: it creates a tiny failing-test project, fixes it, runs tests green, and writes proof artifacts without a model call. `mako doctor` is the product's shortest proof that the runtime is not a toy.
-
-## Extreme Planner (New)
-
-OpenMako now includes **Extreme Planner**: AI-powered code generation with local context building. The current repository verifies the planner interfaces and safety hooks; success-rate and cost claims still require benchmark evidence.
-
-**Key Features:**
-- First-try success and cost targets are explicit, not yet proven by a full benchmark run
-- 0 AI calls for context building (all local: semantic search, dependency analysis, convention extraction)
-- Prompt caching support is designed to reduce repeated context cost when provider caching is available
-
-**Quick Start:**
-```bash
-# Use extreme planner (default)
-mako agent "add input validation to user registration"
-
-# Compare with old planner
-mako agent "same task" --planner cheap
-```
-
-**Learn More:**
-- [Extreme Planner Guide](docs/EXTREME_PLANNER.md)
-- [Migration Guide](docs/EXTREME_PLANNER_MIGRATION.md)
+- agent autopsy and trajectory reporting
+- planner/context plumbing
+- patch preview, checkpoint, and repair utilities
+- desktop-control experiments
+- quant/data-evidence gates
 
 ## Low-Friction Edit
 
@@ -184,7 +164,9 @@ touch .quantagent/desktop/agent/STOP
 
 ## Desktop Intelligence Loop
 
-`mako desktop tokenize|decide|daemon` is the L3 bridge toward the planned L4 desktop-daemon contract in `docs/DESKTOP_DAEMON_L4.md`: tokenize turns screenshot/AX/OCR/SoM/grid state into stable desktop tokens with an observation id and screen hash, decide emits exactly one deterministic next action, and daemon runs the bounded observe-tokenize-decide-act-verify loop. The recommended local driver split is documented in `docs/DESKTOP_CONTROL_DRIVERS.md`: Peekaboo-style observation, DesktopCtl-style execution, and Screenbox-style structured state stay behind OpenMako permission gates. It dry-runs by default; real desktop side effects require `--execute --reviewed --allow-actions`, and missing gates are skipped with `needs` instead of asking mid-run. Targeted click/move actions are fenced to the observed token and rechecked before execution, the STOP file aborts before each daemon step, non-ok terminal exits write an autopsy artifact, and the poison-test surface covers missing gates, STOP, high-risk goals, stale targets, loop detection, action failure, and semantic verification failure.
+`mako desktop tokenize|decide|daemon` is an experimental local desktop-control
+surface. It is not part of the current v0.1 public proof. It dry-runs by
+default; real desktop side effects require `--execute --reviewed --allow-actions`.
 
 ```bash
 mako desktop tokenize --include-grid --json
@@ -207,7 +189,9 @@ mako desktop-daemon stop --all
 
 ## Desktop Eval
 
-`mako desktop-eval` is the L4/L5 scoring gate for local desktop autonomy. It runs bounded scenario suites, writes metrics and reports, and maps results to a level score. The command fails closed if the eval core is unavailable.
+`mako desktop-eval` is an experimental local desktop scoring surface. It is not
+a public autonomy claim in this snapshot. The command fails closed if the eval
+core is unavailable.
 
 ```bash
 mako desktop-eval run --suite suite_l4 --duration-minutes 60
@@ -247,7 +231,7 @@ touch .quantagent/desktop/agent/STOP
 - `desktop`: 本地屏幕/键鼠控制面，支持 screenshot、grid、AX/OCR/SoM、tokenize/decide/daemon、文本找目标、web-search dry-run plan、reviewed click/type/hotkey 和执行日志
 - `desktop-agent`: 直接接管本地屏幕的快速 agent；默认预览，`--execute --reviewed` 后按正常人手速执行，并支持 STOP 文件熔断
 - `desktop-daemon`: 面向整夜任务的桌面 daemon 队列；支持 enqueue/run/status/stop/resume，真实动作仍要求 `--execute --reviewed --allow-actions`
-- `desktop-eval`: L4/L5 桌面自治评测入口；运行 suite、写 metrics/report，并把结果映射到等级分
+- `desktop-eval`: 实验性桌面评测入口；运行 suite、写 metrics/report
 - `desktop-overnight`: 有边界的一整晚桌面 agent；每轮 observe/act/verify，写 state、query_events、trajectory，STOP 文件熔断，并阻断支付/交易/凭证/破坏性删除等高风险目标
 - `query-events`: 查看 agent/query runtime 事件流
 - `runtime`: OpenClaw/Hermes 风格主账本视图；统一查看 SQLite sessions、task runs、approvals、tool invocations、query events，并支持消息搜索/export
