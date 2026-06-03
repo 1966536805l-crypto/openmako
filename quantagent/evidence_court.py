@@ -8,6 +8,7 @@ from .agent_autopsy import AgentAutopsyReport, AutopsyEvidence, AutopsyFinding, 
 
 
 BAD_RUN_FIXTURE = Path("tests/fixtures/agent_autopsy/agent_modified_test_failed")
+EVIDENCE_COURT_SCHEMA_VERSION = "evidence-court/v0.1"
 
 
 def build_bad_run_demo_report(project: str | Path) -> AgentAutopsyReport:
@@ -359,6 +360,7 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
 
 def dumps_evidence_court_json(report: AgentAutopsyReport) -> str:
     payload = {
+        "schema_version": EVIDENCE_COURT_SCHEMA_VERSION,
         "verdict": evidence_court_verdict(report),
         "status": report.status,
         "failure_class": report.failure_class or "",

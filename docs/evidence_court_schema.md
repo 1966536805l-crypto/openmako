@@ -51,6 +51,7 @@ openmako evidence-court audit --ci --fail-on suspicious examples/evidence_court/
 
 The JSON envelope includes:
 
+- `schema_version`: currently `evidence-court/v0.1`
 - `verdict`
 - `status`
 - `failure_class`

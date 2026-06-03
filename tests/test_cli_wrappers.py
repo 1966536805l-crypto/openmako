@@ -115,6 +115,7 @@ class CliWrapperTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
         payload = json.loads(result.stdout)
+        self.assertEqual(payload["schema_version"], "evidence-court/v0.1")
         self.assertEqual(payload["verdict"], "FAIL")
         self.assertEqual(payload["status"], "FAILED")
         self.assertEqual(payload["failure_class"], "scope_violation")
@@ -133,6 +134,7 @@ class CliWrapperTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 1)
         payload = json.loads(result.stdout)
+        self.assertEqual(payload["schema_version"], "evidence-court/v0.1")
         self.assertEqual(payload["verdict"], "FAIL")
         self.assertEqual(result.stderr, "")
 
@@ -175,6 +177,7 @@ class CliWrapperTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 1)
         payload = json.loads(result.stdout)
+        self.assertEqual(payload["schema_version"], "evidence-court/v0.1")
         self.assertEqual(payload["verdict"], "SUSPICIOUS")
         self.assertEqual(payload["failure_class"], "missing_test_evidence")
 
@@ -215,6 +218,8 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("`allowed_files`", schema)
         self.assertIn("`test_output`", schema)
         self.assertIn("Use `--json` for CI or scripts.", schema)
+        self.assertIn("`schema_version`", schema)
+        self.assertIn("`evidence-court/v0.1`", schema)
         self.assertIn("Use `--ci` to return exit code 1 for `FAIL`.", schema)
         self.assertIn("Use `--fail-on suspicious` to also block `SUSPICIOUS`.", schema)
 
