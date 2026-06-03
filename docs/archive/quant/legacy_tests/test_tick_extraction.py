@@ -2,6 +2,9 @@
 """
 Test script to extract tick data from T7 drive.
 
+Archived quant demo script. This is not part of the focused OpenMako v0.1
+public evidence gate.
+
 Usage:
     python3 test_tick_extraction.py [request_csv] [--limit N]
 """
@@ -10,9 +13,11 @@ import argparse
 import sys
 from pathlib import Path
 
-# Add project root to path
-project_root = Path(__file__).parent
+# Add project root to path when this archived script is run directly.
+project_root = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(project_root))
+
+BASE_DIR = Path(__file__).resolve().parent
 
 from quantagent.tick_extractor import TickExtractor
 
@@ -22,7 +27,7 @@ def main():
     parser.add_argument(
         'request_csv',
         nargs='?',
-        default='tick_data_request_test.csv',
+        default=str(BASE_DIR / 'tick_data_request_test.csv'),
         help='Path to request CSV file'
     )
     parser.add_argument(

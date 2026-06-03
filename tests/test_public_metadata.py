@@ -58,6 +58,8 @@ LEGACY_ROOT_QUANT_TEST_FILES = (
     "test_realistic_t1_trades.csv",
     "test_slippage_calculator.py",
     "test_tick_extraction_real.py",
+    "test_tick_extraction.py",
+    "tick_data_request_test.csv",
 )
 
 

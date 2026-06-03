@@ -34,17 +34,23 @@ for key, path in results.items():
     print(f"{key}: {path}")
 ```
 
-### Command Line
+### Archived Command Line Demo
+
+The old root-level command script is archived because tick extraction is not
+part of the focused OpenMako v0.1 public evidence gate.
 
 ```bash
 # Extract first 5 requests from CSV
-python3 test_tick_extraction.py tick_data_request_test.csv --limit 5
+python3 docs/archive/quant/legacy_tests/test_tick_extraction.py \
+  docs/archive/quant/legacy_tests/tick_data_request_test.csv --limit 5
 
 # Extract all requests
-python3 test_tick_extraction.py tick_data_request_all_695.csv --limit 695
+python3 docs/archive/quant/legacy_tests/test_tick_extraction.py \
+  path/to/tick_data_request_all_695.csv --limit 695
 
 # Custom output directory
-python3 test_tick_extraction.py request.csv --output-dir /path/to/output
+python3 docs/archive/quant/legacy_tests/test_tick_extraction.py \
+  request.csv --output-dir /path/to/output
 ```
 
 ## Request CSV Format
