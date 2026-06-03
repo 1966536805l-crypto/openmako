@@ -2,6 +2,9 @@
 """
 Test script for tick_slippage_calculator.
 
+Archived quant demo script. This is not part of the focused OpenMako v0.1
+public evidence gate.
+
 Usage:
     python3 test_slippage_calculator.py
 """

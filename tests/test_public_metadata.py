@@ -53,6 +53,12 @@ EXAMPLE_ROOT_QUANT_FILES = (
     "example_tick_price_validator.py",
     "realistic_t1_trades.csv",
 )
+LEGACY_ROOT_QUANT_TEST_FILES = (
+    "test_tick_price_validator.py",
+    "test_realistic_t1_trades.csv",
+    "test_slippage_calculator.py",
+    "test_tick_extraction_real.py",
+)
 
 
 def _pyproject_description() -> str:
@@ -141,3 +147,11 @@ def test_quant_examples_are_moved_out_of_repository_root() -> None:
     for filename in EXAMPLE_ROOT_QUANT_FILES:
         assert not (ROOT / filename).exists()
         assert (expected_locations[filename] / filename).exists()
+
+
+def test_legacy_quant_test_artifacts_are_archived_out_of_repository_root() -> None:
+    archive_dir = ROOT / "docs" / "archive" / "quant" / "legacy_tests"
+
+    for filename in LEGACY_ROOT_QUANT_TEST_FILES:
+        assert not (ROOT / filename).exists()
+        assert (archive_dir / filename).exists()

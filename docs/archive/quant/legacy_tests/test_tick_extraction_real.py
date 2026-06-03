@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
 测试真实tick数据提取和验证
+
+Archived quant demo script. This is not part of the focused OpenMako v0.1
+public evidence gate.
 """
 import sys
 from pathlib import Path

@@ -2,6 +2,9 @@
 """
 Test script for tick_price_validator.
 
+Archived quant demo script. This is not part of the focused OpenMako v0.1
+public evidence gate.
+
 Usage:
     python3 test_tick_price_validator.py
 """
