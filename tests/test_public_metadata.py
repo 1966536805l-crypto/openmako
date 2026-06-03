@@ -12,6 +12,12 @@ FORBIDDEN_DESCRIPTION_TERMS = (
     "coding and data work",
     "general autonomy",
 )
+FORBIDDEN_README_CLAIMS = (
+    "Today, OpenMako proves",
+    "## What It Proves Today",
+    "| Green public CI |",
+    "OpenMako does not copy Claude/closed-source code",
+)
 
 
 def _pyproject_description() -> str:
@@ -46,3 +52,14 @@ def test_readme_links_public_proof_issue() -> None:
 
     assert "Public proof card" in readme
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in readme
+
+
+def test_readme_uses_reviewable_public_claims() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert "demonstrates one narrow public gate" in readme
+    assert "## Implementation Boundary" in readme
+    assert "## Beyond The Public Gate" in readme
+    assert "OpenMako's project policy is clean-room implementation for closed-source tools" in readme
+    for forbidden in FORBIDDEN_README_CLAIMS:
+        assert forbidden not in readme

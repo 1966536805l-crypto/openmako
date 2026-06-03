@@ -8,10 +8,10 @@ OpenMako is for checking whether an AI coding agent actually improved across
 runs, stayed inside the requested patch scope, and passed validation without
 cheating by editing tests or hiding failures.
 
-Today, OpenMako proves one narrow thing: approved learning must beat
-no-learning on hidden repair tasks while staying inside exact patch scope.
+Today, OpenMako demonstrates one narrow public gate: approved learning must
+beat no-learning on hidden repair tasks while staying inside exact patch scope.
 
-## What It Proves Today
+## What The Public Gate Checks
 
 The focused public gate exercises a package-level JavaScript repair task:
 
@@ -68,7 +68,7 @@ python -m pytest -p no:cacheprovider \
 ```
 
 This is the same focused gate run by GitHub Actions. It is the current public
-proof for the v0.1 snapshot.
+evidence for the v0.1 snapshot.
 
 After installation, the CLI entrypoints are:
 
@@ -83,23 +83,11 @@ qagent --help
 | Evidence | Where |
 | --- | --- |
 | Public proof card | [issue #1](https://github.com/1966536805l-crypto/openmako/issues/1) |
-| Green public CI | [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml) |
+| Focused public CI | [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml) |
 | Learning-effect gate | [`quantagent/learning_effect_coding_bench.py`](quantagent/learning_effect_coding_bench.py) |
 | CodingBench execution | [`quantagent/coding_bench.py`](quantagent/coding_bench.py) |
 | Agent repair loop used by the gate | [`quantagent/agent_loop.py`](quantagent/agent_loop.py) |
 | Focused regression tests | [`tests/test_agent_planner_contract.py`](tests/test_agent_planner_contract.py), [`tests/test_external_benchmark_multimodule_regression.py`](tests/test_external_benchmark_multimodule_regression.py) |
-
-## Other Implemented Surfaces
-
-OpenMako contains more CLI surfaces than the current focused public gate proves.
-Treat these as implementation paths to inspect and test, not as the v0.1 launch
-claim:
-
-- agent autopsy and trajectory reporting
-- planner/context plumbing
-- patch preview, checkpoint, and repair utilities
-- desktop-control experiments
-- quant/data-evidence gates
 
 ## Category
 
@@ -109,11 +97,13 @@ the coding agent itself, and it is not a general autonomy benchmark.
 For broader product notes, see [docs/COMPARISON.md](docs/COMPARISON.md) and
 [docs/LAUNCH_PLAYBOOK.md](docs/LAUNCH_PLAYBOOK.md).
 
-## Clean-Room Boundary
+## Implementation Boundary
 
-OpenMako does not copy Claude/closed-source code, prompts, constants, endpoints, or proprietary strings. MIT-licensed OpenClaw/Hermes ideas are adapted with attribution where used; closed-source agent ideas are implemented only as clean-room mechanisms.
+OpenMako's project policy is clean-room implementation for closed-source tools:
+do not copy closed-source code, prompts, constants, endpoints, or proprietary
+strings. Attribution and third-party review notes live in the docs below.
 
-## Experimental Surfaces
+## Beyond The Public Gate
 
 OpenMako contains implementation work beyond the current focused public gate.
 Treat these as code paths to inspect and test, not as v0.1 launch claims:
@@ -134,9 +124,9 @@ Useful entry points:
 
 ## Attribution Boundary
 
-OpenMako includes notes for clean-room learning from other open-source agent and
-trading projects. Those notes are not v0.1 capability claims. The current public
-proof remains the focused learning-effect gate above.
+OpenMako includes notes for learning from open-source agent and trading
+projects. These notes are not v0.1 capability claims. The current public
+evidence remains the focused learning-effect gate above.
 
 Relevant docs:
 
