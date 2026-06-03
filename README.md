@@ -19,6 +19,7 @@ test-output evidence.
 
 ```bash
 ./bin/openmako --no-trust-prompt evidence-court demo bad-run
+./bin/openmako --no-trust-prompt evidence-court demo missing-tests
 ```
 
 Expected signal:
@@ -30,6 +31,7 @@ Expected signal:
 ## Test Verification
 ## Suspicious Behavior
 ## Verdict: FAIL
+## Verdict: SUSPICIOUS
 ```
 
 ## What The Public Gate Checks

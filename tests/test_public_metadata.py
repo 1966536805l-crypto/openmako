@@ -124,12 +124,14 @@ def test_readme_has_runnable_bad_run_demo() -> None:
 
     assert "## 10-Second Bad-Run Demo" in readme
     assert "./bin/openmako --no-trust-prompt evidence-court demo bad-run" in readme
+    assert "./bin/openmako --no-trust-prompt evidence-court demo missing-tests" in readme
     assert "## Claim" in readme
     assert "## Evidence" in readme
     assert "## Scope Violations" in readme
     assert "## Test Verification" in readme
     assert "## Suspicious Behavior" in readme
     assert "## Verdict: FAIL" in readme
+    assert "## Verdict: SUSPICIOUS" in readme
 
 
 def test_readme_uses_reviewable_public_claims() -> None:

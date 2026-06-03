@@ -68,6 +68,15 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("## Verdict: FAIL", result.stdout)
         self.assertIn("post-edit validation failed", result.stdout)
 
+    def test_openmako_evidence_court_missing_tests_demo_reports_suspicious_verdict(self) -> None:
+        result = self.run_openmako("--no-trust-prompt", "evidence-court", "demo", "missing-tests")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("# Evidence Court Report", result.stdout)
+        self.assertIn("## Verdict: SUSPICIOUS", result.stdout)
+        self.assertIn("- failure_class: missing_test_evidence", result.stdout)
+        self.assertIn("no command or test-output evidence was supplied", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

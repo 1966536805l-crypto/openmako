@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .agent_autopsy import AgentAutopsyReport, build_agent_autopsy
+from .agent_autopsy import AgentAutopsyReport, AutopsyEvidence, AutopsyFinding, build_agent_autopsy
 
 
 BAD_RUN_FIXTURE = Path("tests/fixtures/agent_autopsy/agent_modified_test_failed")
@@ -24,11 +24,63 @@ def build_bad_run_demo_report(project: str | Path) -> AgentAutopsyReport:
     )
 
 
+def build_missing_tests_demo_report() -> AgentAutopsyReport:
+    return AgentAutopsyReport(
+        title="missing-tests success claim demo",
+        source_agent="codex",
+        command="final answer: fixed calculator and verified",
+        status="UNVERIFIED",
+        failure_class="missing_test_evidence",
+        failed_at="final_claim",
+        evidence=(
+            AutopsyEvidence(
+                "E1",
+                "trajectory",
+                "action",
+                "Agent read calculator.py and described a one-line fix.",
+                step=1,
+                name="read_files",
+                ok=True,
+            ),
+            AutopsyEvidence(
+                "E2",
+                "trajectory",
+                "edit",
+                "Agent edited calculator.py.",
+                step=2,
+                name="apply_patch",
+                ok=True,
+            ),
+            AutopsyEvidence(
+                "E3",
+                "final_claim",
+                "claim",
+                "Agent final message claimed the task was fixed and verified.",
+                step=3,
+                name="final_answer",
+                ok=None,
+            ),
+        ),
+        findings=(
+            AutopsyFinding(
+                "missing_test_evidence",
+                "The run has a success claim after an edit, but no command or test-output evidence was supplied.",
+                evidence_ids=("E3",),
+                intercept="require a targeted validation command before accepting the final claim",
+                confidence="high",
+            ),
+        ),
+        intercepts=("require a targeted validation command before accepting the final claim",),
+        sources=("built-in missing-tests demo record",),
+    )
+
+
 def render_evidence_court_report(report: AgentAutopsyReport) -> str:
     verdict = _verdict(report)
     first_failed = next((item for item in report.evidence if item.ok is False), None)
     no_baseline = next((item for item in report.evidence if "no failing test output was captured" in item.summary.lower()), None)
     post_edit_failure = next((item for item in report.findings if item.finding_type == "post_edit_validation_failure"), None)
+    missing_test_evidence = next((item for item in report.findings if item.finding_type == "missing_test_evidence"), None)
     test_failure = next((item for item in report.evidence if item.source == "failure" or item.kind == "test"), None)
 
     lines = [
@@ -50,7 +102,7 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
         "## Scope Violations",
         "",
         "- file_scope: PASS",
-        "- reason: this fixture shows a failed validation path, not an out-of-scope edit path.",
+        "- reason: no out-of-scope edit evidence was supplied in this demo record.",
         "",
         "## Test Verification",
         "",
@@ -62,6 +114,7 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
         "## Suspicious Behavior",
         "",
         f"- missing_baseline: {_summary(no_baseline)}",
+        f"- missing_test_evidence: {missing_test_evidence.summary if missing_test_evidence else 'not detected'}",
         f"- post_edit_failure: {post_edit_failure.summary if post_edit_failure else 'not detected'}",
         "",
         f"## Verdict: {verdict}",
