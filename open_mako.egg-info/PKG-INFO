@@ -1,6 +1,0 @@
-Metadata-Version: 2.4
-Name: open-mako
-Version: 0.1.0
-Summary: A local-first auditable agent runtime for coding and data work.
-Requires-Python: >=3.9
-Dynamic: requires-python
