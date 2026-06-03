@@ -1,27 +1,33 @@
-# QuantAgent Project Memory
+# OpenMako Local Agent Notes
 
-QuantAgent is a local quant-focused coding agent starter. The current goal is to converge toward a Claude Code-like local workflow while keeping the implementation clean, testable, and attribution-safe.
+This file is for local coding-agent behavior inside this repository. It is not a public capability claim.
+
+Current public position:
+
+- OpenMako is a focused evidence harness for coding-agent repair runs.
+- The public v0.1 proof is the focused learning-effect gate linked from
+  `README.md` and issue #1.
+- Claims about broader agent-runtime, desktop-control, quant, or benchmark
+  behavior require current tests and public evidence before they can be used in
+  launch copy.
 
 Core rules:
 
-- Prefer project-local tools and deterministic checks before model conclusions.
-- Treat PF, slippage, capacity, tick, broker, and P4 claims as evidence-gated.
-- Use `python3 -m unittest discover -s tests` as the default regression command.
-- Keep desktop actions plan-first: observe, locate, render a plan, then require explicit execution.
-- Do not copy proprietary Claude Code source. MIT-licensed OpenClaw, Hermes Agent, and similar open source projects may be copied or adapted with attribution.
+- Prefer deterministic commands and file evidence before model conclusions.
+- Keep edits scoped to the requested files and explain any scope expansion.
+- Do not claim tests passed unless the exact command ran in the current
+  workspace.
+- Do not copy closed-source code, prompts, endpoints, constants, or proprietary
+  strings from commercial coding-agent tools.
+- Treat open-source upstream references as attribution-bound sources, not as
+  proof of OpenMako capability.
 
-High-value local modules:
-
-- `quantagent/agent_v2.py`: plan, execute, reflect, memory extract, trajectory record.
-- `quantagent/patch_engine.py`: snapshot, contextual replace, diff preview, restore.
-- `quantagent/trajectory.py`: deterministic JSONL event ledger.
-- `quantagent/edit_loop.py`: edit, test, retry, restore.
-- `quantagent/desktop_plan.py`: no-side-effect click planning from grid/label/OCR payloads.
-- `quantagent/memory_extract.py`: deterministic long-term memory candidate extraction.
-
-Current quality gate:
+Current public quality gate:
 
 ```bash
-python3 -m py_compile quantagent/*.py
-python3 -m unittest discover -s tests
+python3 -m pytest -p no:cacheprovider \
+  tests/test_agent_planner_contract.py::AgentPlannerContractTest::test_planner_no_seed_repairs_package_level_http_manifest_js_module \
+  tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest::test_package_level_http_manifest_js_trajectory_skill_reuses_on_hidden_tasks \
+  tests/test_public_metadata.py \
+  -q
 ```

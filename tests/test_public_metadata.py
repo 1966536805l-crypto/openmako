@@ -29,6 +29,18 @@ FORBIDDEN_PUBLIC_PROGRESS_CLAIMS = (
     "SWE-style repository reasoning",
     "broad unknown NPM repo repair",
 )
+FORBIDDEN_ROOT_AGENT_NOTES = (
+    "QuantAgent Project Memory",
+    "local quant-focused coding agent starter",
+    "quant-focused coding agent starter",
+    "Claude Code-like local workflow",
+    "PF, slippage, capacity, tick, broker",
+    "python3 -m unittest discover -s tests",
+    "desktop actions",
+    "Claude Code source",
+    "OpenClaw, Hermes Agent",
+    "desktop_plan.py",
+)
 
 
 def _pyproject_description() -> str:
@@ -84,3 +96,15 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "stale internal notes" in progress
     for forbidden in FORBIDDEN_PUBLIC_PROGRESS_CLAIMS:
         assert forbidden not in progress
+
+
+def test_root_agent_notes_match_public_evidence_boundary() -> None:
+    notes = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+
+    assert notes.startswith("# OpenMako Local Agent Notes")
+    assert "OpenMako is a focused evidence harness for coding-agent repair runs." in notes
+    assert "not a public capability claim" in notes
+    assert "focused learning-effect gate" in notes
+    assert "tests/test_public_metadata.py" in notes
+    for forbidden in FORBIDDEN_ROOT_AGENT_NOTES:
+        assert forbidden not in notes
