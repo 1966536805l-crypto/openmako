@@ -18,7 +18,7 @@ failed. OpenMako reports the failure from supplied trajectory, query-event, and
 test-output evidence.
 
 ```bash
-python3 -m quantagent.cli --no-trust-prompt agent-autopsy \
+./bin/openmako --no-trust-prompt agent-autopsy \
   --project tests/fixtures/agent_autopsy/agent_modified_test_failed \
   --trajectory tests/fixtures/agent_autopsy/agent_modified_test_failed/trajectory.jsonl \
   --query-events tests/fixtures/agent_autopsy/agent_modified_test_failed/query_events.jsonl \

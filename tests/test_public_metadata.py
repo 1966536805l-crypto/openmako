@@ -123,7 +123,7 @@ def test_readme_has_runnable_bad_run_demo() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     assert "## 10-Second Bad-Run Demo" in readme
-    assert "python3 -m quantagent.cli --no-trust-prompt agent-autopsy" in readme
+    assert "./bin/openmako --no-trust-prompt agent-autopsy" in readme
     assert "tests/fixtures/agent_autopsy/agent_modified_test_failed/trajectory.jsonl" in readme
     assert "- status: FAILED" in readme
     assert "- failure_class: verification_failed" in readme
