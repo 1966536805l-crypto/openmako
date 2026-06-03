@@ -121,6 +121,21 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["finding_types"], ["scope_violation"])
         self.assertEqual(payload["report"]["evidence"][0]["source"], "task")
 
+    def test_openmako_evidence_court_audit_ci_returns_nonzero_for_fail(self) -> None:
+        result = self.run_openmako(
+            "--no-trust-prompt",
+            "evidence-court",
+            "audit",
+            "--ci",
+            "--json",
+            "examples/evidence_court/out_of_scope.json",
+        )
+
+        self.assertEqual(result.returncode, 1)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "FAIL")
+        self.assertEqual(result.stderr, "")
+
     def test_openmako_evidence_court_audit_json_reports_missing_tests(self) -> None:
         result = self.run_openmako(
             "--no-trust-prompt",
@@ -132,6 +147,18 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("- file_scope: PASS", result.stdout)
         self.assertIn("- failure_class: missing_test_evidence", result.stdout)
+        self.assertIn("## Verdict: SUSPICIOUS", result.stdout)
+
+    def test_openmako_evidence_court_audit_ci_allows_suspicious_for_review(self) -> None:
+        result = self.run_openmako(
+            "--no-trust-prompt",
+            "evidence-court",
+            "audit",
+            "--ci",
+            "examples/evidence_court/missing_tests.json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("## Verdict: SUSPICIOUS", result.stdout)
 
     def test_openmako_evidence_court_audit_does_not_misread_zero_failed_summary(self) -> None:
@@ -171,6 +198,7 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("`allowed_files`", schema)
         self.assertIn("`test_output`", schema)
         self.assertIn("Use `--json` for CI or scripts.", schema)
+        self.assertIn("Use `--ci` to return exit code 1 for `FAIL`.", schema)
 
 
 if __name__ == "__main__":

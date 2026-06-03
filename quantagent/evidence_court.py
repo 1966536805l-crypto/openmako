@@ -359,7 +359,7 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
 
 def dumps_evidence_court_json(report: AgentAutopsyReport) -> str:
     payload = {
-        "verdict": _verdict(report),
+        "verdict": evidence_court_verdict(report),
         "status": report.status,
         "failure_class": report.failure_class or "",
         "failed_at": report.failed_at,
@@ -367,6 +367,10 @@ def dumps_evidence_court_json(report: AgentAutopsyReport) -> str:
         "report": report.to_dict(),
     }
     return json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+
+
+def evidence_court_verdict(report: AgentAutopsyReport) -> str:
+    return _verdict(report)
 
 
 def _verdict(report: AgentAutopsyReport) -> str:
