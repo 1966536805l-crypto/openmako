@@ -307,7 +307,7 @@ def cmd_evidence_court(args: argparse.Namespace) -> int:
             print(dumps_evidence_court_json(report), end="")
         else:
             print(render_evidence_court_report(report), end="")
-        if args.ci and evidence_court_verdict(report) == "FAIL":
+        if args.ci and _evidence_court_ci_failed(evidence_court_verdict(report), args.fail_on):
             return 1
         return 0
     if args.evidence_court_command == "demo" and args.demo_command == "bad-run":
@@ -326,6 +326,10 @@ def cmd_evidence_court(args: argparse.Namespace) -> int:
         return 0
     print("evidence-court error: unsupported command", file=sys.stderr)
     return 2
+
+
+def _evidence_court_ci_failed(verdict: str, fail_on: str) -> bool:
+    return verdict == "FAIL" or (fail_on == "suspicious" and verdict == "SUSPICIOUS")
 
 
 def cmd_hooks(args: argparse.Namespace) -> int:
@@ -5467,6 +5471,7 @@ def build_parser() -> argparse.ArgumentParser:
     ap = evidence_court_sub.add_parser("audit", help="Audit a JSON agent-run record")
     ap.add_argument("--json", action="store_true", help="Print a machine-readable verdict envelope")
     ap.add_argument("--ci", action="store_true", help="Return exit code 1 when the verdict is FAIL")
+    ap.add_argument("--fail-on", choices=("fail", "suspicious"), default="fail", help="CI failure threshold; default: fail")
     ap.add_argument("record", help="Path to a JSON record with claimed_task, files_read, files_edited, commands_run, test_output, and final_claim")
     ap.set_defaults(func=cmd_evidence_court)
     ep = evidence_court_sub.add_parser("demo", help="Run built-in Evidence Court demos")

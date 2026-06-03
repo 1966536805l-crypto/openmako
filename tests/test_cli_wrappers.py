@@ -161,6 +161,23 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("## Verdict: SUSPICIOUS", result.stdout)
 
+    def test_openmako_evidence_court_audit_ci_can_fail_on_suspicious(self) -> None:
+        result = self.run_openmako(
+            "--no-trust-prompt",
+            "evidence-court",
+            "audit",
+            "--ci",
+            "--fail-on",
+            "suspicious",
+            "--json",
+            "examples/evidence_court/missing_tests.json",
+        )
+
+        self.assertEqual(result.returncode, 1)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "SUSPICIOUS")
+        self.assertEqual(payload["failure_class"], "missing_test_evidence")
+
     def test_openmako_evidence_court_audit_does_not_misread_zero_failed_summary(self) -> None:
         record = {
             "claimed_task": "Fix calculator.py.",
@@ -199,6 +216,7 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("`test_output`", schema)
         self.assertIn("Use `--json` for CI or scripts.", schema)
         self.assertIn("Use `--ci` to return exit code 1 for `FAIL`.", schema)
+        self.assertIn("Use `--fail-on suspicious` to also block `SUSPICIOUS`.", schema)
 
 
 if __name__ == "__main__":

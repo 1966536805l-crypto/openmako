@@ -41,10 +41,12 @@ It does not claim to read native Claude Code, Codex, Cursor, or SWE-bench logs.
 
 Use `--json` for CI or scripts.
 Use `--ci` to return exit code 1 for `FAIL`.
+Use `--fail-on suspicious` to also block `SUSPICIOUS`.
 
 ```bash
 openmako evidence-court audit --json examples/evidence_court/out_of_scope.json
 openmako evidence-court audit --ci examples/evidence_court/out_of_scope.json
+openmako evidence-court audit --ci --fail-on suspicious examples/evidence_court/missing_tests.json
 ```
 
 The JSON envelope includes:
@@ -58,6 +60,7 @@ The JSON envelope includes:
 
 `--ci` returns `0` for `PASS` and `SUSPICIOUS`, and `1` for `FAIL`.
 Use `SUSPICIOUS` as a review queue unless your workflow chooses to block on it.
+With `--fail-on suspicious`, both `FAIL` and `SUSPICIOUS` return `1`.
 
 This is an evidence audit of the supplied record only. It does not prove that a
 command actually ran outside the record.
