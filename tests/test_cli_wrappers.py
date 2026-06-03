@@ -181,6 +181,31 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["verdict"], "SUSPICIOUS")
         self.assertEqual(payload["failure_class"], "missing_test_evidence")
 
+    def test_openmako_evidence_court_record_from_jsonl_builds_auditable_record(self) -> None:
+        converted = self.run_openmako(
+            "--no-trust-prompt",
+            "evidence-court",
+            "record",
+            "from-jsonl",
+            "examples/evidence_court/simple_events.jsonl",
+        )
+
+        self.assertEqual(converted.returncode, 0, converted.stderr)
+        record = json.loads(converted.stdout)
+        self.assertEqual(record["allowed_files"], ["calculator.py"])
+        self.assertEqual(record["files_edited"], ["calculator.py", "tests/test_calculator.py"])
+        self.assertEqual(record["test_output"], "1 passed in 0.02s")
+
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            audited = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+        self.assertEqual(audited.returncode, 0, audited.stderr)
+        payload = json.loads(audited.stdout)
+        self.assertEqual(payload["verdict"], "FAIL")
+        self.assertEqual(payload["failure_class"], "scope_violation")
+
     def test_openmako_evidence_court_audit_does_not_misread_zero_failed_summary(self) -> None:
         record = {
             "claimed_task": "Fix calculator.py.",
@@ -222,6 +247,8 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("`evidence-court/v0.1`", schema)
         self.assertIn("Use `--ci` to return exit code 1 for `FAIL`.", schema)
         self.assertIn("Use `--fail-on suspicious` to also block `SUSPICIOUS`.", schema)
+        self.assertIn("record from-jsonl", schema)
+        self.assertIn("It is not a native transcript adapter.", schema)
 
 
 if __name__ == "__main__":

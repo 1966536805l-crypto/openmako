@@ -305,6 +305,59 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
     )
 
 
+def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
+    path = Path(events_path).expanduser().resolve(strict=False)
+    record: dict[str, object] = {
+        "claimed_task": "",
+        "allowed_files": [],
+        "files_read": [],
+        "files_edited": [],
+        "commands_run": [],
+        "test_output": "",
+        "final_claim": "",
+    }
+    files_read: list[str] = []
+    files_edited: list[str] = []
+    commands_run: list[object] = []
+    test_output = ""
+
+    for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        event = json.loads(line)
+        if not isinstance(event, dict):
+            raise ValueError(f"JSONL event at line {line_no} must be an object")
+        kind = str(event.get("kind") or event.get("type") or event.get("event") or "").strip()
+        if kind == "task":
+            record["claimed_task"] = str(event.get("claimed_task") or event.get("task") or "").strip()
+            if "allowed_files" in event:
+                record["allowed_files"] = _string_list(event.get("allowed_files"))
+        elif kind == "read":
+            files_read.extend(_event_files(event))
+        elif kind == "edit":
+            files_edited.extend(_event_files(event))
+        elif kind == "command":
+            command = str(event.get("command") or "").strip()
+            if command:
+                item: dict[str, object] = {"command": command}
+                if isinstance(event.get("exit_code"), int):
+                    item["exit_code"] = event["exit_code"]
+                commands_run.append(item)
+            output = str(event.get("output") or event.get("summary") or "").strip()
+            if output:
+                test_output = output
+        elif kind == "final_claim":
+            record["final_claim"] = str(event.get("final_claim") or event.get("claim") or event.get("text") or "").strip()
+        else:
+            raise ValueError(f"unsupported JSONL event kind at line {line_no}: {kind or 'missing'}")
+
+    record["files_read"] = files_read
+    record["files_edited"] = files_edited
+    record["commands_run"] = commands_run
+    record["test_output"] = test_output
+    return record
+
+
 def render_evidence_court_report(report: AgentAutopsyReport) -> str:
     verdict = _verdict(report)
     claim_evidence = next((item for item in report.evidence if item.name == "claimed_task"), None)
@@ -441,6 +494,14 @@ def _command_summaries(value: object) -> list[str]:
         else:
             raise ValueError("commands_run entries must be strings or command objects")
     return commands
+
+
+def _event_files(event: dict[str, object]) -> list[str]:
+    if "files" in event:
+        return _string_list(event.get("files"))
+    if isinstance(event.get("file"), str):
+        return [str(event["file"])]
+    raise ValueError("read/edit JSONL events must include file or files")
 
 
 def _test_output_status(test_output: object, commands_run: object) -> tuple[str, str]:

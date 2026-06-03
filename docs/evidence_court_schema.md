@@ -63,5 +63,16 @@ The JSON envelope includes:
 Use `SUSPICIOUS` as a review queue unless your workflow chooses to block on it.
 With `--fail-on suspicious`, both `FAIL` and `SUSPICIOUS` return `1`.
 
+## Simple JSONL Record Builder
+
+`record from-jsonl` converts a simple JSONL event stream into an audit record.
+It is not a native transcript adapter.
+
+```bash
+openmako evidence-court record from-jsonl examples/evidence_court/simple_events.jsonl
+```
+
+Supported event kinds are `task`, `read`, `edit`, `command`, and `final_claim`.
+
 This is an evidence audit of the supplied record only. It does not prove that a
 command actually ran outside the record.

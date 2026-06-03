@@ -98,7 +98,7 @@ from .edit_loop import (
 from .experiment_runner import ExperimentSpec, fmt_pf, resolve_default_input, run_experiment
 from .eval_harness import append_eval_ledger, build_eval_gap_report, build_eval_scorecard, builtin_code_eval_cases, builtin_smoke_eval_cases, latest_eval_ledger_row, load_eval_cases, render_eval_gap_report, render_eval_json, render_eval_markdown, render_eval_scorecard, run_eval_cases
 from .event_log import append_runtime_event, event_log_stats, export_events, read_runtime_events, render_event_log, replay_summary
-from .evidence_court import build_audit_record_report, build_bad_run_demo_report, build_missing_tests_demo_report, build_out_of_scope_demo_report, dumps_evidence_court_json, evidence_court_verdict, render_evidence_court_report
+from .evidence_court import build_audit_record_from_jsonl, build_audit_record_report, build_bad_run_demo_report, build_missing_tests_demo_report, build_out_of_scope_demo_report, dumps_evidence_court_json, evidence_court_verdict, render_evidence_court_report
 from .evidence_ledger import load_evidence, record_evidence, render_evidence
 from .embedding_provider import (
     EmbeddingJob,
@@ -297,6 +297,14 @@ def cmd_agent_autopsy(args: argparse.Namespace) -> int:
 
 
 def cmd_evidence_court(args: argparse.Namespace) -> int:
+    if args.evidence_court_command == "record" and args.record_command == "from-jsonl":
+        try:
+            record = build_audit_record_from_jsonl(args.events)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            print(f"evidence-court error: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps(record, ensure_ascii=False, indent=2, sort_keys=True) + "\n", end="")
+        return 0
     if args.evidence_court_command == "audit":
         try:
             report = build_audit_record_report(args.record)
@@ -5474,6 +5482,11 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--fail-on", choices=("fail", "suspicious"), default="fail", help="CI failure threshold; default: fail")
     ap.add_argument("record", help="Path to a JSON record with claimed_task, files_read, files_edited, commands_run, test_output, and final_claim")
     ap.set_defaults(func=cmd_evidence_court)
+    rp = evidence_court_sub.add_parser("record", help="Build audit records from simple event inputs")
+    record_sub = rp.add_subparsers(dest="record_command", required=True)
+    rjp = record_sub.add_parser("from-jsonl", help="Convert simple JSONL events into an audit record JSON")
+    rjp.add_argument("events", help="Path to JSONL events with task/read/edit/command/final_claim kinds")
+    rjp.set_defaults(func=cmd_evidence_court)
     ep = evidence_court_sub.add_parser("demo", help="Run built-in Evidence Court demos")
     ep.add_argument("--project", default=".", help="Repository root containing demo fixtures")
     demo_sub = ep.add_subparsers(dest="demo_command", required=True)
