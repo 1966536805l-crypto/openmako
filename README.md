@@ -20,6 +20,8 @@ This uses a simple JSONL event stream, not a native Claude Code, Codex, or Curso
 ./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json
 ```
 
+For a minimal GitHub Actions workflow, see [`docs/github_actions_evidence_court.md`](docs/github_actions_evidence_court.md).
+
 ## 10-Second Bad-Run Demo
 
 This fixture shows a coding agent run that edited code, ran validation, and

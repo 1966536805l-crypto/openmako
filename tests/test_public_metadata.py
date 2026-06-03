@@ -129,6 +129,7 @@ def test_readme_has_runnable_bad_run_demo() -> None:
     ) in readme
     assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in readme
     assert "not a native Claude Code, Codex, or Cursor transcript adapter" in readme
+    assert "docs/github_actions_evidence_court.md" in readme
     assert "## 10-Second Bad-Run Demo" in readme
     assert "./bin/openmako --no-trust-prompt evidence-court demo bad-run" in readme
     assert "./bin/openmako --no-trust-prompt evidence-court demo missing-tests" in readme
@@ -140,6 +141,19 @@ def test_readme_has_runnable_bad_run_demo() -> None:
     assert "## Suspicious Behavior" in readme
     assert "## Verdict: FAIL" in readme
     assert "## Verdict: SUSPICIOUS" in readme
+
+
+def test_github_actions_evidence_court_doc_uses_supported_commands() -> None:
+    doc = (ROOT / "docs" / "github_actions_evidence_court.md").read_text(encoding="utf-8")
+
+    assert "test -f run.json" in doc
+    assert "openmako evidence-court validate run.json" in doc
+    assert "openmako evidence-court audit --ci --json run.json > evidence-court-report.json" in doc
+    assert "actions/upload-artifact@v4" in doc
+    assert "openmako evidence-court record from-jsonl --output run.json path/to/events.jsonl" in doc
+    assert "openmako evidence-court audit --ci --fail-on suspicious --json run.json" in doc
+    assert "does not collect native Claude Code, Codex, Cursor, or SWE-bench logs" in doc
+    assert "audits only the supplied `run.json`" in doc
 
 
 def test_readme_uses_reviewable_public_claims() -> None:
