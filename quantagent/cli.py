@@ -303,7 +303,11 @@ def cmd_evidence_court(args: argparse.Namespace) -> int:
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             print(f"evidence-court error: {exc}", file=sys.stderr)
             return 2
-        print(json.dumps(record, ensure_ascii=False, indent=2, sort_keys=True) + "\n", end="")
+        record_json = json.dumps(record, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+        if args.output:
+            Path(args.output).expanduser().resolve(strict=False).write_text(record_json, encoding="utf-8")
+        else:
+            print(record_json, end="")
         return 0
     if args.evidence_court_command == "audit":
         try:
@@ -5485,6 +5489,7 @@ def build_parser() -> argparse.ArgumentParser:
     rp = evidence_court_sub.add_parser("record", help="Build audit records from simple event inputs")
     record_sub = rp.add_subparsers(dest="record_command", required=True)
     rjp = record_sub.add_parser("from-jsonl", help="Convert simple JSONL events into an audit record JSON")
+    rjp.add_argument("--output", default=None, help="Write the generated audit record JSON to this path")
     rjp.add_argument("events", help="Path to JSONL events with task/read/edit/command/final_claim kinds")
     rjp.set_defaults(func=cmd_evidence_court)
     ep = evidence_court_sub.add_parser("demo", help="Run built-in Evidence Court demos")

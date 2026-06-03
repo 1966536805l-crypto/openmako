@@ -70,6 +70,8 @@ It is not a native transcript adapter.
 
 ```bash
 openmako evidence-court record from-jsonl examples/evidence_court/simple_events.jsonl
+openmako evidence-court record from-jsonl --output run.json examples/evidence_court/simple_events.jsonl
+openmako evidence-court audit --ci --json run.json
 ```
 
 Supported event kinds are `task`, `read`, `edit`, `command`, and `final_claim`.
