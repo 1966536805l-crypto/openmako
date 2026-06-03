@@ -1,5 +1,7 @@
 # Source Copy / Borrow Matrix
 
+Internal clean-room planning note. This is not the current public v0.1 capability claim; the current public proof is the focused learning-effect gate linked from README.md and issue #1.
+
 Date: 2026-05-25
 
 This matrix separates what OpenMako may directly reuse from what should be

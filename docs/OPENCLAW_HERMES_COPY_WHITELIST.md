@@ -1,5 +1,7 @@
 # OpenClaw / Hermes Copy Whitelist
 
+Internal clean-room planning note. This is not the current public v0.1 capability claim; the current public proof is the focused learning-effect gate linked from README.md and issue #1.
+
 Date: 2026-05-26
 
 Purpose: identify the smallest permissively licensed upstream pieces that can

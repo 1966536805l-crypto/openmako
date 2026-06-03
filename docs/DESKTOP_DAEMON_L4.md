@@ -1,5 +1,7 @@
 # Desktop Daemon L4 Contract
 
+Internal desktop planning note. This is not the current public v0.1 capability claim; the current public proof is the focused learning-effect gate linked from README.md and issue #1.
+
 Date: 2026-05-26
 
 Scope: `mako desktop daemon` for the bounded single-goal loop and
