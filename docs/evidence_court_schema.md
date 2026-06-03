@@ -37,5 +37,22 @@ It does not claim to read native Claude Code, Codex, Cursor, or SWE-bench logs.
 - `SUSPICIOUS`: success claim with missing or ambiguous test evidence.
 - `PASS`: supplied record has no detected scope violation and recognizable passing validation evidence.
 
+## Machine Output
+
+Use `--json` for CI or scripts.
+
+```bash
+openmako evidence-court audit --json examples/evidence_court/out_of_scope.json
+```
+
+The JSON envelope includes:
+
+- `verdict`
+- `status`
+- `failure_class`
+- `failed_at`
+- `finding_types`
+- `report`
+
 This is an evidence audit of the supplied record only. It does not prove that a
 command actually ran outside the record.

@@ -357,6 +357,18 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
     return "\n".join(lines)
 
 
+def dumps_evidence_court_json(report: AgentAutopsyReport) -> str:
+    payload = {
+        "verdict": _verdict(report),
+        "status": report.status,
+        "failure_class": report.failure_class or "",
+        "failed_at": report.failed_at,
+        "finding_types": [item.finding_type for item in report.findings],
+        "report": report.to_dict(),
+    }
+    return json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+
+
 def _verdict(report: AgentAutopsyReport) -> str:
     if any(item.finding_type == "scope_violation" for item in report.findings):
         return "FAIL"

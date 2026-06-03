@@ -98,7 +98,7 @@ from .edit_loop import (
 from .experiment_runner import ExperimentSpec, fmt_pf, resolve_default_input, run_experiment
 from .eval_harness import append_eval_ledger, build_eval_gap_report, build_eval_scorecard, builtin_code_eval_cases, builtin_smoke_eval_cases, latest_eval_ledger_row, load_eval_cases, render_eval_gap_report, render_eval_json, render_eval_markdown, render_eval_scorecard, run_eval_cases
 from .event_log import append_runtime_event, event_log_stats, export_events, read_runtime_events, render_event_log, replay_summary
-from .evidence_court import build_audit_record_report, build_bad_run_demo_report, build_missing_tests_demo_report, build_out_of_scope_demo_report, render_evidence_court_report
+from .evidence_court import build_audit_record_report, build_bad_run_demo_report, build_missing_tests_demo_report, build_out_of_scope_demo_report, dumps_evidence_court_json, render_evidence_court_report
 from .evidence_ledger import load_evidence, record_evidence, render_evidence
 from .embedding_provider import (
     EmbeddingJob,
@@ -303,7 +303,10 @@ def cmd_evidence_court(args: argparse.Namespace) -> int:
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             print(f"evidence-court error: {exc}", file=sys.stderr)
             return 2
-        print(render_evidence_court_report(report), end="")
+        if args.json:
+            print(dumps_evidence_court_json(report), end="")
+        else:
+            print(render_evidence_court_report(report), end="")
         return 0
     if args.evidence_court_command == "demo" and args.demo_command == "bad-run":
         try:
@@ -5460,6 +5463,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("evidence-court", help="Render Evidence Court reports from supplied or demo agent-run evidence")
     evidence_court_sub = p.add_subparsers(dest="evidence_court_command", required=True)
     ap = evidence_court_sub.add_parser("audit", help="Audit a JSON agent-run record")
+    ap.add_argument("--json", action="store_true", help="Print a machine-readable verdict envelope")
     ap.add_argument("record", help="Path to a JSON record with claimed_task, files_read, files_edited, commands_run, test_output, and final_claim")
     ap.set_defaults(func=cmd_evidence_court)
     ep = evidence_court_sub.add_parser("demo", help="Run built-in Evidence Court demos")

@@ -104,6 +104,23 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("- test_output: 1 passed in 0.02s", result.stdout)
         self.assertIn("## Verdict: FAIL", result.stdout)
 
+    def test_openmako_evidence_court_audit_json_flag_outputs_machine_readable_verdict(self) -> None:
+        result = self.run_openmako(
+            "--no-trust-prompt",
+            "evidence-court",
+            "audit",
+            "--json",
+            "examples/evidence_court/out_of_scope.json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "FAIL")
+        self.assertEqual(payload["status"], "FAILED")
+        self.assertEqual(payload["failure_class"], "scope_violation")
+        self.assertEqual(payload["finding_types"], ["scope_violation"])
+        self.assertEqual(payload["report"]["evidence"][0]["source"], "task")
+
     def test_openmako_evidence_court_audit_json_reports_missing_tests(self) -> None:
         result = self.run_openmako(
             "--no-trust-prompt",
@@ -153,6 +170,7 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("This is an evidence audit of the supplied record only.", schema)
         self.assertIn("`allowed_files`", schema)
         self.assertIn("`test_output`", schema)
+        self.assertIn("Use `--json` for CI or scripts.", schema)
 
 
 if __name__ == "__main__":
