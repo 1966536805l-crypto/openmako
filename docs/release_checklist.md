@@ -24,6 +24,8 @@ python3 -m pytest -p no:cacheprovider \
 - Evidence Court CLI behavior is covered by `tests/test_cli_wrappers.py`.
 - The `CHANGELOG.md` v0.1 draft uses the allowed release-note claim and required
   caveat below.
+- The GitHub Release body is drafted in `docs/v0.1_release_notes.md` and uses
+  the same allowed claim and required caveat.
 - The demo workflow report artifact exists for the release commit:
   `evidence-court-report.json`.
 

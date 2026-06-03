@@ -17,5 +17,5 @@ public result.
 
 Next smallest hygiene task:
 
-- Before tagging v0.1.0, run the release checklist and confirm both required
-  GitHub Actions workflows are green on the exact commit to tag.
+- Before tagging v0.1.0, rerun the release checklist on the exact commit and
+  use `docs/v0.1_release_notes.md` as the GitHub Release body.

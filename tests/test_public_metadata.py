@@ -201,6 +201,7 @@ def test_release_checklist_keeps_v01_claims_evidence_gated() -> None:
 
     assert "Do not treat this file as proof that a release already happened." in checklist
     assert "CHANGELOG.md" in checklist
+    assert "docs/v0.1_release_notes.md" in checklist
     assert ".github/workflows/focused.yml" in checklist
     assert ".github/workflows/evidence-court-demo.yml" in checklist
     assert "tests/test_public_metadata.py" in checklist
@@ -238,6 +239,37 @@ def test_changelog_v01_draft_stays_inside_public_evidence_boundary() -> None:
     assert "has been released" not in changelog
     assert "published Marketplace action" not in changelog
     assert "broad unknown-repository SWE repair." not in changelog
+
+
+def test_v01_release_notes_draft_is_publishable_without_overclaiming() -> None:
+    notes = (ROOT / "docs" / "v0.1_release_notes.md").read_text(encoding="utf-8")
+
+    assert "# OpenMako v0.1.0 Release Notes Draft" in notes
+    assert "Do not publish this text until the v0.1 release checklist has passed" in notes
+    assert "OpenMako v0.1 audits supplied Evidence Court records" in notes
+    assert "not a replacement for coding agents" in notes
+    assert "evidence-court/v0.1" in notes
+    assert "openmako evidence-court audit --ci" in notes
+    assert "openmako evidence-court record from-jsonl" in notes
+    assert "openmako evidence-court validate" in notes
+    assert "repository-local GitHub composite action" in notes
+    assert "evidence-court-report.json" in notes
+    assert "tests/test_public_metadata.py" in notes
+    assert "tests/test_cli_wrappers.py" in notes
+    assert ".github/workflows/focused.yml" in notes
+    assert ".github/workflows/evidence-court-demo.yml" in notes
+    assert "docs/release_checklist.md" in notes
+    assert "v0.1 audits supplied records only" in notes
+    assert "does not yet ingest native Claude Code,\nCodex, Cursor, or SWE-bench transcripts" in notes
+    assert "broad unknown-repository SWE repair" in notes
+    assert "published Marketplace GitHub Action" in notes
+    assert "has been released" not in notes
+    assert "native Claude Code adapter" not in notes
+    assert "native Codex adapter" not in notes
+    assert "native Cursor adapter" not in notes
+    assert "SWE-bench ingestion" not in notes
+    assert "replaces Claude Code" not in notes
+    assert "full pytest passed" not in notes
 
 
 def test_readme_uses_reviewable_public_claims() -> None:
