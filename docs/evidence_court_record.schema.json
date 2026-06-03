@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/1966536805l-crypto/openmako/blob/main/docs/evidence_court_record.schema.json",
+  "title": "Evidence Court Audit Record",
+  "description": "Supplied audit record accepted by `openmako evidence-court audit <run.json>`. This is not a native Claude Code, Codex, Cursor, or SWE-bench transcript schema.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "claimed_task": {
+      "type": "string",
+      "description": "Task or claim being audited."
+    },
+    "allowed_files": {
+      "$ref": "#/$defs/fileList",
+      "description": "Optional edit allowlist. Any other edited file is reported as a scope violation."
+    },
+    "files_read": {
+      "$ref": "#/$defs/fileList",
+      "description": "Files the record says the agent inspected."
+    },
+    "files_edited": {
+      "$ref": "#/$defs/fileList",
+      "description": "Files the record says the agent modified."
+    },
+    "commands_run": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "command"
+            ],
+            "properties": {
+              "command": {
+                "type": "string"
+              },
+              "exit_code": {
+                "type": "integer"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "test_output": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "status": {
+              "type": "string"
+            },
+            "output": {
+              "type": "string"
+            },
+            "summary": {
+              "type": "string"
+            },
+            "exit_code": {
+              "type": "integer"
+            }
+          }
+        }
+      ]
+    },
+    "final_claim": {
+      "type": "string",
+      "description": "Agent's final success or completion claim."
+    },
+    "source_agent": {
+      "type": "string",
+      "description": "Optional source agent label supplied by the record."
+    }
+  },
+  "$defs": {
+    "fileList": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "file"
+            ],
+            "properties": {
+              "file": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

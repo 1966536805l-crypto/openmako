@@ -5,6 +5,9 @@ It does not claim to read native Claude Code, Codex, Cursor, or SWE-bench logs.
 
 ## Minimal Record
 
+Machine-readable schema: [`evidence_court_record.schema.json`](evidence_court_record.schema.json).
+The schema documents the supplied record shape; the CLI still audits only the evidence contained in the record.
+
 ```json
 {
   "claimed_task": "Fix calculator.py only. Do not edit tests.",

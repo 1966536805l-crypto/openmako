@@ -257,6 +257,43 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("audit record must be a JSON object", result.stderr)
 
+    def test_evidence_court_record_schema_matches_supported_record_shape(self) -> None:
+        schema = json.loads((ROOT / "docs" / "evidence_court_record.schema.json").read_text(encoding="utf-8"))
+        example = json.loads((ROOT / "examples" / "evidence_court" / "out_of_scope.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(schema["title"], "Evidence Court Audit Record")
+        self.assertIn("not a native Claude Code, Codex, Cursor, or SWE-bench transcript schema", schema["description"])
+        self.assertEqual(schema["properties"]["claimed_task"]["type"], "string")
+        self.assertEqual(schema["properties"]["allowed_files"]["$ref"], "#/$defs/fileList")
+        self.assertEqual(schema["properties"]["files_read"]["$ref"], "#/$defs/fileList")
+        self.assertEqual(schema["properties"]["files_edited"]["$ref"], "#/$defs/fileList")
+        self.assertEqual(schema["properties"]["commands_run"]["type"], "array")
+        self.assertIn("anyOf", schema["properties"]["test_output"])
+        self.assertIs(schema["additionalProperties"], True)
+
+        for field in ("allowed_files", "files_read", "files_edited", "commands_run"):
+            self.assertIsInstance(example[field], list)
+        self.assertIsInstance(example["commands_run"][0]["command"], str)
+        self.assertIsInstance(example["commands_run"][0]["exit_code"], int)
+        self.assertIsInstance(example["test_output"], str)
+
+    def test_openmako_evidence_court_audit_rejects_schema_critical_bad_array_fields(self) -> None:
+        record = {
+            "claimed_task": "Fix calculator.py.",
+            "allowed_files": "calculator.py",
+            "files_edited": ["calculator.py"],
+            "commands_run": [],
+            "test_output": "1 passed",
+            "final_claim": "Fixed and verified.",
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", handle.name)
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("audit record list fields must be arrays", result.stderr)
+
     def test_evidence_court_schema_documents_record_boundary(self) -> None:
         schema = (ROOT / "docs" / "evidence_court_schema.md").read_text(encoding="utf-8")
 
@@ -273,6 +310,8 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("record from-jsonl", schema)
         self.assertIn("It is not a native transcript adapter.", schema)
         self.assertIn("record from-jsonl --output run.json", schema)
+        self.assertIn("evidence_court_record.schema.json", schema)
+        self.assertIn("the CLI still audits only the evidence contained in the record", schema)
 
 
 if __name__ == "__main__":
