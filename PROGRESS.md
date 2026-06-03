@@ -17,5 +17,5 @@ public result.
 
 Next smallest hygiene task:
 
-- Move or archive root-level quant/tick demo files that are unrelated to the
-  focused coding-agent evidence gate.
+- Before tagging v0.1.0, run the release checklist and confirm both required
+  GitHub Actions workflows are green on the exact commit to tag.

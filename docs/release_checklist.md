@@ -22,6 +22,8 @@ python3 -m pytest -p no:cacheprovider \
 
 - README capability claims are covered by `tests/test_public_metadata.py`.
 - Evidence Court CLI behavior is covered by `tests/test_cli_wrappers.py`.
+- The `CHANGELOG.md` v0.1 draft uses the allowed release-note claim and required
+  caveat below.
 - The demo workflow report artifact exists for the release commit:
   `evidence-court-report.json`.
 

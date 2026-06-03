@@ -200,6 +200,7 @@ def test_release_checklist_keeps_v01_claims_evidence_gated() -> None:
     checklist = (ROOT / "docs" / "release_checklist.md").read_text(encoding="utf-8")
 
     assert "Do not treat this file as proof that a release already happened." in checklist
+    assert "CHANGELOG.md" in checklist
     assert ".github/workflows/focused.yml" in checklist
     assert ".github/workflows/evidence-court-demo.yml" in checklist
     assert "tests/test_public_metadata.py" in checklist
@@ -213,6 +214,30 @@ def test_release_checklist_keeps_v01_claims_evidence_gated() -> None:
     assert "git tag -a v0.1.0" in checklist
     assert "git push origin v0.1.0" in checklist
     assert "v0.1 audits supplied records only" in checklist
+
+
+def test_changelog_v01_draft_stays_inside_public_evidence_boundary() -> None:
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+
+    assert "## v0.1.0 Draft" in changelog
+    assert "not proof that `v0.1.0` has been tagged or\npublished" in changelog
+    assert "Evidence Court CLI commands" in changelog
+    assert "evidence-court/v0.1" in changelog
+    assert "repository-local GitHub composite action" in changelog
+    assert "evidence-court-report.json" in changelog
+    assert "tests/test_public_metadata.py" in changelog
+    assert "tests/test_cli_wrappers.py" in changelog
+    assert ".github/workflows/focused.yml" in changelog
+    assert ".github/workflows/evidence-court-demo.yml" in changelog
+    assert "OpenMako v0.1 audits supplied Evidence Court records" in changelog
+    assert "v0.1 audits supplied records only" in changelog
+    assert "Native Claude Code, Codex, Cursor, or SWE-bench transcript ingestion" in changelog
+    assert "Broad unknown-repository SWE repair claims" in changelog
+    assert "published Marketplace GitHub Action" in changelog
+    assert "Full-suite or hidden benchmark claims" in changelog
+    assert "has been released" not in changelog
+    assert "published Marketplace action" not in changelog
+    assert "broad unknown-repository SWE repair." not in changelog
 
 
 def test_readme_uses_reviewable_public_claims() -> None:
