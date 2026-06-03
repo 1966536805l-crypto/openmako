@@ -98,7 +98,7 @@ from .edit_loop import (
 from .experiment_runner import ExperimentSpec, fmt_pf, resolve_default_input, run_experiment
 from .eval_harness import append_eval_ledger, build_eval_gap_report, build_eval_scorecard, builtin_code_eval_cases, builtin_smoke_eval_cases, latest_eval_ledger_row, load_eval_cases, render_eval_gap_report, render_eval_json, render_eval_markdown, render_eval_scorecard, run_eval_cases
 from .event_log import append_runtime_event, event_log_stats, export_events, read_runtime_events, render_event_log, replay_summary
-from .evidence_court import build_audit_record_from_jsonl, build_audit_record_report, build_bad_run_demo_report, build_missing_tests_demo_report, build_out_of_scope_demo_report, dumps_evidence_court_json, evidence_court_verdict, render_evidence_court_report
+from .evidence_court import EVIDENCE_COURT_SCHEMA_VERSION, build_audit_record_from_jsonl, build_audit_record_report, build_bad_run_demo_report, build_missing_tests_demo_report, build_out_of_scope_demo_report, dumps_evidence_court_json, evidence_court_verdict, render_evidence_court_report
 from .evidence_ledger import load_evidence, record_evidence, render_evidence
 from .embedding_provider import (
     EmbeddingJob,
@@ -321,6 +321,28 @@ def cmd_evidence_court(args: argparse.Namespace) -> int:
             print(render_evidence_court_report(report), end="")
         if args.ci and _evidence_court_ci_failed(evidence_court_verdict(report), args.fail_on):
             return 1
+        return 0
+    if args.evidence_court_command == "validate":
+        try:
+            build_audit_record_report(args.record)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            print(f"evidence-court error: {exc}", file=sys.stderr)
+            return 2
+        if args.json:
+            print(
+                json.dumps(
+                    {
+                        "schema_version": EVIDENCE_COURT_SCHEMA_VERSION,
+                        "status": "accepted",
+                        "record": str(Path(args.record).expanduser().resolve(strict=False)),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        else:
+            print("record accepted")
         return 0
     if args.evidence_court_command == "demo" and args.demo_command == "bad-run":
         try:
@@ -5486,6 +5508,10 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--fail-on", choices=("fail", "suspicious"), default="fail", help="CI failure threshold; default: fail")
     ap.add_argument("record", help="Path to a JSON record with claimed_task, files_read, files_edited, commands_run, test_output, and final_claim")
     ap.set_defaults(func=cmd_evidence_court)
+    vp = evidence_court_sub.add_parser("validate", help="Validate that a supplied audit record is accepted by the current parser")
+    vp.add_argument("--json", action="store_true", help="Print machine-readable acceptance status")
+    vp.add_argument("record", help="Path to a JSON record to structurally validate")
+    vp.set_defaults(func=cmd_evidence_court)
     rp = evidence_court_sub.add_parser("record", help="Build audit records from simple event inputs")
     record_sub = rp.add_subparsers(dest="record_command", required=True)
     rjp = record_sub.add_parser("from-jsonl", help="Convert simple JSONL events into an audit record JSON")

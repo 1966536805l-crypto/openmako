@@ -138,6 +138,32 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["verdict"], "FAIL")
         self.assertEqual(result.stderr, "")
 
+    def test_openmako_evidence_court_validate_accepts_supported_record(self) -> None:
+        result = self.run_openmako(
+            "--no-trust-prompt",
+            "evidence-court",
+            "validate",
+            "examples/evidence_court/out_of_scope.json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "record accepted\n")
+
+    def test_openmako_evidence_court_validate_json_reports_acceptance(self) -> None:
+        result = self.run_openmako(
+            "--no-trust-prompt",
+            "evidence-court",
+            "validate",
+            "--json",
+            "examples/evidence_court/out_of_scope.json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["schema_version"], "evidence-court/v0.1")
+        self.assertEqual(payload["status"], "accepted")
+        self.assertTrue(payload["record"].endswith("examples/evidence_court/out_of_scope.json"))
+
     def test_openmako_evidence_court_audit_json_reports_missing_tests(self) -> None:
         result = self.run_openmako(
             "--no-trust-prompt",
@@ -294,6 +320,23 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("audit record list fields must be arrays", result.stderr)
 
+    def test_openmako_evidence_court_validate_rejects_schema_critical_bad_array_fields(self) -> None:
+        record = {
+            "claimed_task": "Fix calculator.py.",
+            "allowed_files": "calculator.py",
+            "files_edited": ["calculator.py"],
+            "commands_run": [],
+            "test_output": "1 passed",
+            "final_claim": "Fixed and verified.",
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "validate", handle.name)
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("audit record list fields must be arrays", result.stderr)
+
     def test_evidence_court_schema_documents_record_boundary(self) -> None:
         schema = (ROOT / "docs" / "evidence_court_schema.md").read_text(encoding="utf-8")
 
@@ -307,6 +350,9 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("`evidence-court/v0.1`", schema)
         self.assertIn("Use `--ci` to return exit code 1 for `FAIL`.", schema)
         self.assertIn("Use `--fail-on suspicious` to also block `SUSPICIOUS`.", schema)
+        self.assertIn("Use `validate` to check that a supplied record is accepted by the current parser", schema)
+        self.assertIn("evidence-court validate examples/evidence_court/out_of_scope.json", schema)
+        self.assertIn("evidence-court validate --json examples/evidence_court/out_of_scope.json", schema)
         self.assertIn("record from-jsonl", schema)
         self.assertIn("It is not a native transcript adapter.", schema)
         self.assertIn("record from-jsonl --output run.json", schema)

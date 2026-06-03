@@ -45,8 +45,11 @@ The schema documents the supplied record shape; the CLI still audits only the ev
 Use `--json` for CI or scripts.
 Use `--ci` to return exit code 1 for `FAIL`.
 Use `--fail-on suspicious` to also block `SUSPICIOUS`.
+Use `validate` to check that a supplied record is accepted by the current parser before auditing it.
 
 ```bash
+openmako evidence-court validate examples/evidence_court/out_of_scope.json
+openmako evidence-court validate --json examples/evidence_court/out_of_scope.json
 openmako evidence-court audit --json examples/evidence_court/out_of_scope.json
 openmako evidence-court audit --ci examples/evidence_court/out_of_scope.json
 openmako evidence-court audit --ci --fail-on suspicious examples/evidence_court/missing_tests.json
