@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 setup(
     name="open-mako",
     version="0.1.0",
-    description="A local-first auditable agent runtime for coding and data work.",
+    description="Evidence harness for coding agents: learning-effect, patch-scope, and test-proof checks.",
     python_requires=">=3.9",
     packages=find_packages(include=["quantagent", "quantagent.*"]),
     include_package_data=True,
