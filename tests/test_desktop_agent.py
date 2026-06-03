@@ -1,0 +1,129 @@
+from __future__ import annotations
+
+import contextlib
+import io
+import json
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from quantagent.cli import main
+import quantagent.desktop_control as desktop_control
+from quantagent.desktop_agent import build_desktop_agent_plan, run_desktop_agent
+from quantagent.hook_events import read_query_events
+
+
+class DesktopAgentTest(unittest.TestCase):
+    def test_builds_fast_takeover_plan_without_model(self) -> None:
+        plan = build_desktop_agent_plan("打开 Safari 搜索 OpenMako 并截图", browser="Safari")
+
+        actions = [step.action for step in plan.steps]
+        self.assertIn("activate", actions)
+        self.assertIn("type", actions)
+        self.assertIn("screenshot", actions)
+        self.assertIn("OpenMako", json.dumps(plan.to_payload(), ensure_ascii=False))
+        self.assertIn("Direct screen takeover", plan.safety_note)
+
+    def test_preview_writes_query_events_without_side_effects(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="desktop agent ") as tmp:
+            result = run_desktop_agent(Path(tmp), "点击 10,20", execute=False)
+            events = read_query_events(result.query_events_path)
+
+        self.assertTrue(result.ok)
+        self.assertEqual(result.run.status, "preview")
+        self.assertEqual(events[-1].kind, "stop")
+
+    def test_execute_requires_review_for_direct_takeover(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="desktop agent ") as tmp:
+            result = run_desktop_agent(Path(tmp), "点击 10,20", execute=True, reviewed=False)
+            autopsy_exists = Path(result.autopsy_path).exists()
+
+        self.assertFalse(result.ok)
+        self.assertEqual(result.run.status, "blocked")
+        self.assertIn("requires --reviewed", result.run.summary)
+        self.assertTrue(autopsy_exists)
+
+    def test_stop_file_aborts_before_any_side_effect(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="desktop agent ") as tmp:
+            project = Path(tmp)
+            stop_file = project / "STOP"
+            stop_file.write_text("stop\n", encoding="utf-8")
+
+            result = run_desktop_agent(project, "点击 10,20", execute=True, reviewed=True, stop_file=stop_file)
+            autopsy_exists = Path(result.autopsy_path).exists()
+
+        self.assertFalse(result.ok)
+        self.assertEqual(result.run.status, "stopped")
+        self.assertEqual(result.run.results, ())
+        self.assertTrue(autopsy_exists)
+
+    def test_cli_desktop_agent_json_preview(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="desktop agent ") as tmp:
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                rc = main(["--no-trust-prompt", "desktop-agent", "--project", tmp, "--json", "截图"])
+
+            payload = json.loads(stdout.getvalue())
+
+        self.assertEqual(rc, 0)
+        self.assertEqual(payload["status"], "preview")
+        self.assertIn("stop_file", payload)
+        self.assertEqual(payload["autopsy_path"], "")
+
+    def test_screenshot_retries_once_before_failure(self) -> None:
+        calls: list[list[str]] = []
+
+        def fake_run(args: object, timeout: int = 20) -> subprocess.CompletedProcess[str]:
+            command = [str(item) for item in args]  # type: ignore[union-attr]
+            calls.append(command)
+            if command[0] == "screencapture":
+                shot = Path(command[-1])
+                if len([call for call in calls if call[0] == "screencapture"]) == 2:
+                    shot.parent.mkdir(parents=True, exist_ok=True)
+                    shot.write_bytes(b"png")
+                    return subprocess.CompletedProcess(command, 0, "", "")
+                return subprocess.CompletedProcess(command, 1, "", "could not create image from display")
+            raise AssertionError(f"unexpected command: {command}")
+
+        with tempfile.TemporaryDirectory(prefix="desktop agent ") as tmp:
+            with patch.object(desktop_control, "_run", side_effect=fake_run), patch.object(desktop_control.time, "sleep") as sleep:
+                result = desktop_control.screenshot(Path(tmp), name="retry.png")
+
+        self.assertTrue(result.ok)
+        self.assertEqual(len([call for call in calls if call[0] == "screencapture"]), 2)
+        self.assertEqual(sleep.call_count, 1)
+        self.assertEqual(len(result.data["attempts"]), 2)
+
+    def test_screenshot_failure_includes_diagnostics_after_fallback(self) -> None:
+        calls: list[list[str]] = []
+
+        def fake_run(args: object, timeout: int = 20) -> subprocess.CompletedProcess[str]:
+            command = [str(item) for item in args]  # type: ignore[union-attr]
+            calls.append(command)
+            if command[0] == "screencapture":
+                return subprocess.CompletedProcess(command, 1, "", "could not create image from display")
+            if command[0] == "osascript":
+                return subprocess.CompletedProcess(command, 0, "Codex\n", "")
+            if command[0] == "stat":
+                return subprocess.CompletedProcess(command, 0, "testuser\n", "")
+            if command[0] == "system_profiler":
+                return subprocess.CompletedProcess(command, 0, "Resolution: 1920 x 1080\n", "")
+            raise AssertionError(f"unexpected command: {command}")
+
+        with tempfile.TemporaryDirectory(prefix="desktop agent ") as tmp:
+            with patch.object(desktop_control, "_run", side_effect=fake_run), patch.object(desktop_control.time, "sleep"):
+                result = desktop_control.screenshot(Path(tmp), name="fail.png")
+
+        self.assertFalse(result.ok)
+        self.assertIn("diagnostics:", result.summary)
+        self.assertIn("probable_cause=macOS Screen Recording permission is missing", result.summary)
+        self.assertEqual(len([call for call in calls if call[0] == "screencapture"]), 3)
+        self.assertEqual(result.data["diagnostics"]["console_user"], "testuser")
+        self.assertEqual(result.data["diagnostics"]["display_available"], True)
+        self.assertIn("permission_hint", result.data["diagnostics"])
+
+
+if __name__ == "__main__":
+    unittest.main()

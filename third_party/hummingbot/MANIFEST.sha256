@@ -1,0 +1,3 @@
+f0dd03c14db3dfbce03c166645f88fda96599ad1a5d217fddb49134de8c72a29  third_party/hummingbot/LICENSE
+b06a787e9ca30d07d9a319a1daa8bcdced727d5be84cacef32893c76e07b680b  third_party/hummingbot/hummingbot/core/data_type/common.py
+f0985f713ec63292d72c924853dd7746fae26ff3daa4593e087cc33756174f45  third_party/hummingbot/hummingbot/core/data_type/in_flight_order.py

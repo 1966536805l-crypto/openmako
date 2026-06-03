@@ -1,0 +1,12 @@
+project: /path/to/your/quant/project
+communication_dir: AI_协作交接
+primary_model: gpt-5.5
+review_model: gpt-5.5
+rules:
+  - use_dedup_baselines_only
+  - verify_after_each_change
+  - treat_pf_improvement_as_suspicious_until_audited
+  - real_execution_before_optimization
+baselines:
+  scenario_a: agent2_scenario_A_0p2_0p2_position_dedup.csv
+  scenario_d: agent2_scenario_D_0p3_0p3_position_dedup.csv

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "repair-import-regression",
+    "instruction": "Fix the import regression and rerun the targeted test.",
+    "tags": ["coding", "regression"]
+  },
+  {
+    "id": "handle-empty-input",
+    "instruction": "Handle an empty input edge case and verify it with a test.",
+    "tags": ["coding", "edge-case"]
+  }
+]

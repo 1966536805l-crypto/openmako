@@ -1,0 +1,9 @@
+{
+  "total_trades": 5,
+  "capacity_ok_conservative": 0,
+  "capacity_ok_aggressive": 0,
+  "insufficient_capacity_conservative": [],
+  "insufficient_capacity_aggressive": [],
+  "conservative_threshold": 0.1,
+  "aggressive_threshold": 0.2
+}

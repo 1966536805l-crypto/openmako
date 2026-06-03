@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SOURCE="${BASH_SOURCE[0]}"
+while [[ -L "$SOURCE" ]]; do
+  SOURCE_DIR="$(cd -- "$(dirname -- "$SOURCE")" && pwd)"
+  TARGET="$(readlink "$SOURCE")"
+  if [[ "$TARGET" == /* ]]; then
+    SOURCE="$TARGET"
+  else
+    SOURCE="$SOURCE_DIR/$TARGET"
+  fi
+done
+SCRIPT_DIR="$(cd -- "$(dirname -- "$SOURCE")" && pwd)"
+QA_HOME="$(cd -- "$SCRIPT_DIR/.." && pwd)"
+QA_SECRETS="${QUANTAGENT_SECRETS_FILE:-$HOME/.quantagent/secrets.env}"
+
+if [[ -f "$QA_SECRETS" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$QA_SECRETS"
+  set +a
+fi
+
+export PYTHONPATH="$QA_HOME${PYTHONPATH:+:$PYTHONPATH}"
+
+exec python3 -m quantagent.cli "$@"

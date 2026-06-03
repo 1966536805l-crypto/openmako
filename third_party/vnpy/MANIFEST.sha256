@@ -1,0 +1,4 @@
+81294e5bcba945564df8586f1d789b016001b7b43eb4de97736679dd882cf191  third_party/vnpy/LICENSE
+1361eb485eda9fd97bee3e68324d9b08a96fe927c37a99f8b74de981141e7a0f  third_party/vnpy/vnpy/trader/constant.py
+44e1b191103d8973e8b4973369d48c4a62cabcbb8b11a4a7f26dd2c73809dc2f  third_party/vnpy/vnpy/trader/event.py
+bd360fc224ce22a3f7521bef67ea61125d43c410fa880b9667030ee254546a69  third_party/vnpy/vnpy/trader/object.py

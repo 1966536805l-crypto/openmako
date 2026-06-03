@@ -1,0 +1,101 @@
+{
+  "total_trades": 5,
+  "capacity_ok_conservative": 0,
+  "capacity_ok_aggressive": 0,
+  "insufficient_capacity_conservative": [
+    {
+      "code": "300678",
+      "date": "2018-03-15",
+      "time": "10:00:00",
+      "strategy_volume": 500.0,
+      "market_volume": 1900.0,
+      "ratio": 0.2631578947368421,
+      "threshold": 0.1
+    },
+    {
+      "code": "300678",
+      "date": "2018-03-15",
+      "time": "10:30:00",
+      "strategy_volume": 3000.0,
+      "market_volume": 1945.0,
+      "ratio": 1.5424164524421593,
+      "threshold": 0.1
+    },
+    {
+      "code": "300678",
+      "date": "2018-03-15",
+      "time": "11:00:00",
+      "strategy_volume": 8000.0,
+      "market_volume": 1780.0,
+      "ratio": 4.49438202247191,
+      "threshold": 0.1
+    },
+    {
+      "code": "300678",
+      "date": "2018-03-15",
+      "time": "13:30:00",
+      "strategy_volume": 600.0,
+      "market_volume": 1873.0,
+      "ratio": 0.3203416978109984,
+      "threshold": 0.1
+    },
+    {
+      "code": "300678",
+      "date": "2018-03-15",
+      "time": "14:00:00",
+      "strategy_volume": 2500.0,
+      "market_volume": 1981.0,
+      "ratio": 1.2619888944977284,
+      "threshold": 0.1
+    }
+  ],
+  "insufficient_capacity_aggressive": [
+    {
+      "code": "300678",
+      "date": "2018-03-15",
+      "time": "10:00:00",
+      "strategy_volume": 500.0,
+      "market_volume": 1900.0,
+      "ratio": 0.2631578947368421,
+      "threshold": 0.2
+    },
+    {
+      "code": "300678",
+      "date": "2018-03-15",
+      "time": "10:30:00",
+      "strategy_volume": 3000.0,
+      "market_volume": 1945.0,
+      "ratio": 1.5424164524421593,
+      "threshold": 0.2
+    },
+    {
+      "code": "300678",
+      "date": "2018-03-15",
+      "time": "11:00:00",
+      "strategy_volume": 8000.0,
+      "market_volume": 1780.0,
+      "ratio": 4.49438202247191,
+      "threshold": 0.2
+    },
+    {
+      "code": "300678",
+      "date": "2018-03-15",
+      "time": "13:30:00",
+      "strategy_volume": 600.0,
+      "market_volume": 1873.0,
+      "ratio": 0.3203416978109984,
+      "threshold": 0.2
+    },
+    {
+      "code": "300678",
+      "date": "2018-03-15",
+      "time": "14:00:00",
+      "strategy_volume": 2500.0,
+      "market_volume": 1981.0,
+      "ratio": 1.2619888944977284,
+      "threshold": 0.2
+    }
+  ],
+  "conservative_threshold": 0.1,
+  "aggressive_threshold": 0.2
+}

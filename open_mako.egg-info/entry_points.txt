@@ -1,0 +1,4 @@
+[console_scripts]
+mako = quantagent.cli:main
+openmako = quantagent.cli:main
+qagent = quantagent.cli:main

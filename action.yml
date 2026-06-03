@@ -1,0 +1,41 @@
+name: OpenMako Agent Autopsy
+description: Generate an OpenMako report for a failed agent run.
+inputs:
+  trajectory:
+    description: Path to an OpenMako trajectory JSONL file.
+    required: false
+    default: ""
+  failure-file:
+    description: Path to a captured failure log.
+    required: false
+    default: ""
+  source-agent:
+    description: Name of the agent or wrapper that produced the failing run.
+    required: false
+    default: github-action
+  title:
+    description: Report title.
+    required: false
+    default: Agent failure autopsy
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.x"
+    - run: python -m pip install -e .
+      shell: bash
+    - run: |
+        args=(python -m quantagent.cli --no-trust-prompt agent-autopsy --project . --source-agent "${{ inputs.source-agent }}" --title "${{ inputs.title }}" --output openmako-autopsy.md)
+        if [ -n "${{ inputs.trajectory }}" ]; then
+          args+=(--trajectory "${{ inputs.trajectory }}")
+        fi
+        if [ -n "${{ inputs.failure-file }}" ]; then
+          args+=(--failure-file "${{ inputs.failure-file }}")
+        fi
+        "${args[@]}"
+      shell: bash
+    - uses: actions/upload-artifact@v4
+      with:
+        name: openmako-autopsy
+        path: openmako-autopsy.md

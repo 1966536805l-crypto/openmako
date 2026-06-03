@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel", "pip"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "open-mako"
+version = "0.1.0"
+description = "A local-first auditable agent runtime for coding and data work."
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+mako = "quantagent.cli:main"
+openmako = "quantagent.cli:main"
+qagent = "quantagent.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["quantagent*"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+quantagent = [
+  "vendor/THIRD_PARTY_NOTICES.md",
+  "vendor/hermes/LICENSE",
+  "vendor/hermes/skills/*/*/SKILL.md",
+  "vendor/hermes/skills/*/*/references/*.md",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

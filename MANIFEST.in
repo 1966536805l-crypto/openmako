@@ -1,0 +1,5 @@
+include quantagent/vendor/THIRD_PARTY_NOTICES.md
+include quantagent/vendor/hermes/LICENSE
+include upstream_refs/hermes-agent/LICENSE
+include upstream_refs/openclaw/LICENSE
+recursive-include quantagent/vendor/hermes/skills *.md

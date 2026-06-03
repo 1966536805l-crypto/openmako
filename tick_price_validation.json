@@ -1,0 +1,32 @@
+{
+  "total_trades": 10,
+  "valid_entry_prices": 8,
+  "valid_exit_prices": 0,
+  "invalid_entries": [
+    {
+      "code": "300678",
+      "date": "2018-03-15",
+      "strategy_price": 60.0,
+      "tick_min": 59.05,
+      "tick_max": 59.05,
+      "deviation_pct": 1.58,
+      "price_type": "entry",
+      "time_window": "09:25-09:35"
+    },
+    {
+      "code": "300678",
+      "date": "2018-03-15",
+      "strategy_price": 58.0,
+      "tick_min": 59.05,
+      "tick_max": 59.05,
+      "deviation_pct": 1.81,
+      "price_type": "entry",
+      "time_window": "09:25-09:35"
+    }
+  ],
+  "invalid_exits": [],
+  "missing_tick_data": [
+    "300678_2018-03-16"
+  ],
+  "validation_rate": 42.11
+}
