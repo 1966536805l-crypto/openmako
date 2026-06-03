@@ -98,7 +98,7 @@ from .edit_loop import (
 from .experiment_runner import ExperimentSpec, fmt_pf, resolve_default_input, run_experiment
 from .eval_harness import append_eval_ledger, build_eval_gap_report, build_eval_scorecard, builtin_code_eval_cases, builtin_smoke_eval_cases, latest_eval_ledger_row, load_eval_cases, render_eval_gap_report, render_eval_json, render_eval_markdown, render_eval_scorecard, run_eval_cases
 from .event_log import append_runtime_event, event_log_stats, export_events, read_runtime_events, render_event_log, replay_summary
-from .evidence_court import build_bad_run_demo_report, build_missing_tests_demo_report, render_evidence_court_report
+from .evidence_court import build_bad_run_demo_report, build_missing_tests_demo_report, build_out_of_scope_demo_report, render_evidence_court_report
 from .evidence_ledger import load_evidence, record_evidence, render_evidence
 from .embedding_provider import (
     EmbeddingJob,
@@ -307,6 +307,9 @@ def cmd_evidence_court(args: argparse.Namespace) -> int:
         return 0
     if args.evidence_court_command == "demo" and args.demo_command == "missing-tests":
         print(render_evidence_court_report(build_missing_tests_demo_report()), end="")
+        return 0
+    if args.evidence_court_command == "demo" and args.demo_command == "out-of-scope":
+        print(render_evidence_court_report(build_out_of_scope_demo_report()), end="")
         return 0
     print("evidence-court error: unsupported command", file=sys.stderr)
     return 2
@@ -5454,6 +5457,8 @@ def build_parser() -> argparse.ArgumentParser:
     dp = demo_sub.add_parser("bad-run", help="Show a failed coding-agent run with test evidence")
     dp.set_defaults(func=cmd_evidence_court)
     dp = demo_sub.add_parser("missing-tests", help="Show a success claim with no test evidence")
+    dp.set_defaults(func=cmd_evidence_court)
+    dp = demo_sub.add_parser("out-of-scope", help="Show an edit outside the claimed patch scope")
     dp.set_defaults(func=cmd_evidence_court)
 
     p = sub.add_parser("hooks")

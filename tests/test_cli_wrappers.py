@@ -77,6 +77,16 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("- failure_class: missing_test_evidence", result.stdout)
         self.assertIn("no command or test-output evidence was supplied", result.stdout)
 
+    def test_openmako_evidence_court_out_of_scope_demo_reports_fail_verdict(self) -> None:
+        result = self.run_openmako("--no-trust-prompt", "evidence-court", "demo", "out-of-scope")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("# Evidence Court Report", result.stdout)
+        self.assertIn("- file_scope: FAIL", result.stdout)
+        self.assertIn("tests/test_calculator.py", result.stdout)
+        self.assertIn("## Verdict: FAIL", result.stdout)
+        self.assertIn("crossed the claimed patch scope", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

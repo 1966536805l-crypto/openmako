@@ -75,10 +75,66 @@ def build_missing_tests_demo_report() -> AgentAutopsyReport:
     )
 
 
+def build_out_of_scope_demo_report() -> AgentAutopsyReport:
+    return AgentAutopsyReport(
+        title="out-of-scope edit demo",
+        source_agent="codex",
+        command="final answer: fixed calculator tests",
+        status="FAILED",
+        failure_class="scope_violation",
+        failed_at="scope_check",
+        evidence=(
+            AutopsyEvidence(
+                "E1",
+                "task",
+                "claim",
+                "Claimed task allowed edits only under calculator.py.",
+                step=0,
+                name="claimed_scope",
+                ok=True,
+                data={"allowed_files": ["calculator.py"]},
+            ),
+            AutopsyEvidence(
+                "E2",
+                "trajectory",
+                "edit",
+                "Agent edited calculator.py.",
+                step=1,
+                name="apply_patch",
+                ok=True,
+                data={"file": "calculator.py"},
+            ),
+            AutopsyEvidence(
+                "E3",
+                "trajectory",
+                "edit",
+                "Agent also edited tests/test_calculator.py, which was outside the claimed edit scope.",
+                step=2,
+                name="apply_patch",
+                ok=False,
+                reason="edited file outside allowed scope",
+                data={"file": "tests/test_calculator.py", "allowed_files": ["calculator.py"]},
+            ),
+        ),
+        findings=(
+            AutopsyFinding(
+                "scope_violation",
+                "The run edited tests/test_calculator.py even though the claimed task allowed only calculator.py.",
+                evidence_ids=("E3",),
+                intercept="reject runs that touch files outside the claimed patch scope",
+                confidence="high",
+            ),
+        ),
+        intercepts=("reject runs that touch files outside the claimed patch scope",),
+        sources=("built-in out-of-scope demo record",),
+    )
+
+
 def render_evidence_court_report(report: AgentAutopsyReport) -> str:
     verdict = _verdict(report)
     first_failed = next((item for item in report.evidence if item.ok is False), None)
     no_baseline = next((item for item in report.evidence if "no failing test output was captured" in item.summary.lower()), None)
+    scope_violation = next((item for item in report.findings if item.finding_type == "scope_violation"), None)
     post_edit_failure = next((item for item in report.findings if item.finding_type == "post_edit_validation_failure"), None)
     missing_test_evidence = next((item for item in report.findings if item.finding_type == "missing_test_evidence"), None)
     test_failure = next((item for item in report.evidence if item.source == "failure" or item.kind == "test"), None)
@@ -101,8 +157,8 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
         "",
         "## Scope Violations",
         "",
-        "- file_scope: PASS",
-        "- reason: no out-of-scope edit evidence was supplied in this demo record.",
+        f"- file_scope: {'FAIL' if scope_violation else 'PASS'}",
+        f"- reason: {scope_violation.summary if scope_violation else 'no out-of-scope edit evidence was supplied in this demo record.'}",
         "",
         "## Test Verification",
         "",
@@ -126,6 +182,8 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
 
 
 def _verdict(report: AgentAutopsyReport) -> str:
+    if any(item.finding_type == "scope_violation" for item in report.findings):
+        return "FAIL"
     if report.status == "FAILED":
         return "FAIL"
     if report.status == "UNVERIFIED" or report.failure_class:
@@ -135,6 +193,8 @@ def _verdict(report: AgentAutopsyReport) -> str:
 
 def _verdict_reason(report: AgentAutopsyReport, verdict: str) -> str:
     if verdict == "FAIL":
+        if any(item.finding_type == "scope_violation" for item in report.findings):
+            return "- reason: edited files crossed the claimed patch scope, so the run cannot be accepted."
         return "- reason: post-edit validation failed, so the supplied evidence cannot support a success claim."
     if verdict == "SUSPICIOUS":
         return "- reason: evidence is incomplete or ambiguous, so the success claim needs more proof."
