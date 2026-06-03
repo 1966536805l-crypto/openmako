@@ -11,6 +11,15 @@ cheating by editing tests or hiding failures.
 Today, OpenMako demonstrates one narrow public gate: approved learning must
 beat no-learning on hidden repair tasks while staying inside exact patch scope.
 
+## CI Quickstart
+
+This uses a simple JSONL event stream, not a native Claude Code, Codex, or Cursor transcript adapter.
+
+```bash
+./bin/openmako --no-trust-prompt evidence-court record from-jsonl --output run.json examples/evidence_court/simple_events.jsonl
+./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json
+```
+
 ## 10-Second Bad-Run Demo
 
 This fixture shows a coding agent run that edited code, ran validation, and

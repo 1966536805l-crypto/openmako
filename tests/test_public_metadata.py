@@ -122,6 +122,13 @@ def test_readme_links_public_proof_issue() -> None:
 def test_readme_has_runnable_bad_run_demo() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
+    assert "## CI Quickstart" in readme
+    assert (
+        "./bin/openmako --no-trust-prompt evidence-court record from-jsonl "
+        "--output run.json examples/evidence_court/simple_events.jsonl"
+    ) in readme
+    assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in readme
+    assert "not a native Claude Code, Codex, or Cursor transcript adapter" in readme
     assert "## 10-Second Bad-Run Demo" in readme
     assert "./bin/openmako --no-trust-prompt evidence-court demo bad-run" in readme
     assert "./bin/openmako --no-trust-prompt evidence-court demo missing-tests" in readme
