@@ -18,22 +18,18 @@ failed. OpenMako reports the failure from supplied trajectory, query-event, and
 test-output evidence.
 
 ```bash
-./bin/openmako --no-trust-prompt agent-autopsy \
-  --project tests/fixtures/agent_autopsy/agent_modified_test_failed \
-  --trajectory tests/fixtures/agent_autopsy/agent_modified_test_failed/trajectory.jsonl \
-  --query-events tests/fixtures/agent_autopsy/agent_modified_test_failed/query_events.jsonl \
-  --failure-file tests/fixtures/agent_autopsy/agent_modified_test_failed/failure.txt \
-  --source-agent codex \
-  --title "10-second bad run demo" \
-  --command "python3 -m unittest"
+./bin/openmako --no-trust-prompt evidence-court demo bad-run
 ```
 
 Expected signal:
 
 ```text
-- status: FAILED
-- failure_class: verification_failed
-- evidence_items: 12
+## Claim
+## Evidence
+## Scope Violations
+## Test Verification
+## Suspicious Behavior
+## Verdict: FAIL
 ```
 
 ## What The Public Gate Checks

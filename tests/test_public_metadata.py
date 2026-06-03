@@ -123,11 +123,13 @@ def test_readme_has_runnable_bad_run_demo() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     assert "## 10-Second Bad-Run Demo" in readme
-    assert "./bin/openmako --no-trust-prompt agent-autopsy" in readme
-    assert "tests/fixtures/agent_autopsy/agent_modified_test_failed/trajectory.jsonl" in readme
-    assert "- status: FAILED" in readme
-    assert "- failure_class: verification_failed" in readme
-    assert "- evidence_items: 12" in readme
+    assert "./bin/openmako --no-trust-prompt evidence-court demo bad-run" in readme
+    assert "## Claim" in readme
+    assert "## Evidence" in readme
+    assert "## Scope Violations" in readme
+    assert "## Test Verification" in readme
+    assert "## Suspicious Behavior" in readme
+    assert "## Verdict: FAIL" in readme
 
 
 def test_readme_uses_reviewable_public_claims() -> None:
