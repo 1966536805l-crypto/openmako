@@ -3,6 +3,11 @@
 This workflow assumes your job already writes an Evidence Court `run.json`.
 It does not collect native Claude Code, Codex, Cursor, or SWE-bench logs.
 
+This repository also includes
+[`../.github/workflows/evidence-court-demo.yml`](../.github/workflows/evidence-court-demo.yml),
+which builds a known bad sample from `examples/evidence_court/simple_events.jsonl`
+and asserts that `audit --ci --json` exits with `1`.
+
 ```yaml
 name: Evidence Court
 

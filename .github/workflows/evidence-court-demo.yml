@@ -1,0 +1,52 @@
+name: evidence-court-demo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  evidence-court-demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install OpenMako
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: Build demo audit record
+        run: |
+          openmako evidence-court record from-jsonl --output run.json examples/evidence_court/simple_events.jsonl
+
+      - name: Validate demo audit record
+        run: |
+          openmako evidence-court validate run.json
+
+      - name: Audit demo bad run
+        run: |
+          set +e
+          openmako evidence-court audit --ci --json run.json > evidence-court-report.json
+          audit_exit=$?
+          set -e
+          echo "audit_exit=${audit_exit}"
+          test "${audit_exit}" -eq 1
+
+      - name: Upload Evidence Court report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence-court-report
+          path: evidence-court-report.json
