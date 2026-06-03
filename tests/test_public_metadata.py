@@ -196,6 +196,25 @@ def test_evidence_court_composite_action_wraps_supported_cli_commands() -> None:
     assert "Cursor" not in action
 
 
+def test_release_checklist_keeps_v01_claims_evidence_gated() -> None:
+    checklist = (ROOT / "docs" / "release_checklist.md").read_text(encoding="utf-8")
+
+    assert "Do not treat this file as proof that a release already happened." in checklist
+    assert ".github/workflows/focused.yml" in checklist
+    assert ".github/workflows/evidence-court-demo.yml" in checklist
+    assert "tests/test_public_metadata.py" in checklist
+    assert "tests/test_cli_wrappers.py" in checklist
+    assert "evidence-court-report.json" in checklist
+    assert "Do not claim native Claude Code, Codex, Cursor, or SWE-bench transcript" in checklist
+    assert "Do not claim broad unknown-repository SWE repair." in checklist
+    assert "Do not claim full pytest or hidden benchmark numbers" in checklist
+    assert "repository-local composite action" in checklist
+    assert "published\n  Marketplace action" in checklist
+    assert "git tag -a v0.1.0" in checklist
+    assert "git push origin v0.1.0" in checklist
+    assert "v0.1 audits supplied records only" in checklist
+
+
 def test_readme_uses_reviewable_public_claims() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
