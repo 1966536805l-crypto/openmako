@@ -206,6 +206,7 @@ def test_release_checklist_keeps_v01_claims_evidence_gated() -> None:
     assert ".github/workflows/evidence-court-demo.yml" in checklist
     assert "tests/test_public_metadata.py" in checklist
     assert "tests/test_cli_wrappers.py" in checklist
+    assert "artifact named `evidence-court-report`" in checklist
     assert "evidence-court-report.json" in checklist
     assert "Do not claim native Claude Code, Codex, Cursor, or SWE-bench transcript" in checklist
     assert "Do not claim broad unknown-repository SWE repair." in checklist
@@ -225,6 +226,7 @@ def test_changelog_v01_draft_stays_inside_public_evidence_boundary() -> None:
     assert "Evidence Court CLI commands" in changelog
     assert "evidence-court/v0.1" in changelog
     assert "repository-local GitHub composite action" in changelog
+    assert "evidence-court-report` artifact" in changelog
     assert "evidence-court-report.json" in changelog
     assert "tests/test_public_metadata.py" in changelog
     assert "tests/test_cli_wrappers.py" in changelog
@@ -253,6 +255,7 @@ def test_v01_release_notes_draft_is_publishable_without_overclaiming() -> None:
     assert "openmako evidence-court record from-jsonl" in notes
     assert "openmako evidence-court validate" in notes
     assert "repository-local GitHub composite action" in notes
+    assert "uploads the `evidence-court-report` artifact" in notes
     assert "evidence-court-report.json" in notes
     assert "tests/test_public_metadata.py" in notes
     assert "tests/test_cli_wrappers.py" in notes

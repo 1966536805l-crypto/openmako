@@ -16,7 +16,7 @@ published.
   running an audit, writing an audit report, and checking the expected exit
   code.
 - A GitHub Actions demo workflow that builds a known-bad run record and uploads
-  `evidence-court-report.json`.
+  the `evidence-court-report` artifact containing `evidence-court-report.json`.
 
 ### Evidence
 

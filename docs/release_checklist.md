@@ -26,8 +26,8 @@ python3 -m pytest -p no:cacheprovider \
   caveat below.
 - The GitHub Release body is drafted in `docs/v0.1_release_notes.md` and uses
   the same allowed claim and required caveat.
-- The demo workflow report artifact exists for the release commit:
-  `evidence-court-report.json`.
+- The demo workflow artifact named `evidence-court-report` exists for the
+  release commit and contains `evidence-court-report.json`.
 
 ## Boundary Checks
 
