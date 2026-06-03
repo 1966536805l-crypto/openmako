@@ -17,11 +17,14 @@ This fixture shows a coding agent run that edited code, ran validation, and
 failed. OpenMako reports the failure from supplied trajectory, query-event, and
 test-output evidence.
 
+For supplied JSON records, see [`docs/evidence_court_schema.md`](docs/evidence_court_schema.md).
+
 ```bash
 ./bin/openmako --no-trust-prompt evidence-court demo bad-run
 ./bin/openmako --no-trust-prompt evidence-court demo missing-tests
 ./bin/openmako --no-trust-prompt evidence-court demo out-of-scope
 ./bin/openmako --no-trust-prompt evidence-court audit examples/evidence_court/out_of_scope.json
+./bin/openmako --no-trust-prompt evidence-court audit examples/evidence_court/missing_tests.json
 ```
 
 Expected signal:

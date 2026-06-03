@@ -105,18 +105,12 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("## Verdict: FAIL", result.stdout)
 
     def test_openmako_evidence_court_audit_json_reports_missing_tests(self) -> None:
-        record = {
-            "claimed_task": "Fix calculator.py.",
-            "files_read": ["calculator.py"],
-            "files_edited": ["calculator.py"],
-            "commands_run": [],
-            "test_output": "",
-            "final_claim": "Fixed and verified.",
-        }
-        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
-            json.dump(record, handle)
-            handle.flush()
-            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", handle.name)
+        result = self.run_openmako(
+            "--no-trust-prompt",
+            "evidence-court",
+            "audit",
+            "examples/evidence_court/missing_tests.json",
+        )
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("- file_scope: PASS", result.stdout)
@@ -150,6 +144,15 @@ class CliWrapperTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 2)
         self.assertIn("audit record must be a JSON object", result.stderr)
+
+    def test_evidence_court_schema_documents_record_boundary(self) -> None:
+        schema = (ROOT / "docs" / "evidence_court_schema.md").read_text(encoding="utf-8")
+
+        self.assertIn("openmako evidence-court audit <run.json>", schema)
+        self.assertIn("It does not claim to read native Claude Code, Codex, Cursor, or SWE-bench logs.", schema)
+        self.assertIn("This is an evidence audit of the supplied record only.", schema)
+        self.assertIn("`allowed_files`", schema)
+        self.assertIn("`test_output`", schema)
 
 
 if __name__ == "__main__":
