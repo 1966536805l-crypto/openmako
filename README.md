@@ -82,6 +82,7 @@ qagent --help
 
 | Evidence | Where |
 | --- | --- |
+| Public proof card | [issue #1](https://github.com/1966536805l-crypto/openmako/issues/1) |
 | Green public CI | [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml) |
 | Learning-effect gate | [`quantagent/learning_effect_coding_bench.py`](quantagent/learning_effect_coding_bench.py) |
 | CodingBench execution | [`quantagent/coding_bench.py`](quantagent/coding_bench.py) |

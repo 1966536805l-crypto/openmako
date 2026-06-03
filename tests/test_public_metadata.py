@@ -39,3 +39,10 @@ def test_package_metadata_uses_focused_public_positioning() -> None:
         lowered = description.lower()
         for forbidden in FORBIDDEN_DESCRIPTION_TERMS:
             assert forbidden not in lowered
+
+
+def test_readme_links_public_proof_issue() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert "Public proof card" in readme
+    assert "https://github.com/1966536805l-crypto/openmako/issues/1" in readme
