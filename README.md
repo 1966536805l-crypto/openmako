@@ -12,6 +12,19 @@ The v0.1 public claim is intentionally smaller than the repository: OpenMako
 demonstrates one narrow public gate where approved learning must beat
 no-learning on hidden repair tasks while staying inside exact patch scope.
 
+## Technical Review Entry Points
+
+For technical reviewers, start here before reading older implementation paths:
+
+- Boundary criticism request: [issue #2](https://github.com/1966536805l-crypto/openmako/issues/2).
+- Technical review packet: [`docs/TECHNICAL_REVIEW_PACKET.md`](docs/TECHNICAL_REVIEW_PACKET.md).
+- Public proof card: [issue #1](https://github.com/1966536805l-crypto/openmako/issues/1).
+- Focused public CI: [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml).
+- Local proof command: run the focused gate in [What The Public Gate Checks](#what-the-public-gate-checks).
+
+This is a technical criticism path, not a request for endorsement, stars,
+reposts, or promotion.
+
 ## Public v0.1 Scope
 
 The current release is a record-auditor and evidence-harness snapshot. It can

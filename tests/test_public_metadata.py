@@ -119,6 +119,7 @@ def test_package_metadata_uses_focused_public_positioning() -> None:
 def test_readme_links_public_proof_issue() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
+    assert "## Technical Review Entry Points" in readme
     assert "Public proof card" in readme
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in readme
     assert "Technical boundary criticism request" in readme
@@ -126,6 +127,24 @@ def test_readme_links_public_proof_issue() -> None:
     assert "a review request rather than endorsement or promotion" in readme
     assert "Technical review packet" in readme
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in readme
+
+
+def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    review_index = readme.index("## Technical Review Entry Points")
+    scope_index = readme.index("## Public v0.1 Scope")
+
+    assert review_index < scope_index
+    review_section = readme[review_index:scope_index]
+    assert "https://github.com/1966536805l-crypto/openmako/issues/2" in review_section
+    assert "docs/TECHNICAL_REVIEW_PACKET.md" in review_section
+    assert "https://github.com/1966536805l-crypto/openmako/issues/1" in review_section
+    assert "https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml" in review_section
+    assert "[What The Public Gate Checks](#what-the-public-gate-checks)" in review_section
+    assert "not a request for endorsement, stars,\nreposts, or promotion" in review_section
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in review_section.lower()
 
 
 def test_readme_has_runnable_bad_run_demo() -> None:
@@ -305,6 +324,7 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "not evidence of endorsement or promotion" in progress
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in progress
     assert "docs/REVIEWER_OUTREACH_DRAFT.md" in progress
+    assert "technical review entry points before the v0.1 scope section" in progress
     assert "stale internal notes" in progress
     for forbidden in FORBIDDEN_PUBLIC_PROGRESS_CLAIMS:
         assert forbidden not in progress
