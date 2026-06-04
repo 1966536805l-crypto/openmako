@@ -133,6 +133,8 @@ def test_readme_links_public_proof_issue() -> None:
     assert "docs/REPRODUCE_V0_1.md" in readme
     assert "Contributor guide" in readme
     assert "CONTRIBUTING.md" in readme
+    assert "Attribution boundary" in readme
+    assert "docs/UPSTREAM_ATTRIBUTION.md" in readme
     assert "Public share packet" in readme
     assert "docs/PUBLIC_SHARE_PACKET.md" in readme
 
@@ -150,6 +152,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in review_section
     assert "docs/REPRODUCE_V0_1.md" in review_section
     assert "CONTRIBUTING.md" in review_section
+    assert "docs/UPSTREAM_ATTRIBUTION.md" in review_section
     assert "docs/PUBLIC_SHARE_PACKET.md" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml" in review_section
@@ -322,6 +325,8 @@ def test_readme_uses_reviewable_public_claims() -> None:
     assert "## Implementation Boundary" in readme
     assert "## Beyond The Public Gate" in readme
     assert "OpenMako's project policy is clean-room implementation for closed-source tools" in readme
+    assert "docs/UPSTREAM_ATTRIBUTION.md" in readme
+    assert "vendored-license boundaries" in readme
     for forbidden in FORBIDDEN_README_CLAIMS:
         assert forbidden not in readme
 
