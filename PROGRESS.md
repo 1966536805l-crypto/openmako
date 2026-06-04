@@ -18,6 +18,8 @@ Current public proof:
   `docs/REVIEWER_OUTREACH_DRAFT.md`.
 - The README exposes issue #2, the technical review packet, and focused CI as
   technical review entry points before the v0.1 scope section.
+- The technical review packet includes a minimal issue-comment template for
+  boundary-clear, overclaim, or unclear findings.
 - GitHub Actions runs the focused gate through `.github/workflows/focused.yml`.
 - GitHub Actions also runs the supplied-record Evidence Court demo through
   `.github/workflows/evidence-court-demo.yml`.

@@ -74,3 +74,18 @@ Codex, Cursor, Devin, or SWE-bench transcript ingestion.
 A useful review points to a specific file, line, command, workflow, or missing
 artifact. The most useful outcome is boundary criticism that can be fixed in
 README, tests, CI, or release notes.
+
+## Minimal Review Comment Template
+
+```text
+Verdict: boundary clear / overclaim / unclear
+Evidence checked:
+- README section or line:
+- Test command or workflow:
+- Release or issue link:
+Concrete mismatch or missing proof:
+Suggested correction:
+```
+
+Do not include endorsement, promotion, star, or repost language in the review.
+A useful comment is enough if it records the evidence checked.

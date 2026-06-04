@@ -325,6 +325,7 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in progress
     assert "docs/REVIEWER_OUTREACH_DRAFT.md" in progress
     assert "technical review entry points before the v0.1 scope section" in progress
+    assert "minimal issue-comment template" in progress
     assert "stale internal notes" in progress
     for forbidden in FORBIDDEN_PUBLIC_PROGRESS_CLAIMS:
         assert forbidden not in progress
@@ -347,6 +348,13 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "does not claim native Claude Code" in packet
     assert "Does README claim more than the focused tests and CI prove?" in packet
     assert "A useful review points to a specific file, line, command, workflow, or missing\nartifact." in packet
+    assert "## Minimal Review Comment Template" in packet
+    assert "Verdict: boundary clear / overclaim / unclear" in packet
+    assert "README section or line:" in packet
+    assert "Test command or workflow:" in packet
+    assert "Concrete mismatch or missing proof:" in packet
+    assert "Suggested correction:" in packet
+    assert "Do not include endorsement, promotion, star, or repost language in the review." in packet
     assert "10000" not in packet
     assert "10,000" not in packet
     assert "大咖" not in packet
