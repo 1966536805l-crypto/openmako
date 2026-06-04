@@ -24,6 +24,12 @@ python -m pip install -e . pytest
 ./scripts/public_review_gate.sh
 ```
 
+For a screenshot-friendly summary after the same full gate passes:
+
+```bash
+./scripts/public_proof_card.sh
+```
+
 Expected high-level signal:
 
 ```text
@@ -199,6 +205,7 @@ qagent --help
 | Public share packet | [`docs/PUBLIC_SHARE_PACKET.md`](docs/PUBLIC_SHARE_PACKET.md), boundary-preserving wording for reviewers who choose to discuss the project publicly |
 | v0.1 release | [release v0.1.0](https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0) |
 | Focused public CI | [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml) |
+| Screenshot-friendly proof card | [`scripts/public_proof_card.sh`](scripts/public_proof_card.sh), runs the public gate then prints scope and non-proof boundaries |
 | Learning-effect gate | [`quantagent/learning_effect_coding_bench.py`](quantagent/learning_effect_coding_bench.py) |
 | CodingBench execution | [`quantagent/coding_bench.py`](quantagent/coding_bench.py) |
 | Agent repair loop used by the gate | [`quantagent/agent_loop.py`](quantagent/agent_loop.py) |

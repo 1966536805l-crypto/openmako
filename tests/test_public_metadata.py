@@ -157,6 +157,8 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "git clone https://github.com/1966536805l-crypto/openmako.git" in proof_section
     assert "python -m pip install -e . pytest" in proof_section
     assert "./scripts/public_review_gate.sh" in proof_section
+    assert "./scripts/public_proof_card.sh" in proof_section
+    assert "screenshot-friendly summary" in proof_section
     assert "public-review-gate: PASS" in proof_section
     assert "It does not prove broad unknown-repository repair or\nexternal endorsement." in proof_section
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
@@ -370,6 +372,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "`60-Second Proof` section before the review links" in progress
     assert "minimal issue-comment template" in progress
     assert "scripts/public_review_gate.sh" in progress
+    assert "scripts/public_proof_card.sh" in progress
+    assert "screenshot-friendly proof card with commit, scope, non-proof boundaries,\n  review issue, and external-review record form" in progress
     assert "docs/PUBLIC_SHARE_PACKET.md" in progress
     assert "<=280 character technical\n  review post" in progress
     assert "blocks\n  general-influencer outreach until at least one public technical boundary\n  review exists" in progress
@@ -562,6 +566,24 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
     assert '"failure_class": "scope_violation"' in text
     assert '"failed_at": "scope_check"' in text
     assert "public-review-gate: PASS" in text
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in text.lower()
+
+
+def test_public_proof_card_wraps_gate_without_overclaiming() -> None:
+    script = ROOT / "scripts" / "public_proof_card.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert "openmako-public-proof-card: START" in text
+    assert "proof-command: ./scripts/public_review_gate.sh" in text
+    assert "./scripts/public_review_gate.sh" in text
+    assert "openmako-public-proof-card: PASS" in text
+    assert "focused learning-effect gate; public metadata boundary; supplied-record Evidence Court audit" in text
+    assert "not-proof: broad unknown-repository SWE repair; external endorsement; star or repost traction" in text
+    assert "https://github.com/1966536805l-crypto/openmako/issues/2" in text
+    assert "issues/new?template=external-review-record.yml" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()
 

@@ -37,6 +37,9 @@ Current public proof:
 - `scripts/public_review_gate.sh` wraps the local reviewer proof command:
   focused public tests, metadata boundary checks, and supplied-record
   Evidence Court bad-run audit.
+- `scripts/public_proof_card.sh` wraps the same gate and prints a
+  screenshot-friendly proof card with commit, scope, non-proof boundaries,
+  review issue, and external-review record form.
 - `docs/PUBLIC_SHARE_PACKET.md` provides boundary-preserving public wording for
   reviewers who independently choose to discuss the project.
 - `docs/PUBLIC_SHARE_PACKET.md` also includes a <=280 character technical
