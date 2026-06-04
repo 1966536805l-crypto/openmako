@@ -138,6 +138,8 @@ def test_readme_links_public_proof_issue() -> None:
     assert "CONTRIBUTING.md" in readme
     assert "Attribution boundary" in readme
     assert "docs/UPSTREAM_ATTRIBUTION.md" in readme
+    assert "Agent trend radar" in readme
+    assert "docs/AGENT_TREND_RADAR.md" in readme
     assert "Reviewer target map" in readme
     assert "docs/REVIEWER_TARGETS.md" in readme
     assert "Wave 1 review requests" in readme
@@ -173,6 +175,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "docs/REPRODUCE_V0_1.md" in review_section
     assert "CONTRIBUTING.md" in review_section
     assert "docs/UPSTREAM_ATTRIBUTION.md" in review_section
+    assert "docs/AGENT_TREND_RADAR.md" in review_section
     assert "docs/REVIEWER_TARGETS.md" in review_section
     assert "docs/WAVE1_REVIEW_REQUESTS.md" in review_section
     assert "docs/PUBLIC_SHARE_PACKET.md" in review_section
@@ -371,6 +374,9 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "docs/REVIEWER_TARGETS.md" in progress
     assert "separates technical-review targets from\n  broader writer/community targets" in progress
     assert "forbids star, repost, promotion, or\n  endorsement asks" in progress
+    assert "docs/AGENT_TREND_RADAR.md" in progress
+    assert "maps Hermes/OpenClaw/OpenHands/eval trends to\n  future OpenMako build bets" in progress
+    assert "marks them as non-claims until code, fixtures,\n  and CI exist" in progress
     assert "docs/WAVE1_REVIEW_REQUESTS.md" in progress
     assert "not proof that outreach, review, endorsement, stars, or reposts happened" in progress
     assert "technical review entry points before the v0.1 scope section" in progress
@@ -382,9 +388,41 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "docs/PUBLIC_SHARE_PACKET.md" in progress
     assert "<=280 character technical\n  review post" in progress
     assert "blocks\n  general-influencer outreach until at least one public technical boundary\n  review exists" in progress
+    assert "`run-metrics` evidence extension" in progress
+    assert "optional duration, token, cost, command-count, and missing-telemetry fields" in progress
+    assert "preserved in Evidence Court audit JSON" in progress
     assert "stale internal notes" in progress
     for forbidden in FORBIDDEN_PUBLIC_PROGRESS_CLAIMS:
         assert forbidden not in progress
+
+
+def test_agent_trend_radar_maps_sources_to_non_claim_development_bets() -> None:
+    radar = (ROOT / "docs" / "AGENT_TREND_RADAR.md").read_text(encoding="utf-8")
+
+    assert "OpenMako Agent Trend Radar" in radar
+    assert "Last refreshed: 2026-06-04." in radar
+    assert "not proof that OpenMako already implements these\ncapabilities" in radar
+    assert "not evidence of external review, endorsement, stars, or\nreposts" in radar
+    assert "https://hermes-agent.nousresearch.com/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-hermes-agent" in radar
+    assert "https://docs.openclaw.ai/tools/acp-agents" in radar
+    assert "https://github.com/OpenHands/OpenHands" in radar
+    assert "https://github.com/harbor-framework/terminal-bench" in radar
+    assert "https://github.com/Vexp-ai/vexp-swe-bench" in radar
+    assert "https://arxiv.org/abs/2605.14415" in radar
+    assert "https://arxiv.org/abs/2605.13139" in radar
+    assert "https://arxiv.org/abs/2509.22097" in radar
+    assert "https://arxiv.org/abs/2602.02474" in radar
+    assert "Evidence Ledger Before Broader Runtime" in radar
+    assert "Skill Evolution With Reproducible Approval" in radar
+    assert "External Harness Adapter Without Runtime Overclaim" in radar
+    assert "Benchmark Telemetry Beyond Pass/Fail" in radar
+    assert "Full-Cycle And Secure-Coding Gates" in radar
+    assert "Do not claim OpenMako is a Hermes, OpenClaw, OpenHands, SWE-agent, or\n  Terminal-Bench replacement." in radar
+    assert "Do not claim ACP, MCP orchestration, long-term memory, skill self-evolution,\n  cloud agent execution, or secure-code benchmarking as current public v0.1\n  capability." in radar
+    assert "The next high-leverage public build is a `run-metrics` evidence extension" in radar
+    assert "missing-telemetry fields" in radar
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in radar.lower()
 
 
 def test_technical_review_packet_is_evidence_first_not_promotional() -> None:

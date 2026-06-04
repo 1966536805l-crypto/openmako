@@ -28,6 +28,10 @@ Current public proof:
   `docs/REVIEWER_TARGETS.md`. It separates technical-review targets from
   broader writer/community targets and forbids star, repost, promotion, or
   endorsement asks.
+- A source-linked agent trend radar is available at:
+  `docs/AGENT_TREND_RADAR.md`. It maps Hermes/OpenClaw/OpenHands/eval trends to
+  future OpenMako build bets and marks them as non-claims until code, fixtures,
+  and CI exist.
 - Wave 1 copyable review requests are available at:
   `docs/WAVE1_REVIEW_REQUESTS.md`. They target technical reviewers only and are
   not proof that outreach, review, endorsement, stars, or reposts happened.
@@ -63,5 +67,6 @@ public result.
 
 Next smallest hygiene task:
 
-- Keep reducing reviewer friction without expanding the public claim: make each
-  criticism path point to a reproducible command, public issue, or CI result.
+- Build the `run-metrics` evidence extension from `docs/AGENT_TREND_RADAR.md`:
+  optional duration, token, cost, command-count, and missing-telemetry fields in
+  supplied run records, preserved in Evidence Court audit JSON.
