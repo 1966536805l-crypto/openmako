@@ -1,5 +1,6 @@
 import ast
 import re
+import subprocess
 from pathlib import Path
 
 
@@ -144,6 +145,8 @@ def test_readme_links_public_proof_issue() -> None:
     assert "docs/REVIEWER_TARGETS.md" in readme
     assert "Wave 1 review requests" in readme
     assert "docs/WAVE1_REVIEW_REQUESTS.md" in readme
+    assert "Wave 1 short-message helper" in readme
+    assert "bash scripts/wave1_review_request.sh swe-agent" in readme
     assert "Public share packet" in readme
     assert "docs/PUBLIC_SHARE_PACKET.md" in readme
 
@@ -178,6 +181,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "docs/AGENT_TREND_RADAR.md" in review_section
     assert "docs/REVIEWER_TARGETS.md" in review_section
     assert "docs/WAVE1_REVIEW_REQUESTS.md" in review_section
+    assert "bash scripts/wave1_review_request.sh swe-agent" in review_section
     assert "docs/PUBLIC_SHARE_PACKET.md" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml" in review_section
@@ -379,6 +383,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "marks them as non-claims until code, fixtures,\n  and CI exist" in progress
     assert "docs/WAVE1_REVIEW_REQUESTS.md" in progress
     assert "not proof that outreach, review, endorsement, stars, or reposts happened" in progress
+    assert "bash scripts/wave1_review_request.sh" in progress
+    assert "without sending messages or recording outreach as evidence" in progress
     assert "technical review entry points before the v0.1 scope section" in progress
     assert "`60-Second Proof` section before the review links" in progress
     assert "minimal issue-comment template" in progress
@@ -714,6 +720,56 @@ def test_wave1_review_requests_are_copyable_without_promotion() -> None:
     assert "Do not summarize private feedback as public evidence." in requests
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in requests.lower()
+
+
+def test_wave1_review_request_script_prints_short_non_promotional_messages() -> None:
+    script = ROOT / "scripts" / "wave1_review_request.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert "Prints one short technical-boundary review request." in text
+    assert "It does not send messages,\nask for stars, ask for reposts" in text
+    assert "swe-agent" in text
+    assert "terminal-bench" in text
+    assert "aider" in text
+    assert "openhands" in text
+    assert "Could you poke holes in OpenMako v0.1's boundary?" in text
+    assert "Could you sanity-check OpenMako v0.1's evidence boundary?" in text
+    assert "useful or too noisy from a coding-agent user's view" in text
+    assert "Could you check OpenMako v0.1 for overclaim?" in text
+    assert "unknown target" in text
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in text.lower()
+
+    for target, expected in (
+        ("swe-agent", "Could you poke holes in OpenMako v0.1's boundary?"),
+        ("terminal-bench", "Could you sanity-check OpenMako v0.1's evidence boundary?"),
+        ("aider", "useful or too noisy from a coding-agent user's view"),
+        ("openhands", "Could you check OpenMako v0.1 for overclaim?"),
+    ):
+        result = subprocess.run(
+            ["bash", str(script), target],
+            cwd=ROOT,
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        assert result.returncode == 0
+        assert expected in result.stdout
+        assert "Review issue: https://github.com/1966536805l-crypto/openmako/issues/2" in result.stdout
+        for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+            assert forbidden not in result.stdout.lower()
+
+    unknown = subprocess.run(
+        ["bash", str(script), "unknown"],
+        cwd=ROOT,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert unknown.returncode == 2
+    assert "unknown target: unknown" in unknown.stderr
 
 
 def test_root_agent_notes_match_public_evidence_boundary() -> None:

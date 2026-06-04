@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+usage: ./scripts/wave1_review_request.sh TARGET
+
+Targets:
+  swe-agent
+  terminal-bench
+  aider
+  openhands
+
+Prints one short technical-boundary review request. It does not send messages,
+ask for stars, ask for reposts, or record outreach as evidence.
+EOF
+}
+
+if [ "$#" -ne 1 ]; then
+  usage >&2
+  exit 2
+fi
+
+repo="https://github.com/1966536805l-crypto/openmako"
+issue="https://github.com/1966536805l-crypto/openmako/issues/2"
+proof="./scripts/public_proof_card.sh"
+
+case "$1" in
+  swe-agent)
+    cat <<EOF
+Could you poke holes in OpenMako v0.1's boundary?
+
+It has one focused learning-effect gate, patch-scope checks, metadata checks,
+and a supplied-record audit. It does not claim SWE-bench-scale repair.
+
+The useful review is whether the README and proof command keep that boundary clear.
+
+Repo: ${repo}
+Proof command: ${proof}
+Review issue: ${issue}
+EOF
+    ;;
+  terminal-bench)
+    cat <<EOF
+Could you sanity-check OpenMako v0.1's evidence boundary?
+
+It is a narrow evidence harness, not a broad terminal-agent benchmark. I am
+trying to find places where the wording goes beyond the public gate, README, or
+Evidence Court supplied-record audit.
+
+Repo: ${repo}
+Proof command: ${proof}
+Review issue: ${issue}
+EOF
+    ;;
+  aider)
+    cat <<EOF
+Could you check whether OpenMako v0.1 is useful or too noisy from a coding-agent user's view?
+
+It is not a replacement for Aider or any coding agent. The claim is narrower:
+run evidence, patch-scope discipline, test-proof checks, and an Evidence Court
+audit over supplied records.
+
+Repo: ${repo}
+Proof command: ${proof}
+Review issue: ${issue}
+EOF
+    ;;
+  openhands)
+    cat <<EOF
+Could you check OpenMako v0.1 for overclaim?
+
+The current claim is not that OpenMako is a full software agent. It is an
+evidence harness for coding-agent repair runs, with one focused public
+learning-effect gate and Evidence Court audit for supplied records. The useful
+review is whether README, tests, and CI prove only that claim.
+
+Repo: ${repo}
+Proof command: ${proof}
+Review issue: ${issue}
+EOF
+    ;;
+  -h|--help|help)
+    usage
+    ;;
+  *)
+    echo "unknown target: $1" >&2
+    usage >&2
+    exit 2
+    ;;
+esac
