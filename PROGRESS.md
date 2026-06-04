@@ -30,6 +30,8 @@ Current public proof:
   endorsement asks.
 - The README exposes issue #2, the technical review packet, and focused CI as
   technical review entry points before the v0.1 scope section.
+- The README now exposes a `60-Second Proof` section before the review links so
+  visitors can run the public gate before reading longer docs.
 - The technical review packet includes a minimal issue-comment template for
   boundary-clear, overclaim, or unclear findings.
 - `scripts/public_review_gate.sh` wraps the local reviewer proof command:

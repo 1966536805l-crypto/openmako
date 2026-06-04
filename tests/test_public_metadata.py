@@ -147,10 +147,20 @@ def test_readme_links_public_proof_issue() -> None:
 def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
+    proof_index = readme.index("## 60-Second Proof")
     review_index = readme.index("## Technical Review Entry Points")
     scope_index = readme.index("## Public v0.1 Scope")
 
+    assert proof_index < review_index
     assert review_index < scope_index
+    proof_section = readme[proof_index:review_index]
+    assert "git clone https://github.com/1966536805l-crypto/openmako.git" in proof_section
+    assert "python -m pip install -e . pytest" in proof_section
+    assert "./scripts/public_review_gate.sh" in proof_section
+    assert "public-review-gate: PASS" in proof_section
+    assert "It does not prove broad unknown-repository repair or\nexternal endorsement." in proof_section
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in proof_section.lower()
     review_section = readme[review_index:scope_index]
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in review_section
     assert "issues/new?template=technical-boundary-check.yml" in review_section
@@ -357,6 +367,7 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "separates technical-review targets from\n  broader writer/community targets" in progress
     assert "forbids star, repost, promotion, or\n  endorsement asks" in progress
     assert "technical review entry points before the v0.1 scope section" in progress
+    assert "`60-Second Proof` section before the review links" in progress
     assert "minimal issue-comment template" in progress
     assert "scripts/public_review_gate.sh" in progress
     assert "docs/PUBLIC_SHARE_PACKET.md" in progress

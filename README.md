@@ -12,6 +12,33 @@ The v0.1 public claim is intentionally smaller than the repository: OpenMako
 demonstrates one narrow public gate where approved learning must beat
 no-learning on hidden repair tasks while staying inside exact patch scope.
 
+## 60-Second Proof
+
+The fastest useful check is not a demo video or an agent-written summary. It is
+the public gate:
+
+```bash
+git clone https://github.com/1966536805l-crypto/openmako.git
+cd openmako
+python -m pip install -e . pytest
+./scripts/public_review_gate.sh
+```
+
+Expected high-level signal:
+
+```text
+public-review-gate: running planner focused public test
+public-review-gate: running learning-effect focused public test
+public-review-gate: running public metadata boundary tests
+public-review-gate: auditing supplied Evidence Court record
+public-review-gate: PASS
+```
+
+What this proves is narrow: the focused learning-effect gate passes, public
+metadata stays inside the v0.1 boundary, and Evidence Court fails closed on a
+supplied bad-run record. It does not prove broad unknown-repository repair or
+external endorsement.
+
 ## Technical Review Entry Points
 
 For technical reviewers, start here before reading older implementation paths:
