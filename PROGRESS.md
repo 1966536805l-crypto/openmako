@@ -44,6 +44,10 @@ Current public proof:
 - `scripts/public_review_gate.sh` wraps the local reviewer proof command:
   focused public tests, metadata boundary checks, and supplied-record
   Evidence Court bad-run audit.
+- Evidence Court preserves optional `run_metrics` in supplied records and audit
+  JSON: duration, command count, token counts, estimated or actual cost,
+  provider/model, and missing-telemetry markers. These fields improve
+  comparability, but they are not treated as proof that validation ran.
 - `scripts/public_proof_card.sh` wraps the same gate and prints a
   screenshot-friendly proof card with commit, scope, non-proof boundaries,
   review issue, and external-review record form.
@@ -67,6 +71,6 @@ public result.
 
 Next smallest hygiene task:
 
-- Build the `run-metrics` evidence extension from `docs/AGENT_TREND_RADAR.md`:
-  optional duration, token, cost, command-count, and missing-telemetry fields in
-  supplied run records, preserved in Evidence Court audit JSON.
+- Post a short issue #2 update that points reviewers to commit `570cfc4` and
+  asks for overclaim or missing-proof criticism. Do not ask for stars, reposts,
+  endorsement, or promotion.
