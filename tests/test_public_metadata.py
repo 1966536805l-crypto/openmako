@@ -138,6 +138,8 @@ def test_readme_links_public_proof_issue() -> None:
     assert "CONTRIBUTING.md" in readme
     assert "Attribution boundary" in readme
     assert "docs/UPSTREAM_ATTRIBUTION.md" in readme
+    assert "Reviewer target map" in readme
+    assert "docs/REVIEWER_TARGETS.md" in readme
     assert "Public share packet" in readme
     assert "docs/PUBLIC_SHARE_PACKET.md" in readme
 
@@ -157,6 +159,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "docs/REPRODUCE_V0_1.md" in review_section
     assert "CONTRIBUTING.md" in review_section
     assert "docs/UPSTREAM_ATTRIBUTION.md" in review_section
+    assert "docs/REVIEWER_TARGETS.md" in review_section
     assert "docs/PUBLIC_SHARE_PACKET.md" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml" in review_section
@@ -350,6 +353,9 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in progress
     assert "docs/REPRODUCE_V0_1.md" in progress
     assert "docs/REVIEWER_OUTREACH_DRAFT.md" in progress
+    assert "docs/REVIEWER_TARGETS.md" in progress
+    assert "separates technical-review targets from\n  broader writer/community targets" in progress
+    assert "forbids star, repost, promotion, or\n  endorsement asks" in progress
     assert "technical review entry points before the v0.1 scope section" in progress
     assert "minimal issue-comment template" in progress
     assert "scripts/public_review_gate.sh" in progress
@@ -562,6 +568,7 @@ def test_reviewer_outreach_draft_requests_criticism_not_promotion() -> None:
     assert "Maintainers or reviewers of coding-agent eval, benchmark, or CI tooling." in draft
     assert "agent reliability, test evidence, or\n   benchmark methodology" in draft
     assert "Do not send to general influencers before at least one public technical boundary\nreview exists." in draft
+    assert "docs/REVIEWER_TARGETS.md" in draft
     assert "specific file, line, command, workflow, or missing artifact" in draft
     assert "Only after a reviewer has independently said the boundary is clear" in draft
     assert "Do not ask them to promote the project." in draft
@@ -571,6 +578,36 @@ def test_reviewer_outreach_draft_requests_criticism_not_promotion() -> None:
     assert "10,000" not in draft
     assert "10000" not in draft
     assert "大咖" not in draft
+
+
+def test_reviewer_target_map_prioritizes_public_technical_review() -> None:
+    targets = (ROOT / "docs" / "REVIEWER_TARGETS.md").read_text(encoding="utf-8")
+
+    assert "OpenMako Reviewer Target Map" in targets
+    assert "Last refreshed: 2026-06-04." in targets
+    assert "not proof of endorsement, promotion,\nstars, reposts, or external review" in targets
+    assert "Verify each source again before contacting\nanyone" in targets
+    assert "The first ask is technical boundary criticism." in targets
+    assert "Do not ask for stars, reposts,\npromotion, or endorsement." in targets
+    assert "issues/new?template=external-review-record.yml" in targets
+    assert "| 1 | SWE-bench / SWE-agent researchers and users |" in targets
+    assert "https://arxiv.org/abs/2310.06770" in targets
+    assert "https://github.com/swe-agent/swe-agent" in targets
+    assert "| 1 | Terminal-Bench / Harbor evaluation community |" in targets
+    assert "https://github.com/harbor-framework/terminal-bench" in targets
+    assert "| 1 | Aider maintainer/community |" in targets
+    assert "https://github.com/aider-ai/aider" in targets
+    assert "| 1 | OpenHands maintainer/community |" in targets
+    assert "https://github.com/OpenHands/OpenHands" in targets
+    assert "| 2 | AI engineering writers and conference/community curators |" in targets
+    assert "https://swyx.io/about" in targets
+    assert "| 2 | Software engineering trade writers |" in targets
+    assert "https://blog.pragmaticengineer.com/" in targets
+    assert "General AI influencers who do not review code, tests, CI, or benchmark\n  methodology." in targets
+    assert "Any private feedback channel that cannot later be linked as public evidence." in targets
+    assert "Stop outreach and fix the repository first" in targets
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in targets.lower()
 
 
 def test_root_agent_notes_match_public_evidence_boundary() -> None:

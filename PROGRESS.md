@@ -24,6 +24,10 @@ Current public proof:
   signals is available at: `docs/REPRODUCE_V0_1.md`.
 - A non-promotional reviewer outreach draft is available at:
   `docs/REVIEWER_OUTREACH_DRAFT.md`.
+- A public-source reviewer target map is available at:
+  `docs/REVIEWER_TARGETS.md`. It separates technical-review targets from
+  broader writer/community targets and forbids star, repost, promotion, or
+  endorsement asks.
 - The README exposes issue #2, the technical review packet, and focused CI as
   technical review entry points before the v0.1 scope section.
 - The technical review packet includes a minimal issue-comment template for

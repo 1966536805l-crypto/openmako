@@ -43,6 +43,10 @@ influencers.
 Do not send to general influencers before at least one public technical boundary
 review exists.
 
+For the public-source target map and contact order, see:
+
+https://github.com/1966536805l-crypto/openmako/blob/main/docs/REVIEWER_TARGETS.md
+
 ## Follow-Up Rule
 
 Only after a reviewer has independently said the boundary is clear, ask whether
