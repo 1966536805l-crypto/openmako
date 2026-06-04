@@ -693,16 +693,22 @@ def test_wave1_review_requests_are_copyable_without_promotion() -> None:
     assert "OpenMako Wave 1 Review Requests" in requests
     assert "not endorsement requests, promotion\nrequests, star requests, repost requests" in requests
     assert "not proof that outreach has happened" in requests
+    assert "Send the short note first." in requests
     assert "./scripts/public_proof_card.sh" in requests
     assert "openmako-public-proof-card: PASS" in requests
     assert "not-proof: broad unknown-repository SWE repair; external endorsement; star or repost traction" in requests
     assert "SWE-Bench / SWE-Agent Review Request" in requests
-    assert "It does not claim SWE-bench-scale unknown-repository repair." in requests
+    assert "Could you poke holes in OpenMako v0.1's boundary?" in requests
+    assert "It does not claim SWE-bench-scale repair." in requests
     assert "Terminal-Bench / Agent-Eval Review Request" in requests
+    assert "Could you sanity-check OpenMako v0.1's evidence boundary?" in requests
+    assert "places where the wording goes beyond the public gate" in requests
     assert "not a broad terminal-agent benchmark" in requests
     assert "Aider Community Review Request" in requests
+    assert "useful or too noisy from a coding-agent user's view" in requests
     assert "It is not a replacement for Aider or any coding agent." in requests
     assert "OpenHands / Software-Agent Review Request" in requests
+    assert "Could you check OpenMako v0.1 for overclaim?" in requests
     assert "not that OpenMako is a full software agent" in requests
     assert "Do not send the boundary-clear follow-up before a named reviewer posts public\n  feedback." in requests
     assert "Do not summarize private feedback as public evidence." in requests

@@ -44,10 +44,12 @@ Current public proof:
 - `scripts/public_review_gate.sh` wraps the local reviewer proof command:
   focused public tests, metadata boundary checks, and supplied-record
   Evidence Court bad-run audit.
-- Evidence Court preserves optional `run_metrics` in supplied records and audit
-  JSON: duration, command count, token counts, estimated or actual cost,
-  provider/model, and missing-telemetry markers. These fields improve
-  comparability, but they are not treated as proof that validation ran.
+- The `run-metrics` evidence extension is on `main`: Evidence Court preserves
+  optional duration, token, cost, command-count, and missing-telemetry fields
+  as `run_metrics` in supplied records and audit JSON. Provider/model fields
+  are also preserved when supplied. The fields are preserved in Evidence Court audit JSON.
+  They improve comparability, but they are not treated as proof that validation
+  ran.
 - `scripts/public_proof_card.sh` wraps the same gate and prints a
   screenshot-friendly proof card with commit, scope, non-proof boundaries,
   review issue, and external-review record form.
