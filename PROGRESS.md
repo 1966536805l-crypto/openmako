@@ -28,6 +28,9 @@ Current public proof:
   `docs/REVIEWER_TARGETS.md`. It separates technical-review targets from
   broader writer/community targets and forbids star, repost, promotion, or
   endorsement asks.
+- Wave 1 copyable review requests are available at:
+  `docs/WAVE1_REVIEW_REQUESTS.md`. They target technical reviewers only and are
+  not proof that outreach, review, endorsement, stars, or reposts happened.
 - The README exposes issue #2, the technical review packet, and focused CI as
   technical review entry points before the v0.1 scope section.
 - The README now exposes a `60-Second Proof` section before the review links so

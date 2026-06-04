@@ -140,6 +140,8 @@ def test_readme_links_public_proof_issue() -> None:
     assert "docs/UPSTREAM_ATTRIBUTION.md" in readme
     assert "Reviewer target map" in readme
     assert "docs/REVIEWER_TARGETS.md" in readme
+    assert "Wave 1 review requests" in readme
+    assert "docs/WAVE1_REVIEW_REQUESTS.md" in readme
     assert "Public share packet" in readme
     assert "docs/PUBLIC_SHARE_PACKET.md" in readme
 
@@ -172,6 +174,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "CONTRIBUTING.md" in review_section
     assert "docs/UPSTREAM_ATTRIBUTION.md" in review_section
     assert "docs/REVIEWER_TARGETS.md" in review_section
+    assert "docs/WAVE1_REVIEW_REQUESTS.md" in review_section
     assert "docs/PUBLIC_SHARE_PACKET.md" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml" in review_section
@@ -368,6 +371,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "docs/REVIEWER_TARGETS.md" in progress
     assert "separates technical-review targets from\n  broader writer/community targets" in progress
     assert "forbids star, repost, promotion, or\n  endorsement asks" in progress
+    assert "docs/WAVE1_REVIEW_REQUESTS.md" in progress
+    assert "not proof that outreach, review, endorsement, stars, or reposts happened" in progress
     assert "technical review entry points before the v0.1 scope section" in progress
     assert "`60-Second Proof` section before the review links" in progress
     assert "minimal issue-comment template" in progress
@@ -623,6 +628,7 @@ def test_reviewer_target_map_prioritizes_public_technical_review() -> None:
     assert "The first ask is technical boundary criticism." in targets
     assert "Do not ask for stars, reposts,\npromotion, or endorsement." in targets
     assert "issues/new?template=external-review-record.yml" in targets
+    assert "Wave 1 request copy: `docs/WAVE1_REVIEW_REQUESTS.md`" in targets
     assert "| 1 | SWE-bench / SWE-agent researchers and users |" in targets
     assert "https://arxiv.org/abs/2310.06770" in targets
     assert "https://github.com/swe-agent/swe-agent" in targets
@@ -641,6 +647,29 @@ def test_reviewer_target_map_prioritizes_public_technical_review() -> None:
     assert "Stop outreach and fix the repository first" in targets
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in targets.lower()
+
+
+def test_wave1_review_requests_are_copyable_without_promotion() -> None:
+    requests = (ROOT / "docs" / "WAVE1_REVIEW_REQUESTS.md").read_text(encoding="utf-8")
+
+    assert "OpenMako Wave 1 Review Requests" in requests
+    assert "not endorsement requests, promotion\nrequests, star requests, repost requests" in requests
+    assert "not proof that outreach has happened" in requests
+    assert "./scripts/public_proof_card.sh" in requests
+    assert "openmako-public-proof-card: PASS" in requests
+    assert "not-proof: broad unknown-repository SWE repair; external endorsement; star or repost traction" in requests
+    assert "SWE-Bench / SWE-Agent Review Request" in requests
+    assert "It does not claim SWE-bench-scale unknown-repository repair." in requests
+    assert "Terminal-Bench / Agent-Eval Review Request" in requests
+    assert "not a broad terminal-agent benchmark" in requests
+    assert "Aider Community Review Request" in requests
+    assert "It is not a replacement for Aider or any coding agent." in requests
+    assert "OpenHands / Software-Agent Review Request" in requests
+    assert "not that OpenMako is a full software agent" in requests
+    assert "Do not send the boundary-clear follow-up before a named reviewer posts public\n  feedback." in requests
+    assert "Do not summarize private feedback as public evidence." in requests
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in requests.lower()
 
 
 def test_root_agent_notes_match_public_evidence_boundary() -> None:

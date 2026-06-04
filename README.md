@@ -57,6 +57,7 @@ For technical reviewers, start here before reading older implementation paths:
 - Contributor guide: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - Attribution boundary: [`docs/UPSTREAM_ATTRIBUTION.md`](docs/UPSTREAM_ATTRIBUTION.md).
 - Reviewer target map: [`docs/REVIEWER_TARGETS.md`](docs/REVIEWER_TARGETS.md).
+- Wave 1 review requests: [`docs/WAVE1_REVIEW_REQUESTS.md`](docs/WAVE1_REVIEW_REQUESTS.md).
 - Public share packet: [`docs/PUBLIC_SHARE_PACKET.md`](docs/PUBLIC_SHARE_PACKET.md).
 - Public proof card: [issue #1](https://github.com/1966536805l-crypto/openmako/issues/1).
 - Focused public CI: [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml).
@@ -202,6 +203,7 @@ qagent --help
 | Contributor guide | [`CONTRIBUTING.md`](CONTRIBUTING.md), public-boundary contribution rules |
 | Attribution boundary | [`docs/UPSTREAM_ATTRIBUTION.md`](docs/UPSTREAM_ATTRIBUTION.md), upstream references and vendored-license boundaries |
 | Reviewer target map | [`docs/REVIEWER_TARGETS.md`](docs/REVIEWER_TARGETS.md), public-source outreach waves for technical review |
+| Wave 1 review requests | [`docs/WAVE1_REVIEW_REQUESTS.md`](docs/WAVE1_REVIEW_REQUESTS.md), copyable non-promotional messages for technical reviewers |
 | Public share packet | [`docs/PUBLIC_SHARE_PACKET.md`](docs/PUBLIC_SHARE_PACKET.md), boundary-preserving wording for reviewers who choose to discuss the project publicly |
 | v0.1 release | [release v0.1.0](https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0) |
 | Focused public CI | [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml) |
