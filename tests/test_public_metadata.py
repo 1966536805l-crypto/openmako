@@ -126,6 +126,9 @@ def test_readme_links_public_proof_issue() -> None:
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in readme
     assert "Technical boundary issue form" in readme
     assert "issues/new?template=technical-boundary-check.yml" in readme
+    assert "External review record form" in readme
+    assert "issues/new?template=external-review-record.yml" in readme
+    assert "already-public technical feedback only" in readme
     assert "a review request rather than endorsement or promotion" in readme
     assert "Technical review packet" in readme
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in readme
@@ -149,6 +152,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     review_section = readme[review_index:scope_index]
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in review_section
     assert "issues/new?template=technical-boundary-check.yml" in review_section
+    assert "issues/new?template=external-review-record.yml" in review_section
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in review_section
     assert "docs/REPRODUCE_V0_1.md" in review_section
     assert "CONTRIBUTING.md" in review_section
@@ -340,6 +344,9 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in progress
     assert "not evidence of endorsement or promotion" in progress
     assert ".github/ISSUE_TEMPLATE/technical-boundary-check.yml" in progress
+    assert ".github/ISSUE_TEMPLATE/external-review-record.yml" in progress
+    assert "already-public\n  external technical reviews only" in progress
+    assert "not private messages or self-written\n  summaries" in progress
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in progress
     assert "docs/REPRODUCE_V0_1.md" in progress
     assert "docs/REVIEWER_OUTREACH_DRAFT.md" in progress
@@ -441,8 +448,33 @@ def test_issue_template_config_routes_reviewers_to_reproduction_first() -> None:
     assert "docs/REPRODUCE_V0_1.md" in config
     assert "Read the technical review packet" in config
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in config
+    assert "Share packet for boundary-clear reviews" in config
+    assert "docs/PUBLIC_SHARE_PACKET.md" in config
+    assert "Use only after a named reviewer has already posted public technical feedback." in config
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in config.lower()
+
+
+def test_external_review_record_template_records_public_reviews_only() -> None:
+    template = (ROOT / ".github" / "ISSUE_TEMPLATE" / "external-review-record.yml").read_text(encoding="utf-8")
+
+    assert "External review record" in template
+    assert "Record a public external technical review of OpenMako v0.1." in template
+    assert "external-review, technical-boundary" in template
+    assert "already posted a\n        public technical review" in template
+    assert "not an endorsement request, promotion request, star request, or\n        repost request" in template
+    assert "Do not use private DMs or unverifiable summaries as\n        evidence" in template
+    assert "Reviewer" in template
+    assert "Public review link" in template
+    assert "Review verdict" in template
+    assert "boundary clear" in template
+    assert "overclaim found" in template
+    assert "Evidence checked by reviewer" in template
+    assert "Follow-up needed" in template
+    assert "already-public external technical review" in template
+    assert "does not ask for endorsement, promotion, stars, reposts, or broader claims" in template
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in template.lower()
 
 
 def test_contributing_guide_routes_to_evidence_not_promotion() -> None:

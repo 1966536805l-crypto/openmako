@@ -18,6 +18,7 @@ For technical reviewers, start here before reading older implementation paths:
 
 - Boundary criticism request: [issue #2](https://github.com/1966536805l-crypto/openmako/issues/2).
 - Technical boundary issue form: [open a structured review issue](https://github.com/1966536805l-crypto/openmako/issues/new?template=technical-boundary-check.yml).
+- External review record form: [record a public external review](https://github.com/1966536805l-crypto/openmako/issues/new?template=external-review-record.yml).
 - Technical review packet: [`docs/TECHNICAL_REVIEW_PACKET.md`](docs/TECHNICAL_REVIEW_PACKET.md).
 - Reproduction guide: [`docs/REPRODUCE_V0_1.md`](docs/REPRODUCE_V0_1.md).
 - Contributor guide: [`CONTRIBUTING.md`](CONTRIBUTING.md).
@@ -161,6 +162,7 @@ qagent --help
 | Public proof card | [issue #1](https://github.com/1966536805l-crypto/openmako/issues/1) |
 | Technical boundary criticism request | [issue #2](https://github.com/1966536805l-crypto/openmako/issues/2), a review request rather than endorsement or promotion |
 | Technical boundary issue form | [open a structured review issue](https://github.com/1966536805l-crypto/openmako/issues/new?template=technical-boundary-check.yml) |
+| External review record form | [record a public external review](https://github.com/1966536805l-crypto/openmako/issues/new?template=external-review-record.yml), for already-public technical feedback only |
 | Technical review packet | [`docs/TECHNICAL_REVIEW_PACKET.md`](docs/TECHNICAL_REVIEW_PACKET.md) |
 | Reproduction guide | [`docs/REPRODUCE_V0_1.md`](docs/REPRODUCE_V0_1.md), exact local commands and expected public gate signals |
 | Contributor guide | [`CONTRIBUTING.md`](CONTRIBUTING.md), public-boundary contribution rules |

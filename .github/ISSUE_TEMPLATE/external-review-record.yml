@@ -1,0 +1,80 @@
+name: External review record
+description: Record a public external technical review of OpenMako v0.1.
+title: "External review record: "
+labels: external-review, technical-boundary
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form only after a named external reviewer has already posted a
+        public technical review, critique, or boundary-clear note.
+
+        This is not an endorsement request, promotion request, star request, or
+        repost request. Do not use private DMs or unverifiable summaries as
+        evidence.
+
+  - type: input
+    id: reviewer
+    attributes:
+      label: Reviewer
+      description: Name or handle of the external reviewer.
+      placeholder: "@reviewer or reviewer name"
+    validations:
+      required: true
+
+  - type: input
+    id: public_review_link
+    attributes:
+      label: Public review link
+      description: Link to the public review, issue comment, post, PR review, or article.
+      placeholder: "https://..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: verdict
+    attributes:
+      label: Review verdict
+      description: What did the public review conclude?
+      options:
+        - boundary clear
+        - overclaim found
+        - unclear boundary
+        - mixed / needs follow-up
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence_checked
+    attributes:
+      label: Evidence checked by reviewer
+      description: List concrete files, commands, workflows, issues, release links, or output snippets the reviewer checked.
+      placeholder: |
+        - README section:
+        - Command or workflow:
+        - Issue or release:
+        - Output snippet:
+    validations:
+      required: true
+
+  - type: textarea
+    id: follow_up
+    attributes:
+      label: Follow-up needed
+      description: If the review found a boundary issue, describe the smallest docs, code, test, CI, or release-note correction.
+      placeholder: |
+        Finding:
+        Smallest correction:
+        Tracking PR or commit:
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Boundary confirmation
+      options:
+        - label: This records an already-public external technical review, not a private message or self-written summary.
+          required: true
+        - label: This issue does not ask for endorsement, promotion, stars, reposts, or broader claims.
+          required: true

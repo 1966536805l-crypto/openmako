@@ -14,6 +14,10 @@ Current public proof:
   This is a review request, not evidence of endorsement or promotion.
 - A structured technical boundary issue form is available at:
   `.github/ISSUE_TEMPLATE/technical-boundary-check.yml`.
+- A structured external review record form is available at:
+  `.github/ISSUE_TEMPLATE/external-review-record.yml`. It is for already-public
+  external technical reviews only, not private messages or self-written
+  summaries.
 - A technical reviewer packet is available at:
   `docs/TECHNICAL_REVIEW_PACKET.md`.
 - A reproduction guide with exact local commands and expected public gate

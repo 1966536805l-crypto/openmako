@@ -6,3 +6,6 @@ contact_links:
   - name: Read the technical review packet
     url: https://github.com/1966536805l-crypto/openmako/blob/main/docs/TECHNICAL_REVIEW_PACKET.md
     about: Check the public claim, evidence links, and review template.
+  - name: Share packet for boundary-clear reviews
+    url: https://github.com/1966536805l-crypto/openmako/blob/main/docs/PUBLIC_SHARE_PACKET.md
+    about: Use only after a named reviewer has already posted public technical feedback.
