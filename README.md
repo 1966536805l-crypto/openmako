@@ -8,8 +8,20 @@ OpenMako is for checking whether an AI coding agent actually improved across
 runs, stayed inside the requested patch scope, and passed validation without
 cheating by editing tests or hiding failures.
 
-Today, OpenMako demonstrates one narrow public gate: approved learning must
-beat no-learning on hidden repair tasks while staying inside exact patch scope.
+The v0.1 public claim is intentionally smaller than the repository: OpenMako
+demonstrates one narrow public gate where approved learning must beat
+no-learning on hidden repair tasks while staying inside exact patch scope.
+
+## Public v0.1 Scope
+
+The current release is a record-auditor and evidence-harness snapshot. It can
+audit supplied Evidence Court records, run the focused learning-effect gate,
+and fail closed when patch scope, test proof, or run evidence is missing.
+
+The repository also contains older and experimental implementation paths. Those
+paths are inspectable source, but they are not v0.1 launch claims until each has
+a reproducible command, linked public evidence, and passing CI for that exact
+claim.
 
 ## CI Quickstart
 
@@ -122,6 +134,7 @@ qagent --help
 | Evidence | Where |
 | --- | --- |
 | Public proof card | [issue #1](https://github.com/1966536805l-crypto/openmako/issues/1) |
+| v0.1 release | [release v0.1.0](https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0) |
 | Focused public CI | [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml) |
 | Learning-effect gate | [`quantagent/learning_effect_coding_bench.py`](quantagent/learning_effect_coding_bench.py) |
 | CodingBench execution | [`quantagent/coding_bench.py`](quantagent/coding_bench.py) |
@@ -149,6 +162,17 @@ Treat these as code paths to inspect and test, not as v0.1 launch claims:
 - desktop-control experiments
 - quant/data-evidence gates
 - MCP/runtime/profile plumbing
+
+Repository composition:
+
+- `quantagent/` contains the active Python package and additional implementation
+  paths.
+- `tests/` contains regression coverage for both public and non-public paths.
+- `.github/` contains the focused public CI and Evidence Court demo workflow.
+- `docs/archive/` and older planning docs are historical context, not current
+  public proof.
+- `third_party/` contains external reference code and is not OpenMako-native
+  capability evidence.
 
 Useful entry points:
 

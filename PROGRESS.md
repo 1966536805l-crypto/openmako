@@ -5,9 +5,13 @@ This file is a public status boundary, not an internal scoreboard.
 Current public proof:
 
 - The public v0.1 claim is the focused learning-effect gate in `README.md`.
+- v0.1.0 is published at:
+  `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:
   `https://github.com/1966536805l-crypto/openmako/issues/1`.
 - GitHub Actions runs the focused gate through `.github/workflows/focused.yml`.
+- GitHub Actions also runs the supplied-record Evidence Court demo through
+  `.github/workflows/evidence-court-demo.yml`.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -17,5 +21,5 @@ public result.
 
 Next smallest hygiene task:
 
-- Before tagging v0.1.0, rerun the release checklist on the exact commit and
-  use `docs/v0.1_release_notes.md` as the GitHub Release body.
+- Keep the README boundary current: separate the v0.1 public claim from older
+  and experimental code paths before asking for broader external review.
