@@ -46,6 +46,9 @@ Current public proof:
 - `bash scripts/wave1_send_ready.sh` runs the public review gate before printing
   a target-specific Wave 1 short message. It still does not send messages or
   record outreach as evidence.
+- `bash scripts/wave1_thread_reply_ready.sh` runs the public review gate before
+  printing one thread-specific reply draft for selected public discussions. It
+  still does not send messages, create issues, or record outreach as evidence.
 - The README exposes issue #2, the technical review packet, and focused CI as
   technical review entry points before the v0.1 scope section.
 - The README now exposes a `60-Second Proof` section before the review links so

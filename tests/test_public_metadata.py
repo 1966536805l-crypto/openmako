@@ -393,6 +393,9 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "docs/WAVE1_PUBLIC_TARGET_QUEUE.md" in progress
     assert "reachable public surfaces" in progress
     assert "not proof that messages\n  were sent or that anyone reviewed the project" in progress
+    assert "bash scripts/wave1_thread_reply_ready.sh" in progress
+    assert "one thread-specific reply draft" in progress
+    assert "does not send messages, create issues, or record outreach as evidence" in progress
     assert "bash scripts/wave1_review_request.sh" in progress
     assert "without sending messages or recording outreach as evidence" in progress
     assert "bash scripts/wave1_send_ready.sh" in progress
@@ -714,6 +717,8 @@ def test_wave1_public_target_queue_tracks_reachable_surfaces_without_claiming_ou
     assert "not evidence of endorsement, stars, reposts, or external review" in queue
     assert "bash scripts/public_review_gate.sh" in queue
     assert "bash scripts/wave1_send_ready.sh TARGET" in queue
+    assert "bash scripts/wave1_thread_reply_ready.sh THREAD" in queue
+    assert "This still does not send the\nmessage or record outreach as evidence." in queue
     assert "Send one short note at a time." in queue
     assert "Do not\ncreate a new issue in another project" in queue
     assert "project norms allow\nmeta/tooling review requests" in queue
@@ -730,8 +735,16 @@ def test_wave1_public_target_queue_tracks_reachable_surfaces_without_claiming_ou
     assert "Skip unless directly relevant" in queue
     assert "https://github.com/harbor-framework/terminal-bench/discussions/1357" in queue
     assert "cost of executing a test" in queue
+    assert "bash scripts/wave1_thread_reply_ready.sh terminal-bench-1357" in queue
+    assert "https://github.com/OpenHands/benchmarks/issues/708" in queue
+    assert "non-test patch stripping and patch-shape evidence" in queue
+    assert "bash scripts/wave1_thread_reply_ready.sh openhands-benchmarks-708" in queue
+    assert "https://github.com/OpenHands/benchmarks/issues/718" in queue
+    assert "rule changes affect comparability of historical runs" in queue
+    assert "bash scripts/wave1_thread_reply_ready.sh openhands-benchmarks-718" in queue
     assert "https://github.com/OpenHands/OpenHands/issues/10767" in queue
-    assert "reproducing SWE-bench result claims" in queue
+    assert "Closed as not planned" in queue
+    assert "Do not revive a closed main-repo issue for OpenMako outreach." in queue
     assert "https://github.com/SWE-agent/SWE-agent/issues/21" in queue
     assert "https://github.com/SWE-agent/SWE-agent/issues/580" in queue
     assert "https://github.com/SWE-agent/SWE-agent/issues/563" in queue
@@ -741,6 +754,7 @@ def test_wave1_public_target_queue_tracks_reachable_surfaces_without_claiming_ou
     assert "https://github.com/OpenHands/OpenHands/issues/12043" in queue
     assert "Do not post into a bug thread unless the comment addresses that thread's\nexisting question" in queue
     assert "If the fit is weak, skip the thread instead of making noise." in queue
+    assert "Do not post the same generic message to multiple threads." in queue
     assert "bash scripts/wave1_review_request.sh swe-agent" in queue
     assert "bash scripts/wave1_review_request.sh terminal-bench" in queue
     assert "bash scripts/wave1_review_request.sh aider" in queue
@@ -749,6 +763,64 @@ def test_wave1_public_target_queue_tracks_reachable_surfaces_without_claiming_ou
     assert "Stop outreach and fix the repository first" in queue
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in queue.lower()
+
+
+def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() -> None:
+    script = ROOT / "scripts" / "wave1_thread_reply_ready.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert "Runs the public review gate" in text
+    assert "This does not send messages, create issues" in text
+    assert "terminal-bench-1357" in text
+    assert "openhands-benchmarks-708" in text
+    assert "openhands-benchmarks-718" in text
+    assert "bash scripts/public_review_gate.sh" in text
+    assert "decision: read the thread first; do not post if stale, closed, or off-topic" in text
+    assert "cost/version/proof metadata" in text
+    assert "patch shape needs to be part of the evidence" in text
+    assert "evaluation rules change" in text
+    assert "https://github.com/1966536805l-crypto/openmako/issues/2" in text
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in text.lower()
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_root = Path(tmp)
+        scripts = tmp_root / "scripts"
+        scripts.mkdir()
+        (scripts / "wave1_thread_reply_ready.sh").write_text(text, encoding="utf-8")
+        (scripts / "public_review_gate.sh").write_text(
+            "#!/usr/bin/env bash\necho public-review-gate: PASS\n",
+            encoding="utf-8",
+        )
+        for path in scripts.iterdir():
+            path.chmod(0o755)
+
+        result = subprocess.run(
+            ["bash", str(scripts / "wave1_thread_reply_ready.sh"), "terminal-bench-1357"],
+            cwd=tmp_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        )
+
+        assert "public-review-gate: PASS" in result.stdout
+        assert "wave1-thread-reply-ready: thread=terminal-bench-1357" in result.stdout
+        assert "leaderboard row without cost/version/proof metadata" in result.stdout
+        assert "I would rather get criticism on the boundary than repo promotion" in result.stdout
+
+        unknown = subprocess.run(
+            ["bash", str(scripts / "wave1_thread_reply_ready.sh"), "unknown"],
+            cwd=tmp_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        assert unknown.returncode == 2
+        assert "unknown thread: unknown" in unknown.stderr
 
 
 def test_wave1_send_ready_script_gates_before_printing_message() -> None:
