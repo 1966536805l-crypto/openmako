@@ -20,6 +20,9 @@ Current public proof:
   technical review entry points before the v0.1 scope section.
 - The technical review packet includes a minimal issue-comment template for
   boundary-clear, overclaim, or unclear findings.
+- `scripts/public_review_gate.sh` wraps the local reviewer proof command:
+  focused public tests, metadata boundary checks, and supplied-record
+  Evidence Court bad-run audit.
 - GitHub Actions runs the focused gate through `.github/workflows/focused.yml`.
 - GitHub Actions also runs the supplied-record Evidence Court demo through
   `.github/workflows/evidence-court-demo.yml`.

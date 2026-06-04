@@ -141,7 +141,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml" in review_section
-    assert "[What The Public Gate Checks](#what-the-public-gate-checks)" in review_section
+    assert "./scripts/public_review_gate.sh" in review_section
     assert "not a request for endorsement, stars,\nreposts, or promotion" in review_section
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in review_section.lower()
@@ -326,6 +326,7 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "docs/REVIEWER_OUTREACH_DRAFT.md" in progress
     assert "technical review entry points before the v0.1 scope section" in progress
     assert "minimal issue-comment template" in progress
+    assert "scripts/public_review_gate.sh" in progress
     assert "stale internal notes" in progress
     for forbidden in FORBIDDEN_PUBLIC_PROGRESS_CLAIMS:
         assert forbidden not in progress
@@ -341,6 +342,7 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "repost request" in packet
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in packet
     assert "docs/REVIEWER_OUTREACH_DRAFT.md" in packet
+    assert "./scripts/public_review_gate.sh" in packet
     assert "tests/test_agent_planner_contract.py::AgentPlannerContractTest" in packet
     assert "tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest" in packet
     assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in packet
@@ -358,6 +360,26 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "10000" not in packet
     assert "10,000" not in packet
     assert "大咖" not in packet
+
+
+def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
+    script = ROOT / "scripts" / "public_review_gate.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert 'export PYTHONPATH="$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}"' in text
+    assert "tests/test_agent_planner_contract.py::AgentPlannerContractTest" in text
+    assert "tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest" in text
+    assert "tests/test_public_metadata.py" in text
+    assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in text
+    assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json" in text
+    assert "expected Evidence Court audit exit 1" in text
+    assert '"failure_class": "scope_violation"' in text
+    assert '"failed_at": "scope_check"' in text
+    assert "public-review-gate: PASS" in text
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in text.lower()
 
 
 def test_reviewer_outreach_draft_requests_criticism_not_promotion() -> None:

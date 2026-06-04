@@ -20,7 +20,7 @@ For technical reviewers, start here before reading older implementation paths:
 - Technical review packet: [`docs/TECHNICAL_REVIEW_PACKET.md`](docs/TECHNICAL_REVIEW_PACKET.md).
 - Public proof card: [issue #1](https://github.com/1966536805l-crypto/openmako/issues/1).
 - Focused public CI: [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml).
-- Local proof command: run the focused gate in [What The Public Gate Checks](#what-the-public-gate-checks).
+- Local proof command: `./scripts/public_review_gate.sh`.
 
 This is a technical criticism path, not a request for endorsement, stars,
 reposts, or promotion.
@@ -125,6 +125,13 @@ python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -e . pytest
+./scripts/public_review_gate.sh
+```
+
+That script runs the focused public gate, metadata boundary checks, and supplied
+Evidence Court bad-run audit. To run only the focused learning-effect gate:
+
+```bash
 python -m pytest -p no:cacheprovider \
   tests/test_agent_planner_contract.py::AgentPlannerContractTest::test_planner_no_seed_repairs_package_level_http_manifest_js_module \
   tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest::test_package_level_http_manifest_js_trajectory_skill_reuses_on_hidden_tasks \

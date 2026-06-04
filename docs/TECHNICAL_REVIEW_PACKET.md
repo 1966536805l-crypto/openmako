@@ -37,6 +37,14 @@ python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -e . pytest
+./scripts/public_review_gate.sh
+```
+
+That script runs the focused public gate, metadata boundary checks, and the
+supplied Evidence Court bad-run audit. To run only the focused learning-effect
+gate:
+
+```bash
 python -m pytest -p no:cacheprovider \
   tests/test_agent_planner_contract.py::AgentPlannerContractTest::test_planner_no_seed_repairs_package_level_http_manifest_js_module \
   tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest::test_package_level_http_manifest_js_trajectory_skill_reuses_on_hidden_tasks \
