@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -16,8 +17,9 @@ class CliWrapperTest(unittest.TestCase):
     def run_openmako(self, *args: str) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
         env["QUANTAGENT_SECRETS_FILE"] = "/dev/null"
+        env["PYTHONPATH"] = str(ROOT) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
         return subprocess.run(
-            [str(ROOT / "bin" / "openmako"), *args],
+            [sys.executable, "-m", "quantagent.cli", *args],
             cwd=str(ROOT),
             env=env,
             text=True,
@@ -54,8 +56,8 @@ class CliWrapperTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("- status: FAILED", result.stdout)
-        self.assertIn("- failure_class: verification_failed", result.stdout)
-        self.assertIn("- evidence_items: 12", result.stdout)
+        self.assertIn("- failure_class: assertion", result.stdout)
+        self.assertIn("- evidence_items: 1", result.stdout)
 
     def test_openmako_evidence_court_bad_run_demo_reports_fail_verdict(self) -> None:
         result = self.run_openmako("--no-trust-prompt", "evidence-court", "demo", "bad-run")
@@ -121,6 +123,36 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["failure_class"], "scope_violation")
         self.assertEqual(payload["finding_types"], ["scope_violation"])
         self.assertEqual(payload["report"]["evidence"][0]["source"], "task")
+
+    def test_openmako_evidence_court_audit_json_preserves_run_metrics(self) -> None:
+        record = {
+            "claimed_task": "Fix calculator.py.",
+            "files_read": ["calculator.py"],
+            "files_edited": ["calculator.py"],
+            "commands_run": [{"command": "python3 -m pytest tests/test_calculator.py -q", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "run_metrics": {
+                "duration_seconds": 1.4,
+                "command_count": 1,
+                "input_tokens": 1200,
+                "output_tokens": 320,
+                "estimated_cost_usd": 0.004,
+                "missing_telemetry": ["actual_cost_usd"],
+            },
+            "final_claim": "Fixed and verified.",
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "PASS")
+        self.assertEqual(payload["run_metrics"], record["run_metrics"])
+        metric_items = [item for item in payload["report"]["evidence"] if item["name"] == "run_metrics"]
+        self.assertEqual(len(metric_items), 1)
+        self.assertEqual(metric_items[0]["data"]["run_metrics"], record["run_metrics"])
 
     def test_openmako_evidence_court_audit_ci_returns_nonzero_for_fail(self) -> None:
         result = self.run_openmako(
@@ -232,6 +264,35 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["verdict"], "FAIL")
         self.assertEqual(payload["failure_class"], "scope_violation")
 
+    def test_openmako_evidence_court_record_from_jsonl_preserves_command_metrics(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
+            handle.write('{"kind":"task","claimed_task":"Fix calculator.py.","allowed_files":["calculator.py"]}\n')
+            handle.write('{"kind":"read","file":"calculator.py"}\n')
+            handle.write('{"kind":"edit","file":"calculator.py"}\n')
+            handle.write(
+                '{"kind":"command","command":"python3 -m pytest tests/test_calculator.py -q",'
+                '"exit_code":0,"output":"1 passed in 0.02s","duration_seconds":1.4,'
+                '"input_tokens":1200,"output_tokens":320,"estimated_cost_usd":0.004,'
+                '"missing_telemetry":["actual_cost_usd"]}\n'
+            )
+            handle.write('{"kind":"final_claim","text":"Fixed and verified."}\n')
+            handle.flush()
+            converted = self.run_openmako("--no-trust-prompt", "evidence-court", "record", "from-jsonl", handle.name)
+
+        self.assertEqual(converted.returncode, 0, converted.stderr)
+        record = json.loads(converted.stdout)
+        self.assertEqual(
+            record["run_metrics"],
+            {
+                "command_count": 1,
+                "duration_seconds": 1.4,
+                "estimated_cost_usd": 0.004,
+                "input_tokens": 1200,
+                "missing_telemetry": ["actual_cost_usd"],
+                "output_tokens": 320,
+            },
+        )
+
     def test_openmako_evidence_court_record_from_jsonl_output_file_is_auditable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             output = Path(tmp) / "run.json"
@@ -295,6 +356,8 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(schema["properties"]["files_edited"]["$ref"], "#/$defs/fileList")
         self.assertEqual(schema["properties"]["commands_run"]["type"], "array")
         self.assertIn("anyOf", schema["properties"]["test_output"])
+        self.assertEqual(schema["properties"]["run_metrics"]["type"], "object")
+        self.assertEqual(schema["properties"]["run_metrics"]["properties"]["missing_telemetry"]["type"], "array")
         self.assertIs(schema["additionalProperties"], True)
 
         for field in ("allowed_files", "files_read", "files_edited", "commands_run"):

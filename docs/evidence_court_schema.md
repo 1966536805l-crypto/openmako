@@ -18,6 +18,14 @@ The schema documents the supplied record shape; the CLI still audits only the ev
     {"command": "python3 -m pytest tests/test_calculator.py -q", "exit_code": 0}
   ],
   "test_output": "1 passed in 0.02s",
+  "run_metrics": {
+    "duration_seconds": 1.4,
+    "command_count": 1,
+    "input_tokens": 1200,
+    "output_tokens": 320,
+    "estimated_cost_usd": 0.004,
+    "missing_telemetry": ["actual_cost_usd"]
+  },
   "final_claim": "Fixed and verified."
 }
 ```
@@ -32,6 +40,7 @@ The schema documents the supplied record shape; the CLI still audits only the ev
 | `files_edited` | string array | Files the agent modified. |
 | `commands_run` | string array or command objects | Commands the record says were run. Command objects may include `command` and `exit_code`. |
 | `test_output` | string or object | Validation evidence. Objects may include `status`, `output`, `summary`, or `exit_code`. |
+| `run_metrics` | object | Optional telemetry supplied by the record: duration, command count, token counts, cost, provider/model, and `missing_telemetry`. It is preserved in JSON output but is not treated as validation proof. |
 | `final_claim` | string | Agent's final success or completion claim. |
 
 ## Verdict Boundary
@@ -63,6 +72,7 @@ The JSON envelope includes:
 - `failure_class`
 - `failed_at`
 - `finding_types`
+- `run_metrics`
 - `report`
 
 `--ci` returns `0` for `PASS` and `SUSPICIOUS`, and `1` for `FAIL`.
@@ -81,6 +91,9 @@ openmako evidence-court audit --ci --json run.json
 ```
 
 Supported event kinds are `task`, `read`, `edit`, `command`, and `final_claim`.
+`command` events may include `run_metrics` or direct telemetry fields such as
+`duration_seconds`, `input_tokens`, `output_tokens`, `total_tokens`,
+`estimated_cost_usd`, `provider`, `model`, and `missing_telemetry`.
 
 This is an evidence audit of the supplied record only. It does not prove that a
 command actually ran outside the record.

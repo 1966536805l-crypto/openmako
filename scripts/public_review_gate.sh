@@ -29,12 +29,14 @@ echo "public-review-gate: running public metadata boundary tests"
   -q
 
 echo "public-review-gate: recording Evidence Court bad-run fixture"
-./bin/openmako --no-trust-prompt evidence-court record from-jsonl \
+# Public equivalent: ./bin/openmako --no-trust-prompt evidence-court record from-jsonl
+"$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court record from-jsonl \
   --output "$TMP_DIR/run.json" examples/evidence_court/simple_events.jsonl
 
 echo "public-review-gate: auditing supplied Evidence Court record"
 set +e
-./bin/openmako --no-trust-prompt evidence-court audit --ci --json "$TMP_DIR/run.json" \
+# Public equivalent: ./bin/openmako --no-trust-prompt evidence-court audit --ci --json
+"$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court audit --ci --json "$TMP_DIR/run.json" \
   > "$TMP_DIR/audit.json"
 audit_exit=$?
 set -e

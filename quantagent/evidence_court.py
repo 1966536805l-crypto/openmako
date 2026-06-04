@@ -9,6 +9,19 @@ from .agent_autopsy import AgentAutopsyReport, AutopsyEvidence, AutopsyFinding, 
 
 BAD_RUN_FIXTURE = Path("tests/fixtures/agent_autopsy/agent_modified_test_failed")
 EVIDENCE_COURT_SCHEMA_VERSION = "evidence-court/v0.1"
+RUN_METRIC_FIELDS = (
+    "duration_seconds",
+    "command_count",
+    "input_tokens",
+    "output_tokens",
+    "total_tokens",
+    "estimated_cost_usd",
+    "actual_cost_usd",
+    "cost_usd",
+    "provider",
+    "model",
+    "missing_telemetry",
+)
 
 
 def build_bad_run_demo_report(project: str | Path) -> AgentAutopsyReport:
@@ -145,6 +158,7 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
     files_read = _string_list(payload.get("files_read"))
     files_edited = _string_list(payload.get("files_edited"))
     commands_run = _command_summaries(payload.get("commands_run"))
+    run_metrics = _run_metrics(payload.get("run_metrics"))
     test_status, test_summary = _test_output_status(payload.get("test_output"), payload.get("commands_run"))
 
     evidence: list[AutopsyEvidence] = [
@@ -211,6 +225,19 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
                 name="commands_run",
                 ok=True,
                 data={"commands": commands_run},
+            )
+        )
+    if run_metrics:
+        evidence.append(
+            AutopsyEvidence(
+                f"E{len(evidence) + 1}",
+                "run_metrics",
+                "metrics",
+                "Run metrics: " + _run_metrics_summary(run_metrics),
+                step=len(evidence),
+                name="run_metrics",
+                ok=True,
+                data={"run_metrics": run_metrics},
             )
         )
     if test_summary:
@@ -319,6 +346,7 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
     files_read: list[str] = []
     files_edited: list[str] = []
     commands_run: list[object] = []
+    run_metrics: dict[str, object] = {}
     test_output = ""
 
     for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
@@ -343,6 +371,9 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
                 if isinstance(event.get("exit_code"), int):
                     item["exit_code"] = event["exit_code"]
                 commands_run.append(item)
+            event_metrics = _event_run_metrics(event)
+            if event_metrics:
+                _merge_run_metrics(run_metrics, event_metrics)
             output = str(event.get("output") or event.get("summary") or "").strip()
             if output:
                 test_output = output
@@ -355,6 +386,10 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
     record["files_edited"] = files_edited
     record["commands_run"] = commands_run
     record["test_output"] = test_output
+    if run_metrics:
+        if commands_run and "command_count" not in run_metrics:
+            run_metrics["command_count"] = len(commands_run)
+        record["run_metrics"] = run_metrics
     return record
 
 
@@ -419,6 +454,7 @@ def dumps_evidence_court_json(report: AgentAutopsyReport) -> str:
         "failure_class": report.failure_class or "",
         "failed_at": report.failed_at,
         "finding_types": [item.finding_type for item in report.findings],
+        "run_metrics": _report_run_metrics(report),
         "report": report.to_dict(),
     }
     return json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
@@ -494,6 +530,71 @@ def _command_summaries(value: object) -> list[str]:
         else:
             raise ValueError("commands_run entries must be strings or command objects")
     return commands
+
+
+def _run_metrics(value: object) -> dict[str, object]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError("run_metrics must be an object")
+    metrics = dict(value)
+    if "missing_telemetry" in metrics:
+        missing = metrics["missing_telemetry"]
+        if not isinstance(missing, list) or not all(isinstance(item, str) for item in missing):
+            raise ValueError("run_metrics.missing_telemetry must be an array of strings")
+        metrics["missing_telemetry"] = [item for item in missing if item.strip()]
+    return metrics
+
+
+def _event_run_metrics(event: dict[str, object]) -> dict[str, object]:
+    metrics = _run_metrics(event.get("run_metrics"))
+    for field in RUN_METRIC_FIELDS:
+        if field in event:
+            metrics[field] = event[field]
+    if isinstance(event.get("tokens"), dict):
+        tokens = event["tokens"]
+        for field in ("input_tokens", "output_tokens", "total_tokens"):
+            if field in tokens and field not in metrics:
+                metrics[field] = tokens[field]
+    if "cost_usd" in metrics and "estimated_cost_usd" not in metrics:
+        metrics["estimated_cost_usd"] = metrics["cost_usd"]
+    return _run_metrics(metrics) if metrics else {}
+
+
+def _merge_run_metrics(target: dict[str, object], source: dict[str, object]) -> None:
+    for key, value in source.items():
+        if key == "missing_telemetry":
+            existing = target.get(key)
+            values: list[str] = []
+            if isinstance(existing, list):
+                values.extend(str(item) for item in existing)
+            if isinstance(value, list):
+                values.extend(str(item) for item in value)
+            target[key] = list(dict.fromkeys(item for item in values if item.strip()))
+        else:
+            target[key] = value
+
+
+def _report_run_metrics(report: AgentAutopsyReport) -> dict[str, object]:
+    item = next((evidence for evidence in report.evidence if evidence.name == "run_metrics"), None)
+    if item is None:
+        return {}
+    metrics = item.data.get("run_metrics")
+    return dict(metrics) if isinstance(metrics, dict) else {}
+
+
+def _run_metrics_summary(metrics: dict[str, object]) -> str:
+    parts: list[str] = []
+    for field in RUN_METRIC_FIELDS:
+        if field not in metrics:
+            continue
+        value = metrics[field]
+        if field == "missing_telemetry" and isinstance(value, list):
+            value = ",".join(str(item) for item in value) or "none"
+        parts.append(f"{field}={value}")
+    extra_fields = sorted(key for key in metrics if key not in RUN_METRIC_FIELDS)
+    parts.extend(f"{key}={metrics[key]}" for key in extra_fields)
+    return ", ".join(parts) if parts else "none supplied"
 
 
 def _event_files(event: dict[str, object]) -> list[str]:
