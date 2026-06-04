@@ -19,6 +19,8 @@ experiments, or agent-written summaries as public capability evidence.
 - Public proof card: https://github.com/1966536805l-crypto/openmako/issues/1
 - Technical boundary criticism request:
   https://github.com/1966536805l-crypto/openmako/issues/2
+- Structured technical boundary issue form:
+  https://github.com/1966536805l-crypto/openmako/issues/new?template=technical-boundary-check.yml
 - v0.1.0 release:
   https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0
 - Focused CI:
@@ -103,3 +105,6 @@ Suggested correction:
 
 Do not include endorsement, promotion, star, or repost language in the review.
 A useful comment is enough if it records the evidence checked.
+
+If you prefer a structured GitHub issue form, use:
+https://github.com/1966536805l-crypto/openmako/issues/new?template=technical-boundary-check.yml

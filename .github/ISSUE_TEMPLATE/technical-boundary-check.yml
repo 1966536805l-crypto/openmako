@@ -1,0 +1,81 @@
+name: Technical boundary check
+description: Report whether OpenMako v0.1 public claims match repository evidence.
+title: "Technical boundary check: "
+labels: technical-boundary, review
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for technical boundary criticism only. It is not an
+        endorsement request, promotion request, star request, or repost request.
+
+        Please check the reproduction guide first:
+        https://github.com/1966536805l-crypto/openmako/blob/main/docs/REPRODUCE_V0_1.md
+
+  - type: dropdown
+    id: verdict
+    attributes:
+      label: Verdict
+      description: Does the public v0.1 claim match the evidence you checked?
+      options:
+        - boundary clear
+        - overclaim
+        - unclear
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence_checked
+    attributes:
+      label: Evidence checked
+      description: List concrete files, commands, workflows, issues, release links, or output snippets.
+      placeholder: |
+        - README section:
+        - Command or workflow:
+        - Issue or release:
+        - Output snippet:
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction_result
+    attributes:
+      label: Reproduction result
+      description: State whether `./scripts/public_review_gate.sh` passed, failed, or was not run.
+      placeholder: |
+        Command:
+        Result:
+        Platform / Python version:
+    validations:
+      required: true
+
+  - type: textarea
+    id: mismatch
+    attributes:
+      label: Concrete mismatch or missing proof
+      description: If the boundary is unclear or overclaimed, identify the exact claim and missing evidence.
+      placeholder: |
+        Claim:
+        Evidence gap:
+        Why this matters:
+    validations:
+      required: false
+
+  - type: textarea
+    id: suggested_correction
+    attributes:
+      label: Suggested correction
+      description: Suggest the smallest README, docs, test, CI, release-note, or issue correction.
+      placeholder: |
+        Suggested file:
+        Suggested wording or test:
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Boundary confirmation
+      options:
+        - label: This issue is technical criticism only, not endorsement, promotion, star request, or repost request.
+          required: true

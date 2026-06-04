@@ -12,6 +12,8 @@ Current public proof:
 - External technical boundary criticism is requested in issue #2:
   `https://github.com/1966536805l-crypto/openmako/issues/2`.
   This is a review request, not evidence of endorsement or promotion.
+- A structured technical boundary issue form is available at:
+  `.github/ISSUE_TEMPLATE/technical-boundary-check.yml`.
 - A technical reviewer packet is available at:
   `docs/TECHNICAL_REVIEW_PACKET.md`.
 - A reproduction guide with exact local commands and expected public gate

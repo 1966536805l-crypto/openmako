@@ -124,6 +124,8 @@ def test_readme_links_public_proof_issue() -> None:
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in readme
     assert "Technical boundary criticism request" in readme
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in readme
+    assert "Technical boundary issue form" in readme
+    assert "issues/new?template=technical-boundary-check.yml" in readme
     assert "a review request rather than endorsement or promotion" in readme
     assert "Technical review packet" in readme
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in readme
@@ -142,6 +144,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert review_index < scope_index
     review_section = readme[review_index:scope_index]
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in review_section
+    assert "issues/new?template=technical-boundary-check.yml" in review_section
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in review_section
     assert "docs/REPRODUCE_V0_1.md" in review_section
     assert "docs/PUBLIC_SHARE_PACKET.md" in review_section
@@ -328,6 +331,7 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "External technical boundary criticism is requested in issue #2" in progress
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in progress
     assert "not evidence of endorsement or promotion" in progress
+    assert ".github/ISSUE_TEMPLATE/technical-boundary-check.yml" in progress
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in progress
     assert "docs/REPRODUCE_V0_1.md" in progress
     assert "docs/REVIEWER_OUTREACH_DRAFT.md" in progress
@@ -349,6 +353,7 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "star request" in packet
     assert "repost request" in packet
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in packet
+    assert "issues/new?template=technical-boundary-check.yml" in packet
     assert "docs/REVIEWER_OUTREACH_DRAFT.md" in packet
     assert "docs/REPRODUCE_V0_1.md" in packet
     assert "docs/PUBLIC_SHARE_PACKET.md" in packet
@@ -393,6 +398,27 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "It does not prove external endorsement." in guide
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in guide.lower()
+
+
+def test_github_issue_template_routes_boundary_criticism_without_promotion() -> None:
+    template = (ROOT / ".github" / "ISSUE_TEMPLATE" / "technical-boundary-check.yml").read_text(encoding="utf-8")
+
+    assert "Technical boundary check" in template
+    assert "Report whether OpenMako v0.1 public claims match repository evidence." in template
+    assert "technical boundary criticism only" in template
+    assert "not an\n        endorsement request, promotion request, star request, or repost request" in template
+    assert "docs/REPRODUCE_V0_1.md" in template
+    assert "boundary clear" in template
+    assert "overclaim" in template
+    assert "unclear" in template
+    assert "Evidence checked" in template
+    assert "Reproduction result" in template
+    assert "./scripts/public_review_gate.sh" in template
+    assert "Concrete mismatch or missing proof" in template
+    assert "Suggested correction" in template
+    assert "not endorsement, promotion, star request, or repost request" in template
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in template.lower()
 
 
 def test_public_share_packet_preserves_review_boundary_without_promotion() -> None:
