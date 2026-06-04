@@ -37,7 +37,7 @@ public-review-gate: running planner focused public test
 public-review-gate: running learning-effect focused public test
 1 passed
 public-review-gate: running public metadata boundary tests
-21 passed
+22 passed
 public-review-gate: recording Evidence Court bad-run fixture
 public-review-gate: auditing supplied Evidence Court record
 public-review-gate: PASS
