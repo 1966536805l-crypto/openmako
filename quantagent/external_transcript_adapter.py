@@ -174,6 +174,86 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
     return record
 
 
+def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) -> dict[str, object]:
+    path = Path(transcript_path).expanduser().resolve(strict=False)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("swe-agent transcript must be a JSON object")
+    steps = payload.get("trajectory") or payload.get("steps") or payload.get("history")
+    if not isinstance(steps, list):
+        raise ValueError("swe-agent transcript must include a trajectory, steps, or history array")
+
+    issue = payload.get("issue") if isinstance(payload.get("issue"), dict) else {}
+    record: dict[str, object] = {
+        "source_agent": str(payload.get("source_agent") or payload.get("source") or "swe-agent"),
+        "claimed_task": _first_text(payload.get("claimed_task"), payload.get("problem_statement"), issue.get("title"), issue.get("body")),
+        "allowed_files": _file_list(payload.get("allowed_files") or issue.get("allowed_files")),
+        "files_read": [],
+        "files_edited": [],
+        "commands_run": [],
+        "test_output": "",
+        "final_claim": "",
+    }
+    files_read: list[str] = []
+    files_edited: list[str] = []
+    commands_run: list[dict[str, object]] = []
+    run_metrics: dict[str, object] = {}
+    unsupported_fields: list[str] = []
+
+    for index, raw_step in enumerate(steps):
+        if not isinstance(raw_step, dict):
+            raise ValueError(f"swe-agent transcript step {index} must be an object")
+        step = dict(raw_step)
+        kind = str(step.get("type") or step.get("action") or step.get("event") or "").strip().lower()
+        tool = str(step.get("tool") or step.get("name") or "").strip().lower()
+        observation = step.get("observation") if isinstance(step.get("observation"), dict) else {}
+        _collect_unsupported_fields(step, index, unsupported_fields, prefix="trajectory")
+
+        if kind in {"message", "assistant_message", "final_response", "submit"}:
+            final_claim = _first_text(step.get("content"), step.get("message"), step.get("text"), step.get("answer"))
+            if final_claim:
+                record["final_claim"] = final_claim
+            continue
+        if kind in {"read", "file_read", "open_file"} or tool in {"open_file", "read_file", "view_file"}:
+            files_read.extend(_file_list(step.get("files") or step.get("file") or step.get("path") or observation))
+            continue
+        if kind in {"edit", "file_edit", "patch", "apply_patch"} or tool in {"edit", "apply_patch", "write_file"}:
+            files_edited.extend(_file_list(step.get("files") or step.get("file") or step.get("path") or observation))
+            continue
+        if kind in {"command", "shell", "run_tests"} or tool in {"bash", "shell", "run_tests", "exec"}:
+            command = _first_text(step.get("command"), step.get("cmd"), step.get("args"))
+            if command:
+                command_item: dict[str, object] = {"command": command}
+                exit_code = step.get("exit_code")
+                if not isinstance(exit_code, int):
+                    exit_code = observation.get("exit_code")
+                if isinstance(exit_code, int):
+                    command_item["exit_code"] = exit_code
+                commands_run.append(command_item)
+            output = _first_text(step.get("output"), step.get("stdout"), step.get("stderr"), observation.get("output"), observation.get("stdout"))
+            if output:
+                record["test_output"] = output
+            _merge_run_metrics(run_metrics, _extract_metrics(step))
+            continue
+        if kind or tool:
+            unsupported_fields.append(f"trajectory[{index}].type:{kind or tool}")
+
+    record["files_read"] = _dedupe(files_read)
+    record["files_edited"] = _dedupe(files_edited)
+    record["commands_run"] = commands_run
+    if run_metrics:
+        if commands_run and "command_count" not in run_metrics:
+            run_metrics["command_count"] = len(commands_run)
+        record["run_metrics"] = run_metrics
+    record["adapter_report"] = {
+        "source_format": "swe-agent-transcript/v0.1",
+        "unsupported_fields": _dedupe(unsupported_fields),
+        "missing_evidence": _missing_evidence(record),
+        "claim_boundary": "import-and-audit supplied transcript records only; not live SWE-agent control",
+    }
+    return record
+
+
 def _first_text(*values: object) -> str:
     for value in values:
         if isinstance(value, str) and value.strip():

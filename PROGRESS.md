@@ -78,6 +78,11 @@ Current public proof:
   supplied OpenHands-style event fixture into the same Evidence Court
   audit-record shape, records unsupported browser/UI payloads, and does not
   claim live OpenHands control or broad native transcript ingestion.
+- A third external-harness record adapter slice is available:
+  `openmako evidence-court record from-swe-agent-transcript`. It converts a
+  supplied SWE-agent-style trajectory fixture into the same Evidence Court
+  audit-record shape, records unsupported screenshot payloads, and does not
+  claim live SWE-agent control or broad native transcript ingestion.
 - `scripts/public_proof_card.sh` wraps the same gate and prints a
   screenshot-friendly proof card with commit, scope, non-proof boundaries,
   review issue, and external-review record form.

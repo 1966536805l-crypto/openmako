@@ -437,6 +437,47 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["verdict"], "FAIL")
         self.assertEqual(payload["failure_class"], "scope_violation")
 
+    def test_openmako_evidence_court_record_from_swe_agent_transcript_builds_auditable_record(self) -> None:
+        converted = self.run_openmako(
+            "--no-trust-prompt",
+            "evidence-court",
+            "record",
+            "from-swe-agent-transcript",
+            "examples/evidence_court/swe_agent_transcript.json",
+        )
+
+        self.assertEqual(converted.returncode, 0, converted.stderr)
+        record = json.loads(converted.stdout)
+        self.assertEqual(record["source_agent"], "swe-agent")
+        self.assertEqual(record["allowed_files"], ["calculator.py"])
+        self.assertEqual(record["files_read"], ["calculator.py"])
+        self.assertEqual(record["files_edited"], ["calculator.py", "tests/test_calculator.py"])
+        self.assertEqual(record["commands_run"], [{"command": "python3 -m pytest tests/test_calculator.py -q", "exit_code": 0}])
+        self.assertEqual(record["test_output"], "1 passed in 0.02s")
+        self.assertEqual(
+            record["run_metrics"],
+            {
+                "command_count": 1,
+                "duration_seconds": 2.1,
+                "missing_telemetry": ["actual_cost_usd"],
+                "total_tokens": 2500,
+            },
+        )
+        self.assertEqual(record["adapter_report"]["source_format"], "swe-agent-transcript/v0.1")
+        self.assertEqual(record["adapter_report"]["missing_evidence"], [])
+        self.assertIn("trajectory[2].screenshot_path", record["adapter_report"]["unsupported_fields"])
+        self.assertIn("not live SWE-agent control", record["adapter_report"]["claim_boundary"])
+
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            audited = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+        self.assertEqual(audited.returncode, 0, audited.stderr)
+        payload = json.loads(audited.stdout)
+        self.assertEqual(payload["verdict"], "FAIL")
+        self.assertEqual(payload["failure_class"], "scope_violation")
+
     def test_openmako_evidence_court_audit_does_not_misread_zero_failed_summary(self) -> None:
         record = {
             "claimed_task": "Fix calculator.py.",
