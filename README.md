@@ -134,6 +134,8 @@ qagent --help
 | Evidence | Where |
 | --- | --- |
 | Public proof card | [issue #1](https://github.com/1966536805l-crypto/openmako/issues/1) |
+| Technical boundary criticism request | [issue #2](https://github.com/1966536805l-crypto/openmako/issues/2), a review request rather than endorsement or promotion |
+| Technical review packet | [`docs/TECHNICAL_REVIEW_PACKET.md`](docs/TECHNICAL_REVIEW_PACKET.md) |
 | v0.1 release | [release v0.1.0](https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0) |
 | Focused public CI | [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml) |
 | Learning-effect gate | [`quantagent/learning_effect_coding_bench.py`](quantagent/learning_effect_coding_bench.py) |

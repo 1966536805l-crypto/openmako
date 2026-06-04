@@ -121,6 +121,11 @@ def test_readme_links_public_proof_issue() -> None:
 
     assert "Public proof card" in readme
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in readme
+    assert "Technical boundary criticism request" in readme
+    assert "https://github.com/1966536805l-crypto/openmako/issues/2" in readme
+    assert "a review request rather than endorsement or promotion" in readme
+    assert "Technical review packet" in readme
+    assert "docs/TECHNICAL_REVIEW_PACKET.md" in readme
 
 
 def test_readme_has_runnable_bad_run_demo() -> None:
@@ -295,9 +300,55 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
 
     assert "public status boundary" in progress
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in progress
+    assert "External technical boundary criticism is requested in issue #2" in progress
+    assert "https://github.com/1966536805l-crypto/openmako/issues/2" in progress
+    assert "not evidence of endorsement or promotion" in progress
+    assert "docs/TECHNICAL_REVIEW_PACKET.md" in progress
+    assert "docs/REVIEWER_OUTREACH_DRAFT.md" in progress
     assert "stale internal notes" in progress
     for forbidden in FORBIDDEN_PUBLIC_PROGRESS_CLAIMS:
         assert forbidden not in progress
+
+
+def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
+    packet = (ROOT / "docs" / "TECHNICAL_REVIEW_PACKET.md").read_text(encoding="utf-8")
+
+    assert "OpenMako v0.1 Technical Review Packet" in packet
+    assert "not an endorsement request" in packet
+    assert "promotion request" in packet
+    assert "star request" in packet
+    assert "repost request" in packet
+    assert "https://github.com/1966536805l-crypto/openmako/issues/2" in packet
+    assert "docs/REVIEWER_OUTREACH_DRAFT.md" in packet
+    assert "tests/test_agent_planner_contract.py::AgentPlannerContractTest" in packet
+    assert "tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest" in packet
+    assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in packet
+    assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in packet
+    assert "does not claim native Claude Code" in packet
+    assert "Does README claim more than the focused tests and CI prove?" in packet
+    assert "A useful review points to a specific file, line, command, workflow, or missing\nartifact." in packet
+    assert "10000" not in packet
+    assert "10,000" not in packet
+    assert "大咖" not in packet
+
+
+def test_reviewer_outreach_draft_requests_criticism_not_promotion() -> None:
+    draft = (ROOT / "docs" / "REVIEWER_OUTREACH_DRAFT.md").read_text(encoding="utf-8")
+
+    assert "Reviewer Outreach Draft" in draft
+    assert "technical boundary criticism" in draft
+    assert "https://github.com/1966536805l-crypto/openmako/issues/2" in draft
+    assert "docs/TECHNICAL_REVIEW_PACKET.md" in draft
+    assert "I'm not asking for endorsement, stars, reposts, or promotion." in draft
+    assert "specific file, line, command, workflow, or missing artifact" in draft
+    assert "Only after a reviewer has independently said the boundary is clear" in draft
+    assert "Do not ask them to promote the project." in draft
+    assert "public technical critique on issue #2" in draft
+    assert "please star" not in draft.lower()
+    assert "please repost" not in draft.lower()
+    assert "10,000" not in draft
+    assert "10000" not in draft
+    assert "大咖" not in draft
 
 
 def test_root_agent_notes_match_public_evidence_boundary() -> None:

@@ -9,6 +9,13 @@ Current public proof:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:
   `https://github.com/1966536805l-crypto/openmako/issues/1`.
+- External technical boundary criticism is requested in issue #2:
+  `https://github.com/1966536805l-crypto/openmako/issues/2`.
+  This is a review request, not evidence of endorsement or promotion.
+- A technical reviewer packet is available at:
+  `docs/TECHNICAL_REVIEW_PACKET.md`.
+- A non-promotional reviewer outreach draft is available at:
+  `docs/REVIEWER_OUTREACH_DRAFT.md`.
 - GitHub Actions runs the focused gate through `.github/workflows/focused.yml`.
 - GitHub Actions also runs the supplied-record Evidence Court demo through
   `.github/workflows/evidence-court-demo.yml`.
