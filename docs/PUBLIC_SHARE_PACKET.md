@@ -31,6 +31,25 @@ I would review the boundary before treating it as evidence for broader agent
 capability.
 ```
 
+## Short Public Posts
+
+Use short posts only as a technical review request. Do not use them as a launch
+claim, endorsement request, star request, or repost request.
+
+### Technical Review Request
+
+```text
+OpenMako v0.1 is a narrow evidence harness for coding-agent repair runs: learning-effect gate, patch-scope checks, test-proof checks, and Evidence Court for supplied records. Looking for technical boundary criticism: https://github.com/1966536805l-crypto/openmako/issues/2
+```
+
+### Boundary-Clear Follow-Up
+
+Use this only after a named reviewer has publicly said the boundary is clear.
+
+```text
+OpenMako v0.1's narrow public claim has external boundary feedback. It is still an evidence harness, not a broad agent benchmark. Reproduce it with ./scripts/public_review_gate.sh before treating it as proof of anything broader.
+```
+
 ## Do Not Say
 
 - Do not say it proves broad unknown-repository SWE repair.

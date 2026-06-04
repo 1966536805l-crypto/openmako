@@ -347,6 +347,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "minimal issue-comment template" in progress
     assert "scripts/public_review_gate.sh" in progress
     assert "docs/PUBLIC_SHARE_PACKET.md" in progress
+    assert "<=280 character technical\n  review post" in progress
+    assert "blocks\n  general-influencer outreach until at least one public technical boundary\n  review exists" in progress
     assert "stale internal notes" in progress
     for forbidden in FORBIDDEN_PUBLIC_PROGRESS_CLAIMS:
         assert forbidden not in progress
@@ -465,6 +467,13 @@ def test_public_share_packet_preserves_review_boundary_without_promotion() -> No
 
     assert "OpenMako Public Share Packet" in share_packet
     assert "not endorsement, promotion, star request, or repost request" in share_packet
+    assert "## Short Public Posts" in share_packet
+    assert "Use short posts only as a technical review request" in share_packet
+    assert "### Technical Review Request" in share_packet
+    assert "Looking for technical boundary criticism" in share_packet
+    assert "### Boundary-Clear Follow-Up" in share_packet
+    assert "Use this only after a named reviewer has publicly said the boundary is clear." in share_packet
+    assert "not a broad agent benchmark" in share_packet
     assert "focused learning-effect gate" in share_packet
     assert "patch-scope discipline" in share_packet
     assert "test-proof evidence" in share_packet
@@ -477,6 +486,13 @@ def test_public_share_packet_preserves_review_boundary_without_promotion() -> No
     assert "Do not say it replaces Claude Code, Codex, Cursor, Devin, or other agents." in share_packet
     assert "Do not ask readers to star, repost, or promote the repository." in share_packet
     assert "technical critique that links a concrete" in share_packet
+    short_post_match = re.search(
+        r"### Technical Review Request\n\n```text\n(?P<post>.*?)\n```",
+        share_packet,
+        flags=re.DOTALL,
+    )
+    assert short_post_match, "public share packet must include a short technical review post"
+    assert len(short_post_match.group("post")) <= 280
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in share_packet.lower()
 
@@ -510,6 +526,10 @@ def test_reviewer_outreach_draft_requests_criticism_not_promotion() -> None:
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in draft
     assert "docs/PUBLIC_SHARE_PACKET.md" in draft
     assert "I'm not asking for endorsement, stars, reposts, or promotion." in draft
+    assert "## Who To Send First" in draft
+    assert "Maintainers or reviewers of coding-agent eval, benchmark, or CI tooling." in draft
+    assert "agent reliability, test evidence, or\n   benchmark methodology" in draft
+    assert "Do not send to general influencers before at least one public technical boundary\nreview exists." in draft
     assert "specific file, line, command, workflow, or missing artifact" in draft
     assert "Only after a reviewer has independently said the boundary is clear" in draft
     assert "Do not ask them to promote the project." in draft

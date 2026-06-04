@@ -29,6 +29,12 @@ Current public proof:
   Evidence Court bad-run audit.
 - `docs/PUBLIC_SHARE_PACKET.md` provides boundary-preserving public wording for
   reviewers who independently choose to discuss the project.
+- `docs/PUBLIC_SHARE_PACKET.md` also includes a <=280 character technical
+  review post and a boundary-clear follow-up that must not be used before a
+  named reviewer gives public feedback.
+- `docs/REVIEWER_OUTREACH_DRAFT.md` defines who to contact first and blocks
+  general-influencer outreach until at least one public technical boundary
+  review exists.
 - GitHub Actions runs the focused gate through `.github/workflows/focused.yml`.
 - GitHub Actions also runs the supplied-record Evidence Court demo through
   `.github/workflows/evidence-court-demo.yml`.

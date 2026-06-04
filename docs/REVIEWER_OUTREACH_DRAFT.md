@@ -30,6 +30,19 @@ I'm not asking for endorsement, stars, reposts, or promotion. A critical comment
 pointing to a specific file, line, command, workflow, or missing artifact would
 be more useful.
 
+## Who To Send First
+
+Send this first to people who can check the technical boundary, not to general
+influencers.
+
+1. Maintainers or reviewers of coding-agent eval, benchmark, or CI tooling.
+2. Engineers who publicly write about agent reliability, test evidence, or
+   benchmark methodology.
+3. OSS maintainers who have criticized agent overclaiming or weak proof.
+
+Do not send to general influencers before at least one public technical boundary
+review exists.
+
 ## Follow-Up Rule
 
 Only after a reviewer has independently said the boundary is clear, ask whether
