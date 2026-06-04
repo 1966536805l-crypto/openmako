@@ -99,6 +99,81 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
     return record
 
 
+def build_audit_record_from_openhands_transcript(transcript_path: str | Path) -> dict[str, object]:
+    path = Path(transcript_path).expanduser().resolve(strict=False)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("openhands transcript must be a JSON object")
+    events = payload.get("events") or payload.get("history") or payload.get("steps")
+    if not isinstance(events, list):
+        raise ValueError("openhands transcript must include an events, history, or steps array")
+
+    metadata = payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {}
+    record: dict[str, object] = {
+        "source_agent": str(payload.get("source_agent") or payload.get("source") or "openhands"),
+        "claimed_task": _first_text(payload.get("claimed_task"), payload.get("goal"), metadata.get("task"), metadata.get("goal")),
+        "allowed_files": _file_list(payload.get("allowed_files") or metadata.get("allowed_files")),
+        "files_read": [],
+        "files_edited": [],
+        "commands_run": [],
+        "test_output": "",
+        "final_claim": "",
+    }
+    files_read: list[str] = []
+    files_edited: list[str] = []
+    commands_run: list[dict[str, object]] = []
+    run_metrics: dict[str, object] = {}
+    unsupported_fields: list[str] = []
+
+    for index, raw_event in enumerate(events):
+        if not isinstance(raw_event, dict):
+            raise ValueError(f"openhands transcript event {index} must be an object")
+        event = dict(raw_event)
+        kind = str(event.get("event") or event.get("type") or event.get("action") or "").strip().lower()
+        _collect_unsupported_fields(event, index, unsupported_fields, prefix="events")
+
+        if kind in {"message", "assistant_message", "agent_message", "final_response"}:
+            final_claim = _first_text(event.get("content"), event.get("message"), event.get("text"))
+            if final_claim:
+                record["final_claim"] = final_claim
+            continue
+        if kind in {"read", "file_read", "view_file", "read_file"}:
+            files_read.extend(_file_list(event.get("files") or event.get("file") or event.get("path")))
+            continue
+        if kind in {"edit", "file_edit", "write_file", "apply_patch", "patch"}:
+            files_edited.extend(_file_list(event.get("files") or event.get("file") or event.get("path")))
+            continue
+        if kind in {"command", "shell", "run_command", "execute"}:
+            command = _first_text(event.get("command"), event.get("cmd"), event.get("args"))
+            if command:
+                command_item: dict[str, object] = {"command": command}
+                if isinstance(event.get("exit_code"), int):
+                    command_item["exit_code"] = event["exit_code"]
+                commands_run.append(command_item)
+            output = _first_text(event.get("stdout"), event.get("output"), event.get("summary"), event.get("stderr"))
+            if output:
+                record["test_output"] = output
+            _merge_run_metrics(run_metrics, _extract_metrics(event))
+            continue
+        if kind:
+            unsupported_fields.append(f"events[{index}].type:{kind}")
+
+    record["files_read"] = _dedupe(files_read)
+    record["files_edited"] = _dedupe(files_edited)
+    record["commands_run"] = commands_run
+    if run_metrics:
+        if commands_run and "command_count" not in run_metrics:
+            run_metrics["command_count"] = len(commands_run)
+        record["run_metrics"] = run_metrics
+    record["adapter_report"] = {
+        "source_format": "openhands-transcript/v0.1",
+        "unsupported_fields": _dedupe(unsupported_fields),
+        "missing_evidence": _missing_evidence(record),
+        "claim_boundary": "import-and-audit supplied transcript records only; not live OpenHands control",
+    }
+    return record
+
+
 def _first_text(*values: object) -> str:
     for value in values:
         if isinstance(value, str) and value.strip():
@@ -165,10 +240,10 @@ def _merge_run_metrics(target: dict[str, object], source: dict[str, object]) -> 
             target[key] = value
 
 
-def _collect_unsupported_fields(item: Mapping[str, object], index: int, unsupported: list[str]) -> None:
+def _collect_unsupported_fields(item: Mapping[str, object], index: int, unsupported: list[str], *, prefix: str = "items") -> None:
     for key in ("screenshot_path", "browser_snapshot", "ui_snapshot", "raw_dom", "image"):
         if key in item:
-            unsupported.append(f"items[{index}].{key}")
+            unsupported.append(f"{prefix}[{index}].{key}")
 
 
 def _missing_evidence(record: Mapping[str, object]) -> list[str]:

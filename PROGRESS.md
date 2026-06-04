@@ -73,6 +73,11 @@ Current public proof:
   Codex transcript fixture into the existing Evidence Court audit-record shape,
   records unsupported fields and missing evidence in `adapter_report`, and does
   not claim live Codex control or broad native transcript ingestion.
+- A second external-harness record adapter slice is available:
+  `openmako evidence-court record from-openhands-transcript`. It converts a
+  supplied OpenHands-style event fixture into the same Evidence Court
+  audit-record shape, records unsupported browser/UI payloads, and does not
+  claim live OpenHands control or broad native transcript ingestion.
 - `scripts/public_proof_card.sh` wraps the same gate and prints a
   screenshot-friendly proof card with commit, scope, non-proof boundaries,
   review issue, and external-review record form.
