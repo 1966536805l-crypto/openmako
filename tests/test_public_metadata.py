@@ -794,6 +794,10 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
     assert "cost/version/proof metadata" in text
     assert "patch shape needs to be part of the evidence" in text
     assert "evaluation rules change" in text
+    assert "visible audit metadata showing which rule version produced each artifact" in text
+    assert "does not ingest native OpenHands/SWTBench artifacts" in text
+    assert "does not ingest native OpenHands/SWTBench artifacts or solve historical re-scoring" in text
+    assert "boundary checklist for what metadata would need to be preserved" in text
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()

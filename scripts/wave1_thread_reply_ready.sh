@@ -71,9 +71,9 @@ EOF
     ;;
   openhands-benchmarks-718)
     cat <<'EOF'
-The comparability problem here is the part I am trying to make explicit: when evaluation rules change, old runs need an audit trail instead of being silently treated as comparable.
+The comparability problem here is the part I am trying to make explicit: when evaluation rules change, old runs need visible audit metadata showing which rule version produced each artifact.
 
-OpenMako only covers a narrow supplied-record audit today, but I would like criticism on whether that boundary is clear enough:
+OpenMako only covers a narrow supplied-record audit today; it does not ingest native OpenHands/SWTBench artifacts or solve historical re-scoring. I am using it as a boundary checklist for what metadata would need to be preserved. Criticism on whether that boundary is clear enough would help:
 https://github.com/1966536805l-crypto/openmako/issues/2
 EOF
     ;;
