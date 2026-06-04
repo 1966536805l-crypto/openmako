@@ -1,0 +1,73 @@
+name: Technical boundary review
+description: Check whether an OpenMako claim matches the repo evidence.
+title: "Technical boundary review: "
+labels: ["technical-boundary", "review-wanted"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for boundary criticism, not endorsement.
+
+        Good reports point to a specific claim, command, artifact, or file and explain
+        whether the evidence proves it, contradicts it, or is still missing.
+  - type: dropdown
+    id: claim_area
+    attributes:
+      label: Claim area
+      description: Which claim should be reviewed?
+      options:
+        - Evidence Court v0.1 supplied-record audit
+        - Autonomy stop-rule candidate
+        - README / public wording
+        - Capability evidence score
+        - Other bounded claim
+    validations:
+      required: true
+  - type: textarea
+    id: claim_text
+    attributes:
+      label: Claim text or file
+      description: Paste the exact claim, or link the file/section to review.
+      placeholder: "Example: README says ..."
+    validations:
+      required: true
+  - type: textarea
+    id: evidence_checked
+    attributes:
+      label: Evidence checked
+      description: List files, commands, logs, artifacts, or CI runs you checked.
+      placeholder: |
+        - docs/PUBLIC_REVIEW_ENTRYPOINTS.md
+        - bash scripts/evidence_court_smoke.sh
+        - tests/test_agent_loop_core.py
+    validations:
+      required: true
+  - type: dropdown
+    id: verdict
+    attributes:
+      label: Boundary verdict
+      options:
+        - Claim matches evidence
+        - Claim is too broad
+        - Evidence is missing or indirect
+        - Wording is confusing
+        - Cannot reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: issue_detail
+    attributes:
+      label: Detail
+      description: Explain the smallest correction or missing proof.
+      placeholder: |
+        The README says X, but the current evidence only proves Y.
+        Suggested correction: ...
+    validations:
+      required: true
+  - type: checkboxes
+    id: non_endorsement
+    attributes:
+      label: Non-endorsement boundary
+      options:
+        - label: I am reporting technical boundary feedback, not giving endorsement, promotion, or star-bait.
+          required: true
