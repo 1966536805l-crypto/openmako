@@ -5,8 +5,10 @@ It is not proof that outreach happened.
 It is not evidence of endorsement, stars, reposts, or external review.
 
 Use this only after `bash scripts/public_review_gate.sh` passes on the current
-checkout. Send one short note at a time. Do not create a new issue in another
-project unless the project norms allow meta/tooling review requests there.
+checkout. To generate a checked message, run
+`bash scripts/wave1_send_ready.sh TARGET`. Send one short note at a time. Do not
+create a new issue in another project unless the project norms allow
+meta/tooling review requests there.
 
 ## Verified Public Surfaces
 

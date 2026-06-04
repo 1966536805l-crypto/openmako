@@ -1,6 +1,7 @@
 import ast
 import re
 import subprocess
+import tempfile
 from pathlib import Path
 
 
@@ -149,6 +150,8 @@ def test_readme_links_public_proof_issue() -> None:
     assert "docs/WAVE1_PUBLIC_TARGET_QUEUE.md" in readme
     assert "Wave 1 short-message helper" in readme
     assert "bash scripts/wave1_review_request.sh swe-agent" in readme
+    assert "Wave 1 send-ready check" in readme
+    assert "bash scripts/wave1_send_ready.sh swe-agent" in readme
     assert "Public share packet" in readme
     assert "docs/PUBLIC_SHARE_PACKET.md" in readme
 
@@ -185,6 +188,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "docs/WAVE1_REVIEW_REQUESTS.md" in review_section
     assert "docs/WAVE1_PUBLIC_TARGET_QUEUE.md" in review_section
     assert "bash scripts/wave1_review_request.sh swe-agent" in review_section
+    assert "bash scripts/wave1_send_ready.sh swe-agent" in review_section
     assert "docs/PUBLIC_SHARE_PACKET.md" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml" in review_section
@@ -391,6 +395,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "not proof that messages\n  were sent or that anyone reviewed the project" in progress
     assert "bash scripts/wave1_review_request.sh" in progress
     assert "without sending messages or recording outreach as evidence" in progress
+    assert "bash scripts/wave1_send_ready.sh" in progress
+    assert "runs the public review gate before printing\n  a target-specific Wave 1 short message" in progress
     assert "technical review entry points before the v0.1 scope section" in progress
     assert "`60-Second Proof` section before the review links" in progress
     assert "minimal issue-comment template" in progress
@@ -707,8 +713,10 @@ def test_wave1_public_target_queue_tracks_reachable_surfaces_without_claiming_ou
     assert "not proof that outreach happened" in queue
     assert "not evidence of endorsement, stars, reposts, or external review" in queue
     assert "bash scripts/public_review_gate.sh" in queue
+    assert "bash scripts/wave1_send_ready.sh TARGET" in queue
     assert "Send one short note at a time." in queue
-    assert "Do not create a new issue in another\nproject unless the project norms allow" in queue
+    assert "Do not\ncreate a new issue in another project" in queue
+    assert "project norms allow\nmeta/tooling review requests" in queue
     assert "https://github.com/SWE-agent/SWE-agent/issues" in queue
     assert "Issues page reachable; discussions page not public." in queue
     assert "https://github.com/harbor-framework/terminal-bench/discussions" in queue
@@ -723,6 +731,59 @@ def test_wave1_public_target_queue_tracks_reachable_surfaces_without_claiming_ou
     assert "Stop outreach and fix the repository first" in queue
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in queue.lower()
+
+
+def test_wave1_send_ready_script_gates_before_printing_message() -> None:
+    script = ROOT / "scripts" / "wave1_send_ready.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert "Runs the public review gate" in text
+    assert "This does not send messages, create issues" in text
+    assert "bash scripts/public_review_gate.sh" in text
+    assert "bash scripts/wave1_review_request.sh \"$target\"" in text
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in text.lower()
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_root = Path(tmp)
+        scripts = tmp_root / "scripts"
+        scripts.mkdir()
+        (scripts / "wave1_send_ready.sh").write_text(text, encoding="utf-8")
+        (scripts / "public_review_gate.sh").write_text(
+            "#!/usr/bin/env bash\nset -euo pipefail\necho stub-gate-pass\n",
+            encoding="utf-8",
+        )
+        (scripts / "wave1_review_request.sh").write_text(
+            "#!/usr/bin/env bash\nset -euo pipefail\necho stub-message-$1\n",
+            encoding="utf-8",
+        )
+        for path in scripts.iterdir():
+            path.chmod(path.stat().st_mode | 0o111)
+
+        result = subprocess.run(
+            ["bash", str(scripts / "wave1_send_ready.sh"), "swe-agent"],
+            cwd=tmp_root,
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        assert result.returncode == 0
+        assert "stub-gate-pass" in result.stdout
+        assert "wave1-send-ready: target=swe-agent" in result.stdout
+        assert "stub-message-swe-agent" in result.stdout
+        assert result.stdout.index("stub-gate-pass") < result.stdout.index("stub-message-swe-agent")
+
+        unknown = subprocess.run(
+            ["bash", str(scripts / "wave1_send_ready.sh"), "unknown"],
+            cwd=tmp_root,
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        assert unknown.returncode == 2
+        assert "unknown target: unknown" in unknown.stderr
 
 
 def test_wave1_review_requests_are_copyable_without_promotion() -> None:

@@ -61,6 +61,7 @@ For technical reviewers, start here before reading older implementation paths:
 - Wave 1 review requests: [`docs/WAVE1_REVIEW_REQUESTS.md`](docs/WAVE1_REVIEW_REQUESTS.md).
 - Wave 1 public target queue: [`docs/WAVE1_PUBLIC_TARGET_QUEUE.md`](docs/WAVE1_PUBLIC_TARGET_QUEUE.md).
 - Wave 1 short-message helper: `bash scripts/wave1_review_request.sh swe-agent`.
+- Wave 1 send-ready check: `bash scripts/wave1_send_ready.sh swe-agent`.
 - Public share packet: [`docs/PUBLIC_SHARE_PACKET.md`](docs/PUBLIC_SHARE_PACKET.md).
 - Public proof card: [issue #1](https://github.com/1966536805l-crypto/openmako/issues/1).
 - Focused public CI: [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml).
