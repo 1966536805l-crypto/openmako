@@ -40,6 +40,7 @@ https://github.com/1966536805l-crypto/openmako/issues/new?template=external-revi
 
 - Repository: `https://github.com/1966536805l-crypto/openmako`
 - Review issue: `https://github.com/1966536805l-crypto/openmako/issues/2`
+- Public target queue: `docs/WAVE1_PUBLIC_TARGET_QUEUE.md`
 - Wave 1 request copy: `docs/WAVE1_REVIEW_REQUESTS.md`
 - Reproduction guide: `docs/REPRODUCE_V0_1.md`
 - Technical review packet: `docs/TECHNICAL_REVIEW_PACKET.md`

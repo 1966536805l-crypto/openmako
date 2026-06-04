@@ -145,6 +145,8 @@ def test_readme_links_public_proof_issue() -> None:
     assert "docs/REVIEWER_TARGETS.md" in readme
     assert "Wave 1 review requests" in readme
     assert "docs/WAVE1_REVIEW_REQUESTS.md" in readme
+    assert "Wave 1 public target queue" in readme
+    assert "docs/WAVE1_PUBLIC_TARGET_QUEUE.md" in readme
     assert "Wave 1 short-message helper" in readme
     assert "bash scripts/wave1_review_request.sh swe-agent" in readme
     assert "Public share packet" in readme
@@ -181,6 +183,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "docs/AGENT_TREND_RADAR.md" in review_section
     assert "docs/REVIEWER_TARGETS.md" in review_section
     assert "docs/WAVE1_REVIEW_REQUESTS.md" in review_section
+    assert "docs/WAVE1_PUBLIC_TARGET_QUEUE.md" in review_section
     assert "bash scripts/wave1_review_request.sh swe-agent" in review_section
     assert "docs/PUBLIC_SHARE_PACKET.md" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in review_section
@@ -383,6 +386,9 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "marks them as non-claims until code, fixtures,\n  and CI exist" in progress
     assert "docs/WAVE1_REVIEW_REQUESTS.md" in progress
     assert "not proof that outreach, review, endorsement, stars, or reposts happened" in progress
+    assert "docs/WAVE1_PUBLIC_TARGET_QUEUE.md" in progress
+    assert "reachable public surfaces" in progress
+    assert "not proof that messages\n  were sent or that anyone reviewed the project" in progress
     assert "bash scripts/wave1_review_request.sh" in progress
     assert "without sending messages or recording outreach as evidence" in progress
     assert "technical review entry points before the v0.1 scope section" in progress
@@ -673,6 +679,7 @@ def test_reviewer_target_map_prioritizes_public_technical_review() -> None:
     assert "Do not ask for stars, reposts,\npromotion, or endorsement." in targets
     assert "issues/new?template=external-review-record.yml" in targets
     assert "Wave 1 request copy: `docs/WAVE1_REVIEW_REQUESTS.md`" in targets
+    assert "Public target queue: `docs/WAVE1_PUBLIC_TARGET_QUEUE.md`" in targets
     assert "| 1 | SWE-bench / SWE-agent researchers and users |" in targets
     assert "https://arxiv.org/abs/2310.06770" in targets
     assert "https://github.com/swe-agent/swe-agent" in targets
@@ -691,6 +698,31 @@ def test_reviewer_target_map_prioritizes_public_technical_review() -> None:
     assert "Stop outreach and fix the repository first" in targets
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in targets.lower()
+
+
+def test_wave1_public_target_queue_tracks_reachable_surfaces_without_claiming_outreach() -> None:
+    queue = (ROOT / "docs" / "WAVE1_PUBLIC_TARGET_QUEUE.md").read_text(encoding="utf-8")
+
+    assert "OpenMako Wave 1 Public Target Queue" in queue
+    assert "not proof that outreach happened" in queue
+    assert "not evidence of endorsement, stars, reposts, or external review" in queue
+    assert "bash scripts/public_review_gate.sh" in queue
+    assert "Send one short note at a time." in queue
+    assert "Do not create a new issue in another\nproject unless the project norms allow" in queue
+    assert "https://github.com/SWE-agent/SWE-agent/issues" in queue
+    assert "Issues page reachable; discussions page not public." in queue
+    assert "https://github.com/harbor-framework/terminal-bench/discussions" in queue
+    assert "Discussions page reachable; issues page also reachable." in queue
+    assert "https://github.com/Aider-AI/aider/issues" in queue
+    assert "https://github.com/OpenHands/OpenHands/issues" in queue
+    assert "bash scripts/wave1_review_request.sh swe-agent" in queue
+    assert "bash scripts/wave1_review_request.sh terminal-bench" in queue
+    assert "bash scripts/wave1_review_request.sh aider" in queue
+    assert "bash scripts/wave1_review_request.sh openhands" in queue
+    assert "Do not ask for stars, reposts, promotion, endorsement" in queue
+    assert "Stop outreach and fix the repository first" in queue
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in queue.lower()
 
 
 def test_wave1_review_requests_are_copyable_without_promotion() -> None:

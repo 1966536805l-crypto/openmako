@@ -35,6 +35,9 @@ Current public proof:
 - Wave 1 copyable review requests are available at:
   `docs/WAVE1_REVIEW_REQUESTS.md`. They target technical reviewers only and are
   not proof that outreach, review, endorsement, stars, or reposts happened.
+- `docs/WAVE1_PUBLIC_TARGET_QUEUE.md` lists reachable public surfaces for the
+  first technical-boundary review pass. It is a queue, not proof that messages
+  were sent or that anyone reviewed the project.
 - `bash scripts/wave1_review_request.sh` prints the same Wave 1 short messages
   by target ecosystem without sending messages or recording outreach as evidence.
 - The README exposes issue #2, the technical review packet, and focused CI as
