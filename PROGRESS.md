@@ -38,6 +38,9 @@ Current public proof:
 - `docs/WAVE1_PUBLIC_TARGET_QUEUE.md` lists reachable public surfaces for the
   first technical-boundary review pass. It is a queue, not proof that messages
   were sent or that anyone reviewed the project.
+- `docs/WAVE1_PUBLIC_TARGET_QUEUE.md` also lists existing public threads to
+  inspect before posting. Those threads are reading candidates, not approved
+  posting targets, outreach evidence, endorsement, stars, or reposts.
 - `bash scripts/wave1_review_request.sh` prints the same Wave 1 short messages
   by target ecosystem without sending messages or recording outreach as evidence.
 - `bash scripts/wave1_send_ready.sh` runs the public review gate before printing

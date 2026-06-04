@@ -723,6 +723,24 @@ def test_wave1_public_target_queue_tracks_reachable_surfaces_without_claiming_ou
     assert "Discussions page reachable; issues page also reachable." in queue
     assert "https://github.com/Aider-AI/aider/issues" in queue
     assert "https://github.com/OpenHands/OpenHands/issues" in queue
+    assert "Existing Threads To Inspect Before Posting" in queue
+    assert "These are candidate reading targets, not approved posting targets." in queue
+    assert "Best current fit" in queue
+    assert "Read-only / weak fit" in queue
+    assert "Skip unless directly relevant" in queue
+    assert "https://github.com/harbor-framework/terminal-bench/discussions/1357" in queue
+    assert "cost of executing a test" in queue
+    assert "https://github.com/OpenHands/OpenHands/issues/10767" in queue
+    assert "reproducing SWE-bench result claims" in queue
+    assert "https://github.com/SWE-agent/SWE-agent/issues/21" in queue
+    assert "https://github.com/SWE-agent/SWE-agent/issues/580" in queue
+    assert "https://github.com/SWE-agent/SWE-agent/issues/563" in queue
+    assert "https://github.com/Aider-AI/aider/issues/110" in queue
+    assert "https://github.com/Aider-AI/aider/issues/2588" in queue
+    assert "Do not revive a solved issue for OpenMako outreach." in queue
+    assert "https://github.com/OpenHands/OpenHands/issues/12043" in queue
+    assert "Do not post into a bug thread unless the comment addresses that thread's\nexisting question" in queue
+    assert "If the fit is weak, skip the thread instead of making noise." in queue
     assert "bash scripts/wave1_review_request.sh swe-agent" in queue
     assert "bash scripts/wave1_review_request.sh terminal-bench" in queue
     assert "bash scripts/wave1_review_request.sh aider" in queue

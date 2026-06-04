@@ -21,6 +21,23 @@ These public pages were checked for reachability before adding them here.
 | 3 | Aider | `https://github.com/Aider-AI/aider/issues` | Issues page reachable; discussions page not public. | `bash scripts/wave1_review_request.sh aider` | Look for a thread about coding-agent reliability or test evidence. If none exists, skip rather than creating unrelated noise. |
 | 4 | OpenHands | `https://github.com/OpenHands/OpenHands/issues` | Issues page reachable; discussions page not public. | `bash scripts/wave1_review_request.sh openhands` | Look for a thread about agent evaluation, logs, or evidence. Do not ask maintainers to endorse OpenMako. |
 
+## Existing Threads To Inspect Before Posting
+
+These are candidate reading targets, not approved posting targets. Read the
+thread first and post only if the OpenMako boundary question directly matches
+the existing discussion.
+
+| Fit | Target | Thread | Why it is on the queue | Posting decision |
+| --- | --- | --- | --- | --- |
+| Best current fit | Terminal-Bench / Harbor | `https://github.com/harbor-framework/terminal-bench/discussions/1357` | Discussion asks about the cost of executing a test, which is close to verifier/evaluation evidence. | Inspect first; post only if the note is about evidence cost or proof boundaries. |
+| Best current fit | OpenHands | `https://github.com/OpenHands/OpenHands/issues/10767` | Existing thread is about reproducing SWE-bench result claims. | Inspect first; post only if the comment helps the reproducibility/evidence question. |
+| Read-only / weak fit | SWE-agent | `https://github.com/SWE-agent/SWE-agent/issues/21` | Logs from SWE-agent running on SWE-Bench. | Learn wording; do not post unless the thread asks for boundary-review tools. |
+| Read-only / weak fit | SWE-agent | `https://github.com/SWE-agent/SWE-agent/issues/580` | all_preds.jsonl question around SWE-Bench Lite output. | Learn wording; likely too issue-specific for an OpenMako note. |
+| Read-only / weak fit | SWE-agent | `https://github.com/SWE-agent/SWE-agent/issues/563` | Reusing previous built environments for faster evaluation. | Learn wording; likely too operational for a boundary request. |
+| Read-only / weak fit | Aider | `https://github.com/Aider-AI/aider/issues/110` | Prompting-strategy discussion mentions benchmark and evidence terms. | Inspect only; do not turn a broad prompting thread into promotion. |
+| Skip unless directly relevant | Aider | `https://github.com/Aider-AI/aider/issues/2588` | Solved benchmark issue. | Do not revive a solved issue for OpenMako outreach. |
+| Skip unless directly relevant | OpenHands | `https://github.com/OpenHands/OpenHands/issues/12043` | SWE-bench evaluation issue about `chown` time. | Use only if commenting on that concrete bug; not for a generic review ask. |
+
 ## Send Rule
 
 Post only a boundary-check ask:
@@ -31,6 +48,8 @@ Post only a boundary-check ask:
 - Is the supplied-record Evidence Court boundary clear?
 
 Do not ask for stars, reposts, promotion, endorsement, or maintainer approval.
+Do not post into a bug thread unless the comment addresses that thread's
+existing question. If the fit is weak, skip the thread instead of making noise.
 
 ## Stop Rule
 
