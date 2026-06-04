@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Reproduce OpenMako v0.1 first
+    url: https://github.com/1966536805l-crypto/openmako/blob/main/docs/REPRODUCE_V0_1.md
+    about: Run the public gate before opening a boundary review issue.
+  - name: Read the technical review packet
+    url: https://github.com/1966536805l-crypto/openmako/blob/main/docs/TECHNICAL_REVIEW_PACKET.md
+    about: Check the public claim, evidence links, and review template.
