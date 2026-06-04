@@ -51,6 +51,9 @@ Current public proof:
   still does not send messages, create issues, or record outreach as evidence.
 - The README exposes issue #2, the technical review packet, and focused CI as
   technical review entry points before the v0.1 scope section.
+- The README now shows `docs/openmako-review-card.svg`, a reviewer-facing visual
+  proof card. It points visitors to the narrow public gate and issue #2. The
+  card is not proof of broad repair, endorsement, stars, or reposts.
 - The README now exposes a `60-Second Proof` section before the review links so
   visitors can run the public gate before reading longer docs.
 - The README now includes an `If You Came From A Benchmark Thread` path that

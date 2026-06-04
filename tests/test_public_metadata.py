@@ -121,6 +121,7 @@ def test_package_metadata_uses_focused_public_positioning() -> None:
 def test_readme_links_public_proof_issue() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
+    assert "![OpenMako public review card](docs/openmako-review-card.svg)" in readme
     assert "## Technical Review Entry Points" in readme
     assert "Public proof card" in readme
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in readme
@@ -171,17 +172,17 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "git clone https://github.com/1966536805l-crypto/openmako.git" in proof_section
     assert "python -m pip install -e . pytest" in proof_section
     assert "./scripts/public_review_gate.sh" in proof_section
-    assert "./scripts/public_proof_card.sh" in proof_section
+    assert "bash scripts/public_proof_card.sh" in proof_section
     assert "screenshot-friendly summary" in proof_section
     assert "public-review-gate: PASS" in proof_section
     assert "It does not prove broad unknown-repository repair or\nexternal endorsement." in proof_section
     assert "## If You Came From A Benchmark Thread" in proof_section
+    assert "Start with the public gate:" in proof_section
     assert 'The useful review is not "do you like this project?"' in proof_section
     assert "Run `./scripts/public_review_gate.sh`." in proof_section
     assert "Check whether the README claims more than that command proves." in proof_section
     assert "leave the concrete mismatch on\n   [issue #2]" in proof_section
-    assert "Good criticism points to a file, command, workflow, or missing artifact." in proof_section
-    assert "A\nstar, repost, or endorsement is not needed for the review to be useful." in proof_section
+    assert "If something is unclear, please point to the file, command, workflow, or\nmissing artifact." in proof_section
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in proof_section.lower()
     review_section = readme[review_index:scope_index]
@@ -202,7 +203,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml" in review_section
     assert "./scripts/public_review_gate.sh" in review_section
-    assert "not a request for endorsement, stars,\nreposts, or promotion" in review_section
+    assert "This path is for technical boundary review, not promotion." in review_section
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in review_section.lower()
 
@@ -410,6 +411,9 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "bash scripts/wave1_send_ready.sh" in progress
     assert "runs the public review gate before printing\n  a target-specific Wave 1 short message" in progress
     assert "technical review entry points before the v0.1 scope section" in progress
+    assert "docs/openmako-review-card.svg" in progress
+    assert "reviewer-facing visual\n  proof card" in progress
+    assert "not proof of broad repair, endorsement, stars, or reposts" in progress
     assert "`60-Second Proof` section before the review links" in progress
     assert "`If You Came From A Benchmark Thread` path" in progress
     assert "compare README claims\n  against that command" in progress
@@ -428,6 +432,23 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "stale internal notes" in progress
     for forbidden in FORBIDDEN_PUBLIC_PROGRESS_CLAIMS:
         assert forbidden not in progress
+
+
+def test_openmako_review_card_is_visual_boundary_not_promotion() -> None:
+    card = (ROOT / "docs" / "openmako-review-card.svg").read_text(encoding="utf-8")
+
+    assert "<title id=\"title\">OpenMako public review card</title>" in card
+    assert "Short reviewer-facing proof summary for OpenMako v0.1." in card
+    assert "Evidence harness for coding agents" in card
+    assert "Run the gate. Tell us where the claim overreaches." in card
+    assert "learning effect" in card
+    assert "patch-scope drift" in card
+    assert "test proof" in card
+    assert "supplied records" in card
+    assert "github.com/1966536805l-crypto/openmako/issues/2" in card
+    assert "Not evidence of broad repair, endorsement, stars, or reposts." in card
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in card.lower()
 
 
 def test_agent_trend_radar_maps_sources_to_non_claim_development_bets() -> None:
