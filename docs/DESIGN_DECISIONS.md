@@ -1,5 +1,9 @@
 # Design Decisions: Quantitative Evidence Gates
 
+Internal legacy quant documentation. This is not the current public v0.1 capability claim;
+the current public proof is the focused learning-effect gate linked from
+`README.md` and issue #1.
+
 This document explains the key design decisions behind OpenMako's quantitative evidence gates, which prevent unverified performance claims and enforce statistical rigor.
 
 ## 1. Why `runner_sha256` Prevents Forgery

@@ -1,5 +1,9 @@
 # OpenMako Next Ports
 
+Internal planning note. This is not the current public v0.1 capability claim;
+the current public proof is the focused learning-effect gate linked from
+`README.md` and issue #1.
+
 ## Clean-Room Absorption Spine
 
 Use `docs/CLAUDE_SRC_ABSORPTION_PLAN.md` as the cross-subsystem blueprint.

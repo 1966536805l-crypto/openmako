@@ -78,6 +78,10 @@ INTERNAL_PLANNING_DOCS = (
     "docs/SANDBOX_ROADMAP.md",
     "docs/TICK_VALIDATION.md",
     "docs/OPENAI_COMPATIBLE_SETUP.md",
+    "docs/UPSTREAM_ATTRIBUTION.md",
+    "docs/DESIGN_DECISIONS.md",
+    "docs/OPERATOR_TRUST_MODEL.md",
+    "docs/OPENMAKO_NEXT_PORTS.md",
 )
 FORBIDDEN_PUBLIC_DOC_VENDOR_ENDPOINTS = (
     "api.xiaoma.best",

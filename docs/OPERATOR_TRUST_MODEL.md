@@ -1,5 +1,9 @@
 # QuantAgent Operator Trust Model
 
+Internal operator-model note. This is not the current public v0.1 capability claim;
+the current public proof is the focused learning-effect gate linked from
+`README.md` and issue #1.
+
 This document adapts local-first operator and sandbox-policy concepts from
 OpenClaw under its MIT license. See `docs/UPSTREAM_ATTRIBUTION.md` and the
 OpenClaw MIT license in `upstream_refs/openclaw/LICENSE` for attribution.
@@ -181,4 +185,3 @@ For a shared research team:
 - do not mix personal browser profiles or password managers with shared agents
 - log approvals, experiments, and generated conclusions
 - separate production trading from research automation
-

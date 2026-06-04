@@ -1,5 +1,9 @@
 # Upstream Attribution
 
+Attribution note. This is not the current public v0.1 capability claim; the
+current public proof is the focused learning-effect gate linked from `README.md`
+and issue #1.
+
 QuantAgent borrows and adapts architecture ideas from permissively licensed
 agent projects. Code in this repository is kept small and local-first, but some
 modules intentionally mirror upstream patterns.
