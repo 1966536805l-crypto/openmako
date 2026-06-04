@@ -37,7 +37,7 @@ public-review-gate: running planner focused public test
 public-review-gate: running learning-effect focused public test
 1 passed
 public-review-gate: running public metadata boundary tests
-25 passed
+<N> passed
 public-review-gate: recording Evidence Court bad-run fixture
 public-review-gate: auditing supplied Evidence Court record
 public-review-gate: PASS
@@ -45,6 +45,10 @@ public-review-gate: PASS
 
 The script sets `PYTHONPATH` to the checkout root before running tests so a
 stale installed package cannot silently satisfy the public gate.
+
+The `<N>` metadata-test count is intentionally not fixed in this guide. It may
+increase as public-boundary checks are added; the expected signal is that the
+metadata section passes and the script reaches `public-review-gate: PASS`.
 
 ## What The Gate Covers
 

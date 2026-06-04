@@ -390,7 +390,9 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "git clone https://github.com/1966536805l-crypto/openmako.git" in guide
     assert "python -m pip install -e . pytest" in guide
     assert "./scripts/public_review_gate.sh" in guide
-    assert "25 passed" in guide
+    assert "<N> passed" in guide
+    assert "metadata-test count is intentionally not fixed" in guide
+    assert "25 passed" not in guide
     assert "public-review-gate: PASS" in guide
     assert "PYTHONPATH" in guide
     assert "stale installed package" in guide
