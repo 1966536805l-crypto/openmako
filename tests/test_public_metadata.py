@@ -425,6 +425,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "`run-metrics` evidence extension" in progress
     assert "optional duration, token, cost, command-count, and missing-telemetry fields" in progress
     assert "preserved in Evidence Court audit JSON" in progress
+    assert "sets the next build target to an\n  external-harness record adapter" in progress
+    assert "future non-claim until fixtures\n  and CI exist" in progress
     assert "stale internal notes" in progress
     for forbidden in FORBIDDEN_PUBLIC_PROGRESS_CLAIMS:
         assert forbidden not in progress
@@ -434,7 +436,7 @@ def test_agent_trend_radar_maps_sources_to_non_claim_development_bets() -> None:
     radar = (ROOT / "docs" / "AGENT_TREND_RADAR.md").read_text(encoding="utf-8")
 
     assert "OpenMako Agent Trend Radar" in radar
-    assert "Last refreshed: 2026-06-04." in radar
+    assert "Last refreshed: 2026-06-05." in radar
     assert "not proof that OpenMako already implements these\ncapabilities" in radar
     assert "not evidence of external review, endorsement, stars, or\nreposts" in radar
     assert "https://hermes-agent.nousresearch.com/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-hermes-agent" in radar
@@ -453,8 +455,14 @@ def test_agent_trend_radar_maps_sources_to_non_claim_development_bets() -> None:
     assert "Full-Cycle And Secure-Coding Gates" in radar
     assert "Do not claim OpenMako is a Hermes, OpenClaw, OpenHands, SWE-agent, or\n  Terminal-Bench replacement." in radar
     assert "Do not claim ACP, MCP orchestration, long-term memory, skill self-evolution,\n  cloud agent execution, or secure-code benchmarking as current public v0.1\n  capability." in radar
-    assert "The next high-leverage public build is a `run-metrics` evidence extension" in radar
-    assert "missing-telemetry fields" in radar
+    assert "OpenMako has added a supplied-record telemetry\nextension" in radar
+    assert "missing-telemetry marker" in radar
+    assert "not proof\nthat validation ran" in radar
+    assert "The next high-leverage public build is an external-harness record adapter" in radar
+    assert "Codex, Claude, OpenHands, and SWE-agent transcript shapes" in radar
+    assert "a normalizer that emits a supplied Evidence Court record plus an unsupported\n  field report" in radar
+    assert "fail-closed behavior when command, diff, or test evidence is missing" in radar
+    assert "not live control of those external agents" in radar
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in radar.lower()
 

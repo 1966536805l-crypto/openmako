@@ -32,6 +32,10 @@ Current public proof:
   `docs/AGENT_TREND_RADAR.md`. It maps Hermes/OpenClaw/OpenHands/eval trends to
   future OpenMako build bets and marks them as non-claims until code, fixtures,
   and CI exist.
+  It now marks the `run-metrics` evidence extension as already implemented in
+  supplied-record audit JSON and sets the next build target to an
+  external-harness record adapter, still as a future non-claim until fixtures
+  and CI exist.
 - Wave 1 copyable review requests are available at:
   `docs/WAVE1_REVIEW_REQUESTS.md`. They target technical reviewers only and are
   not proof that outreach, review, endorsement, stars, or reposts happened.

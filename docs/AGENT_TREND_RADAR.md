@@ -1,6 +1,6 @@
 # OpenMako Agent Trend Radar
 
-Last refreshed: 2026-06-04.
+Last refreshed: 2026-06-05.
 
 This is a source-linked planning map for deciding what OpenMako should build
 next after v0.1. It is not proof that OpenMako already implements these
@@ -68,8 +68,8 @@ Public claim boundary: record auditing first, live multi-agent control later.
 ### 4. Benchmark Telemetry Beyond Pass/Fail
 
 Vexp-style benchmark reporting makes cost, duration, and token usage part of
-the result, not an afterthought. OpenMako should add optional telemetry fields
-to run records:
+the result, not an afterthought. OpenMako has added a supplied-record telemetry
+extension for:
 
 - model/provider name
 - input/output token counts
@@ -78,7 +78,8 @@ to run records:
 - missing-telemetry marker when it is not known
 
 Public claim boundary: telemetry improves comparability, but does not improve
-repair capability by itself.
+repair capability by itself. It is evidence preserved for reviewers, not proof
+that validation ran.
 
 ### 5. Full-Cycle And Secure-Coding Gates
 
@@ -104,7 +105,15 @@ exist.
 
 ## Next Build Target
 
-The next high-leverage public build is a `run-metrics` evidence extension:
-add optional duration, token, cost, command-count, and missing-telemetry fields
-to supplied run records, then make Evidence Court preserve those fields in its
-audit JSON without changing the v0.1 claim.
+The next high-leverage public build is an external-harness record adapter, not
+a live orchestration claim:
+
+- one fixture each for Codex, Claude, OpenHands, and SWE-agent transcript shapes
+- a normalizer that emits a supplied Evidence Court record plus an unsupported
+  field report
+- fail-closed behavior when command, diff, or test evidence is missing
+- CI coverage proving the normalized record can be audited without expanding
+  the public v0.1 claim
+
+Public claim boundary: this would prove import-and-audit for supplied records,
+not live control of those external agents.
