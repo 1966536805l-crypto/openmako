@@ -127,6 +127,8 @@ def test_readme_links_public_proof_issue() -> None:
     assert "a review request rather than endorsement or promotion" in readme
     assert "Technical review packet" in readme
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in readme
+    assert "Public share packet" in readme
+    assert "docs/PUBLIC_SHARE_PACKET.md" in readme
 
 
 def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
@@ -139,6 +141,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     review_section = readme[review_index:scope_index]
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in review_section
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in review_section
+    assert "docs/PUBLIC_SHARE_PACKET.md" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml" in review_section
     assert "./scripts/public_review_gate.sh" in review_section
@@ -327,6 +330,7 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "technical review entry points before the v0.1 scope section" in progress
     assert "minimal issue-comment template" in progress
     assert "scripts/public_review_gate.sh" in progress
+    assert "docs/PUBLIC_SHARE_PACKET.md" in progress
     assert "stale internal notes" in progress
     for forbidden in FORBIDDEN_PUBLIC_PROGRESS_CLAIMS:
         assert forbidden not in progress
@@ -342,6 +346,7 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "repost request" in packet
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in packet
     assert "docs/REVIEWER_OUTREACH_DRAFT.md" in packet
+    assert "docs/PUBLIC_SHARE_PACKET.md" in packet
     assert "./scripts/public_review_gate.sh" in packet
     assert "tests/test_agent_planner_contract.py::AgentPlannerContractTest" in packet
     assert "tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest" in packet
@@ -360,6 +365,27 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "10000" not in packet
     assert "10,000" not in packet
     assert "大咖" not in packet
+
+
+def test_public_share_packet_preserves_review_boundary_without_promotion() -> None:
+    share_packet = (ROOT / "docs" / "PUBLIC_SHARE_PACKET.md").read_text(encoding="utf-8")
+
+    assert "OpenMako Public Share Packet" in share_packet
+    assert "not endorsement, promotion, star request, or repost request" in share_packet
+    assert "focused learning-effect gate" in share_packet
+    assert "patch-scope discipline" in share_packet
+    assert "test-proof evidence" in share_packet
+    assert "Evidence Court CLI that audits supplied records" in share_packet
+    assert "https://github.com/1966536805l-crypto/openmako/issues/2" in share_packet
+    assert "https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0" in share_packet
+    assert "./scripts/public_review_gate.sh" in share_packet
+    assert "docs/TECHNICAL_REVIEW_PACKET.md" in share_packet
+    assert "Do not say it proves broad unknown-repository SWE repair." in share_packet
+    assert "Do not say it replaces Claude Code, Codex, Cursor, Devin, or other agents." in share_packet
+    assert "Do not ask readers to star, repost, or promote the repository." in share_packet
+    assert "technical critique that links a concrete" in share_packet
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in share_packet.lower()
 
 
 def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
@@ -389,6 +415,7 @@ def test_reviewer_outreach_draft_requests_criticism_not_promotion() -> None:
     assert "technical boundary criticism" in draft
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in draft
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in draft
+    assert "docs/PUBLIC_SHARE_PACKET.md" in draft
     assert "I'm not asking for endorsement, stars, reposts, or promotion." in draft
     assert "specific file, line, command, workflow, or missing artifact" in draft
     assert "Only after a reviewer has independently said the boundary is clear" in draft

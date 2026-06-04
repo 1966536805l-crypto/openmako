@@ -27,6 +27,8 @@ experiments, or agent-written summaries as public capability evidence.
   https://github.com/1966536805l-crypto/openmako/actions/workflows/evidence-court-demo.yml
 - Reviewer outreach draft:
   https://github.com/1966536805l-crypto/openmako/blob/main/docs/REVIEWER_OUTREACH_DRAFT.md
+- Boundary-preserving public share packet:
+  https://github.com/1966536805l-crypto/openmako/blob/main/docs/PUBLIC_SHARE_PACKET.md
 
 ## Reproduce The Focused Gate
 

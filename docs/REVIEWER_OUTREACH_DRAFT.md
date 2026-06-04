@@ -21,6 +21,11 @@ The review packet is here:
 
 https://github.com/1966536805l-crypto/openmako/blob/main/docs/TECHNICAL_REVIEW_PACKET.md
 
+If you decide to discuss it publicly after review, this share packet keeps the
+claim narrow:
+
+https://github.com/1966536805l-crypto/openmako/blob/main/docs/PUBLIC_SHARE_PACKET.md
+
 I'm not asking for endorsement, stars, reposts, or promotion. A critical comment
 pointing to a specific file, line, command, workflow, or missing artifact would
 be more useful.

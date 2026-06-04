@@ -23,6 +23,8 @@ Current public proof:
 - `scripts/public_review_gate.sh` wraps the local reviewer proof command:
   focused public tests, metadata boundary checks, and supplied-record
   Evidence Court bad-run audit.
+- `docs/PUBLIC_SHARE_PACKET.md` provides boundary-preserving public wording for
+  reviewers who independently choose to discuss the project.
 - GitHub Actions runs the focused gate through `.github/workflows/focused.yml`.
 - GitHub Actions also runs the supplied-record Evidence Court demo through
   `.github/workflows/evidence-court-demo.yml`.
