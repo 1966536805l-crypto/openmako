@@ -68,6 +68,11 @@ Current public proof:
   are also preserved when supplied. The fields are preserved in Evidence Court audit JSON.
   They improve comparability, but they are not treated as proof that validation
   ran.
+- The first external-harness record adapter slice is available:
+  `openmako evidence-court record from-codex-transcript`. It converts a supplied
+  Codex transcript fixture into the existing Evidence Court audit-record shape,
+  records unsupported fields and missing evidence in `adapter_report`, and does
+  not claim live Codex control or broad native transcript ingestion.
 - `scripts/public_proof_card.sh` wraps the same gate and prints a
   screenshot-friendly proof card with commit, scope, non-proof boundaries,
   review issue, and external-review record form.

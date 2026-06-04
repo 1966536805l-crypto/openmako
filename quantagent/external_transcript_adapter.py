@@ -1,0 +1,188 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Mapping
+
+
+RUN_METRIC_FIELDS = (
+    "duration_seconds",
+    "command_count",
+    "input_tokens",
+    "output_tokens",
+    "total_tokens",
+    "estimated_cost_usd",
+    "actual_cost_usd",
+    "cost_usd",
+    "provider",
+    "model",
+    "missing_telemetry",
+)
+
+
+def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dict[str, object]:
+    path = Path(transcript_path).expanduser().resolve(strict=False)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("codex transcript must be a JSON object")
+    items = payload.get("items")
+    if not isinstance(items, list):
+        raise ValueError("codex transcript must include an items array")
+
+    task = payload.get("task") if isinstance(payload.get("task"), dict) else {}
+    record: dict[str, object] = {
+        "source_agent": str(payload.get("source_agent") or payload.get("source") or "codex"),
+        "claimed_task": _first_text(payload.get("claimed_task"), task.get("claimed_task"), task.get("prompt")),
+        "allowed_files": _file_list(payload.get("allowed_files") or task.get("allowed_files")),
+        "files_read": [],
+        "files_edited": [],
+        "commands_run": [],
+        "test_output": "",
+        "final_claim": "",
+    }
+    files_read: list[str] = []
+    files_edited: list[str] = []
+    commands_run: list[dict[str, object]] = []
+    run_metrics: dict[str, object] = {}
+    unsupported_fields: list[str] = []
+
+    for index, raw_item in enumerate(items):
+        if not isinstance(raw_item, dict):
+            raise ValueError(f"codex transcript item {index} must be an object")
+        item = dict(raw_item)
+        kind = str(item.get("type") or item.get("kind") or "").strip().lower()
+        name = str(item.get("name") or item.get("tool") or "").strip().lower()
+        input_payload = item.get("input") if isinstance(item.get("input"), dict) else {}
+        output = str(item.get("output") or item.get("result") or "").strip()
+
+        _collect_unsupported_fields(item, index, unsupported_fields)
+        if kind in {"message", "assistant_message"} and str(item.get("role") or "").lower() == "assistant":
+            final_claim = _first_text(item.get("text"), item.get("content"))
+            if final_claim:
+                record["final_claim"] = final_claim
+            continue
+        if kind in {"read", "file_read"} or name in {"read_file", "read_files", "view_file"}:
+            files_read.extend(_file_list(item.get("files") or item.get("file") or item.get("path") or input_payload))
+            continue
+        if kind in {"edit", "file_edit", "patch"} or name in {"apply_patch", "write_file", "edit_file"}:
+            files_edited.extend(_file_list(item.get("files") or item.get("file") or item.get("path") or input_payload))
+            continue
+        if kind in {"command", "shell"} or name in {"shell", "exec_command", "run_command"}:
+            command = _first_text(item.get("command"), item.get("cmd"), input_payload.get("command"), input_payload.get("cmd"))
+            if command:
+                command_item: dict[str, object] = {"command": command}
+                if isinstance(item.get("exit_code"), int):
+                    command_item["exit_code"] = item["exit_code"]
+                elif isinstance(input_payload.get("exit_code"), int):
+                    command_item["exit_code"] = input_payload["exit_code"]
+                commands_run.append(command_item)
+            if output:
+                record["test_output"] = output
+            _merge_run_metrics(run_metrics, _extract_metrics(item))
+            continue
+        if kind or name:
+            unsupported_fields.append(f"items[{index}].type:{kind or name}")
+
+    record["files_read"] = _dedupe(files_read)
+    record["files_edited"] = _dedupe(files_edited)
+    record["commands_run"] = commands_run
+    if run_metrics:
+        if commands_run and "command_count" not in run_metrics:
+            run_metrics["command_count"] = len(commands_run)
+        record["run_metrics"] = run_metrics
+    record["adapter_report"] = {
+        "source_format": "codex-transcript/v0.1",
+        "unsupported_fields": _dedupe(unsupported_fields),
+        "missing_evidence": _missing_evidence(record),
+        "claim_boundary": "import-and-audit supplied transcript records only; not live Codex control",
+    }
+    return record
+
+
+def _first_text(*values: object) -> str:
+    for value in values:
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def _file_list(value: object) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value.strip() else []
+    if isinstance(value, Mapping):
+        for key in ("files", "paths"):
+            if key in value:
+                return _file_list(value[key])
+        for key in ("file", "path"):
+            if isinstance(value.get(key), str):
+                return _file_list(value[key])
+        return []
+    if isinstance(value, list):
+        files: list[str] = []
+        for item in value:
+            files.extend(_file_list(item))
+        return files
+    return []
+
+
+def _extract_metrics(item: Mapping[str, object]) -> dict[str, object]:
+    metrics: dict[str, object] = {}
+    for source_key in ("run_metrics", "metrics"):
+        source = item.get(source_key)
+        if isinstance(source, dict):
+            metrics.update(source)
+    for field in RUN_METRIC_FIELDS:
+        if field in item:
+            metrics[field] = item[field]
+    tokens = item.get("tokens")
+    if isinstance(tokens, dict):
+        for field in ("input_tokens", "output_tokens", "total_tokens"):
+            if field in tokens and field not in metrics:
+                metrics[field] = tokens[field]
+    if "cost_usd" in metrics and "estimated_cost_usd" not in metrics:
+        metrics["estimated_cost_usd"] = metrics["cost_usd"]
+    if "missing_telemetry" in metrics:
+        missing = metrics["missing_telemetry"]
+        metrics["missing_telemetry"] = [str(entry) for entry in missing] if isinstance(missing, list) else [str(missing)]
+    return metrics
+
+
+def _merge_run_metrics(target: dict[str, object], source: dict[str, object]) -> None:
+    for key, value in source.items():
+        if key == "missing_telemetry":
+            merged: list[str] = []
+            existing = target.get(key)
+            if isinstance(existing, list):
+                merged.extend(str(item) for item in existing)
+            if isinstance(value, list):
+                merged.extend(str(item) for item in value)
+            else:
+                merged.append(str(value))
+            target[key] = _dedupe(merged)
+        else:
+            target[key] = value
+
+
+def _collect_unsupported_fields(item: Mapping[str, object], index: int, unsupported: list[str]) -> None:
+    for key in ("screenshot_path", "browser_snapshot", "ui_snapshot", "raw_dom", "image"):
+        if key in item:
+            unsupported.append(f"items[{index}].{key}")
+
+
+def _missing_evidence(record: Mapping[str, object]) -> list[str]:
+    missing: list[str] = []
+    if not record.get("claimed_task"):
+        missing.append("claimed_task")
+    if not record.get("files_edited"):
+        missing.append("files_edited")
+    if not record.get("commands_run"):
+        missing.append("commands_run")
+    if not record.get("test_output"):
+        missing.append("test_output")
+    return missing
+
+
+def _dedupe(values: list[str]) -> list[str]:
+    return list(dict.fromkeys(value for value in values if value.strip()))
