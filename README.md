@@ -45,6 +45,18 @@ metadata stays inside the v0.1 boundary, and Evidence Court fails closed on a
 supplied bad-run record. It does not prove broad unknown-repository repair or
 external endorsement.
 
+## If You Came From A Benchmark Thread
+
+The useful review is not "do you like this project?" It is narrower:
+
+1. Run `./scripts/public_review_gate.sh`.
+2. Check whether the README claims more than that command proves.
+3. If a boundary is unclear, leave the concrete mismatch on
+   [issue #2](https://github.com/1966536805l-crypto/openmako/issues/2).
+
+Good criticism points to a file, command, workflow, or missing artifact. A
+star, repost, or endorsement is not needed for the review to be useful.
+
 ## Technical Review Entry Points
 
 For technical reviewers, start here before reading older implementation paths:

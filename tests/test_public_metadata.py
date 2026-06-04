@@ -160,10 +160,12 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     proof_index = readme.index("## 60-Second Proof")
+    benchmark_thread_index = readme.index("## If You Came From A Benchmark Thread")
     review_index = readme.index("## Technical Review Entry Points")
     scope_index = readme.index("## Public v0.1 Scope")
 
     assert proof_index < review_index
+    assert proof_index < benchmark_thread_index < review_index
     assert review_index < scope_index
     proof_section = readme[proof_index:review_index]
     assert "git clone https://github.com/1966536805l-crypto/openmako.git" in proof_section
@@ -173,6 +175,13 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "screenshot-friendly summary" in proof_section
     assert "public-review-gate: PASS" in proof_section
     assert "It does not prove broad unknown-repository repair or\nexternal endorsement." in proof_section
+    assert "## If You Came From A Benchmark Thread" in proof_section
+    assert 'The useful review is not "do you like this project?"' in proof_section
+    assert "Run `./scripts/public_review_gate.sh`." in proof_section
+    assert "Check whether the README claims more than that command proves." in proof_section
+    assert "leave the concrete mismatch on\n   [issue #2]" in proof_section
+    assert "Good criticism points to a file, command, workflow, or missing artifact." in proof_section
+    assert "A\nstar, repost, or endorsement is not needed for the review to be useful." in proof_section
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in proof_section.lower()
     review_section = readme[review_index:scope_index]
@@ -402,6 +411,10 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "runs the public review gate before printing\n  a target-specific Wave 1 short message" in progress
     assert "technical review entry points before the v0.1 scope section" in progress
     assert "`60-Second Proof` section before the review links" in progress
+    assert "`If You Came From A Benchmark Thread` path" in progress
+    assert "compare README claims\n  against that command" in progress
+    assert "leave concrete mismatches on issue #2" in progress
+    assert "not outreach evidence, endorsement, stars, or reposts" in progress
     assert "minimal issue-comment template" in progress
     assert "scripts/public_review_gate.sh" in progress
     assert "scripts/public_proof_card.sh" in progress
