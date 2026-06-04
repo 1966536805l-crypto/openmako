@@ -25,6 +25,8 @@ experiments, or agent-written summaries as public capability evidence.
   https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml
 - Evidence Court demo CI:
   https://github.com/1966536805l-crypto/openmako/actions/workflows/evidence-court-demo.yml
+- Reproduction guide:
+  https://github.com/1966536805l-crypto/openmako/blob/main/docs/REPRODUCE_V0_1.md
 - Reviewer outreach draft:
   https://github.com/1966536805l-crypto/openmako/blob/main/docs/REVIEWER_OUTREACH_DRAFT.md
 - Boundary-preserving public share packet:
@@ -45,6 +47,8 @@ python -m pip install -e . pytest
 That script runs the focused public gate, metadata boundary checks, and the
 supplied Evidence Court bad-run audit. To run only the focused learning-effect
 gate:
+
+For exact expected output and smaller checks, see `docs/REPRODUCE_V0_1.md`.
 
 ```bash
 python -m pytest -p no:cacheprovider \

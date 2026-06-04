@@ -14,6 +14,8 @@ Current public proof:
   This is a review request, not evidence of endorsement or promotion.
 - A technical reviewer packet is available at:
   `docs/TECHNICAL_REVIEW_PACKET.md`.
+- A reproduction guide with exact local commands and expected public gate
+  signals is available at: `docs/REPRODUCE_V0_1.md`.
 - A non-promotional reviewer outreach draft is available at:
   `docs/REVIEWER_OUTREACH_DRAFT.md`.
 - The README exposes issue #2, the technical review packet, and focused CI as

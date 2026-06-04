@@ -127,6 +127,8 @@ def test_readme_links_public_proof_issue() -> None:
     assert "a review request rather than endorsement or promotion" in readme
     assert "Technical review packet" in readme
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in readme
+    assert "Reproduction guide" in readme
+    assert "docs/REPRODUCE_V0_1.md" in readme
     assert "Public share packet" in readme
     assert "docs/PUBLIC_SHARE_PACKET.md" in readme
 
@@ -141,6 +143,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     review_section = readme[review_index:scope_index]
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in review_section
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in review_section
+    assert "docs/REPRODUCE_V0_1.md" in review_section
     assert "docs/PUBLIC_SHARE_PACKET.md" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml" in review_section
@@ -326,6 +329,7 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in progress
     assert "not evidence of endorsement or promotion" in progress
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in progress
+    assert "docs/REPRODUCE_V0_1.md" in progress
     assert "docs/REVIEWER_OUTREACH_DRAFT.md" in progress
     assert "technical review entry points before the v0.1 scope section" in progress
     assert "minimal issue-comment template" in progress
@@ -346,6 +350,7 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "repost request" in packet
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in packet
     assert "docs/REVIEWER_OUTREACH_DRAFT.md" in packet
+    assert "docs/REPRODUCE_V0_1.md" in packet
     assert "docs/PUBLIC_SHARE_PACKET.md" in packet
     assert "./scripts/public_review_gate.sh" in packet
     assert "tests/test_agent_planner_contract.py::AgentPlannerContractTest" in packet
@@ -365,6 +370,28 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "10000" not in packet
     assert "10,000" not in packet
     assert "大咖" not in packet
+
+
+def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
+    guide = (ROOT / "docs" / "REPRODUCE_V0_1.md").read_text(encoding="utf-8")
+
+    assert "OpenMako v0.1 Reproduction Guide" in guide
+    assert "not an endorsement\nrequest, promotion request, star request, or repost request" in guide
+    assert "## Claim Under Test" in guide
+    assert "## Fresh Checkout" in guide
+    assert "git clone https://github.com/1966536805l-crypto/openmako.git" in guide
+    assert "python -m pip install -e . pytest" in guide
+    assert "./scripts/public_review_gate.sh" in guide
+    assert "public-review-gate: PASS" in guide
+    assert "PYTHONPATH" in guide
+    assert "stale installed package" in guide
+    assert "tests/test_public_metadata.py" in guide
+    assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in guide
+    assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in guide
+    assert "It does not prove broad unknown-repository SWE repair." in guide
+    assert "It does not prove external endorsement." in guide
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in guide.lower()
 
 
 def test_public_share_packet_preserves_review_boundary_without_promotion() -> None:

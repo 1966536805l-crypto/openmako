@@ -18,6 +18,7 @@ For technical reviewers, start here before reading older implementation paths:
 
 - Boundary criticism request: [issue #2](https://github.com/1966536805l-crypto/openmako/issues/2).
 - Technical review packet: [`docs/TECHNICAL_REVIEW_PACKET.md`](docs/TECHNICAL_REVIEW_PACKET.md).
+- Reproduction guide: [`docs/REPRODUCE_V0_1.md`](docs/REPRODUCE_V0_1.md).
 - Public share packet: [`docs/PUBLIC_SHARE_PACKET.md`](docs/PUBLIC_SHARE_PACKET.md).
 - Public proof card: [issue #1](https://github.com/1966536805l-crypto/openmako/issues/1).
 - Focused public CI: [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml).
@@ -157,6 +158,7 @@ qagent --help
 | Public proof card | [issue #1](https://github.com/1966536805l-crypto/openmako/issues/1) |
 | Technical boundary criticism request | [issue #2](https://github.com/1966536805l-crypto/openmako/issues/2), a review request rather than endorsement or promotion |
 | Technical review packet | [`docs/TECHNICAL_REVIEW_PACKET.md`](docs/TECHNICAL_REVIEW_PACKET.md) |
+| Reproduction guide | [`docs/REPRODUCE_V0_1.md`](docs/REPRODUCE_V0_1.md), exact local commands and expected public gate signals |
 | Public share packet | [`docs/PUBLIC_SHARE_PACKET.md`](docs/PUBLIC_SHARE_PACKET.md), boundary-preserving wording for reviewers who choose to discuss the project publicly |
 | v0.1 release | [release v0.1.0](https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0) |
 | Focused public CI | [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml) |
