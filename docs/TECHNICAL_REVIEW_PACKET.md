@@ -115,6 +115,12 @@ proof:
 bash scripts/desktop_control_local_gate.sh
 ```
 
+For a screenshot-friendly local summary of the same bounded gate:
+
+```bash
+bash scripts/desktop_control_proof_card.sh
+```
+
 Expected boundary signal:
 
 ```text

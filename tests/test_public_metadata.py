@@ -157,6 +157,7 @@ def test_readme_links_public_proof_issue() -> None:
     assert "docs/PUBLIC_SHARE_PACKET.md" in readme
     assert "Public share-ready check" in readme
     assert "bash scripts/public_share_ready.sh review-request" in readme
+    assert "bash scripts/desktop_control_proof_card.sh" in readme
     assert "Post-review broader share packet" in readme
     assert "docs/LARGE_REPOST_PACKET.md" in readme
     assert "Post-review share check" in readme
@@ -263,6 +264,25 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "This path is for technical boundary review, not promotion." in review_section
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in review_section.lower()
+
+
+def test_desktop_control_proof_card_stays_bounded() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    packet = (ROOT / "docs" / "TECHNICAL_REVIEW_PACKET.md").read_text(encoding="utf-8")
+    script = ROOT / "scripts" / "desktop_control_proof_card.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert os.access(script, os.X_OK)
+    assert "bash scripts/desktop_control_proof_card.sh" in readme
+    assert "bash scripts/desktop_control_proof_card.sh" in packet
+    assert "bash scripts/desktop_control_local_gate.sh" in text
+    assert "openmako-desktop-control-proof-card: PASS" in text
+    assert "suite_l4 dry-run plan" in text
+    assert "AX-only target preflight" in text
+    assert "OCR fallback after failed AX type verify" in text
+    assert "not-proof: live desktop control; L4; L5; external endorsement; star or repost traction" in text
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in text.lower()
 
 
 def test_readme_has_runnable_bad_run_demo() -> None:

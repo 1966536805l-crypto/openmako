@@ -239,6 +239,10 @@ Current public proof:
   control gate: it runs focused desktop intelligence/policy tests and a
   `suite_l4` dry-run eval, then checks that the result remains conservative
   rather than claiming live L4/L5 desktop control.
+- `scripts/desktop_control_proof_card.sh` wraps the same bounded local desktop
+  control gate into a screenshot-friendly proof card. It prints the commit,
+  proof command, local scope, recent fast-path evidence, and explicit
+  `not-proof` boundary for live control, L4/L5, endorsement, stars, or reposts.
 - The README and technical review packet now expose that desktop-control local
   gate only under optional non-v0.1 inspection paths. They keep the expected
   `status=dry_run`, `scenarios=8`, and `level=L2` boundary visible so reviewers
