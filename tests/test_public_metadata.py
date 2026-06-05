@@ -454,11 +454,12 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "does not send messages, create issues, or record outreach as evidence" in progress
     assert "`openhands-benchmarks-718` thread draft was refreshed" in progress
     assert "`output.jsonl` to\n  `output.swtbench.jsonl` artifact identity" in progress
-    assert "omits a self-link to reduce\n  promotional risk" in progress
+    assert "links only the concrete\n  `swtbench_patch_artifact` fixture" in progress
+    assert "not a homepage, star ask, or promotion\n  request" in progress
     assert "send-ready text only, not proof of posting" in progress
     assert "`openhands-benchmarks-708` thread draft was refreshed" in progress
     assert "`332 / 424` mixed\n  test+source patch bucket" in progress
-    assert "patch-shape metadata without a self-link" in progress
+    assert "patch-shape metadata, and the concrete\n  `swtbench_patch_artifact` fixture" in progress
     assert "bash scripts/wave1_review_request.sh" in progress
     assert "without sending messages or recording outreach as evidence" in progress
     assert "bash scripts/wave1_send_ready.sh" in progress
@@ -933,6 +934,8 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
     assert "332 / 424 mixed bucket" in text
     assert "patch-shape bucket separately from the final SWT-bench score" in text
     assert "expected F2P failure mode from source edits under model_patch" in text
+    assert "where `mixed_test_source` is machine-readable and still separate from any score claim" in text
+    assert "examples/evidence_court/swtbench_patch_artifact.json" in text
     assert "mixed test+source patch" in text
     assert "first-class verdict/metadata field rather than a post-hoc explanation" in text
     assert "artifact identity, not just the score delta" in text
@@ -940,8 +943,8 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
     assert "eval-time patch stripping changes" in text
     assert "eval rule version, runner version or commit, input/output hashes" in text
     assert "patch-shape bucket" in text
-    assert "smaller supplied-record audits" in text
-    assert "would not treat that as historical re-scoring or native OpenHands/SWTBench ingestion" in text
+    assert "metadata shape I mean: eval rule version, runner commit, input/output hashes" in text
+    assert "while still not treating it as historical re-scoring or native OpenHands/SWTBench ingestion" in text
     assert "Same boundary question here" in text
     assert "runner commit + input/output hashes enough to compare artifacts" in text
     assert "should patch-shape be first-class metadata too" in text
