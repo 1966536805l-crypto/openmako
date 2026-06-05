@@ -350,6 +350,26 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
                 confidence="high",
             )
         )
+    if (
+        test_status != "missing"
+        and not files_edited
+        and _looks_like_success_claim(final_claim)
+        and _looks_like_patch_task(" ".join((claimed_task, final_claim)))
+    ):
+        evidence_ids = tuple(
+            item.evidence_id
+            for item in evidence
+            if item.source in {"task", "final_claim"} or item.kind in {"command", "test"}
+        )
+        findings.append(
+            AutopsyFinding(
+                "missing_edited_file_evidence",
+                "The run claims a code change was fixed, but no edited-file evidence was supplied.",
+                evidence_ids=evidence_ids,
+                intercept="require edited-file evidence before accepting a repair claim",
+                confidence="high",
+            )
+        )
 
     failure_class = findings[0].finding_type if findings else ""
     status = "PASSED"
@@ -366,6 +386,9 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
     elif test_status == "missing" and findings:
         status = "UNVERIFIED"
         failed_at = "final_claim"
+    elif any(item.finding_type == "missing_edited_file_evidence" for item in findings):
+        status = "UNVERIFIED"
+        failed_at = "files_edited"
 
     return AgentAutopsyReport(
         title="agent-run audit record",
@@ -1301,3 +1324,18 @@ def _looks_like_success_claim(text: str) -> bool:
     lowered = text.lower()
     success_markers = ("fixed", "complete", "completed", "done", "verified", "passed", "success")
     return any(marker in lowered for marker in success_markers)
+
+
+def _looks_like_patch_task(text: str) -> bool:
+    lowered = text.lower()
+    word_patterns = (
+        r"\bfix(?:e[ds])?\b",
+        r"\brepair(?:ed)?\b",
+        r"\bpatch(?:ed)?\b",
+        r"\bedit(?:ed)?\b",
+        r"\badd(?:ed)?\s+regression\b",
+        r"\bcode\s+change\b",
+    )
+    if any(re.search(pattern, lowered) for pattern in word_patterns):
+        return True
+    return any(marker in text for marker in ("修复", "编辑", "修改", "实现"))
