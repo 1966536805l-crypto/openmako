@@ -123,8 +123,9 @@ case "$thread" in
     cat <<'EOF'
 This is a related issue I keep hitting: once runs are expensive, a leaderboard row without cost/version/proof metadata is hard to trust.
 
-I made a small harness for my own project that refuses to treat a run as proof unless patch scope, tests, and supplied-run metadata line up. If useful, I would rather get criticism on the boundary than repo promotion:
-https://github.com/1966536805l-crypto/openmako/issues/2
+The useful unit might be something like: command/test count, wall time, runner or environment version, validation command, and whether failures were observed directly or inferred after the fact.
+
+Boundary question: what is the minimum metadata a benchmark row should expose so another project can compare execution cost without rerunning the task?
 EOF
     ;;
   openhands-benchmarks-708)

@@ -1231,6 +1231,10 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
     assert "decision: read the thread first; do not post if stale, closed, or off-topic" in text
     assert "requires-confirmation: yes; do not submit a public comment without final user confirmation" in text
     assert "cost/version/proof metadata" in text
+    assert "command/test count, wall time, runner or environment version, validation command" in text
+    assert "what is the minimum metadata a benchmark row should expose" in text
+    assert "I made a small harness for my own project" not in text
+    assert "https://github.com/1966536805l-crypto/openmako/issues/2" not in text
     assert "332 / 424 mixed bucket" in text
     assert "patch-shape bucket separately from the final SWT-bench score" in text
     assert "expected F2P failure mode from source edits under model_patch" in text
@@ -1254,7 +1258,6 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
     assert "my own audit harness" not in text
     assert "runner commit, and input/output hashes enough to compare artifacts" in text
     assert "should patch-shape be first-class metadata too" not in text
-    assert "https://github.com/1966536805l-crypto/openmako/issues/2" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()
 
@@ -1310,7 +1313,8 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
         assert "wave1-thread-reply-ready: thread=terminal-bench-1357" in result.stdout
         assert "preflight: target thread page matched expected topic markers" in result.stdout
         assert "leaderboard row without cost/version/proof metadata" in result.stdout
-        assert "I would rather get criticism on the boundary than repo promotion" in result.stdout
+        assert "what is the minimum metadata a benchmark row should expose" in result.stdout
+        assert "I would rather get criticism on the boundary than repo promotion" not in result.stdout
 
         for thread, fixture, expected in (
             ("openhands-benchmarks-708", openhands_708, "332 / 424 mixed bucket"),
