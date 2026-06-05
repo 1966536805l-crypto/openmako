@@ -112,6 +112,12 @@ Current public proof:
   `examples/evidence_court/artifact_provenance.json` and is now checked by
   `scripts/public_review_gate.sh`, so reviewers can reproduce the supplied
   artifact-identity boundary without relying on prose.
+- A supplied SWTBench-style patch artifact fixture is available at
+  `examples/evidence_court/swtbench_patch_artifact.json` and is checked by
+  `scripts/public_review_gate.sh`. It combines `mixed_test_source` patch-shape
+  metadata with `output.jsonl` to `output.swtbench.jsonl` artifact identity
+  metadata for OpenHands/SWTBench-style comparability questions. It is still a
+  supplied-record audit, not native benchmark ingestion or score validation.
 - A supplied Codex-style transcript adapter is available through
   `openmako evidence-court record from-codex-transcript`. It converts a
   repository-defined JSON transcript shape into an Evidence Court audit record

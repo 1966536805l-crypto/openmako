@@ -70,6 +70,20 @@ if ! grep -q '"eval_rule_version": "swtbench-strip-model-patch/v2"' "$TMP_DIR/ar
   exit 1
 fi
 
+echo "public-review-gate: auditing SWTBench patch artifact fixture"
+"$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court audit --ci --json \
+  examples/evidence_court/swtbench_patch_artifact.json > "$TMP_DIR/swtbench_patch_artifact.json"
+
+if ! grep -q '"bucket": "mixed_test_source"' "$TMP_DIR/swtbench_patch_artifact.json"; then
+  echo "public-review-gate: expected mixed_test_source patch bucket in SWTBench artifact audit JSON" >&2
+  exit 1
+fi
+
+if ! grep -q '"eval_rule_version": "swtbench-strip-model-patch/v2"' "$TMP_DIR/swtbench_patch_artifact.json"; then
+  echo "public-review-gate: expected eval_rule_version in SWTBench artifact audit JSON" >&2
+  exit 1
+fi
+
 echo "public-review-gate: running supplied transcript adapter matrix"
 bash scripts/supplied_transcript_adapter_matrix.sh
 

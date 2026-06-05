@@ -476,6 +476,9 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "links the supplied Codex/OpenHands/SWE-agent\n  transcript adapter checks" in progress
     assert "repository-defined supplied formats only, not native\n  exports, live control, benchmark ingestion, or endorsement" in progress
     assert "scripts/public_review_gate.sh" in progress
+    assert "examples/evidence_court/swtbench_patch_artifact.json" in progress
+    assert "combines `mixed_test_source` patch-shape\n  metadata with `output.jsonl` to `output.swtbench.jsonl` artifact identity" in progress
+    assert "not native benchmark ingestion or score validation" in progress
     assert "scripts/supplied_transcript_adapter_matrix.sh" in progress
     assert "repository-defined Codex, Claude, OpenHands, and SWE-agent style transcripts" in progress
     assert "verifies that each adapter rejects a success claim when\n  command/test proof is missing" in progress
@@ -747,6 +750,9 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
     assert "expected Evidence Court audit exit 1" in text
     assert '"failure_class": "scope_violation"' in text
     assert '"failed_at": "scope_check"' in text
+    assert "public-review-gate: auditing SWTBench patch artifact fixture" in text
+    assert "examples/evidence_court/swtbench_patch_artifact.json" in text
+    assert '"bucket": "mixed_test_source"' in text
     assert "public-review-gate: running supplied transcript adapter matrix" in text
     assert "bash scripts/supplied_transcript_adapter_matrix.sh" in text
     assert "public-review-gate: PASS" in text

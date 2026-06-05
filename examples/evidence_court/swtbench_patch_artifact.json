@@ -1,0 +1,37 @@
+{
+  "claimed_task": "Compare SWTBench-style artifact identity and patch-shape metadata for a supplied run record.",
+  "files_read": [
+    "bench/output.jsonl",
+    "bench/output.swtbench.jsonl",
+    "src/calculator.py",
+    "tests/test_calculator.py"
+  ],
+  "files_edited": [
+    "src/calculator.py",
+    "tests/test_calculator.py",
+    "bench/output.swtbench.jsonl"
+  ],
+  "commands_run": [
+    {
+      "command": "python3 scripts/compare_outputs.py && python3 -m pytest tests/test_calculator.py -q",
+      "exit_code": 0
+    }
+  ],
+  "test_output": "1 passed in 0.02s",
+  "artifact_provenance": {
+    "eval_rule_version": "swtbench-strip-model-patch/v2",
+    "eval_rule_commit": "abc1234",
+    "runner_version": "openhands-benchmark/2026-06-05",
+    "runner_commit": "def5678",
+    "input_hashes": {
+      "output.jsonl": "sha256:111"
+    },
+    "output_hashes": {
+      "output.swtbench.jsonl": "sha256:222"
+    },
+    "missing_provenance": [
+      "container_digest"
+    ]
+  },
+  "final_claim": "Patch-shape and artifact identity metadata were preserved for audit."
+}

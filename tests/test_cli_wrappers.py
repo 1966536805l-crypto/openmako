@@ -244,6 +244,29 @@ class CliWrapperTest(unittest.TestCase):
             {"output.swtbench.jsonl": "sha256:222"},
         )
 
+    def test_openmako_evidence_court_swtbench_patch_artifact_fixture_is_auditable(self) -> None:
+        result = self.run_openmako(
+            "--no-trust-prompt",
+            "evidence-court",
+            "audit",
+            "--ci",
+            "--json",
+            "examples/evidence_court/swtbench_patch_artifact.json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "PASS")
+        self.assertEqual(payload["patch_shape"]["bucket"], "mixed_test_source")
+        self.assertEqual(payload["patch_shape"]["test_files"], ["tests/test_calculator.py"])
+        self.assertEqual(payload["patch_shape"]["source_files"], ["src/calculator.py"])
+        self.assertEqual(payload["patch_shape"]["other_files"], ["bench/output.swtbench.jsonl"])
+        self.assertEqual(payload["artifact_provenance"]["eval_rule_version"], "swtbench-strip-model-patch/v2")
+        self.assertEqual(
+            payload["artifact_provenance"]["output_hashes"],
+            {"output.swtbench.jsonl": "sha256:222"},
+        )
+
     def test_openmako_evidence_court_audit_ci_returns_nonzero_for_fail(self) -> None:
         result = self.run_openmako(
             "--no-trust-prompt",
