@@ -154,7 +154,9 @@ Current public proof:
 - `docs/REVIEWER_OUTREACH_DRAFT.md` defines who to contact first and blocks
   general-influencer outreach until at least one public technical boundary
   review exists.
-- GitHub Actions runs the focused gate through `.github/workflows/focused.yml`.
+- GitHub Actions runs the same `scripts/public_review_gate.sh` command through
+  `.github/workflows/focused.yml`, so the focused badge covers the README's
+  public proof command instead of a separate pytest-only subset.
 - GitHub Actions also runs the supplied-record Evidence Court demo through
   `.github/workflows/evidence-court-demo.yml`.
 

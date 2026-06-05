@@ -157,6 +157,16 @@ def test_readme_links_public_proof_issue() -> None:
     assert "Why It Is Worth Checking" in readme
 
 
+def test_focused_workflow_runs_same_public_gate_as_readme() -> None:
+    workflow = (ROOT / ".github" / "workflows" / "focused.yml").read_text(encoding="utf-8")
+
+    assert "Run focused OpenMako evidence gate" in workflow
+    assert "bash scripts/public_review_gate.sh" in workflow
+    assert "tests/test_agent_planner_contract.py::AgentPlannerContractTest" not in workflow
+    assert "tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest" not in workflow
+    assert "python -m pip install -e . pytest" in workflow
+
+
 def test_agent_trend_radar_tracks_current_next_build_target() -> None:
     radar = (ROOT / "docs" / "AGENT_TREND_RADAR.md").read_text(encoding="utf-8")
 
@@ -576,6 +586,9 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "metadata-test count is intentionally not fixed" in guide
     assert "25 passed" not in guide
     assert "public-review-gate: PASS" in guide
+    assert "public-review-gate: auditing artifact provenance fixture" in guide
+    assert "public-review-gate: running supplied transcript adapter matrix" in guide
+    assert "adapter-matrix: PASS" in guide
     assert "PYTHONPATH" in guide
     assert "stale installed package" in guide
     assert "tests/test_public_metadata.py" in guide
@@ -583,6 +596,7 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in guide
     assert "./scripts/supplied_transcript_adapter_matrix.sh" in guide
     assert "repository-defined Codex, Claude, OpenHands,\nand SWE-agent style transcripts" in guide
+    assert "checks that each adapter rejects a\nsuccess claim when command/test proof is missing" in guide
     assert "not native product export parsing or live agent control" in guide
     assert "It does not prove broad unknown-repository SWE repair." in guide
     assert "It does not prove external endorsement." in guide

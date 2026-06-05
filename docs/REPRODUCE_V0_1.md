@@ -40,6 +40,9 @@ public-review-gate: running public metadata boundary tests
 <N> passed
 public-review-gate: recording Evidence Court bad-run fixture
 public-review-gate: auditing supplied Evidence Court record
+public-review-gate: auditing artifact provenance fixture
+public-review-gate: running supplied transcript adapter matrix
+adapter-matrix: PASS
 public-review-gate: PASS
 ```
 
@@ -61,6 +64,10 @@ metadata section passes and the script reaches `public-review-gate: PASS`.
   narrow v0.1 boundary.
 - The Evidence Court CLI audits a supplied bad-run record and fails closed on a
   scope violation.
+- The artifact-provenance fixture preserves supplied benchmark artifact
+  identity fields without claiming native benchmark ingestion.
+- Supplied transcript adapters preserve complete supplied proof fields and
+  reject missing-test-proof success claims.
 
 ## Smaller Checks
 
@@ -95,8 +102,9 @@ Supplied transcript adapter matrix:
 
 This script generates temporary repository-defined Codex, Claude, OpenHands,
 and SWE-agent style transcripts, converts each one into an Evidence Court
-record, and audits each generated record. It is still a supplied-format smoke
-test, not native product export parsing or live agent control.
+record, audits each generated record, and checks that each adapter rejects a
+success claim when command/test proof is missing. It is still a supplied-format
+smoke test, not native product export parsing or live agent control.
 
 ## What Passing Does Not Prove
 
