@@ -159,6 +159,10 @@ Current public proof:
   control gate: it runs focused desktop intelligence/policy tests and a
   `suite_l4` dry-run eval, then checks that the result remains conservative
   rather than claiming live L4/L5 desktop control.
+- The README and technical review packet now expose that desktop-control local
+  gate only under optional non-v0.1 inspection paths. They keep the expected
+  `status=dry_run`, `scenarios=8`, and `level=L2` boundary visible so reviewers
+  do not confuse it with live L4/L5 autonomy proof.
 - `docs/PUBLIC_SHARE_PACKET.md` provides boundary-preserving public wording for
   reviewers who independently choose to discuss the project.
 - `docs/openmako-review-card.svg` is an optional visual summary for the public

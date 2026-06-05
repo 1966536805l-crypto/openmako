@@ -416,6 +416,14 @@ def test_readme_uses_reviewable_public_claims() -> None:
     assert "demonstrates one narrow public gate" in readme
     assert "## Implementation Boundary" in readme
     assert "## Beyond The Public Gate" in readme
+    beyond = readme[readme.index("## Beyond The Public Gate") :]
+    assert "desktop-control experiments with a bounded local dry-run gate" in beyond
+    assert "bash scripts/desktop_control_local_gate.sh" in beyond
+    assert "desktop-control-local-gate: status=dry_run" in beyond
+    assert "desktop-control-local-gate: scenarios=8" in beyond
+    assert "desktop-control-local-gate: level=L2" in beyond
+    assert "not-proof=live desktop control, L4, L5, external endorsement, star or repost traction" in beyond
+    assert "It is useful implementation evidence, not a claim\nthat OpenMako has live L4/L5 desktop autonomy." in beyond
     assert "OpenMako's project policy is clean-room implementation for closed-source tools" in readme
     assert "docs/UPSTREAM_ATTRIBUTION.md" in readme
     assert "vendored-license boundaries" in readme
@@ -563,6 +571,13 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "adapter_report.unsupported" in packet
     assert "They do not claim native Codex, Claude,\nOpenHands, or SWE-agent export parsing" in packet
     assert "live agent control, benchmark\ningestion, or external endorsement" in packet
+    assert "## Optional Desktop-Control Dry-Run Check" in packet
+    assert "bash scripts/desktop_control_local_gate.sh" in packet
+    assert "desktop-control-local-gate: status=dry_run" in packet
+    assert "desktop-control-local-gate: scenarios=8" in packet
+    assert "desktop-control-local-gate: level=L2" in packet
+    assert "not-proof=live desktop control, L4, L5, external endorsement, star or repost traction" in packet
+    assert "It is not evidence that OpenMako has live L4/L5 desktop autonomy." in packet
     assert "Does README claim more than the focused tests and CI prove?" in packet
     assert "A useful review points to a specific file, line, command, workflow, or missing\nartifact." in packet
     assert "## Minimal Review Comment Template" in packet

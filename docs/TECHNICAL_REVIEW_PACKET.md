@@ -105,6 +105,29 @@ They preserve unsupported tool calls, events, or steps under
 OpenHands, or SWE-agent export parsing, live agent control, benchmark
 ingestion, or external endorsement.
 
+## Optional Desktop-Control Dry-Run Check
+
+The repository also contains desktop-control implementation work outside the
+current v0.1 public claim. To inspect that path without treating it as launch
+proof:
+
+```bash
+bash scripts/desktop_control_local_gate.sh
+```
+
+Expected boundary signal:
+
+```text
+desktop-control-local-gate: status=dry_run
+desktop-control-local-gate: scenarios=8
+desktop-control-local-gate: level=L2
+desktop-control-local-gate: not-proof=live desktop control, L4, L5, external endorsement, star or repost traction
+desktop-control-local-gate: PASS
+```
+
+This is local implementation evidence for desktop intelligence and policy
+guards. It is not evidence that OpenMako has live L4/L5 desktop autonomy.
+
 ## Please Challenge These Boundaries
 
 - Does README claim more than the focused tests and CI prove?

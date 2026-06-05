@@ -262,9 +262,30 @@ Treat these as code paths to inspect and test, not as v0.1 launch claims:
 
 - agent autopsy and trajectory reporting
 - patch preview, checkpoint, and repair utilities
-- desktop-control experiments
+- desktop-control experiments with a bounded local dry-run gate
 - quant/data-evidence gates
 - MCP/runtime/profile plumbing
+
+To inspect the current desktop-control path without treating it as public
+proof, run:
+
+```bash
+bash scripts/desktop_control_local_gate.sh
+```
+
+Expected boundary signal:
+
+```text
+desktop-control-local-gate: status=dry_run
+desktop-control-local-gate: scenarios=8
+desktop-control-local-gate: level=L2
+desktop-control-local-gate: not-proof=live desktop control, L4, L5, external endorsement, star or repost traction
+desktop-control-local-gate: PASS
+```
+
+That gate checks local desktop intelligence, policy guards, and the dry-run
+`suite_l4` scenario plan. It is useful implementation evidence, not a claim
+that OpenMako has live L4/L5 desktop autonomy.
 
 Repository composition:
 
