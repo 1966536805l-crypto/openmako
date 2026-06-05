@@ -156,6 +156,18 @@ def test_readme_links_public_proof_issue() -> None:
     assert "docs/PUBLIC_SHARE_PACKET.md" in readme
 
 
+def test_agent_trend_radar_tracks_current_next_build_target() -> None:
+    radar = (ROOT / "docs" / "AGENT_TREND_RADAR.md").read_text(encoding="utf-8")
+
+    assert "Last refreshed: 2026-06-05." in radar
+    assert "## Current Build Target" in radar
+    assert "run-record adapter matrix for supplied transcripts" in radar
+    assert "The `run-metrics` evidence extension is already on `main`" in radar
+    assert "one fixture and one CLI smoke test per adapter" in radar
+    assert "cross-agent supplied-record audit\ncoverage" in radar
+    assert "not prove live orchestration, ACP control, broad SWE-bench repair, or\nexternal endorsement" in radar
+
+
 def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
@@ -171,17 +183,17 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "git clone https://github.com/1966536805l-crypto/openmako.git" in proof_section
     assert "python -m pip install -e . pytest" in proof_section
     assert "./scripts/public_review_gate.sh" in proof_section
-    assert "./scripts/public_proof_card.sh" in proof_section
+    assert "bash scripts/public_proof_card.sh" in proof_section
     assert "screenshot-friendly summary" in proof_section
     assert "public-review-gate: PASS" in proof_section
     assert "It does not prove broad unknown-repository repair or\nexternal endorsement." in proof_section
     assert "## If You Came From A Benchmark Thread" in proof_section
+    assert "Start with the public gate:" in proof_section
     assert 'The useful review is not "do you like this project?"' in proof_section
     assert "Run `./scripts/public_review_gate.sh`." in proof_section
     assert "Check whether the README claims more than that command proves." in proof_section
     assert "leave the concrete mismatch on\n   [issue #2]" in proof_section
-    assert "Good criticism points to a file, command, workflow, or missing artifact." in proof_section
-    assert "A\nstar, repost, or endorsement is not needed for the review to be useful." in proof_section
+    assert "If something is unclear, please point to the file, command, workflow, or\nmissing artifact." in proof_section
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in proof_section.lower()
     review_section = readme[review_index:scope_index]
@@ -202,7 +214,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml" in review_section
     assert "./scripts/public_review_gate.sh" in review_section
-    assert "not a request for endorsement, stars,\nreposts, or promotion" in review_section
+    assert "This path is for technical boundary review, not promotion." in review_section
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in review_section.lower()
 
@@ -434,7 +446,7 @@ def test_agent_trend_radar_maps_sources_to_non_claim_development_bets() -> None:
     radar = (ROOT / "docs" / "AGENT_TREND_RADAR.md").read_text(encoding="utf-8")
 
     assert "OpenMako Agent Trend Radar" in radar
-    assert "Last refreshed: 2026-06-04." in radar
+    assert "Last refreshed: 2026-06-05." in radar
     assert "not proof that OpenMako already implements these\ncapabilities" in radar
     assert "not evidence of external review, endorsement, stars, or\nreposts" in radar
     assert "https://hermes-agent.nousresearch.com/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-hermes-agent" in radar
@@ -453,8 +465,9 @@ def test_agent_trend_radar_maps_sources_to_non_claim_development_bets() -> None:
     assert "Full-Cycle And Secure-Coding Gates" in radar
     assert "Do not claim OpenMako is a Hermes, OpenClaw, OpenHands, SWE-agent, or\n  Terminal-Bench replacement." in radar
     assert "Do not claim ACP, MCP orchestration, long-term memory, skill self-evolution,\n  cloud agent execution, or secure-code benchmarking as current public v0.1\n  capability." in radar
-    assert "The next high-leverage public build is a `run-metrics` evidence extension" in radar
-    assert "missing-telemetry fields" in radar
+    assert "The `run-metrics` evidence extension is already on `main`" in radar
+    assert "run-record adapter matrix for supplied transcripts" in radar
+    assert "one fixture and one CLI smoke test per adapter" in radar
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in radar.lower()
 
@@ -897,18 +910,22 @@ def test_wave1_review_requests_are_copyable_without_promotion() -> None:
     requests = (ROOT / "docs" / "WAVE1_REVIEW_REQUESTS.md").read_text(encoding="utf-8")
 
     assert "OpenMako Wave 1 Review Requests" in requests
-    assert "not endorsement requests, promotion\nrequests, star requests, repost requests" in requests
+    assert "not endorsement\nrequests, promotion requests" in requests
+    assert "star requests, repost requests" in requests
     assert "not proof that outreach has happened" in requests
     assert "Send the short note first." in requests
-    assert "./scripts/public_proof_card.sh" in requests
+    assert "bash scripts/public_proof_card.sh" in requests
     assert "openmako-public-proof-card: PASS" in requests
     assert "not-proof: broad unknown-repository SWE repair; external endorsement; star or repost traction" in requests
     assert "SWE-Bench / SWE-Agent Review Request" in requests
-    assert "Could you poke holes in OpenMako v0.1's boundary?" in requests
-    assert "It does not claim SWE-bench-scale repair." in requests
+    assert "short notes for asking technical reviewers to check the v0.1 boundary" in requests
+    assert "Can you point out where OpenMako v0.1 overclaims its evidence boundary?" in requests
+    assert "Current public proof covers one focused learning-effect gate" in requests
+    assert "It does not claim\nSWE-bench-scale repair." in requests
+    assert "I'm mainly looking for README lines or proof-command gaps that overclaim." in requests
     assert "Terminal-Bench / Agent-Eval Review Request" in requests
-    assert "Could you sanity-check OpenMako v0.1's evidence boundary?" in requests
-    assert "places where the wording goes beyond the public gate" in requests
+    assert "Can you check OpenMako v0.1's evidence boundary?" in requests
+    assert "README lines or proof-command gaps that overclaim" in requests
     assert "not a broad terminal-agent benchmark" in requests
     assert "Aider Community Review Request" in requests
     assert "useful or too noisy from a coding-agent user's view" in requests
@@ -934,8 +951,9 @@ def test_wave1_review_request_script_prints_short_non_promotional_messages() -> 
     assert "terminal-bench" in text
     assert "aider" in text
     assert "openhands" in text
-    assert "Could you poke holes in OpenMako v0.1's boundary?" in text
-    assert "Could you sanity-check OpenMako v0.1's evidence boundary?" in text
+    assert "Can you point out where OpenMako v0.1 overclaims its evidence boundary?" in text
+    assert "Can you check OpenMako v0.1's evidence boundary?" in text
+    assert "I'm mainly looking for README lines or proof-command gaps that overclaim." in text
     assert "useful or too noisy from a coding-agent user's view" in text
     assert "Could you check OpenMako v0.1 for overclaim?" in text
     assert "unknown target" in text
@@ -943,8 +961,8 @@ def test_wave1_review_request_script_prints_short_non_promotional_messages() -> 
         assert forbidden not in text.lower()
 
     for target, expected in (
-        ("swe-agent", "Could you poke holes in OpenMako v0.1's boundary?"),
-        ("terminal-bench", "Could you sanity-check OpenMako v0.1's evidence boundary?"),
+        ("swe-agent", "Can you point out where OpenMako v0.1 overclaims its evidence boundary?"),
+        ("terminal-bench", "Can you check OpenMako v0.1's evidence boundary?"),
         ("aider", "useful or too noisy from a coding-agent user's view"),
         ("openhands", "Could you check OpenMako v0.1 for overclaim?"),
     ):

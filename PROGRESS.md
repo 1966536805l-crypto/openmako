@@ -5,6 +5,11 @@ This file is a public status boundary, not an internal scoreboard.
 Current public proof:
 
 - The public v0.1 claim is the focused learning-effect gate in `README.md`.
+- Latest local send-ready check on 2026-06-05 passed:
+  `./scripts/public_review_gate.sh` ended with `public-review-gate: PASS`;
+  `bash scripts/wave1_send_ready.sh swe-agent` re-ran the gate and printed a
+  non-promotional technical-boundary message with
+  `Proof command: bash scripts/public_proof_card.sh`.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:
@@ -28,10 +33,12 @@ Current public proof:
   `docs/REVIEWER_TARGETS.md`. It separates technical-review targets from
   broader writer/community targets and forbids star, repost, promotion, or
   endorsement asks.
-- A source-linked agent trend radar is available at:
+- A source-linked agent trend radar refreshed on 2026-06-05 is available at:
   `docs/AGENT_TREND_RADAR.md`. It maps Hermes/OpenClaw/OpenHands/eval trends to
-  future OpenMako build bets and marks them as non-claims until code, fixtures,
-  and CI exist.
+  future OpenMako build bets, marks them as non-claims until code, fixtures,
+  and CI exist, and points the next build target at an external run-record
+  adapter matrix for supplied transcripts rather than the completed
+  `run-metrics` extension.
 - Wave 1 copyable review requests are available at:
   `docs/WAVE1_REVIEW_REQUESTS.md`. They target technical reviewers only and are
   not proof that outreach, review, endorsement, stars, or reposts happened.
@@ -68,6 +75,21 @@ Current public proof:
   are also preserved when supplied. The fields are preserved in Evidence Court audit JSON.
   They improve comparability, but they are not treated as proof that validation
   ran.
+- A supplied Codex-style transcript adapter is available through
+  `openmako evidence-court record from-codex-transcript`. It converts a
+  repository-defined JSON transcript shape into an Evidence Court audit record
+  with `source_format=codex-transcript/v0.1` and unsupported tool-call markers.
+  It is not native Codex product log ingestion or live Codex control.
+- A supplied OpenHands-style transcript adapter is available through
+  `openmako evidence-court record from-openhands-transcript`. It converts a
+  repository-defined JSON transcript shape into an Evidence Court audit record
+  with `source_format=openhands-transcript/v0.1` and unsupported event markers.
+  It is not native OpenHands export parsing or live OpenHands control.
+- A supplied SWE-agent-style transcript adapter is available through
+  `openmako evidence-court record from-swe-agent-transcript`. It converts a
+  repository-defined JSON transcript shape into an Evidence Court audit record
+  with `source_format=swe-agent-transcript/v0.1` and unsupported step markers.
+  It is not native SWE-agent export parsing or live SWE-agent control.
 - `scripts/public_proof_card.sh` wraps the same gate and prints a
   screenshot-friendly proof card with commit, scope, non-proof boundaries,
   review issue, and external-review record form.
@@ -91,6 +113,7 @@ public result.
 
 Next smallest hygiene task:
 
-- Post a short issue #2 update that points reviewers to commit `570cfc4` and
-  asks for overclaim or missing-proof criticism. Do not ask for stars, reposts,
-  endorsement, or promotion.
+- After the current reviewer-surface branch is merged, post a short issue #2
+  update that points reviewers to the merged commit and asks for overclaim or
+  missing-proof criticism. Do not ask for stars, reposts, endorsement, or
+  promotion.

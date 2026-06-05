@@ -23,17 +23,18 @@ fi
 
 repo="https://github.com/1966536805l-crypto/openmako"
 issue="https://github.com/1966536805l-crypto/openmako/issues/2"
-proof="./scripts/public_proof_card.sh"
+proof="bash scripts/public_proof_card.sh"
 
 case "$1" in
   swe-agent)
     cat <<EOF
-Could you poke holes in OpenMako v0.1's boundary?
+Can you point out where OpenMako v0.1 overclaims its evidence boundary?
 
-It has one focused learning-effect gate, patch-scope checks, metadata checks,
-and a supplied-record audit. It does not claim SWE-bench-scale repair.
+Current public proof covers one focused learning-effect gate, patch-scope
+checks, metadata checks, and a supplied-record audit. It does not claim
+SWE-bench-scale repair.
 
-The useful review is whether the README and proof command keep that boundary clear.
+I'm mainly looking for README lines or proof-command gaps that overclaim.
 
 Repo: ${repo}
 Proof command: ${proof}
@@ -42,11 +43,10 @@ EOF
     ;;
   terminal-bench)
     cat <<EOF
-Could you sanity-check OpenMako v0.1's evidence boundary?
+Can you check OpenMako v0.1's evidence boundary?
 
-It is a narrow evidence harness, not a broad terminal-agent benchmark. I am
-trying to find places where the wording goes beyond the public gate, README, or
-Evidence Court supplied-record audit.
+It is a narrow evidence harness, not a broad terminal-agent benchmark. I'm
+looking for README lines or proof-command gaps that overclaim.
 
 Repo: ${repo}
 Proof command: ${proof}

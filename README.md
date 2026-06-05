@@ -14,8 +14,7 @@ no-learning on hidden repair tasks while staying inside exact patch scope.
 
 ## 60-Second Proof
 
-The fastest useful check is not a demo video or an agent-written summary. It is
-the public gate:
+Start with the public gate:
 
 ```bash
 git clone https://github.com/1966536805l-crypto/openmako.git
@@ -27,7 +26,7 @@ python -m pip install -e . pytest
 For a screenshot-friendly summary after the same full gate passes:
 
 ```bash
-./scripts/public_proof_card.sh
+bash scripts/public_proof_card.sh
 ```
 
 Expected high-level signal:
@@ -54,8 +53,8 @@ The useful review is not "do you like this project?" It is narrower:
 3. If a boundary is unclear, leave the concrete mismatch on
    [issue #2](https://github.com/1966536805l-crypto/openmako/issues/2).
 
-Good criticism points to a file, command, workflow, or missing artifact. A
-star, repost, or endorsement is not needed for the review to be useful.
+If something is unclear, please point to the file, command, workflow, or
+missing artifact.
 
 ## Technical Review Entry Points
 
@@ -79,8 +78,7 @@ For technical reviewers, start here before reading older implementation paths:
 - Focused public CI: [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml).
 - Local proof command: `./scripts/public_review_gate.sh`.
 
-This is a technical criticism path, not a request for endorsement, stars,
-reposts, or promotion.
+This path is for technical boundary review, not promotion.
 
 ## Public v0.1 Scope
 
