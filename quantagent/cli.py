@@ -98,7 +98,7 @@ from .edit_loop import (
 from .experiment_runner import ExperimentSpec, fmt_pf, resolve_default_input, run_experiment
 from .eval_harness import append_eval_ledger, build_eval_gap_report, build_eval_scorecard, builtin_code_eval_cases, builtin_smoke_eval_cases, latest_eval_ledger_row, load_eval_cases, render_eval_gap_report, render_eval_json, render_eval_markdown, render_eval_scorecard, run_eval_cases
 from .event_log import append_runtime_event, event_log_stats, export_events, read_runtime_events, render_event_log, replay_summary
-from .evidence_court import EVIDENCE_COURT_SCHEMA_VERSION, build_audit_record_from_claude_transcript, build_audit_record_from_codex_transcript, build_audit_record_from_jsonl, build_audit_record_from_openhands_transcript, build_audit_record_from_swe_agent_transcript, build_audit_record_report, build_bad_run_demo_report, build_missing_tests_demo_report, build_out_of_scope_demo_report, dumps_evidence_court_json, evidence_court_verdict, render_evidence_court_report
+from .evidence_court import EVIDENCE_COURT_SCHEMA_VERSION, build_audit_record_from_claude_transcript, build_audit_record_from_codex_transcript, build_audit_record_from_jsonl, build_audit_record_from_openhands_transcript, build_audit_record_from_swe_agent_transcript, build_audit_record_from_swtbench_artifacts, build_audit_record_report, build_bad_run_demo_report, build_missing_tests_demo_report, build_out_of_scope_demo_report, dumps_evidence_court_json, evidence_court_verdict, render_evidence_court_report
 from .evidence_ledger import load_evidence, record_evidence, render_evidence
 from .embedding_provider import (
     EmbeddingJob,
@@ -336,6 +336,28 @@ def cmd_evidence_court(args: argparse.Namespace) -> int:
     if args.evidence_court_command == "record" and args.record_command == "from-openhands-transcript":
         try:
             record = build_audit_record_from_openhands_transcript(args.transcript)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            print(f"evidence-court error: {exc}", file=sys.stderr)
+            return 2
+        record_json = json.dumps(record, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+        if args.output:
+            Path(args.output).expanduser().resolve(strict=False).write_text(record_json, encoding="utf-8")
+        else:
+            print(record_json, end="")
+        return 0
+    if args.evidence_court_command == "record" and args.record_command == "from-swtbench-artifacts":
+        try:
+            record = build_audit_record_from_swtbench_artifacts(
+                args.input_artifact,
+                args.swtbench_output,
+                eval_rule_version=args.eval_rule_version or "",
+                eval_rule_commit=args.eval_rule_commit or "",
+                runner_version=args.runner_version or "",
+                runner_commit=args.runner_commit or "",
+                source_files=tuple(args.source_file or ()),
+                test_files=tuple(args.test_file or ()),
+                other_files=tuple(args.other_file or ()),
+            )
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             print(f"evidence-court error: {exc}", file=sys.stderr)
             return 2
@@ -5587,6 +5609,21 @@ def build_parser() -> argparse.ArgumentParser:
     rop.add_argument("--output", default=None, help="Write the generated audit record JSON to this path")
     rop.add_argument("transcript", help="Path to a supplied OpenHands-style transcript JSON")
     rop.set_defaults(func=cmd_evidence_court)
+    rap = record_sub.add_parser(
+        "from-swtbench-artifacts",
+        help="Build a supplied SWTBench artifact identity record from output.jsonl and output.swtbench.jsonl",
+    )
+    rap.add_argument("--output", default=None, help="Write the generated audit record JSON to this path")
+    rap.add_argument("--eval-rule-version", default="", help="Evaluation transform rule version, if known")
+    rap.add_argument("--eval-rule-commit", default="", help="Evaluation transform rule commit, if known")
+    rap.add_argument("--runner-version", default="", help="Runner version, if known")
+    rap.add_argument("--runner-commit", default="", help="Runner commit, if known")
+    rap.add_argument("--source-file", action="append", default=[], help="Source file touched by the patch; repeatable")
+    rap.add_argument("--test-file", action="append", default=[], help="Test file touched by the patch; repeatable")
+    rap.add_argument("--other-file", action="append", default=[], help="Other patch artifact or file; repeatable")
+    rap.add_argument("input_artifact", help="Path to output.jsonl or equivalent pre-transform artifact")
+    rap.add_argument("swtbench_output", help="Path to output.swtbench.jsonl or equivalent post-transform artifact")
+    rap.set_defaults(func=cmd_evidence_court)
     rsp = record_sub.add_parser(
         "from-swe-agent-transcript",
         help="Convert a supplied SWE-agent-style transcript JSON into an audit record JSON",

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
@@ -493,6 +494,98 @@ class CliWrapperTest(unittest.TestCase):
                 "output_hashes": {"output.swtbench.jsonl": "sha256:222"},
             },
         )
+
+    def test_openmako_evidence_court_record_from_swtbench_artifacts_is_auditable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            output_jsonl = tmp_path / "output.jsonl"
+            swtbench_jsonl = tmp_path / "output.swtbench.jsonl"
+            output_jsonl.write_text('{"instance_id":"a","patch":"test+source"}\n', encoding="utf-8")
+            swtbench_jsonl.write_text('{"instance_id":"a","patch":"source-stripped"}\n', encoding="utf-8")
+
+            converted = self.run_openmako(
+                "--no-trust-prompt",
+                "evidence-court",
+                "record",
+                "from-swtbench-artifacts",
+                "--eval-rule-version",
+                "swtbench-strip-model-patch/v2",
+                "--runner-commit",
+                "abc1234",
+                "--test-file",
+                "tests/test_calculator.py",
+                "--source-file",
+                "src/calculator.py",
+                str(output_jsonl),
+                str(swtbench_jsonl),
+            )
+
+            self.assertEqual(converted.returncode, 0, converted.stderr)
+            record = json.loads(converted.stdout)
+            self.assertEqual(record["source_agent"], "swtbench-artifacts")
+            self.assertEqual(record["source_format"], "swtbench-artifacts/v0.1")
+            self.assertEqual(record["files_read"], ["output.jsonl"])
+            self.assertEqual(
+                record["files_edited"],
+                ["tests/test_calculator.py", "src/calculator.py", "output.swtbench.jsonl"],
+            )
+            provenance = record["artifact_provenance"]
+            self.assertEqual(provenance["eval_rule_version"], "swtbench-strip-model-patch/v2")
+            self.assertEqual(provenance["runner_commit"], "abc1234")
+            self.assertEqual(
+                provenance["input_hashes"]["output.jsonl"],
+                "sha256:" + hashlib.sha256(output_jsonl.read_bytes()).hexdigest(),
+            )
+            self.assertEqual(
+                provenance["output_hashes"]["output.swtbench.jsonl"],
+                "sha256:" + hashlib.sha256(swtbench_jsonl.read_bytes()).hexdigest(),
+            )
+            self.assertEqual(provenance["missing_provenance"], ["eval_rule_commit", "runner_version"])
+            self.assertEqual(provenance["benchmark_score_validated"], False)
+            self.assertEqual(provenance["runner_verified"], False)
+
+            record_path = tmp_path / "record.json"
+            record_path.write_text(converted.stdout, encoding="utf-8")
+            audited = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", str(record_path))
+
+        self.assertEqual(audited.returncode, 0, audited.stderr)
+        payload = json.loads(audited.stdout)
+        self.assertEqual(payload["verdict"], "PASS")
+        self.assertEqual(payload["patch_shape"]["bucket"], "mixed_test_source")
+        self.assertEqual(payload["artifact_provenance"]["runner_commit"], "abc1234")
+        self.assertEqual(payload["artifact_provenance"]["benchmark_score_validated"], False)
+        self.assertEqual(payload["artifact_provenance"]["runner_verified"], False)
+
+    def test_openmako_evidence_court_record_from_swtbench_artifacts_requires_existing_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            existing = tmp_path / "output.jsonl"
+            missing = tmp_path / "missing.swtbench.jsonl"
+            existing.write_text('{"instance_id":"a"}\n', encoding="utf-8")
+
+            missing_input = self.run_openmako(
+                "--no-trust-prompt",
+                "evidence-court",
+                "record",
+                "from-swtbench-artifacts",
+                str(tmp_path / "missing.jsonl"),
+                str(existing),
+            )
+            missing_output = self.run_openmako(
+                "--no-trust-prompt",
+                "evidence-court",
+                "record",
+                "from-swtbench-artifacts",
+                str(existing),
+                str(missing),
+            )
+
+        self.assertEqual(missing_input.returncode, 2)
+        self.assertIn("SWTBench input artifact not found", missing_input.stderr)
+        self.assertEqual(missing_input.stdout, "")
+        self.assertEqual(missing_output.returncode, 2)
+        self.assertIn("SWTBench output artifact not found", missing_output.stderr)
+        self.assertEqual(missing_output.stdout, "")
 
     def test_openmako_evidence_court_record_from_jsonl_output_file_is_auditable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

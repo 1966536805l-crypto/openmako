@@ -125,6 +125,14 @@ Current public proof:
   metadata with `output.jsonl` to `output.swtbench.jsonl` artifact identity
   metadata for OpenHands/SWTBench-style comparability questions. It is still a
   supplied-record audit, not native benchmark ingestion or score validation.
+- `openmako evidence-court record from-swtbench-artifacts` now builds the same
+  supplied artifact-identity record from real `output.jsonl` and
+  `output.swtbench.jsonl` paths, computing input/output SHA-256 hashes and
+  preserving supplied rule/runner metadata plus patch-shape files. This is a
+  reviewer-facing artifact comparability entrypoint; its machine JSON also
+  records `benchmark_score_validated=false` and `runner_verified=false`. It is
+  not native OpenHands or SWTBench ingestion, benchmark scoring, or external
+  review evidence.
 - A supplied Codex-style transcript adapter is available through
   `openmako evidence-court record from-codex-transcript`. It converts a
   repository-defined JSON transcript shape into an Evidence Court audit record

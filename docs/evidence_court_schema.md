@@ -134,6 +134,30 @@ They may also include `artifact_provenance` or direct provenance fields such as
 This is an evidence audit of the supplied record only. It does not prove that a
 command actually ran outside the record.
 
+## SWTBench Artifact Identity Builder
+
+`record from-swtbench-artifacts` builds a supplied audit record from an
+`output.jsonl`-style input artifact and an `output.swtbench.jsonl`-style output
+artifact. It computes input/output SHA-256 hashes and preserves optional
+evaluation rule and runner metadata so artifact comparability questions can be
+checked without claiming historical re-scoring. The generated provenance also
+sets `benchmark_score_validated=false` and `runner_verified=false`.
+
+```bash
+openmako evidence-court record from-swtbench-artifacts \
+  --eval-rule-version swtbench-strip-model-patch/v2 \
+  --runner-commit abc1234 \
+  --test-file tests/test_calculator.py \
+  --source-file src/calculator.py \
+  --output run.json \
+  output.jsonl output.swtbench.jsonl
+openmako evidence-court audit --ci --json run.json
+```
+
+This is a supplied artifact-identity record builder. It is not native
+OpenHands/SWTBench ingestion, benchmark scoring, or proof that the artifacts
+came from a particular runner unless that evidence is supplied.
+
 ## Supplied Codex-Style Transcript Builder
 
 `record from-codex-transcript` converts a small Codex-style JSON transcript into

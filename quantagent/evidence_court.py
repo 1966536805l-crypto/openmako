@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -469,6 +470,70 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
     if artifact_provenance:
         record["artifact_provenance"] = artifact_provenance
     return record
+
+
+def build_audit_record_from_swtbench_artifacts(
+    input_artifact: str | Path,
+    output_artifact: str | Path,
+    *,
+    eval_rule_version: str = "",
+    eval_rule_commit: str = "",
+    runner_version: str = "",
+    runner_commit: str = "",
+    source_files: tuple[str, ...] = (),
+    test_files: tuple[str, ...] = (),
+    other_files: tuple[str, ...] = (),
+) -> dict[str, object]:
+    input_path = Path(input_artifact).expanduser().resolve(strict=False)
+    output_path = Path(output_artifact).expanduser().resolve(strict=False)
+    if not input_path.exists():
+        raise FileNotFoundError(f"SWTBench input artifact not found: {input_path}")
+    if not output_path.exists():
+        raise FileNotFoundError(f"SWTBench output artifact not found: {output_path}")
+
+    input_name = input_path.name
+    output_name = output_path.name
+    provenance: dict[str, object] = {
+        "input_hashes": {input_name: _sha256_file(input_path)},
+        "output_hashes": {output_name: _sha256_file(output_path)},
+        "benchmark_score_validated": False,
+        "runner_verified": False,
+    }
+    missing: list[str] = []
+    for key, value in (
+        ("eval_rule_version", eval_rule_version),
+        ("eval_rule_commit", eval_rule_commit),
+        ("runner_version", runner_version),
+        ("runner_commit", runner_commit),
+    ):
+        if value:
+            provenance[key] = value
+        else:
+            missing.append(key)
+    if missing:
+        provenance["missing_provenance"] = missing
+
+    edited_files = _unique_strings((*test_files, *source_files, *other_files, output_name))
+    return {
+        "source_agent": "swtbench-artifacts",
+        "source_format": "swtbench-artifacts/v0.1",
+        "claimed_task": "Record SWTBench artifact identity and patch-shape metadata.",
+        "allowed_files": [],
+        "files_read": [input_name],
+        "files_edited": edited_files,
+        "commands_run": [
+            {
+                "command": f"record swtbench artifact identity: {input_name} -> {output_name}",
+                "exit_code": 0,
+            }
+        ],
+        "test_output": {
+            "status": "passed",
+            "summary": "artifact hashes recorded; no benchmark score validated",
+        },
+        "artifact_provenance": provenance,
+        "final_claim": "Recorded SWTBench artifact identity metadata without validating benchmark score or historical re-scoring.",
+    }
 
 
 def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dict[str, object]:
@@ -955,6 +1020,25 @@ def _string_list(value: object) -> list[str]:
         else:
             raise ValueError("audit record arrays must contain strings or file objects")
     return result
+
+
+def _unique_strings(values: tuple[str, ...]) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        item = str(value or "").strip()
+        if item and item not in seen:
+            result.append(item)
+            seen.add(item)
+    return result
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return "sha256:" + digest.hexdigest()
 
 
 def _command_summaries(value: object) -> list[str]:
