@@ -84,13 +84,14 @@ If you want to inspect the newly merged adapter surface, use the schema notes:
 The current adapters are repository-defined supplied transcript formats:
 
 - `record from-codex-transcript`
+- `record from-claude-transcript`
 - `record from-openhands-transcript`
 - `record from-swe-agent-transcript`
 
 They preserve unsupported tool calls, events, or steps under
-`adapter_report.unsupported`. They do not claim native Codex, OpenHands, or
-SWE-agent export parsing, live agent control, benchmark ingestion, or external
-endorsement.
+`adapter_report.unsupported`. They do not claim native Codex, Claude,
+OpenHands, or SWE-agent export parsing, live agent control, benchmark
+ingestion, or external endorsement.
 
 ## Please Challenge These Boundaries
 

@@ -496,11 +496,12 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "## Optional Supplied-Transcript Adapter Checks" in packet
     assert "docs/evidence_court_schema.md" in packet
     assert "record from-codex-transcript" in packet
+    assert "record from-claude-transcript" in packet
     assert "record from-openhands-transcript" in packet
     assert "record from-swe-agent-transcript" in packet
     assert "adapter_report.unsupported" in packet
-    assert "They do not claim native Codex, OpenHands, or\nSWE-agent export parsing" in packet
-    assert "live agent control, benchmark ingestion, or external\nendorsement" in packet
+    assert "They do not claim native Codex, Claude,\nOpenHands, or SWE-agent export parsing" in packet
+    assert "live agent control, benchmark\ningestion, or external endorsement" in packet
     assert "Does README claim more than the focused tests and CI prove?" in packet
     assert "A useful review points to a specific file, line, command, workflow, or missing\nartifact." in packet
     assert "## Minimal Review Comment Template" in packet
