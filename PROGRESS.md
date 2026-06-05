@@ -155,6 +155,10 @@ Current public proof:
   AX click targets. This reduces redundant perception work before reviewed
   control actions, but it is still an internal local hardening step, not a
   public live-control claim.
+- `scripts/desktop_control_local_gate.sh` provides a bounded local desktop
+  control gate: it runs focused desktop intelligence/policy tests and a
+  `suite_l4` dry-run eval, then checks that the result remains conservative
+  rather than claiming live L4/L5 desktop control.
 - `docs/PUBLIC_SHARE_PACKET.md` provides boundary-preserving public wording for
   reviewers who independently choose to discuss the project.
 - `docs/openmako-review-card.svg` is an optional visual summary for the public

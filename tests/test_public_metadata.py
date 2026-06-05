@@ -805,6 +805,25 @@ def test_public_proof_card_wraps_gate_without_overclaiming() -> None:
         assert forbidden not in text.lower()
 
 
+def test_desktop_control_local_gate_is_bounded_and_conservative() -> None:
+    script = ROOT / "scripts" / "desktop_control_local_gate.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert 'export PYTHONPATH="$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}"' in text
+    assert "tests/test_desktop_intelligence.py" in text
+    assert "tests/test_desktop_daemon_policy.py" in text
+    assert "desktop-eval run --suite suite_l4 --json" in text
+    assert '"status_is_dry_run"' in text
+    assert '"scenario_count_is_8"' in text
+    assert '"level_is_not_l4_claim"' in text
+    assert "not-proof=live desktop control, L4, L5, external endorsement, star or repost traction" in text
+    assert "desktop-control-local-gate: PASS" in text
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in text.lower()
+
+
 def test_reviewer_outreach_draft_requests_criticism_not_promotion() -> None:
     draft = (ROOT / "docs" / "REVIEWER_OUTREACH_DRAFT.md").read_text(encoding="utf-8")
 
