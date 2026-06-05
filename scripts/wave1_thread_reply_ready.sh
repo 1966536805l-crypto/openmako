@@ -71,10 +71,11 @@ EOF
     ;;
   openhands-benchmarks-718)
     cat <<'EOF'
-This comparability problem is close to one thing I am trying to define: when evaluation rules change, old runs need audit metadata for rule version, runner version, and artifact provenance.
+I think this comes down to artifact identity, not just the score delta.
 
-OpenMako is only a small supplied-record audit today; it does not ingest native OpenHands/SWTBench artifacts or solve historical re-scoring. The specific question for this thread is whether rule version, runner version, and artifact provenance are enough to keep old artifacts interpretable. Related notes, if useful:
-https://github.com/1966536805l-crypto/openmako/issues/2
+If the same output.jsonl can produce a different output.swtbench.jsonl after eval-time patch stripping changes, I would expect the published artifact to carry eval rule version, runner version or commit, input/output hashes, and maybe a patch-shape bucket.
+
+I am working on a much smaller supplied-record audit, so I am not claiming to solve historical re-scoring or native OpenHands/SWTBench ingestion. Same boundary question here: are rule version + runner version + artifact hashes enough, or should patch-shape be first-class metadata?
 EOF
     ;;
 esac

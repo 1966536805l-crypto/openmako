@@ -60,6 +60,10 @@ Current public proof:
 - `bash scripts/wave1_thread_reply_ready.sh` runs the public review gate before
   printing one thread-specific reply draft for selected public discussions. It
   still does not send messages, create issues, or record outreach as evidence.
+- The `openhands-benchmarks-718` thread draft was refreshed after re-checking
+  the public issue page on 2026-06-05. It now discusses `output.jsonl` to
+  `output.swtbench.jsonl` artifact identity and omits a self-link to reduce
+  promotional risk. This is send-ready text only, not proof of posting.
 - The README exposes issue #2, the technical review packet, and focused CI as
   technical review entry points before the v0.1 scope section.
 - The README now exposes a `60-Second Proof` section before the review links so

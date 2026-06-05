@@ -432,6 +432,10 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "bash scripts/wave1_thread_reply_ready.sh" in progress
     assert "one thread-specific reply draft" in progress
     assert "does not send messages, create issues, or record outreach as evidence" in progress
+    assert "`openhands-benchmarks-718` thread draft was refreshed" in progress
+    assert "`output.jsonl` to\n  `output.swtbench.jsonl` artifact identity" in progress
+    assert "omits a self-link to reduce\n  promotional risk" in progress
+    assert "send-ready text only, not proof of posting" in progress
     assert "bash scripts/wave1_review_request.sh" in progress
     assert "without sending messages or recording outreach as evidence" in progress
     assert "bash scripts/wave1_send_ready.sh" in progress
@@ -879,13 +883,14 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
     assert "decision: read the thread first; do not post if stale, closed, or off-topic" in text
     assert "cost/version/proof metadata" in text
     assert "patch shape needs to be part of the evidence" in text
-    assert "evaluation rules change" in text
-    assert "audit metadata for rule version, runner version, and artifact provenance" in text
-    assert "does not ingest native OpenHands/SWTBench artifacts" in text
-    assert "does not ingest native OpenHands/SWTBench artifacts or solve historical re-scoring" in text
-    assert "The specific question for this thread is whether rule version" in text
-    assert "artifact provenance are enough to keep old artifacts interpretable" in text
-    assert "Related notes, if useful" in text
+    assert "artifact identity, not just the score delta" in text
+    assert "output.jsonl can produce a different output.swtbench.jsonl" in text
+    assert "eval-time patch stripping changes" in text
+    assert "eval rule version, runner version or commit, input/output hashes" in text
+    assert "patch-shape bucket" in text
+    assert "not claiming to solve historical re-scoring or native OpenHands/SWTBench ingestion" in text
+    assert "Same boundary question here" in text
+    assert "should patch-shape be first-class metadata" in text
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()
