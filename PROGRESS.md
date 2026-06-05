@@ -175,6 +175,9 @@ Current public proof:
   do not confuse it with live L4/L5 autonomy proof.
 - `docs/PUBLIC_SHARE_PACKET.md` provides boundary-preserving public wording for
   reviewers who independently choose to discuss the project.
+- `bash scripts/public_share_ready.sh review-request` now runs the public proof
+  gate before printing the short public review-request text. It does not post,
+  ask for stars or reposts, or record outreach as evidence.
 - `docs/openmako-review-card.svg` is an optional visual summary for the public
   gate and issue #2 boundary review. It is not evidence of external review,
   endorsement, stars, or reposts.

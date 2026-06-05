@@ -3,6 +3,15 @@
 Use this only after checking the public evidence. It is for accurate technical
 summary, not endorsement, promotion, star request, or repost request.
 
+For a checked copy of the short public text, run:
+
+```bash
+bash scripts/public_share_ready.sh review-request
+```
+
+That command runs the public proof gate before printing text. It does not post,
+ask for stars, ask for reposts, or record outreach as evidence.
+
 ## One-Sentence Summary
 
 OpenMako v0.1 is an evidence harness for coding-agent repair runs: it checks a
@@ -49,6 +58,8 @@ OpenMako v0.1 is a narrow evidence harness for coding-agent repair runs: learnin
 ### Boundary-Clear Follow-Up
 
 Use this only after a named reviewer has publicly said the boundary is clear.
+To print this text with the proof gate and an explicit guard, run:
+`bash scripts/public_share_ready.sh boundary-clear`.
 
 ```text
 OpenMako v0.1's narrow public claim has external boundary feedback. It is still an evidence harness, not a broad agent benchmark. Reproduce it with ./scripts/public_review_gate.sh before treating it as proof of anything broader.

@@ -90,6 +90,7 @@ For technical reviewers, start here before reading older implementation paths:
 - Wave 1 short-message helper: `bash scripts/wave1_review_request.sh swe-agent`.
 - Wave 1 send-ready check: `bash scripts/wave1_send_ready.sh swe-agent`.
 - Public share packet: [`docs/PUBLIC_SHARE_PACKET.md`](docs/PUBLIC_SHARE_PACKET.md).
+- Public share-ready check: `bash scripts/public_share_ready.sh review-request`.
 - Public proof card: [issue #1](https://github.com/1966536805l-crypto/openmako/issues/1).
 - Focused public CI: [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml).
 - Local proof command: `./scripts/public_review_gate.sh`.
@@ -236,6 +237,7 @@ qagent --help
 | Reviewer target map | [`docs/REVIEWER_TARGETS.md`](docs/REVIEWER_TARGETS.md), public-source outreach waves for technical review |
 | Wave 1 review requests | [`docs/WAVE1_REVIEW_REQUESTS.md`](docs/WAVE1_REVIEW_REQUESTS.md), copyable non-promotional messages for technical reviewers |
 | Public share packet | [`docs/PUBLIC_SHARE_PACKET.md`](docs/PUBLIC_SHARE_PACKET.md), boundary-preserving wording for reviewers who choose to discuss the project publicly |
+| Public share-ready check | `bash scripts/public_share_ready.sh review-request`, runs the public gate before printing a non-promotional share message |
 | v0.1 release | [release v0.1.0](https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0) |
 | Focused public CI | [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml) |
 | Screenshot-friendly proof card | [`scripts/public_proof_card.sh`](scripts/public_proof_card.sh), runs the public gate then prints scope and non-proof boundaries |

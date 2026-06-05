@@ -154,6 +154,8 @@ def test_readme_links_public_proof_issue() -> None:
     assert "bash scripts/wave1_send_ready.sh swe-agent" in readme
     assert "Public share packet" in readme
     assert "docs/PUBLIC_SHARE_PACKET.md" in readme
+    assert "Public share-ready check" in readme
+    assert "bash scripts/public_share_ready.sh review-request" in readme
     assert "Why It Is Worth Checking" in readme
 
 
@@ -246,6 +248,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "bash scripts/wave1_review_request.sh swe-agent" in review_section
     assert "bash scripts/wave1_send_ready.sh swe-agent" in review_section
     assert "docs/PUBLIC_SHARE_PACKET.md" in review_section
+    assert "bash scripts/public_share_ready.sh review-request" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml" in review_section
     assert "./scripts/public_review_gate.sh" in review_section
@@ -496,6 +499,9 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "scripts/public_proof_card.sh" in progress
     assert "screenshot-friendly proof card with commit, scope, non-proof boundaries,\n  review issue, and external-review record form" in progress
     assert "docs/PUBLIC_SHARE_PACKET.md" in progress
+    assert "bash scripts/public_share_ready.sh review-request" in progress
+    assert "runs the public proof\n  gate before printing the short public review-request text" in progress
+    assert "does not post,\n  ask for stars or reposts, or record outreach as evidence" in progress
     assert "docs/openmako-review-card.svg" in progress
     assert "optional visual summary for the public\n  gate and issue #2 boundary review" in progress
     assert "not evidence of external review,\n  endorsement, stars, or reposts" in progress
@@ -704,12 +710,16 @@ def test_public_share_packet_preserves_review_boundary_without_promotion() -> No
 
     assert "OpenMako Public Share Packet" in share_packet
     assert "not endorsement, promotion, star request, or repost request" in share_packet
+    assert "bash scripts/public_share_ready.sh review-request" in share_packet
+    assert "That command runs the public proof gate before printing text." in share_packet
+    assert "It does not post,\nask for stars, ask for reposts, or record outreach as evidence." in share_packet
     assert "## Short Public Posts" in share_packet
     assert "Use short posts only as a technical review request" in share_packet
     assert "### Technical Review Request" in share_packet
     assert "Looking for technical boundary criticism" in share_packet
     assert "### Boundary-Clear Follow-Up" in share_packet
     assert "Use this only after a named reviewer has publicly said the boundary is clear." in share_packet
+    assert "bash scripts/public_share_ready.sh boundary-clear" in share_packet
     assert "not a broad agent benchmark" in share_packet
     assert "focused learning-effect gate" in share_packet
     assert "patch-scope discipline" in share_packet
@@ -818,6 +828,76 @@ def test_public_proof_card_wraps_gate_without_overclaiming() -> None:
     assert "issues/new?template=external-review-record.yml" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()
+
+
+def test_public_share_ready_script_gates_before_printing_message() -> None:
+    script = ROOT / "scripts" / "public_share_ready.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert "Runs the public review gate" in text
+    assert "It does not post, ask for stars, ask for reposts" in text
+    assert "bash scripts/public_review_gate.sh" in text
+    assert "docs/PUBLIC_SHARE_PACKET.md" in text
+    assert "review-request|boundary-clear" in text
+    assert "requires-public-review: yes" in text
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in text.lower()
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_root = Path(tmp)
+        scripts = tmp_root / "scripts"
+        docs = tmp_root / "docs"
+        scripts.mkdir()
+        docs.mkdir()
+        (scripts / "public_share_ready.sh").write_text(text, encoding="utf-8")
+        (scripts / "public_review_gate.sh").write_text(
+            "#!/usr/bin/env bash\nset -euo pipefail\necho stub-public-gate-pass\n",
+            encoding="utf-8",
+        )
+        (docs / "PUBLIC_SHARE_PACKET.md").write_text(
+            (ROOT / "docs" / "PUBLIC_SHARE_PACKET.md").read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+        for path in scripts.iterdir():
+            path.chmod(path.stat().st_mode | 0o111)
+
+        review = subprocess.run(
+            ["bash", str(scripts / "public_share_ready.sh"), "review-request"],
+            cwd=tmp_root,
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        assert review.returncode == 0
+        assert "stub-public-gate-pass" in review.stdout
+        assert "public-share-ready: mode=review-request" in review.stdout
+        assert "Looking for technical boundary criticism" in review.stdout
+        assert review.stdout.index("stub-public-gate-pass") < review.stdout.index("Looking for technical boundary criticism")
+
+        boundary = subprocess.run(
+            ["bash", str(scripts / "public_share_ready.sh"), "boundary-clear"],
+            cwd=tmp_root,
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        assert boundary.returncode == 0
+        assert "stub-public-gate-pass" in boundary.stdout
+        assert "public-share-ready: mode=boundary-clear" in boundary.stdout
+        assert "requires-public-review: yes" in boundary.stdout
+        assert "narrow public claim has external boundary feedback" in boundary.stdout
+
+        unknown = subprocess.run(
+            ["bash", str(scripts / "public_share_ready.sh"), "unknown"],
+            cwd=tmp_root,
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        assert unknown.returncode == 2
+        assert "unknown mode: unknown" in unknown.stderr
 
 
 def test_desktop_control_local_gate_is_bounded_and_conservative() -> None:
