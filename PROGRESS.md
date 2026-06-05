@@ -183,7 +183,7 @@ Current public proof:
 - AX click/move post-action verification now uses the same AX-only no-screenshot
   refresh when the original target was an AX token, reducing one redundant
   screenshot capture in the focused daemon path. Verification now also fails if
-  the fresh AX check can only recover cached AX tokens, so the fast path does
+  the fresh AX check uses cached AX fallback tokens, so the fast path does
   not treat stale accessibility state as proof. This is local call-count
   evidence, not a live latency benchmark or external desktop-control claim.
 - Screenshot failure diagnostics now support the
