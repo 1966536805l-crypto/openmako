@@ -263,7 +263,8 @@ Current public proof:
   REVIEW_RECORD_ISSUE_URL --confirm-external-review` refuses to print it unless
   a public external-review record issue URL is supplied, a human confirms the
   linked public review was written by a named external reviewer, the issue page
-  contains structured review record fields, and the public proof gate passes.
+  contains structured review record fields plus the required boundary checkbox
+  text, and the public proof gate passes.
   This is a readiness check after external review, not proof of reposts, stars,
   or endorsement.
 - `docs/REVIEWER_OUTREACH_DRAFT.md` defines who to contact first and blocks

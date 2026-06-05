@@ -948,6 +948,7 @@ def test_large_repost_packet_requires_external_review_record() -> None:
     assert "not a launch claim, endorsement request, star request, or repost request" in packet
     assert "must not be used while OpenMako only has self-written proof" in packet
     assert "issue page is reachable, contains the structured external review record fields" in packet
+    assert "includes the `External review record:` title prefix plus the required boundary\ncheckbox text" in packet
     assert "includes a selected review verdict" in packet
     assert "requires an explicit human confirmation flag" in packet
     assert "This check cannot prove non-self authorship by itself" in packet
@@ -992,12 +993,14 @@ def test_large_repost_ready_script_requires_review_record_and_gates() -> None:
     assert "issue page does not look like a structured external-review record" in text
     assert "missing record markers" in text
     for marker in (
+        "External review record:",
         "Reviewer",
         "Public review link",
         "Review verdict",
         "Evidence checked by reviewer",
         "Boundary confirmation",
-        "already-public external technical review",
+        "This records an already-public external technical review, not a private message or self-written summary.",
+        "This issue does not ask for endorsement, promotion, stars, reposts, or broader claims.",
         "selected review verdict",
     ):
         assert marker in text

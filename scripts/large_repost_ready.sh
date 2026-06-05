@@ -60,13 +60,14 @@ import sys
 page = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
 review_record_url = sys.argv[2]
 required_markers = (
-    "External review record",
+    "External review record:",
     "Reviewer",
     "Public review link",
     "Review verdict",
     "Evidence checked by reviewer",
     "Boundary confirmation",
-    "already-public external technical review",
+    "This records an already-public external technical review, not a private message or self-written summary.",
+    "This issue does not ask for endorsement, promotion, stars, reposts, or broader claims.",
 )
 verdict_markers = (
     "boundary clear",
