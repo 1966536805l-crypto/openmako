@@ -139,11 +139,11 @@ EOF
     ;;
   openhands-benchmarks-718)
     cat <<'EOF'
-I think this comes down to artifact identity, not just the score delta.
+This thread reads like an artifact-identity problem more than a scoring problem.
 
-If the same `output.jsonl` can produce a different `output.swtbench.jsonl` after eval-time patch stripping changes, I would expect the published artifact to carry enough provenance to make comparisons stable: eval rule version, runner version or commit, input/output hashes, and possibly a patch-shape bucket.
+If the same `output.jsonl` can produce a different `output.swtbench.jsonl` after the patch-stripping rule changes, the row probably needs provenance next to the artifact: eval rule version, runner commit or version, input/output hashes, and maybe the patch-shape bucket.
 
-Boundary question: are rule version, runner commit, and input/output hashes enough to compare artifacts, or should patch shape be first-class metadata too?
+Boundary question: would rule version + runner commit + input/output hashes be enough to compare old/new runs, or does patch shape need to be a first-class field too?
 EOF
     ;;
 esac

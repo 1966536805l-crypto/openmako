@@ -79,6 +79,12 @@ Current public proof:
   `output.swtbench.jsonl` artifact identity and links only the concrete
   `swtbench_patch_artifact` fixture, not a homepage, star ask, or promotion
   request. This is send-ready text only, not proof of posting.
+- The `openhands-benchmarks-718` draft was rechecked again with the live topic
+  guard before sending: the page matched the expected artifact-identity markers
+  and the public review gate passed. The printed reply is now a shorter
+  artifact-identity question about eval rule version, runner commit/version,
+  input/output hashes, and patch-shape metadata. It still requires final user
+  confirmation before any public comment is submitted.
 - The `openhands-benchmarks-708` thread draft was refreshed after re-checking
   the public issue page on 2026-06-05. It now discusses the `332 / 424` mixed
   test+source patch bucket, patch-shape metadata, and the concrete

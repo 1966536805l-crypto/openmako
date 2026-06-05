@@ -1246,13 +1246,13 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
     assert "first-class verdict/metadata field rather than a post-hoc explanation" in text
     assert "A concrete supplied-record shape for this is a fixture" not in text
     assert "examples/evidence_court/swtbench_patch_artifact.json" not in text
-    assert "artifact identity, not just the score delta" in text
+    assert "artifact-identity problem more than a scoring problem" in text
     assert "`output.jsonl` can produce a different `output.swtbench.jsonl`" in text
-    assert "eval-time patch stripping changes" in text
-    assert "eval rule version, runner version or commit, input/output hashes" in text
+    assert "patch-stripping rule changes" in text
+    assert "eval rule version, runner commit or version, input/output hashes" in text
     assert "patch-shape bucket" in text
-    assert "Boundary question: are rule version, runner commit, and input/output hashes enough to compare artifacts" in text
-    assert "should patch shape be first-class metadata too" in text
+    assert "would rule version + runner commit + input/output hashes be enough to compare old/new runs" in text
+    assert "does patch shape need to be a first-class field too" in text
     assert "The closest shape I have been testing" not in text
     assert "docs/evidence_court_schema.md#swtbench-artifact-identity-builder" not in text
     assert "benchmark_score_validated=false" not in text
@@ -1260,7 +1260,7 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
     assert "openmako evidence-court record from-swtbench-artifacts" not in text
     assert "historical re-scoring or native OpenHands/SWTBench ingestion" not in text
     assert "my own audit harness" not in text
-    assert "runner commit, and input/output hashes enough to compare artifacts" in text
+    assert "runner commit + input/output hashes be enough to compare old/new runs" in text
     assert "should patch-shape be first-class metadata too" not in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()
@@ -1322,7 +1322,7 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
 
         for thread, fixture, expected in (
             ("openhands-benchmarks-708", openhands_708, "332 / 424 mixed bucket"),
-            ("openhands-benchmarks-718", openhands_718, "artifact identity, not just the score delta"),
+            ("openhands-benchmarks-718", openhands_718, "artifact-identity problem more than a scoring problem"),
         ):
             specific = subprocess.run(
                 ["bash", str(scripts / "wave1_thread_reply_ready.sh"), thread],
