@@ -14,6 +14,7 @@ from typing import Any, Callable, Mapping
 from .desktop_control import desktop_dir
 from .desktop_daemon_policy import authorize_daemon_action, classify_goal_risk
 from .exception_audit import audit_suppressed_exception
+from .desktop_intelligence import build_desktop_tokenization
 from .trajectory import record_action, record_observation, record_step
 
 
@@ -533,7 +534,89 @@ def _real_preflight(context: _CycleContext, decision: Mapping[str, Any] | None =
                 "summary": f"observation fence mismatch before action: expected {current_observation_id}, got {observation_id}",
                 "decision": _json_safe(payload),
             }
+        current_target = _refresh_target_fence(context, target_id)
+        if not current_target["ok"]:
+            return {
+                "ok": False,
+                "allowed": False,
+                "status": BLOCKED,
+                "summary": current_target["summary"],
+                "decision": _json_safe(payload),
+                "target_refresh": current_target,
+            }
+        current_hash = str(current_target.get("target_hash") or "")
+        if current_hash != target_hash:
+            return {
+                "ok": False,
+                "allowed": False,
+                "status": BLOCKED,
+                "summary": f"target changed before action: {target_id}",
+                "decision": _json_safe(payload),
+                "target_refresh": current_target,
+            }
+        return {
+            "ok": True,
+            "allowed": True,
+            "status": "allowed",
+            "summary": f"preflight allowed after target refresh: {target_id}",
+            "decision": _json_safe(payload),
+            "target_refresh": current_target,
+        }
     return {"ok": True, "allowed": True, "status": "allowed", "summary": "preflight allowed", "decision": _json_safe(payload)}
+
+
+def _refresh_target_fence(context: _CycleContext, target_id: str) -> dict[str, Any]:
+    try:
+        tokenized = build_desktop_tokenization(context.project, name=f"l4_preflight_{context.cycle:04d}", **_target_refresh_kwargs(target_id))
+    except Exception as exc:  # noqa: BLE001 - live desktop refresh must fail closed.
+        return {"ok": False, "summary": f"target refresh failed: {type(exc).__name__}: {exc}", "error_type": type(exc).__name__}
+    payload = tokenized.to_payload() if hasattr(tokenized, "to_payload") else _payload(tokenized)
+    if not bool(payload.get("ok")):
+        return {"ok": False, "summary": f"target refresh failed: {payload.get('summary') or payload.get('status') or 'unknown'}", "tokenization": _json_safe_dict(payload)}
+    token = _find_token_payload(payload, target_id)
+    if token is None:
+        return {"ok": False, "summary": f"target missing before action: {target_id}", "tokenization": _json_safe_dict(payload)}
+    raw = token.get("raw") if isinstance(token.get("raw"), Mapping) else {}
+    if str(raw.get("recovered_from") or "") == "cached_ax":
+        return {"ok": False, "summary": f"target refresh used cached AX fallback: {target_id}", "tokenization": _json_safe_dict(payload)}
+    return {
+        "ok": True,
+        "summary": f"target refresh matched {target_id}",
+        "target_id": target_id,
+        "target_hash": str(token.get("target_hash") or ""),
+        "observation_id": str(payload.get("observation_id") or ""),
+        "screen_hash": str(payload.get("screen_hash") or ""),
+        "mode": "ax_only" if _is_ax_target(target_id) else "full",
+    }
+
+
+def _target_refresh_kwargs(target_id: str) -> dict[str, Any]:
+    if _is_ax_target(target_id):
+        return {
+            "include_ax": True,
+            "include_ocr": False,
+            "include_som": False,
+            "include_grid": False,
+            "skip_screenshot_if_ax_only": True,
+        }
+    return {
+        "include_ax": True,
+        "include_ocr": True,
+        "include_som": True,
+        "include_grid": False,
+    }
+
+
+def _is_ax_target(target_id: str) -> bool:
+    return target_id.strip().upper().startswith("AX")
+
+
+def _find_token_payload(tokenization: Mapping[str, Any], target_id: str) -> dict[str, Any] | None:
+    tokens = tokenization.get("tokens") if isinstance(tokenization.get("tokens"), list) else []
+    for token in tokens:
+        if isinstance(token, Mapping) and str(token.get("token_id") or "") == target_id:
+            return dict(token)
+    return None
 
 
 def _default_verify(context: _CycleContext, decision: Mapping[str, Any] | None = None, action_result: Mapping[str, Any] | None = None) -> dict[str, Any]:

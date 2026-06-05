@@ -8,6 +8,7 @@ import contextlib
 import io
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 from quantagent.cli import main
 from quantagent.desktop_l4_soak import DesktopL4SoakConfig, run_desktop_l4_soak
@@ -411,6 +412,120 @@ class DesktopL4SoakContractTest(unittest.TestCase):
         self.assertEqual(self.result_status(result), "blocked")
         self.assertEqual(payload["metrics"]["blocked_actions"], 1)
         self.assertIn("missing observation fence", payload["summary"])
+        self.assertEqual(calls["execute"], 0)
+
+    def test_live_default_preflight_rechecks_ax_target_with_fast_refresh(self) -> None:
+        calls = {"execute": 0}
+
+        def click_action(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+            return {
+                "ok": True,
+                "status": "action",
+                "action": "click",
+                "args": {
+                    "x": 60,
+                    "y": 35,
+                    "target_id": "AX0001",
+                    "target_hash": "same-hash",
+                    "observation_id": "obs-1",
+                },
+                "summary": "click Search",
+                "risk": "low",
+            }
+
+        def execute_action(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+            calls["execute"] += 1
+            return self.ok_action_result()
+
+        tokenized = {
+            "ok": True,
+            "status": "ok",
+            "summary": "ax refresh ok",
+            "observation_id": "obs-2",
+            "tokens": [{"token_id": "AX0001", "target_hash": "same-hash", "raw": {"role": "AXButton"}}],
+        }
+        with tempfile.TemporaryDirectory(prefix="desktop l4 soak fast preflight ") as tmp:
+            project = Path(tmp)
+            paths = self.paths(project)
+            with patch("quantagent.desktop_l4_soak.build_desktop_tokenization", return_value=tokenized) as tokenize:
+                result = run_desktop_l4_soak(
+                    self.config(
+                        project,
+                        max_cycles=1,
+                        dry_run=False,
+                        execute=True,
+                        reviewed=True,
+                        allow_actions=True,
+                        decide=click_action,
+                        preflight=None,
+                        execute_action=execute_action,
+                    )
+                )
+            payload = self.read_result_json(result, paths["result_path"])
+
+        self.assertEqual(self.result_status(result), "success")
+        self.assertEqual(payload["status"], "success")
+        self.assertEqual(calls["execute"], 1)
+        refresh_kwargs = tokenize.call_args.kwargs
+        self.assertEqual(refresh_kwargs["include_ax"], True)
+        self.assertEqual(refresh_kwargs["include_ocr"], False)
+        self.assertEqual(refresh_kwargs["include_som"], False)
+        self.assertEqual(refresh_kwargs["include_grid"], False)
+        self.assertEqual(refresh_kwargs["skip_screenshot_if_ax_only"], True)
+
+    def test_live_default_preflight_blocks_stale_ax_target_before_execute(self) -> None:
+        calls = {"execute": 0}
+
+        def click_action(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+            return {
+                "ok": True,
+                "status": "action",
+                "action": "click",
+                "args": {
+                    "x": 60,
+                    "y": 35,
+                    "target_id": "AX0001",
+                    "target_hash": "old-hash",
+                    "observation_id": "obs-1",
+                },
+                "summary": "click Search",
+                "risk": "low",
+            }
+
+        def execute_action(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+            calls["execute"] += 1
+            return self.ok_action_result()
+
+        tokenized = {
+            "ok": True,
+            "status": "ok",
+            "summary": "ax refresh ok",
+            "observation_id": "obs-2",
+            "tokens": [{"token_id": "AX0001", "target_hash": "new-hash", "raw": {"role": "AXButton"}}],
+        }
+        with tempfile.TemporaryDirectory(prefix="desktop l4 soak stale preflight ") as tmp:
+            project = Path(tmp)
+            paths = self.paths(project)
+            with patch("quantagent.desktop_l4_soak.build_desktop_tokenization", return_value=tokenized):
+                result = run_desktop_l4_soak(
+                    self.config(
+                        project,
+                        max_cycles=1,
+                        dry_run=False,
+                        execute=True,
+                        reviewed=True,
+                        allow_actions=True,
+                        decide=click_action,
+                        preflight=None,
+                        execute_action=execute_action,
+                    )
+                )
+            payload = self.read_result_json(result, paths["result_path"])
+
+        self.assertEqual(self.result_status(result), "blocked")
+        self.assertEqual(payload["status"], "blocked")
+        self.assertEqual(payload["metrics"]["blocked_actions"], 1)
+        self.assertIn("target changed before action", payload["summary"])
         self.assertEqual(calls["execute"], 0)
 
     def test_stop_file_exists_exits_before_observe(self) -> None:

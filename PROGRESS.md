@@ -170,6 +170,11 @@ Current public proof:
   AX click targets. This reduces redundant perception work before reviewed
   control actions, but it is still an internal local hardening step, not a
   public live-control claim.
+- Desktop L4 soak live preflight now applies the same fenced-target refresh
+  before executing click/type-style actions. AX targets use the AX-only fast
+  refresh and stale target hashes block before execution. This improves local
+  control safety and latency, but it is not a public live-control, L4, or L5
+  claim.
 - Internal desktop-control verification now uses the same source-scoped refresh
   path where safe: AX targets verify with AX-only evidence, typed text verifies
   with AX+OCR, and global hotkeys can use screenshot capture without rebuilding
