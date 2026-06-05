@@ -26,6 +26,15 @@ The schema documents the supplied record shape; the CLI still audits only the ev
     "estimated_cost_usd": 0.004,
     "missing_telemetry": ["actual_cost_usd"]
   },
+  "artifact_provenance": {
+    "eval_rule_version": "swtbench-strip-model-patch/v2",
+    "eval_rule_commit": "abc1234",
+    "runner_version": "openhands-benchmark/2026-06-05",
+    "runner_commit": "def5678",
+    "input_hashes": {"output.jsonl": "sha256:111"},
+    "output_hashes": {"output.swtbench.jsonl": "sha256:222"},
+    "missing_provenance": ["container_digest"]
+  },
   "final_claim": "Fixed and verified."
 }
 ```
@@ -41,6 +50,7 @@ The schema documents the supplied record shape; the CLI still audits only the ev
 | `commands_run` | string array or command objects | Commands the record says were run. Command objects may include `command` and `exit_code`. |
 | `test_output` | string or object | Validation evidence. Objects may include `status`, `output`, `summary`, or `exit_code`. |
 | `run_metrics` | object | Optional telemetry supplied by the record: duration, command count, token counts, cost, provider/model, and `missing_telemetry`. It is preserved in JSON output but is not treated as validation proof. |
+| `artifact_provenance` | object | Optional artifact identity metadata supplied by the record: eval rule version/commit, runner version/commit, input/output hashes, artifact hashes, and `missing_provenance`. It is preserved in JSON output but is not treated as validation proof. |
 | `final_claim` | string | Agent's final success or completion claim. |
 
 ## Verdict Boundary
@@ -74,6 +84,7 @@ The JSON envelope includes:
 - `finding_types`
 - `patch_shape`
 - `run_metrics`
+- `artifact_provenance`
 - `report`
 
 `patch_shape` is derived from `files_edited` and is preserved as audit metadata:
@@ -89,6 +100,13 @@ Test-like files include paths under `test/`, `tests/`, or `testing/`, plus
 file extensions outside that test shape. This classification improves artifact
 comparability; it does not prove that a benchmark score should be higher or
 lower by itself.
+
+`artifact_provenance` preserves artifact identity metadata supplied by the
+record, including eval rule identifiers, runner identifiers, input/output
+hashes, artifact hashes, and missing provenance markers. This adds
+comparability metadata, but it does not mean OpenMako ingests native benchmark
+artifacts or independently proves that two benchmark outputs used the same
+rules.
 
 `--ci` returns `0` for `PASS` and `SUSPICIOUS`, and `1` for `FAIL`.
 Use `SUSPICIOUS` as a review queue unless your workflow chooses to block on it.
@@ -109,6 +127,9 @@ Supported event kinds are `task`, `read`, `edit`, `command`, and `final_claim`.
 `command` events may include `run_metrics` or direct telemetry fields such as
 `duration_seconds`, `input_tokens`, `output_tokens`, `total_tokens`,
 `estimated_cost_usd`, `provider`, `model`, and `missing_telemetry`.
+They may also include `artifact_provenance` or direct provenance fields such as
+`eval_rule_version`, `eval_rule_commit`, `runner_version`, `runner_commit`,
+`input_hashes`, `output_hashes`, `artifact_hashes`, and `missing_provenance`.
 
 This is an evidence audit of the supplied record only. It does not prove that a
 command actually ran outside the record.

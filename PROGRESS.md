@@ -99,6 +99,12 @@ Current public proof:
   including `mixed_test_source` for runs that edit both test-like and
   source-like files. This improves artifact comparability, but it does not
   prove a benchmark score should be higher or lower by itself.
+- The `artifact-provenance` evidence extension is supported for supplied records:
+  Evidence Court preserves supplied eval-rule identifiers, runner identifiers,
+  artifact/input/output hashes, and missing-provenance markers as
+  `artifact_provenance` in audit JSON and the Markdown report. This adds
+  comparability metadata, but it does not mean OpenMako ingests native benchmark
+  artifacts or validates benchmark scores.
 - A supplied Codex-style transcript adapter is available through
   `openmako evidence-court record from-codex-transcript`. It converts a
   repository-defined JSON transcript shape into an Evidence Court audit record

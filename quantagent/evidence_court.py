@@ -22,6 +22,16 @@ RUN_METRIC_FIELDS = (
     "model",
     "missing_telemetry",
 )
+ARTIFACT_PROVENANCE_FIELDS = (
+    "eval_rule_version",
+    "eval_rule_commit",
+    "runner_version",
+    "runner_commit",
+    "input_hashes",
+    "output_hashes",
+    "artifact_hashes",
+    "missing_provenance",
+)
 SOURCE_FILE_SUFFIXES = (
     ".py",
     ".js",
@@ -184,6 +194,7 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
     files_edited = _string_list(payload.get("files_edited"))
     commands_run = _command_summaries(payload.get("commands_run"))
     run_metrics = _run_metrics(payload.get("run_metrics"))
+    artifact_provenance = _artifact_provenance(payload.get("artifact_provenance"))
     test_status, test_summary = _test_output_status(payload.get("test_output"), payload.get("commands_run"))
 
     evidence: list[AutopsyEvidence] = [
@@ -263,6 +274,19 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
                 name="run_metrics",
                 ok=True,
                 data={"run_metrics": run_metrics},
+            )
+        )
+    if artifact_provenance:
+        evidence.append(
+            AutopsyEvidence(
+                f"E{len(evidence) + 1}",
+                "artifact_provenance",
+                "metadata",
+                "Artifact provenance: " + _artifact_provenance_summary(artifact_provenance),
+                step=len(evidence),
+                name="artifact_provenance",
+                ok=True,
+                data={"artifact_provenance": artifact_provenance},
             )
         )
     if test_summary:
@@ -372,6 +396,7 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
     files_edited: list[str] = []
     commands_run: list[object] = []
     run_metrics: dict[str, object] = {}
+    artifact_provenance: dict[str, object] = {}
     test_output = ""
 
     for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
@@ -399,6 +424,9 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
             event_metrics = _event_run_metrics(event)
             if event_metrics:
                 _merge_run_metrics(run_metrics, event_metrics)
+            event_provenance = _event_artifact_provenance(event)
+            if event_provenance:
+                _merge_artifact_provenance(artifact_provenance, event_provenance)
             output = str(event.get("output") or event.get("summary") or "").strip()
             if output:
                 test_output = output
@@ -415,6 +443,8 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
         if commands_run and "command_count" not in run_metrics:
             run_metrics["command_count"] = len(commands_run)
         record["run_metrics"] = run_metrics
+    if artifact_provenance:
+        record["artifact_provenance"] = artifact_provenance
     return record
 
 
@@ -447,6 +477,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
     files_edited: list[str] = []
     commands_run: list[dict[str, object]] = []
     run_metrics: dict[str, object] = {}
+    artifact_provenance: dict[str, object] = {}
     unsupported: list[str] = []
     test_output = ""
 
@@ -479,6 +510,9 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
                 metrics = _event_run_metrics(tool_payload)
                 if metrics:
                     _merge_run_metrics(run_metrics, metrics)
+                provenance = _event_artifact_provenance(tool_payload)
+                if provenance:
+                    _merge_artifact_provenance(artifact_provenance, provenance)
                 output = _codex_command_output(tool_payload)
                 if output:
                     test_output = output
@@ -495,6 +529,8 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
         record["run_metrics"] = run_metrics
     else:
         record.pop("run_metrics")
+    if artifact_provenance:
+        record["artifact_provenance"] = artifact_provenance
     adapter_report = {"unsupported": unsupported}
     record["adapter_report"] = adapter_report
     return record
@@ -529,6 +565,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
     files_edited: list[str] = []
     commands_run: list[dict[str, object]] = []
     run_metrics: dict[str, object] = {}
+    artifact_provenance: dict[str, object] = {}
     unsupported: list[str] = []
     test_output = ""
 
@@ -563,6 +600,9 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
                 metrics = _event_run_metrics(tool_payload)
                 if metrics:
                     _merge_run_metrics(run_metrics, metrics)
+                provenance = _event_artifact_provenance(tool_payload)
+                if provenance:
+                    _merge_artifact_provenance(artifact_provenance, provenance)
                 output = _codex_command_output(tool_payload)
                 if output:
                     test_output = output
@@ -579,6 +619,8 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
         record["run_metrics"] = run_metrics
     else:
         record.pop("run_metrics")
+    if artifact_provenance:
+        record["artifact_provenance"] = artifact_provenance
     record["adapter_report"] = {"unsupported": unsupported}
     return record
 
@@ -612,6 +654,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
     files_edited: list[str] = []
     commands_run: list[dict[str, object]] = []
     run_metrics: dict[str, object] = {}
+    artifact_provenance: dict[str, object] = {}
     unsupported: list[str] = []
     test_output = ""
 
@@ -640,6 +683,9 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
             metrics = _event_run_metrics(event)
             if metrics:
                 _merge_run_metrics(run_metrics, metrics)
+            provenance = _event_artifact_provenance(event)
+            if provenance:
+                _merge_artifact_provenance(artifact_provenance, provenance)
             output = _codex_command_output(event)
             if output:
                 test_output = output
@@ -660,6 +706,8 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
         record["run_metrics"] = run_metrics
     else:
         record.pop("run_metrics")
+    if artifact_provenance:
+        record["artifact_provenance"] = artifact_provenance
     record["adapter_report"] = {"unsupported": unsupported}
     return record
 
@@ -693,6 +741,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
     files_edited: list[str] = []
     commands_run: list[dict[str, object]] = []
     run_metrics: dict[str, object] = {}
+    artifact_provenance: dict[str, object] = {}
     unsupported: list[str] = []
     test_output = ""
 
@@ -721,6 +770,9 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
             metrics = _event_run_metrics(step)
             if metrics:
                 _merge_run_metrics(run_metrics, metrics)
+            provenance = _event_artifact_provenance(step)
+            if provenance:
+                _merge_artifact_provenance(artifact_provenance, provenance)
             output = _codex_command_output(step)
             if output:
                 test_output = output
@@ -741,6 +793,8 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
         record["run_metrics"] = run_metrics
     else:
         record.pop("run_metrics")
+    if artifact_provenance:
+        record["artifact_provenance"] = artifact_provenance
     record["adapter_report"] = {"unsupported": unsupported}
     return record
 
@@ -756,6 +810,7 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
     missing_test_evidence = next((item for item in report.findings if item.finding_type == "missing_test_evidence"), None)
     test_failure = next((item for item in report.evidence if item.source == "failure" or item.kind == "test"), None)
     patch_shape = _report_patch_shape(report)
+    artifact_provenance = _report_artifact_provenance(report)
 
     lines = [
         "# Evidence Court Report",
@@ -784,6 +839,10 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
         f"- test_files: {', '.join(patch_shape.get('test_files', ())) or 'none'}",
         f"- source_files: {', '.join(patch_shape.get('source_files', ())) or 'none'}",
         f"- other_files: {', '.join(patch_shape.get('other_files', ())) or 'none'}",
+        "",
+        "## Artifact Provenance",
+        "",
+        f"- summary: {_artifact_provenance_summary(artifact_provenance)}",
         "",
         "## Test Verification",
         "",
@@ -815,6 +874,7 @@ def dumps_evidence_court_json(report: AgentAutopsyReport) -> str:
         "failed_at": report.failed_at,
         "finding_types": [item.finding_type for item in report.findings],
         "patch_shape": _report_patch_shape(report),
+        "artifact_provenance": _report_artifact_provenance(report),
         "run_metrics": _report_run_metrics(report),
         "report": report.to_dict(),
     }
@@ -922,6 +982,51 @@ def _event_run_metrics(event: dict[str, object]) -> dict[str, object]:
     return _run_metrics(metrics) if metrics else {}
 
 
+def _artifact_provenance(value: object) -> dict[str, object]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError("artifact_provenance must be an object")
+    provenance = dict(value)
+    missing = provenance.get("missing_provenance")
+    if missing is not None:
+        if not isinstance(missing, list) or not all(isinstance(item, str) for item in missing):
+            raise ValueError("artifact_provenance.missing_provenance must be an array of strings")
+        provenance["missing_provenance"] = [item for item in missing if item.strip()]
+    for field in ("input_hashes", "output_hashes", "artifact_hashes"):
+        hashes = provenance.get(field)
+        if hashes is not None and not isinstance(hashes, dict):
+            raise ValueError(f"artifact_provenance.{field} must be an object")
+    return provenance
+
+
+def _event_artifact_provenance(event: dict[str, object]) -> dict[str, object]:
+    provenance = _artifact_provenance(event.get("artifact_provenance"))
+    for field in ARTIFACT_PROVENANCE_FIELDS:
+        if field in event:
+            provenance[field] = event[field]
+    return _artifact_provenance(provenance) if provenance else {}
+
+
+def _merge_artifact_provenance(target: dict[str, object], source: dict[str, object]) -> None:
+    for key, value in source.items():
+        if key == "missing_provenance":
+            existing = target.get(key)
+            values: list[str] = []
+            if isinstance(existing, list):
+                values.extend(str(item) for item in existing)
+            if isinstance(value, list):
+                values.extend(str(item) for item in value)
+            target[key] = list(dict.fromkeys(item for item in values if item.strip()))
+        elif key in {"input_hashes", "output_hashes", "artifact_hashes"} and isinstance(value, dict):
+            existing = target.get(key)
+            merged = dict(existing) if isinstance(existing, dict) else {}
+            merged.update(value)
+            target[key] = merged
+        else:
+            target[key] = value
+
+
 def _merge_run_metrics(target: dict[str, object], source: dict[str, object]) -> None:
     for key, value in source.items():
         if key == "missing_telemetry":
@@ -942,6 +1047,14 @@ def _report_run_metrics(report: AgentAutopsyReport) -> dict[str, object]:
         return {}
     metrics = item.data.get("run_metrics")
     return dict(metrics) if isinstance(metrics, dict) else {}
+
+
+def _report_artifact_provenance(report: AgentAutopsyReport) -> dict[str, object]:
+    item = next((evidence for evidence in report.evidence if evidence.name == "artifact_provenance"), None)
+    if item is None:
+        return {}
+    provenance = item.data.get("artifact_provenance")
+    return dict(provenance) if isinstance(provenance, dict) else {}
 
 
 def _report_patch_shape(report: AgentAutopsyReport) -> dict[str, object]:
@@ -1008,6 +1121,22 @@ def _run_metrics_summary(metrics: dict[str, object]) -> str:
         parts.append(f"{field}={value}")
     extra_fields = sorted(key for key in metrics if key not in RUN_METRIC_FIELDS)
     parts.extend(f"{key}={metrics[key]}" for key in extra_fields)
+    return ", ".join(parts) if parts else "none supplied"
+
+
+def _artifact_provenance_summary(provenance: dict[str, object]) -> str:
+    parts: list[str] = []
+    for field in ARTIFACT_PROVENANCE_FIELDS:
+        if field not in provenance:
+            continue
+        value = provenance[field]
+        if field == "missing_provenance" and isinstance(value, list):
+            value = ",".join(str(item) for item in value) or "none"
+        elif field.endswith("_hashes") and isinstance(value, dict):
+            value = ",".join(f"{key}={value[key]}" for key in sorted(value)) or "none"
+        parts.append(f"{field}={value}")
+    extra_fields = sorted(key for key in provenance if key not in ARTIFACT_PROVENANCE_FIELDS)
+    parts.extend(f"{key}={provenance[key]}" for key in extra_fields)
     return ", ".join(parts) if parts else "none supplied"
 
 

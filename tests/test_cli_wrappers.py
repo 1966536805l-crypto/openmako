@@ -188,6 +188,43 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(len(metric_items), 1)
         self.assertEqual(metric_items[0]["data"]["run_metrics"], record["run_metrics"])
 
+    def test_openmako_evidence_court_audit_json_preserves_artifact_provenance(self) -> None:
+        record = {
+            "claimed_task": "Compare benchmark artifact outputs.",
+            "files_read": ["bench/output.jsonl"],
+            "files_edited": ["bench/output.swtbench.jsonl"],
+            "commands_run": [{"command": "python3 scripts/compare_outputs.py", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "artifact_provenance": {
+                "eval_rule_version": "swtbench-strip-model-patch/v2",
+                "eval_rule_commit": "abc1234",
+                "runner_version": "openhands-benchmark/2026-06-05",
+                "runner_commit": "def5678",
+                "input_hashes": {"output.jsonl": "sha256:111"},
+                "output_hashes": {"output.swtbench.jsonl": "sha256:222"},
+                "missing_provenance": ["container_digest"],
+            },
+            "final_claim": "Artifact comparison was preserved.",
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+            text_result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", handle.name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "PASS")
+        self.assertEqual(payload["artifact_provenance"], record["artifact_provenance"])
+        provenance_items = [
+            item for item in payload["report"]["evidence"] if item["name"] == "artifact_provenance"
+        ]
+        self.assertEqual(len(provenance_items), 1)
+        self.assertEqual(provenance_items[0]["data"]["artifact_provenance"], record["artifact_provenance"])
+        self.assertEqual(text_result.returncode, 0, text_result.stderr)
+        self.assertIn("## Artifact Provenance", text_result.stdout)
+        self.assertIn("eval_rule_version=swtbench-strip-model-patch/v2", text_result.stdout)
+
     def test_openmako_evidence_court_audit_ci_returns_nonzero_for_fail(self) -> None:
         result = self.run_openmako(
             "--no-trust-prompt",
@@ -324,6 +361,35 @@ class CliWrapperTest(unittest.TestCase):
                 "input_tokens": 1200,
                 "missing_telemetry": ["actual_cost_usd"],
                 "output_tokens": 320,
+            },
+        )
+
+    def test_openmako_evidence_court_record_from_jsonl_preserves_artifact_provenance(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
+            handle.write('{"kind":"task","claimed_task":"Compare benchmark artifacts."}\n')
+            handle.write(
+                '{"kind":"command","command":"python3 scripts/compare_outputs.py",'
+                '"exit_code":0,"artifact_provenance":{"eval_rule_version":"swtbench-strip-model-patch/v2",'
+                '"input_hashes":{"output.jsonl":"sha256:111"},"missing_provenance":["runner_commit"]}}\n'
+            )
+            handle.write(
+                '{"kind":"command","command":"python3 scripts/hash_output.py","exit_code":0,'
+                '"runner_commit":"def5678","output_hashes":{"output.swtbench.jsonl":"sha256:222"},'
+                '"missing_provenance":["container_digest"]}\n'
+            )
+            handle.flush()
+            converted = self.run_openmako("--no-trust-prompt", "evidence-court", "record", "from-jsonl", handle.name)
+
+        self.assertEqual(converted.returncode, 0, converted.stderr)
+        record = json.loads(converted.stdout)
+        self.assertEqual(
+            record["artifact_provenance"],
+            {
+                "eval_rule_version": "swtbench-strip-model-patch/v2",
+                "input_hashes": {"output.jsonl": "sha256:111"},
+                "missing_provenance": ["runner_commit", "container_digest"],
+                "runner_commit": "def5678",
+                "output_hashes": {"output.swtbench.jsonl": "sha256:222"},
             },
         )
 
@@ -660,6 +726,11 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("anyOf", schema["properties"]["test_output"])
         self.assertEqual(schema["properties"]["run_metrics"]["type"], "object")
         self.assertEqual(schema["properties"]["run_metrics"]["properties"]["missing_telemetry"]["type"], "array")
+        self.assertEqual(schema["properties"]["artifact_provenance"]["type"], "object")
+        self.assertEqual(
+            schema["properties"]["artifact_provenance"]["properties"]["missing_provenance"]["type"],
+            "array",
+        )
         self.assertIs(schema["additionalProperties"], True)
 
         for field in ("allowed_files", "files_read", "files_edited", "commands_run"):
@@ -713,6 +784,9 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("Use `--json` for CI or scripts.", schema)
         self.assertIn("`schema_version`", schema)
         self.assertIn("`patch_shape`", schema)
+        self.assertIn("`artifact_provenance`", schema)
+        self.assertIn("artifact identity metadata supplied by the record", schema)
+        self.assertIn("does not mean OpenMako ingests native benchmark", schema)
         self.assertIn("`mixed_test_source`: both test-like files and source-like files were edited.", schema)
         self.assertIn("This classification improves artifact\ncomparability", schema)
         self.assertIn("does not prove that a benchmark score should be higher or\nlower by itself", schema)

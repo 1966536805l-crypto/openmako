@@ -118,6 +118,43 @@
         }
       }
     },
+    "artifact_provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Optional artifact identity metadata supplied by the record. Evidence Court preserves it in machine JSON but does not treat it as proof that native benchmark ingestion is supported or that benchmark scores are valid.",
+      "properties": {
+        "eval_rule_version": {
+          "type": "string"
+        },
+        "eval_rule_commit": {
+          "type": "string"
+        },
+        "runner_version": {
+          "type": "string"
+        },
+        "runner_commit": {
+          "type": "string"
+        },
+        "input_hashes": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "output_hashes": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "artifact_hashes": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "missing_provenance": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "final_claim": {
       "type": "string",
       "description": "Agent's final success or completion claim."
