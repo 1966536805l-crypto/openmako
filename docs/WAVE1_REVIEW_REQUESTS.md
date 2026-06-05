@@ -1,11 +1,11 @@
 # OpenMako Wave 1 Review Requests
 
-Last refreshed: 2026-06-04.
+Last refreshed: 2026-06-05.
 
-These are copyable technical-review requests for the Wave 1 targets in
-`docs/REVIEWER_TARGETS.md`. They are not endorsement requests, promotion
-requests, star requests, repost requests, or public traction evidence. They are
-also not proof that outreach has happened.
+These are short notes for asking technical reviewers to check the v0.1 boundary
+for the Wave 1 targets in `docs/REVIEWER_TARGETS.md`. They are not endorsement
+requests, promotion requests, star requests, repost requests, or public traction
+evidence. They are also not proof that outreach has happened.
 
 Use one message at a time. Send the short note first. Only send the proof card
 or longer context if the reviewer asks. If a reviewer replies with a concrete
@@ -18,7 +18,7 @@ Run this before sending a request and paste the final proof-card block if the
 reviewer asks for command output:
 
 ```bash
-./scripts/public_proof_card.sh
+bash scripts/public_proof_card.sh
 ```
 
 Expected final block:
@@ -34,27 +34,28 @@ record-external-review: https://github.com/1966536805l-crypto/openmako/issues/ne
 ## SWE-Bench / SWE-Agent Review Request
 
 ```text
-Could you poke holes in OpenMako v0.1's boundary?
+Can you point out where OpenMako v0.1 overclaims its evidence boundary?
 
-It has one focused learning-effect gate, patch-scope checks, metadata checks,
-and a supplied-record audit. It does not claim SWE-bench-scale repair.
+Current public proof covers one focused learning-effect gate, patch-scope
+checks, metadata checks, and a supplied-record audit. It does not claim
+SWE-bench-scale repair.
 
-The useful review is whether the README and proof command keep that boundary clear.
+I'm mainly looking for README lines or proof-command gaps that overclaim.
 
 Repo: https://github.com/1966536805l-crypto/openmako
-Proof command: ./scripts/public_proof_card.sh
+Proof command: bash scripts/public_proof_card.sh
 Review issue: https://github.com/1966536805l-crypto/openmako/issues/2
 ```
 
 ## Terminal-Bench / Agent-Eval Review Request
 
 ```text
-Could you sanity-check OpenMako v0.1's evidence boundary?
+Can you check OpenMako v0.1's evidence boundary?
 
-It is a narrow evidence harness, not a broad terminal-agent benchmark. I am trying to find places where the wording goes beyond the public gate, README, or Evidence Court supplied-record audit.
+It is a narrow evidence harness, not a broad terminal-agent benchmark. I'm looking for README lines or proof-command gaps that overclaim.
 
 Repo: https://github.com/1966536805l-crypto/openmako
-Proof command: ./scripts/public_proof_card.sh
+Proof command: bash scripts/public_proof_card.sh
 Review issue: https://github.com/1966536805l-crypto/openmako/issues/2
 ```
 
@@ -66,7 +67,7 @@ Could you check whether OpenMako v0.1 is useful or too noisy from a coding-agent
 It is not a replacement for Aider or any coding agent. The claim is narrower: run evidence, patch-scope discipline, test-proof checks, and an Evidence Court audit over supplied records.
 
 Repo: https://github.com/1966536805l-crypto/openmako
-Proof command: ./scripts/public_proof_card.sh
+Proof command: bash scripts/public_proof_card.sh
 Review issue: https://github.com/1966536805l-crypto/openmako/issues/2
 ```
 
@@ -78,7 +79,7 @@ Could you check OpenMako v0.1 for overclaim?
 The current claim is not that OpenMako is a full software agent. It is an evidence harness for coding-agent repair runs, with one focused public learning-effect gate and Evidence Court audit for supplied records. The useful review is whether README, tests, and CI prove only that claim.
 
 Repo: https://github.com/1966536805l-crypto/openmako
-Proof command: ./scripts/public_proof_card.sh
+Proof command: bash scripts/public_proof_card.sh
 Review issue: https://github.com/1966536805l-crypto/openmako/issues/2
 ```
 

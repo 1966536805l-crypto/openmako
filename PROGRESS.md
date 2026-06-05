@@ -5,6 +5,11 @@ This file is a public status boundary, not an internal scoreboard.
 Current public proof:
 
 - The public v0.1 claim is the focused learning-effect gate in `README.md`.
+- Latest local send-ready check on 2026-06-05 passed:
+  `./scripts/public_review_gate.sh` ended with `public-review-gate: PASS`;
+  `bash scripts/wave1_send_ready.sh swe-agent` re-ran the gate and printed a
+  non-promotional technical-boundary message with
+  `Proof command: bash scripts/public_proof_card.sh`.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:
