@@ -64,6 +64,9 @@ Current public proof:
   technical review entry points before the v0.1 scope section.
 - The README now exposes a `60-Second Proof` section before the review links so
   visitors can run the public gate before reading longer docs.
+- The README now includes a short `Why It Is Worth Checking` hook before the
+  proof commands. It frames OpenMako as an inspectable-evidence harness and
+  asks for concrete claim/proof mismatches, not promotion.
 - The README now includes an `If You Came From A Benchmark Thread` path that
   tells external benchmark/eval readers to run the gate, compare README claims
   against that command, and leave concrete mismatches on issue #2. It is a

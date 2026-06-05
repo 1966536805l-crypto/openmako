@@ -12,6 +12,16 @@ The v0.1 public claim is intentionally smaller than the repository: OpenMako
 demonstrates one narrow public gate where approved learning must beat
 no-learning on hidden repair tasks while staying inside exact patch scope.
 
+## Why It Is Worth Checking
+
+Coding-agent evals often collapse into a final pass/fail. OpenMako's narrower
+job is to make the run evidence inspectable: did a repair skill actually
+improve hidden variants, did it stay inside patch scope, and did the required
+tests run as claimed?
+
+The fastest useful criticism is a concrete mismatch between a public claim and
+the command, workflow, issue, or artifact that should prove it.
+
 ## 60-Second Proof
 
 Start with the public gate:

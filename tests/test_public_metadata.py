@@ -154,6 +154,7 @@ def test_readme_links_public_proof_issue() -> None:
     assert "bash scripts/wave1_send_ready.sh swe-agent" in readme
     assert "Public share packet" in readme
     assert "docs/PUBLIC_SHARE_PACKET.md" in readme
+    assert "Why It Is Worth Checking" in readme
 
 
 def test_agent_trend_radar_tracks_current_next_build_target() -> None:
@@ -171,14 +172,28 @@ def test_agent_trend_radar_tracks_current_next_build_target() -> None:
 def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
+    why_index = readme.index("## Why It Is Worth Checking")
     proof_index = readme.index("## 60-Second Proof")
     benchmark_thread_index = readme.index("## If You Came From A Benchmark Thread")
     review_index = readme.index("## Technical Review Entry Points")
     scope_index = readme.index("## Public v0.1 Scope")
 
+    assert why_index < proof_index
     assert proof_index < review_index
     assert proof_index < benchmark_thread_index < review_index
     assert review_index < scope_index
+    why_section = readme[why_index:proof_index]
+    assert "Coding-agent evals often collapse into a final pass/fail." in why_section
+    assert "make the run evidence inspectable" in why_section
+    assert "improve hidden variants" in why_section
+    assert "stay inside patch scope" in why_section
+    assert "did the required\ntests run as claimed" in why_section
+    assert (
+        "concrete mismatch between a public claim and\n"
+        "the command, workflow, issue, or artifact"
+    ) in why_section
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in why_section.lower()
     proof_section = readme[proof_index:review_index]
     assert "git clone https://github.com/1966536805l-crypto/openmako.git" in proof_section
     assert "python -m pip install -e . pytest" in proof_section
@@ -423,6 +438,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "runs the public review gate before printing\n  a target-specific Wave 1 short message" in progress
     assert "technical review entry points before the v0.1 scope section" in progress
     assert "`60-Second Proof` section before the review links" in progress
+    assert "`Why It Is Worth Checking` hook before the\n  proof commands" in progress
+    assert "asks for concrete claim/proof mismatches, not promotion" in progress
     assert "`If You Came From A Benchmark Thread` path" in progress
     assert "compare README claims\n  against that command" in progress
     assert "leave concrete mismatches on issue #2" in progress
