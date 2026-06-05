@@ -431,6 +431,9 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "links the supplied Codex/OpenHands/SWE-agent\n  transcript adapter checks" in progress
     assert "repository-defined supplied formats only, not native\n  exports, live control, benchmark ingestion, or endorsement" in progress
     assert "scripts/public_review_gate.sh" in progress
+    assert "scripts/supplied_transcript_adapter_matrix.sh" in progress
+    assert "repository-defined Codex, Claude, OpenHands, and SWE-agent style transcripts" in progress
+    assert "supplied-format smoke test, not native product export\n  parsing, live agent control, benchmark ingestion, or endorsement" in progress
     assert "scripts/public_proof_card.sh" in progress
     assert "screenshot-friendly proof card with commit, scope, non-proof boundaries,\n  review issue, and external-review record form" in progress
     assert "docs/PUBLIC_SHARE_PACKET.md" in progress
@@ -535,6 +538,9 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "tests/test_public_metadata.py" in guide
     assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in guide
     assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in guide
+    assert "./scripts/supplied_transcript_adapter_matrix.sh" in guide
+    assert "repository-defined Codex, Claude, OpenHands,\nand SWE-agent style transcripts" in guide
+    assert "not native product export parsing or live agent control" in guide
     assert "It does not prove broad unknown-repository SWE repair." in guide
     assert "It does not prove external endorsement." in guide
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
@@ -667,6 +673,24 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
     assert '"failure_class": "scope_violation"' in text
     assert '"failed_at": "scope_check"' in text
     assert "public-review-gate: PASS" in text
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in text.lower()
+
+
+def test_supplied_transcript_adapter_matrix_script_is_reviewer_runnable() -> None:
+    script = ROOT / "scripts" / "supplied_transcript_adapter_matrix.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert 'export PYTHONPATH="$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}"' in text
+    assert "from-${adapter}-transcript" in text
+    assert "smoke_adapter codex" in text
+    assert "smoke_adapter claude" in text
+    assert "smoke_adapter openhands" in text
+    assert "smoke_adapter swe-agent" in text
+    assert '"verdict": "PASS"' in text
+    assert "adapter-matrix: PASS" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()
 

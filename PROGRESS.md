@@ -104,6 +104,11 @@ Current public proof:
   repository-defined JSON transcript shape into an Evidence Court audit record
   with `source_format=swe-agent-transcript/v0.1` and unsupported step markers.
   It is not native SWE-agent export parsing or live SWE-agent control.
+- `scripts/supplied_transcript_adapter_matrix.sh` generates temporary
+  repository-defined Codex, Claude, OpenHands, and SWE-agent style transcripts,
+  converts each one into an Evidence Court record, and audits each generated
+  record. It is a supplied-format smoke test, not native product export
+  parsing, live agent control, benchmark ingestion, or endorsement.
 - `scripts/public_proof_card.sh` wraps the same gate and prints a
   screenshot-friendly proof card with commit, scope, non-proof boundaries,
   review issue, and external-review record form.

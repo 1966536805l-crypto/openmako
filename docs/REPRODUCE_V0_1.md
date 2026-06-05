@@ -87,6 +87,17 @@ Evidence Court supplied-record demo:
 ./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json
 ```
 
+Supplied transcript adapter matrix:
+
+```bash
+./scripts/supplied_transcript_adapter_matrix.sh
+```
+
+This script generates temporary repository-defined Codex, Claude, OpenHands,
+and SWE-agent style transcripts, converts each one into an Evidence Court
+record, and audits each generated record. It is still a supplied-format smoke
+test, not native product export parsing or live agent control.
+
 ## What Passing Does Not Prove
 
 - It does not prove broad unknown-repository SWE repair.
