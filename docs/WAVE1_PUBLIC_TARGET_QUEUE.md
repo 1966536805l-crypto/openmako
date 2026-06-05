@@ -10,6 +10,13 @@ checkout. To generate a checked message, run
 create a new issue in another project unless the project norms allow
 meta/tooling review requests there.
 
+For an existing public thread where a project link would look like promotion,
+prefer `bash scripts/wave1_send_ready.sh --linkless TARGET`. It still runs the
+public proof gate first, but prints a question without repo, proof-command, or
+review-issue links. The output includes `THREAD_HOOK`; replace it with a
+concrete point from the target thread before posting. If no concrete hook fits,
+skip the thread.
+
 For a thread-specific draft, run
 `bash scripts/wave1_thread_reply_ready.sh THREAD`. This still does not send the
 message or record outreach as evidence. The helper re-fetches the selected

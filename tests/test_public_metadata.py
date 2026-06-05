@@ -1200,6 +1200,10 @@ def test_wave1_public_target_queue_tracks_reachable_surfaces_without_claiming_ou
     assert "Do not post into a bug thread unless the comment addresses that thread's\nexisting question" in queue
     assert "If the fit is weak, skip the thread instead of making noise." in queue
     assert "Do not post the same generic message to multiple threads." in queue
+    assert "bash scripts/wave1_send_ready.sh --linkless TARGET" in queue
+    assert "without repo, proof-command, or\nreview-issue links" in queue
+    assert "The output includes `THREAD_HOOK`; replace it with a\nconcrete point from the target thread before posting." in queue
+    assert "If no concrete hook fits,\nskip the thread." in queue
     assert "bash scripts/wave1_review_request.sh swe-agent" in queue
     assert "bash scripts/wave1_review_request.sh terminal-bench" in queue
     assert "bash scripts/wave1_review_request.sh aider" in queue
@@ -1366,7 +1370,11 @@ def test_wave1_send_ready_script_gates_before_printing_message() -> None:
     assert "Runs the public review gate" in text
     assert "This does not send messages, create issues" in text
     assert "bash scripts/public_review_gate.sh" in text
-    assert "bash scripts/wave1_review_request.sh \"$target\"" in text
+    assert "usage: bash scripts/wave1_send_ready.sh [--linkless] TARGET" in text
+    assert "Use --linkless for an existing public thread" in text
+    assert "review_args+=(--linkless)" in text
+    assert "requires-thread-hook: yes; replace THREAD_HOOK before posting" in text
+    assert "bash scripts/wave1_review_request.sh \"${review_args[@]}\"" in text
     assert "swe-agent|terminal-bench|aider|openhands|agent-runtime" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()
@@ -1381,7 +1389,7 @@ def test_wave1_send_ready_script_gates_before_printing_message() -> None:
             encoding="utf-8",
         )
         (scripts / "wave1_review_request.sh").write_text(
-            "#!/usr/bin/env bash\nset -euo pipefail\necho stub-message-$1\n",
+            "#!/usr/bin/env bash\nset -euo pipefail\nprintf 'stub-message'\nfor arg in \"$@\"; do printf -- '-%s' \"$arg\"; done\nprintf '\\n'\n",
             encoding="utf-8",
         )
         for path in scripts.iterdir():
@@ -1399,6 +1407,21 @@ def test_wave1_send_ready_script_gates_before_printing_message() -> None:
         assert "wave1-send-ready: target=swe-agent" in result.stdout
         assert "stub-message-swe-agent" in result.stdout
         assert result.stdout.index("stub-gate-pass") < result.stdout.index("stub-message-swe-agent")
+
+        linkless = subprocess.run(
+            ["bash", str(scripts / "wave1_send_ready.sh"), "--linkless", "terminal-bench"],
+            cwd=tmp_root,
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        assert linkless.returncode == 0
+        assert "stub-gate-pass" in linkless.stdout
+        assert "wave1-send-ready: target=terminal-bench" in linkless.stdout
+        assert "wave1-send-ready: mode=linkless" in linkless.stdout
+        assert "requires-thread-hook: yes; replace THREAD_HOOK before posting" in linkless.stdout
+        assert "stub-message---linkless-terminal-bench" in linkless.stdout
+        assert linkless.stdout.index("stub-gate-pass") < linkless.stdout.index("stub-message---linkless-terminal-bench")
 
         agent_runtime = subprocess.run(
             ["bash", str(scripts / "wave1_send_ready.sh"), "agent-runtime"],
@@ -1470,6 +1493,10 @@ def test_wave1_review_request_script_prints_short_non_promotional_messages() -> 
     assert script.stat().st_mode & 0o111
     assert "Prints one short technical-boundary review request." in text
     assert "It does not send messages,\nask for stars, ask for reposts" in text
+    assert "usage: ./scripts/wave1_review_request.sh [--linkless] TARGET" in text
+    assert "Use --linkless for an existing public thread" in text
+    assert "Linkless messages omit repo, proof-command, and issue\nlinks, and include a required THREAD_HOOK placeholder." in text
+    assert "Do not post until the\nplaceholder is replaced with a concrete point from the target thread." in text
     assert "swe-agent" in text
     assert "terminal-bench" in text
     assert "aider" in text
@@ -1482,6 +1509,18 @@ def test_wave1_review_request_script_prints_short_non_promotional_messages() -> 
     assert "Could you check OpenMako v0.1 for overclaim?" in text
     assert "runtime-adjacent docs overread the current proof" in text
     assert "skills, memory, ACP-style sessions, and desktop-control work as trends or future bets" in text
+    assert "THREAD_HOOK: replace this with the specific eval-proof point from the thread." in text
+    assert "for a narrow repair run, would touched-file scope, exact test\ncommand, and exit status be enough" in text
+    assert "specific test-cost or eval-proof point from\nthe thread" in text
+    assert "command\ntranscript plus exit status enough proof" in text
+    assert "specific reliability or benchmark point from\nthe thread" in text
+    assert "which evidence would make you\ntrust it first" in text
+    assert "specific log, patch-shape, or eval-artifact\npoint from the thread" in text
+    assert "is native log format required before that\ncheck is credible" in text
+    assert "specific runtime-docs or session-control\npoint from the thread" in text
+    assert "separate proof table" in text
+    assert "I am thinking" not in text
+    assert "I usually separate" not in text
     assert "unknown target" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()
@@ -1503,6 +1542,37 @@ def test_wave1_review_request_script_prints_short_non_promotional_messages() -> 
         assert result.returncode == 0
         assert expected in result.stdout
         assert "Review issue: https://github.com/1966536805l-crypto/openmako/issues/2" in result.stdout
+        for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+            assert forbidden not in result.stdout.lower()
+
+    for target, expected in (
+        ("swe-agent", "THREAD_HOOK: replace this with the specific eval-proof point from the thread."),
+        ("terminal-bench", "specific test-cost or eval-proof point from\nthe thread"),
+        ("aider", "specific reliability or benchmark point from\nthe thread"),
+        ("openhands", "specific log, patch-shape, or eval-artifact\npoint from the thread"),
+        ("agent-runtime", "specific runtime-docs or session-control\npoint from the thread"),
+    ):
+        result = subprocess.run(
+            ["bash", str(script), "--linkless", target],
+            cwd=ROOT,
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        assert result.returncode == 0
+        assert expected in result.stdout
+        assert "THREAD_HOOK:" in result.stdout
+        assert "Question:" in result.stdout
+        assert "http" not in result.stdout.lower()
+        assert "OpenMako" not in result.stdout
+        assert "Repo:" not in result.stdout
+        assert "Proof command:" not in result.stdout
+        assert "Review issue:" not in result.stdout
+        assert "trend radar" not in result.stdout.lower()
+        assert "future bets" not in result.stdout.lower()
+        assert "ACP-style" not in result.stdout
+        assert "I am thinking" not in result.stdout
+        assert "I usually separate" not in result.stdout
         for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
             assert forbidden not in result.stdout.lower()
 

@@ -57,6 +57,13 @@ Current public proof:
 - `bash scripts/wave1_send_ready.sh` runs the public review gate before printing
   a target-specific Wave 1 short message. It still does not send messages or
   record outreach as evidence.
+- `bash scripts/wave1_send_ready.sh --linkless TARGET` runs the same proof gate
+  before printing a public-thread cold-start question without repo,
+  proof-command, or review-issue links. This is for avoiding promotional-looking
+  first comments in existing technical threads. It now prints a required
+  `THREAD_HOOK` placeholder so the draft must be tied to a concrete thread point
+  before posting. It is still send-ready text, not proof that outreach, review,
+  endorsement, stars, or reposts happened.
 - `agent-runtime` is now a send-ready Wave 1 target for reviewers already
   discussing skills, memory, ACP-style sessions, desktop control, or external
   harness orchestration. The message asks whether runtime-adjacent docs
