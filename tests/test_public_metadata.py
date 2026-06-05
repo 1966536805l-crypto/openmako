@@ -1239,16 +1239,21 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
     assert "mixed test+source patch" in text
     assert "first-class verdict/metadata field rather than a post-hoc explanation" in text
     assert "artifact identity, not just the score delta" in text
-    assert "output.jsonl can produce a different output.swtbench.jsonl" in text
+    assert "`output.jsonl` can produce a different `output.swtbench.jsonl`" in text
     assert "eval-time patch stripping changes" in text
     assert "eval rule version, runner version or commit, input/output hashes" in text
     assert "patch-shape bucket" in text
-    assert "A concrete supplied-record shape for this is a fixture with eval rule version, runner commit, input/output hashes" in text
-    assert "while still not treating it as historical re-scoring or native OpenHands/SWTBench ingestion" in text
+    assert "Boundary question: are rule version, runner commit, and input/output hashes enough to compare artifacts" in text
+    assert "should patch shape be first-class metadata too" in text
+    assert "The closest shape I have been testing" not in text
+    assert "docs/evidence_court_schema.md#swtbench-artifact-identity-builder" not in text
+    assert "benchmark_score_validated=false" not in text
+    assert "runner_verified=false" not in text
+    assert "openmako evidence-court record from-swtbench-artifacts" not in text
+    assert "historical re-scoring or native OpenHands/SWTBench ingestion" not in text
     assert "my own audit harness" not in text
-    assert "Same boundary question here" in text
-    assert "runner commit + input/output hashes enough to compare artifacts" in text
-    assert "should patch-shape be first-class metadata too" in text
+    assert "runner commit, and input/output hashes enough to compare artifacts" in text
+    assert "should patch-shape be first-class metadata too" not in text
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()

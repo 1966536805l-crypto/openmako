@@ -143,12 +143,9 @@ EOF
     cat <<'EOF'
 I think this comes down to artifact identity, not just the score delta.
 
-If the same output.jsonl can produce a different output.swtbench.jsonl after eval-time patch stripping changes, I would expect the published artifact to carry eval rule version, runner version or commit, input/output hashes, and maybe a patch-shape bucket.
+If the same `output.jsonl` can produce a different `output.swtbench.jsonl` after eval-time patch stripping changes, I would expect the published artifact to carry enough provenance to make comparisons stable: eval rule version, runner version or commit, input/output hashes, and possibly a patch-shape bucket.
 
-A concrete supplied-record shape for this is a fixture with eval rule version, runner commit, input/output hashes, and a `mixed_test_source` patch bucket, while still not treating it as historical re-scoring or native OpenHands/SWTBench ingestion:
-https://github.com/1966536805l-crypto/openmako/blob/main/examples/evidence_court/swtbench_patch_artifact.json
-
-Same boundary question here: are rule version + runner commit + input/output hashes enough to compare artifacts, or should patch-shape be first-class metadata too?
+Boundary question: are rule version, runner commit, and input/output hashes enough to compare artifacts, or should patch shape be first-class metadata too?
 EOF
     ;;
 esac
