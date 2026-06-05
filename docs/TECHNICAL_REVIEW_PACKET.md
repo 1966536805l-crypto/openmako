@@ -76,6 +76,22 @@ Expected public snapshot signal:
 The demo audits supplied JSON records. It does not claim native Claude Code,
 Codex, Cursor, Devin, or SWE-bench transcript ingestion.
 
+## Optional Supplied-Transcript Adapter Checks
+
+If you want to inspect the newly merged adapter surface, use the schema notes:
+`docs/evidence_court_schema.md`.
+
+The current adapters are repository-defined supplied transcript formats:
+
+- `record from-codex-transcript`
+- `record from-openhands-transcript`
+- `record from-swe-agent-transcript`
+
+They preserve unsupported tool calls, events, or steps under
+`adapter_report.unsupported`. They do not claim native Codex, OpenHands, or
+SWE-agent export parsing, live agent control, benchmark ingestion, or external
+endorsement.
+
 ## Please Challenge These Boundaries
 
 - Does README claim more than the focused tests and CI prove?

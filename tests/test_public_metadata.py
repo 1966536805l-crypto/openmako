@@ -428,6 +428,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "leave concrete mismatches on issue #2" in progress
     assert "not outreach evidence, endorsement, stars, or reposts" in progress
     assert "minimal issue-comment template" in progress
+    assert "links the supplied Codex/OpenHands/SWE-agent\n  transcript adapter checks" in progress
+    assert "repository-defined supplied formats only, not native\n  exports, live control, benchmark ingestion, or endorsement" in progress
     assert "scripts/public_review_gate.sh" in progress
     assert "scripts/public_proof_card.sh" in progress
     assert "screenshot-friendly proof card with commit, scope, non-proof boundaries,\n  review issue, and external-review record form" in progress
@@ -491,6 +493,14 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in packet
     assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in packet
     assert "does not claim native Claude Code" in packet
+    assert "## Optional Supplied-Transcript Adapter Checks" in packet
+    assert "docs/evidence_court_schema.md" in packet
+    assert "record from-codex-transcript" in packet
+    assert "record from-openhands-transcript" in packet
+    assert "record from-swe-agent-transcript" in packet
+    assert "adapter_report.unsupported" in packet
+    assert "They do not claim native Codex, OpenHands, or\nSWE-agent export parsing" in packet
+    assert "live agent control, benchmark ingestion, or external\nendorsement" in packet
     assert "Does README claim more than the focused tests and CI prove?" in packet
     assert "A useful review points to a specific file, line, command, workflow, or missing\nartifact." in packet
     assert "## Minimal Review Comment Template" in packet
@@ -807,10 +817,12 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
     assert "cost/version/proof metadata" in text
     assert "patch shape needs to be part of the evidence" in text
     assert "evaluation rules change" in text
-    assert "visible audit metadata showing which rule version produced each artifact" in text
+    assert "audit metadata for rule version, runner version, and artifact provenance" in text
     assert "does not ingest native OpenHands/SWTBench artifacts" in text
     assert "does not ingest native OpenHands/SWTBench artifacts or solve historical re-scoring" in text
-    assert "boundary checklist for what metadata would need to be preserved" in text
+    assert "The specific question for this thread is whether rule version" in text
+    assert "artifact provenance are enough to keep old artifacts interpretable" in text
+    assert "Related notes, if useful" in text
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()

@@ -71,9 +71,9 @@ EOF
     ;;
   openhands-benchmarks-718)
     cat <<'EOF'
-The comparability problem here is the part I am trying to make explicit: when evaluation rules change, old runs need visible audit metadata showing which rule version produced each artifact.
+This comparability problem is close to one thing I am trying to define: when evaluation rules change, old runs need audit metadata for rule version, runner version, and artifact provenance.
 
-OpenMako only covers a narrow supplied-record audit today; it does not ingest native OpenHands/SWTBench artifacts or solve historical re-scoring. I am using it as a boundary checklist for what metadata would need to be preserved. Criticism on whether that boundary is clear enough would help:
+OpenMako is only a small supplied-record audit today; it does not ingest native OpenHands/SWTBench artifacts or solve historical re-scoring. The specific question for this thread is whether rule version, runner version, and artifact provenance are enough to keep old artifacts interpretable. Related notes, if useful:
 https://github.com/1966536805l-crypto/openmako/issues/2
 EOF
     ;;

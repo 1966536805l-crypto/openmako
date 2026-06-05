@@ -70,6 +70,10 @@ Current public proof:
   review path, not outreach evidence, endorsement, stars, or reposts.
 - The technical review packet includes a minimal issue-comment template for
   boundary-clear, overclaim, or unclear findings.
+- The technical review packet also links the supplied Codex/OpenHands/SWE-agent
+  transcript adapter checks through `docs/evidence_court_schema.md`. This is a
+  reviewer lookup path for repository-defined supplied formats only, not native
+  exports, live control, benchmark ingestion, or endorsement.
 - `scripts/public_review_gate.sh` wraps the local reviewer proof command:
   focused public tests, metadata boundary checks, and supplied-record
   Evidence Court bad-run audit.
@@ -117,5 +121,7 @@ public result.
 
 Next smallest hygiene task:
 
-- Link the merged supplied-transcript adapters from the reviewer packet only if
-  it reduces reviewer lookup friction without broadening the v0.1 claim.
+- Pick one relevant public benchmark/eval thread from
+  `docs/WAVE1_PUBLIC_TARGET_QUEUE.md`, re-check that the thread is still
+  on-topic, and prepare a short technical-boundary reply only after a 5-agent
+  AI-like/promotional-risk review.
