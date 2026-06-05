@@ -642,7 +642,7 @@ def decide_desktop_action(
 
     keys = _hotkey_keys(text)
     if keys:
-        return _decision(True, "action", "hotkey", {"keys": keys}, "press requested hotkey", requires_review=True, confidence=0.82)
+        return _hotkey_decision(keys, observed, reason="press requested hotkey", confidence=0.82)
 
     click = CLICK_RE.search(text)
     if click:
@@ -1371,7 +1371,7 @@ def _decide_search(query: str, observed: DesktopTokenization, *, last_action: st
             reason = f"type deterministic search URL into focused target {target.token_id}: {target.text}"
         return _decision(True, "action", "type", args, reason, target_id=target_id, requires_review=True, confidence=0.82)
     if marker.startswith("type:"):
-        return _decision(True, "action", "hotkey", {"keys": ["return"]}, "submit search", requires_review=True, confidence=0.8)
+        return _hotkey_decision(["return"], observed, reason="submit search", confidence=0.8)
     if marker == "hotkey:return":
         return _decision(True, "action", "wait", {"seconds": 1.0}, "wait for browser navigation", confidence=0.65)
     if marker.startswith("wait"):
@@ -1668,12 +1668,24 @@ def _verify_action_semantics(
     )
     if fast_type_verification is not None and fast_type_verification.ok:
         return fast_type_verification
+    fast_hotkey_verification = _verify_hotkey_with_fast_ax_path(
+        project,
+        decision,
+        previous,
+        result,
+        include_grid=include_grid,
+        token_limit=token_limit,
+    )
+    if fast_hotkey_verification is not None and fast_hotkey_verification.ok:
+        return fast_hotkey_verification
 
     verify_kwargs = _verification_tokenization_kwargs(decision, previous, include_grid=include_grid, token_limit=token_limit)
     verified = _safe_build_desktop_tokenization(project, **verify_kwargs)
     data, comparable_sources = _verification_record_data(verified, verify_kwargs, previous, decision, result)
     if fast_type_verification is not None:
         data["fast_type_verify"] = fast_type_verification.data.get("fast_type_verify", {})
+    if fast_hotkey_verification is not None:
+        data["fast_hotkey_verify"] = fast_hotkey_verification.data.get("fast_hotkey_verify", {})
 
     targetless_hotkey = decision.action == "hotkey" and not decision.target_id and not decision.args.get("target_id")
     if not verified.ok and not verified.tokens and not targetless_hotkey:
@@ -1761,6 +1773,52 @@ def _verify_type_with_fast_ax_path(
         return DesktopActionVerification(True, "ok", "semantic verify passed: typed text visible in AX", verified, data)
     fast_data["fallback_reason"] = "typed_text_not_visible_in_target_ax"
     return DesktopActionVerification(False, "needs_fallback", f"fast AX type verify needs OCR fallback: typed text not visible in target AX: {typed}", verified, data)
+
+
+def _verify_hotkey_with_fast_ax_path(
+    project: Path,
+    decision: DesktopDecision,
+    previous: DesktopTokenization,
+    result: DesktopResult,
+    *,
+    include_grid: bool,
+    token_limit: int,
+) -> DesktopActionVerification | None:
+    if decision.action != "hotkey":
+        return None
+    target_id = decision.target_id or str(decision.args.get("target_id") or "")
+    previous_token = _find_token(previous, target_id) if target_id else None
+    if previous_token is None or str(previous_token.source or "").strip().lower() != "ax":
+        return None
+
+    verify_kwargs = _preflight_tokenization_kwargs(
+        previous_token,
+        include_grid=include_grid,
+        token_limit=token_limit,
+        skip_screenshot_if_ax_only=True,
+    )
+    verified = _safe_build_desktop_tokenization(project, **verify_kwargs)
+    data, comparable_sources = _verification_record_data(verified, verify_kwargs, previous, decision, result)
+    fast_data = {
+        "mode": "ax_only",
+        "fallback_required": True,
+        "artifact_path": verified.path,
+        "tokens": len(verified.tokens),
+        "screen_hash": _short_hash(verified.screen_hash),
+    }
+    data["fast_hotkey_verify"] = fast_data
+    if not verified.ok and not verified.tokens:
+        fast_data["fallback_reason"] = "ax_tokenization_failed"
+        return DesktopActionVerification(False, "needs_fallback", f"fast AX hotkey verify needs fallback: {verified.summary}", verified, data)
+    if _tokenization_uses_cached_ax(verified):
+        data["cached_ax_fallback"] = True
+        fast_data["fallback_reason"] = "cached_ax_fallback"
+        return DesktopActionVerification(False, "needs_fallback", "fast AX hotkey verify needs fallback: cached AX fallback", verified, data)
+    if _post_action_progress(previous, verified, decision, sources=comparable_sources):
+        fast_data["fallback_required"] = False
+        return DesktopActionVerification(True, "ok", "semantic verify passed: focused hotkey changed AX state", verified, data)
+    fast_data["fallback_reason"] = "focused_hotkey_no_ax_progress"
+    return DesktopActionVerification(False, "needs_fallback", "fast AX hotkey verify needs fallback: no AX progress", verified, data)
 
 
 def _verification_record_data(
@@ -2224,6 +2282,24 @@ def _focused_text_target(tokenization: DesktopTokenization) -> DesktopToken | No
             item.token_id,
         ),
     )[0]
+
+
+def _hotkey_decision(keys: list[str], observed: DesktopTokenization, *, reason: str, confidence: float) -> DesktopDecision:
+    args: dict[str, Any] = {"keys": keys}
+    target = _focused_hotkey_target(observed, keys)
+    target_id = ""
+    if target is not None:
+        args |= _target_fence_args(target, observed)
+        target_id = target.token_id
+        reason = f"{reason} on focused target {target.token_id}: {target.text}"
+    return _decision(True, "action", "hotkey", args, reason, target_id=target_id, requires_review=True, confidence=confidence)
+
+
+def _focused_hotkey_target(tokenization: DesktopTokenization, keys: Sequence[str]) -> DesktopToken | None:
+    normalized = _normalized_hotkey_keys(keys)
+    if len(normalized) != 1 or normalized[0] not in {"return", "enter", "tab"}:
+        return None
+    return _focused_text_target(tokenization)
 
 
 def _target_fence_args(token: DesktopToken, tokenization: DesktopTokenization) -> dict[str, Any]:

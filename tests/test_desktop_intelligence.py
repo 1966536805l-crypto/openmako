@@ -191,6 +191,24 @@ class DesktopIntelligenceTest(unittest.TestCase):
         self.assertEqual(decision.args["observation_id"], "obs-field")
         self.assertTrue(decision.args["target_hash"])
 
+    def test_decider_binds_focused_text_hotkey_with_observation_fence(self) -> None:
+        decision = decide_desktop_action("按 enter", self.focused_text_tokenization())
+
+        self.assertTrue(decision.ok)
+        self.assertEqual(decision.action, "hotkey")
+        self.assertEqual(decision.target_id, "AX0002")
+        self.assertEqual(decision.args["target_id"], "AX0002")
+        self.assertEqual(decision.args["observation_id"], "obs-field")
+        self.assertTrue(decision.args["target_hash"])
+
+    def test_decider_keeps_modifier_hotkey_global(self) -> None:
+        decision = decide_desktop_action("按 cmd+l", self.focused_text_tokenization())
+
+        self.assertTrue(decision.ok)
+        self.assertEqual(decision.action, "hotkey")
+        self.assertEqual(decision.target_id, "")
+        self.assertNotIn("target_id", decision.args)
+
     def test_decider_does_not_bind_type_to_selected_text_target(self) -> None:
         selected = DesktopToken("AX0003", "Search field", "AXTextField", "ax", bbox=(10, 80, 210, 110), center=(110, 95), clickable=True, confidence=0.9, raw={"role": "AXTextField", "selected": "true", "value": ""})
         decision = decide_desktop_action("输入 OpenMako", self.tokenization((selected,)))
@@ -582,7 +600,7 @@ class DesktopIntelligenceTest(unittest.TestCase):
         args = {"keys": ["tab"], "target_id": token.token_id, "target_hash": desktop_intelligence._token_hash(token), "observation_id": tokenized.observation_id}
         hotkey = DesktopDecision(True, "action", "hotkey", args, token.token_id, "press tab", True, (), 0.8, DesktopStep("hotkey", args, "press tab"))
         with tempfile.TemporaryDirectory(prefix="desktop daemon loop ") as tmp:
-            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[tokenized, tokenized, tokenized]), patch.object(
+            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[tokenized, tokenized, tokenized, tokenized]), patch.object(
                 desktop_intelligence,
                 "decide_desktop_action",
                 return_value=hotkey,
@@ -593,6 +611,51 @@ class DesktopIntelligenceTest(unittest.TestCase):
         self.assertEqual(result.status, "verify_failed")
         self.assertIn("no visible progress after hotkey", result.summary)
         self.assertEqual(execute.call_count, 1)
+
+    def test_targeted_hotkey_uses_fast_ax_preflight_and_verification(self) -> None:
+        pre = self.focused_text_tokenization()
+        changed = self.tokenization(
+            (
+                DesktopToken(
+                    "AX0002",
+                    "Search field submitted",
+                    "AXTextField",
+                    "ax",
+                    bbox=(10, 80, 210, 110),
+                    center=(110, 95),
+                    clickable=True,
+                    confidence=0.9,
+                    raw={"role": "AXTextField", "focused": "true", "value": "submitted"},
+                ),
+            ),
+            observation_id="obs-hotkey-visible",
+            screen_hash="",
+        )
+        with tempfile.TemporaryDirectory(prefix="desktop daemon focused hotkey ") as tmp:
+            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[pre, pre, changed]) as tokenize, patch.object(
+                desktop_intelligence,
+                "_execute_step",
+                return_value=DesktopResult("hotkey", True, "hotkey ok"),
+            ) as execute:
+                result = run_desktop_daemon(Path(tmp), "按 enter", execute=True, reviewed=True, allow_actions=True, max_steps=1, delay=0)
+
+        self.assertTrue(result.ok, result.to_json())
+        self.assertEqual(result.status, "step_budget_exhausted")
+        self.assertEqual(execute.call_count, 1)
+        preflight_kwargs = tokenize.call_args_list[1].kwargs
+        self.assertEqual(preflight_kwargs["include_ax"], True)
+        self.assertEqual(preflight_kwargs["include_ocr"], False)
+        self.assertEqual(preflight_kwargs["include_som"], False)
+        self.assertEqual(preflight_kwargs["skip_screenshot_if_ax_only"], True)
+        verify_kwargs = tokenize.call_args_list[2].kwargs
+        self.assertEqual(verify_kwargs["include_ax"], True)
+        self.assertEqual(verify_kwargs["include_ocr"], False)
+        self.assertEqual(verify_kwargs["include_som"], False)
+        self.assertEqual(verify_kwargs["skip_screenshot_if_ax_only"], True)
+        verify_records = [record for record in result.records if record.phase == "verify"]
+        self.assertTrue(verify_records)
+        self.assertIn("focused hotkey changed AX state", verify_records[0].summary)
+        self.assertFalse(verify_records[0].data["fast_hotkey_verify"]["fallback_required"])
 
     def test_cli_desktop_decide_reads_latest_tokens(self) -> None:
         with tempfile.TemporaryDirectory(prefix="desktop decide cli ") as tmp:

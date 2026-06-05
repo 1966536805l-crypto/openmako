@@ -205,6 +205,12 @@ Current public proof:
   fallback, and the case where matching text appears only on a different AX
   token. This is local call-path evidence, not a live latency benchmark or public
   L4/L5 desktop-control proof.
+- Focused AX text-field hotkeys now carry the same `target_id`, `target_hash`,
+  and `observation_id` fence for single-key `return`, `enter`, and `tab`
+  actions. The daemon can verify AX-visible focus/value changes without a
+  screenshot first, then fall back to the normal verification path if AX does
+  not show progress. This is local call-path hardening, not a live speed
+  benchmark or public L4/L5 desktop-control proof.
 - Screenshot failure diagnostics now support the
   `OPENMAKO_DESKTOP_FAST_DIAGNOSTICS=1` local fast path, which skips the slower
   display probe while still returning front-app/window/console context and a
