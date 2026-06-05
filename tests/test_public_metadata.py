@@ -1,4 +1,5 @@
 import ast
+import os
 import re
 import subprocess
 import tempfile
@@ -156,6 +157,10 @@ def test_readme_links_public_proof_issue() -> None:
     assert "docs/PUBLIC_SHARE_PACKET.md" in readme
     assert "Public share-ready check" in readme
     assert "bash scripts/public_share_ready.sh review-request" in readme
+    assert "Post-review broader share packet" in readme
+    assert "docs/LARGE_REPOST_PACKET.md" in readme
+    assert "Post-review share check" in readme
+    assert "bash scripts/large_repost_ready.sh REVIEW_RECORD_ISSUE_URL --confirm-external-review" in readme
     assert "Why It Is Worth Checking" in readme
 
 
@@ -249,6 +254,8 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "bash scripts/wave1_send_ready.sh swe-agent" in review_section
     assert "docs/PUBLIC_SHARE_PACKET.md" in review_section
     assert "bash scripts/public_share_ready.sh review-request" in review_section
+    assert "docs/LARGE_REPOST_PACKET.md" in review_section
+    assert "bash scripts/large_repost_ready.sh REVIEW_RECORD_ISSUE_URL --confirm-external-review" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in review_section
     assert "https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml" in review_section
     assert "./scripts/public_review_gate.sh" in review_section
@@ -506,6 +513,12 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "optional visual summary for the public\n  gate and issue #2 boundary review" in progress
     assert "not evidence of external review,\n  endorsement, stars, or reposts" in progress
     assert "<=280 character technical\n  review post" in progress
+    assert "docs/LARGE_REPOST_PACKET.md" in progress
+    assert "bash scripts/large_repost_ready.sh\n  REVIEW_RECORD_ISSUE_URL --confirm-external-review" in progress
+    assert "refuses to print it unless\n  a public external-review record issue URL is supplied" in progress
+    assert "a human confirms the\n  linked public review was written by a named external reviewer" in progress
+    assert "the issue page\n  contains structured review record fields" in progress
+    assert "not proof of reposts, stars,\n  or endorsement" in progress
     assert "blocks\n  general-influencer outreach until at least one public technical boundary\n  review exists" in progress
     assert "`run-metrics` evidence extension" in progress
     assert "optional duration, token, cost, command-count, and missing-telemetry fields" in progress
@@ -898,6 +911,165 @@ def test_public_share_ready_script_gates_before_printing_message() -> None:
         )
         assert unknown.returncode == 2
         assert "unknown mode: unknown" in unknown.stderr
+
+
+def test_large_repost_packet_requires_external_review_record() -> None:
+    packet = (ROOT / "docs" / "LARGE_REPOST_PACKET.md").read_text(encoding="utf-8")
+
+    assert "OpenMako Post-Review Broader Share Packet" in packet
+    assert "Use this only after a named external reviewer has posted public technical\nfeedback" in packet
+    assert "bash scripts/large_repost_ready.sh REVIEW_RECORD_ISSUE_URL --confirm-external-review" in packet
+    assert "not a launch claim, endorsement request, star request, or repost request" in packet
+    assert "must not be used while OpenMako only has self-written proof" in packet
+    assert "issue page is reachable, contains the structured external review record fields" in packet
+    assert "includes a selected review verdict" in packet
+    assert "requires an explicit human confirmation flag" in packet
+    assert "This check cannot prove non-self authorship by itself" in packet
+    assert "## Gate" in packet
+    assert "./scripts/public_review_gate.sh" in packet
+    assert "A named external reviewer has posted public technical feedback." in packet
+    assert "public OpenMako external review record issue" in packet
+    assert "## Broad Technical Summary" in packet
+    assert "## Short Repost-Ready Note" in packet
+    assert "patch scope, test proof, learning-effect evidence, and supplied-run audit records" in packet
+    assert "https://github.com/1966536805l-crypto/openmako" in packet
+    assert "https://github.com/1966536805l-crypto/openmako/issues/2" in packet
+    assert "issues/new?template=external-review-record.yml" in packet
+    assert "Do not say OpenMako has broad SWE-bench-scale repair proof." in packet
+    assert "Do not ask for stars, reposts, promotion, or endorsement." in packet
+    assert "The next action is to ask for technical boundary criticism on issue #2" in packet
+    short_match = re.search(
+        r"## Short Repost-Ready Note\n\n```text\n(?P<post>.*?)\n```",
+        packet,
+        flags=re.DOTALL,
+    )
+    assert short_match, "large repost packet must include a short note"
+    assert len(short_match.group("post")) <= 280
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in packet.lower()
+
+
+def test_large_repost_ready_script_requires_review_record_and_gates() -> None:
+    script = ROOT / "scripts" / "large_repost_ready.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert "REVIEW_RECORD_ISSUE_URL" in text
+    assert "--confirm-external-review" in text
+    assert "manual external-review authorship confirmation" in text
+    assert "bash scripts/public_review_gate.sh" in text
+    assert "docs/LARGE_REPOST_PACKET.md" in text
+    assert "OPENMAKO_CURL_BIN" in text
+    assert "^[0-9]+$" in text or "/issues/[0-9]+$" in text
+    assert "-fsSL --max-time 20" in text
+    assert "issue page does not look like a structured external-review record" in text
+    assert "missing record markers" in text
+    for marker in (
+        "Reviewer",
+        "Public review link",
+        "Review verdict",
+        "Evidence checked by reviewer",
+        "Boundary confirmation",
+        "already-public external technical review",
+        "selected review verdict",
+    ):
+        assert marker in text
+    assert "missing public external-review record issue URL" in text
+    assert "does not post, contact anyone, ask for stars, ask for reposts" in text
+    assert text.index("large-repost-ready: verifying external review record issue") < text.index(
+        "bash scripts/public_review_gate.sh"
+    )
+    assert text.index("required_markers = (") < text.index("bash scripts/public_review_gate.sh")
+    assert text.index("selected review verdict") < text.index("bash scripts/public_review_gate.sh")
+    assert text.index("bash scripts/public_review_gate.sh") < text.index("message:")
+    assert '"Broad Technical Summary", "Short Repost-Ready Note"' in text
+    assert 'print(f"## {heading}")' in text
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in text.lower()
+
+    missing = subprocess.run(
+        ["bash", str(script)],
+        cwd=ROOT,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert missing.returncode == 2
+    assert "usage:" in missing.stderr
+
+    invalid = subprocess.run(
+        ["bash", str(script), "https://example.com/review"],
+        cwd=ROOT,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert invalid.returncode == 2
+    assert "usage:" in invalid.stderr
+
+    invalid_with_confirmation = subprocess.run(
+        [
+            "bash",
+            str(script),
+            "https://example.com/review",
+            "--confirm-external-review",
+        ],
+        cwd=ROOT,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert invalid_with_confirmation.returncode == 2
+    assert "missing public external-review record issue URL" in invalid_with_confirmation.stderr
+
+    missing_confirmation = subprocess.run(
+        [
+            "bash",
+            str(script),
+            "https://github.com/1966536805l-crypto/openmako/issues/3",
+            "--wrong-confirmation",
+        ],
+        cwd=ROOT,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert missing_confirmation.returncode == 2
+    assert "manual external-review authorship confirmation" in missing_confirmation.stderr
+
+    non_numeric_issue = subprocess.run(
+        [
+            "bash",
+            str(script),
+            "https://github.com/1966536805l-crypto/openmako/issues/3abc",
+            "--confirm-external-review",
+        ],
+        cwd=ROOT,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert non_numeric_issue.returncode == 2
+    assert "missing public external-review record issue URL" in non_numeric_issue.stderr
+
+    fake_page = subprocess.run(
+        [
+            "bash",
+            str(script),
+            "https://github.com/1966536805l-crypto/openmako/issues/3",
+            "--confirm-external-review",
+        ],
+        cwd=ROOT,
+        env={**os.environ, "OPENMAKO_CURL_BIN": "/bin/echo"},
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert fake_page.returncode == 2
+    assert "structured external-review record" in fake_page.stderr
+    assert "missing record markers" in fake_page.stderr
+    assert "large-repost-ready: checking public proof gate" not in fake_page.stdout
 
 
 def test_desktop_control_local_gate_is_bounded_and_conservative() -> None:

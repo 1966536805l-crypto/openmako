@@ -189,6 +189,14 @@ Current public proof:
 - `docs/PUBLIC_SHARE_PACKET.md` also includes a <=280 character technical
   review post and a boundary-clear follow-up that must not be used before a
   named reviewer gives public feedback.
+- `docs/LARGE_REPOST_PACKET.md` defines the second-stage broader share packet
+  for writer/community surfaces, and `bash scripts/large_repost_ready.sh
+  REVIEW_RECORD_ISSUE_URL --confirm-external-review` refuses to print it unless
+  a public external-review record issue URL is supplied, a human confirms the
+  linked public review was written by a named external reviewer, the issue page
+  contains structured review record fields, and the public proof gate passes.
+  This is a readiness check after external review, not proof of reposts, stars,
+  or endorsement.
 - `docs/REVIEWER_OUTREACH_DRAFT.md` defines who to contact first and blocks
   general-influencer outreach until at least one public technical boundary
   review exists.

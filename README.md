@@ -91,6 +91,9 @@ For technical reviewers, start here before reading older implementation paths:
 - Wave 1 send-ready check: `bash scripts/wave1_send_ready.sh swe-agent`.
 - Public share packet: [`docs/PUBLIC_SHARE_PACKET.md`](docs/PUBLIC_SHARE_PACKET.md).
 - Public share-ready check: `bash scripts/public_share_ready.sh review-request`.
+- Post-review broader share packet: [`docs/LARGE_REPOST_PACKET.md`](docs/LARGE_REPOST_PACKET.md).
+- Post-review share check:
+  `bash scripts/large_repost_ready.sh REVIEW_RECORD_ISSUE_URL --confirm-external-review`.
 - Public proof card: [issue #1](https://github.com/1966536805l-crypto/openmako/issues/1).
 - Focused public CI: [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml).
 - Local proof command: `./scripts/public_review_gate.sh`.
