@@ -1234,10 +1234,10 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
     assert "332 / 424 mixed bucket" in text
     assert "patch-shape bucket separately from the final SWT-bench score" in text
     assert "expected F2P failure mode from source edits under model_patch" in text
-    assert "A concrete supplied-record shape for this is a fixture where `mixed_test_source` is machine-readable" in text
-    assert "examples/evidence_court/swtbench_patch_artifact.json" in text
     assert "mixed test+source patch" in text
     assert "first-class verdict/metadata field rather than a post-hoc explanation" in text
+    assert "A concrete supplied-record shape for this is a fixture" not in text
+    assert "examples/evidence_court/swtbench_patch_artifact.json" not in text
     assert "artifact identity, not just the score delta" in text
     assert "`output.jsonl` can produce a different `output.swtbench.jsonl`" in text
     assert "eval-time patch stripping changes" in text

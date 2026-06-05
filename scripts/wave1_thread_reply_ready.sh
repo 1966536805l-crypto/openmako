@@ -133,10 +133,7 @@ The 332 / 424 mixed bucket feels like the key metadata, not just an implementati
 
 If a run writes both the test and a source-code fix, I would want the published row to expose the patch-shape bucket separately from the final SWT-bench score. Otherwise it is hard to tell whether a low score means weak test generation or just the expected F2P failure mode from source edits under model_patch.
 
-A concrete supplied-record shape for this is a fixture where `mixed_test_source` is machine-readable and still separate from any score claim:
-https://github.com/1966536805l-crypto/openmako/blob/main/examples/evidence_court/swtbench_patch_artifact.json
-
-Same boundary question here: should "mixed test+source patch" be a first-class verdict/metadata field rather than a post-hoc explanation?
+Boundary question: should "mixed test+source patch" be a first-class verdict/metadata field rather than a post-hoc explanation?
 EOF
     ;;
   openhands-benchmarks-718)
