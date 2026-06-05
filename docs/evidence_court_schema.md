@@ -131,3 +131,21 @@ openmako evidence-court audit --ci --json run.json
 The transcript must be a JSON object with `events`. Supported event actions are
 task/instruction, read, edit/apply-patch, shell command, and final/finish
 messages. Unsupported events are listed under `adapter_report.unsupported`.
+
+## Supplied SWE-Agent-Style Transcript Builder
+
+`record from-swe-agent-transcript` converts a small SWE-agent-style JSON
+transcript into the same audit record shape. This is a repository-defined
+supplied transcript format, not native SWE-agent export parsing and not live
+SWE-agent control.
+
+```bash
+openmako evidence-court record from-swe-agent-transcript transcript.json
+openmako evidence-court record from-swe-agent-transcript --output run.json transcript.json
+openmako evidence-court audit --ci --json run.json
+```
+
+The transcript must be a JSON object with `steps`. Supported step actions are
+task/instruction/issue, read, edit/apply-patch, shell command/test, and
+final/submit messages. Unsupported steps are listed under
+`adapter_report.unsupported`.

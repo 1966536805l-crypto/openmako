@@ -556,6 +556,87 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
     return record
 
 
+def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) -> dict[str, object]:
+    path = Path(transcript_path).expanduser().resolve(strict=False)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("SWE-agent transcript must be a JSON object")
+
+    steps = payload.get("steps")
+    if not isinstance(steps, list):
+        raise ValueError("SWE-agent transcript must include a steps array")
+
+    record: dict[str, object] = {
+        "source_agent": "swe-agent",
+        "source_format": "swe-agent-transcript/v0.1",
+        "claimed_task": str(payload.get("claimed_task") or payload.get("task") or payload.get("issue") or "").strip(),
+        "allowed_files": _string_list(payload.get("allowed_files")),
+        "files_read": [],
+        "files_edited": [],
+        "commands_run": [],
+        "test_output": "",
+        "run_metrics": {},
+        "final_claim": str(payload.get("final_claim") or "").strip(),
+        "adapter_report": {
+            "unsupported": [],
+        },
+    }
+    files_read: list[str] = []
+    files_edited: list[str] = []
+    commands_run: list[dict[str, object]] = []
+    run_metrics: dict[str, object] = {}
+    unsupported: list[str] = []
+    test_output = ""
+
+    for step_index, step in enumerate(steps):
+        if not isinstance(step, dict):
+            raise ValueError(f"SWE-agent transcript step {step_index} must be an object")
+        step_kind = _swe_agent_step_kind(step)
+        step_path = f"steps[{step_index}]"
+        if step_kind in {"task", "instruction", "issue"}:
+            text = _openhands_event_text(step)
+            if text and not record["claimed_task"]:
+                record["claimed_task"] = text
+        elif step_kind in {"read", "read_file", "open"}:
+            files_read.extend(_codex_tool_files(step))
+        elif step_kind in {"edit", "write", "write_file", "apply_patch", "patch"}:
+            files_edited.extend(_codex_tool_files(step))
+        elif step_kind in {"command", "shell", "run", "run_command", "test"}:
+            command = str(step.get("command") or step.get("cmd") or "").strip()
+            if not command:
+                unsupported.append(f"{step_path}: missing command")
+                continue
+            item: dict[str, object] = {"command": command}
+            if isinstance(step.get("exit_code"), int):
+                item["exit_code"] = step["exit_code"]
+            commands_run.append(item)
+            metrics = _event_run_metrics(step)
+            if metrics:
+                _merge_run_metrics(run_metrics, metrics)
+            output = _codex_command_output(step)
+            if output:
+                test_output = output
+        elif step_kind in {"finish", "final", "final_claim", "submit"}:
+            text = _openhands_event_text(step)
+            if text:
+                record["final_claim"] = text
+        else:
+            unsupported.append(f"{step_path}: {step_kind or 'unsupported'}")
+
+    if commands_run and "command_count" not in run_metrics:
+        run_metrics["command_count"] = len(commands_run)
+    record["files_read"] = files_read
+    record["files_edited"] = files_edited
+    record["commands_run"] = commands_run
+    record["test_output"] = test_output
+    if run_metrics:
+        record["run_metrics"] = run_metrics
+    else:
+        record.pop("run_metrics")
+    record["adapter_report"] = {"unsupported": unsupported}
+    return record
+
+
 def render_evidence_court_report(report: AgentAutopsyReport) -> str:
     verdict = _verdict(report)
     claim_evidence = next((item for item in report.evidence if item.name == "claimed_task"), None)
@@ -858,6 +939,11 @@ def _openhands_event_text(event: dict[str, object]) -> str:
         if isinstance(event.get(field), str) and str(event[field]).strip():
             return str(event[field]).strip()
     return ""
+
+
+def _swe_agent_step_kind(step: dict[str, object]) -> str:
+    value = step.get("kind") or step.get("type") or step.get("action") or step.get("operation") or step.get("role") or ""
+    return str(value).strip().lower().replace("-", "_")
 
 
 def _test_output_status(test_output: object, commands_run: object) -> tuple[str, str]:

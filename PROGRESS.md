@@ -85,6 +85,11 @@ Current public proof:
   repository-defined JSON transcript shape into an Evidence Court audit record
   with `source_format=openhands-transcript/v0.1` and unsupported event markers.
   It is not native OpenHands export parsing or live OpenHands control.
+- A supplied SWE-agent-style transcript adapter is available through
+  `openmako evidence-court record from-swe-agent-transcript`. It converts a
+  repository-defined JSON transcript shape into an Evidence Court audit record
+  with `source_format=swe-agent-transcript/v0.1` and unsupported step markers.
+  It is not native SWE-agent export parsing or live SWE-agent control.
 - `scripts/public_proof_card.sh` wraps the same gate and prints a
   screenshot-friendly proof card with commit, scope, non-proof boundaries,
   review issue, and external-review record form.
