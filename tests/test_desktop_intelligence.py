@@ -192,6 +192,26 @@ class DesktopIntelligenceTest(unittest.TestCase):
         self.assertIn("target changed", result.summary)
         execute.assert_not_called()
 
+    def test_daemon_preflight_uses_ax_only_refresh_for_ax_target(self) -> None:
+        click = self.click_decision()
+        after_click = self.tokenization((), observation_id="obs-after-click", screen_hash="screen-after-click")
+        with tempfile.TemporaryDirectory(prefix="desktop daemon fast preflight ") as tmp:
+            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[self.tokenization(), self.tokenization(), after_click]) as tokenize, patch.object(
+                desktop_intelligence,
+                "decide_desktop_action",
+                return_value=click,
+            ), patch.object(desktop_intelligence, "_execute_step", return_value=DesktopResult("click", True, "click ok")):
+                result = run_desktop_daemon(Path(tmp), "点击 Search", execute=True, reviewed=True, allow_actions=True, max_steps=1, delay=0)
+
+        self.assertTrue(result.ok)
+        self.assertEqual(result.status, "step_budget_exhausted")
+        self.assertGreaterEqual(tokenize.call_count, 3)
+        preflight_kwargs = tokenize.call_args_list[1].kwargs
+        self.assertEqual(preflight_kwargs["include_ax"], True)
+        self.assertEqual(preflight_kwargs["include_ocr"], False)
+        self.assertEqual(preflight_kwargs["include_som"], False)
+        self.assertEqual(preflight_kwargs["include_grid"], False)
+
     def test_daemon_rejects_target_action_without_observation_metadata(self) -> None:
         stale_click = DesktopDecision(True, "action", "click", {"x": 60, "y": 35, "target_id": "AX0001"}, "AX0001", "old decision", True, (), 0.9, DesktopStep("click", {"x": 60, "y": 35, "target_id": "AX0001"}, "old decision"))
         with tempfile.TemporaryDirectory(prefix="desktop daemon missing fence ") as tmp:

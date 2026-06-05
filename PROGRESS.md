@@ -150,6 +150,11 @@ Current public proof:
 - `scripts/public_proof_card.sh` wraps the same gate and prints a
   screenshot-friendly proof card with commit, scope, non-proof boundaries,
   review issue, and external-review record form.
+- Internal desktop-control preflight now refreshes only the target source needed
+  for fenced side-effect validation when possible, such as AX-only refresh for
+  AX click targets. This reduces redundant perception work before reviewed
+  control actions, but it is still an internal local hardening step, not a
+  public live-control claim.
 - `docs/PUBLIC_SHARE_PACKET.md` provides boundary-preserving public wording for
   reviewers who independently choose to discuss the project.
 - `docs/openmako-review-card.svg` is an optional visual summary for the public

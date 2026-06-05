@@ -1545,7 +1545,10 @@ def _preflight_target_check(
                 "source_target_hash": _short_hash(previous_hash),
             },
         )
-    current = _safe_build_desktop_tokenization(project, include_grid=include_grid, limit=token_limit)
+    current = _safe_build_desktop_tokenization(
+        project,
+        **_preflight_tokenization_kwargs(previous_token, include_grid=include_grid, token_limit=token_limit),
+    )
     current_token = _find_token(current, target_id)
     data = {
         "action": step.action,
@@ -1581,6 +1584,22 @@ def _preflight_target_check(
     if center_drift > MAX_CENTER_DRIFT_PX or bbox_drift > MAX_BBOX_DRIFT_PX:
         return DesktopActionVerification(False, "stale_target", f"target drifted before action: {target_id}; {_drift_summary(center_drift, bbox_drift)}", current, data)
     return DesktopActionVerification(True, "ok", f"target fresh: {target_id}", current, data)
+
+
+def _preflight_tokenization_kwargs(
+    previous_token: DesktopToken,
+    *,
+    include_grid: bool,
+    token_limit: int,
+) -> dict[str, Any]:
+    source = str(previous_token.source or "").strip().lower()
+    if source == "ax":
+        return {"include_ax": True, "include_ocr": False, "include_som": False, "include_grid": False, "limit": token_limit}
+    if source == "ocr":
+        return {"include_ax": False, "include_ocr": True, "include_som": False, "include_grid": False, "limit": token_limit}
+    if source == "som":
+        return {"include_ax": True, "include_ocr": True, "include_som": True, "include_grid": include_grid, "limit": token_limit}
+    return {"include_grid": include_grid, "limit": token_limit}
 
 
 def _safe_build_desktop_tokenization(project: Path, **kwargs: Any) -> DesktopTokenization:
