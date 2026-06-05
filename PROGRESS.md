@@ -75,6 +75,11 @@ Current public proof:
   are also preserved when supplied. The fields are preserved in Evidence Court audit JSON.
   They improve comparability, but they are not treated as proof that validation
   ran.
+- A supplied Codex-style transcript adapter is available through
+  `openmako evidence-court record from-codex-transcript`. It converts a
+  repository-defined JSON transcript shape into an Evidence Court audit record
+  with `source_format=codex-transcript/v0.1` and unsupported tool-call markers.
+  It is not native Codex product log ingestion or live Codex control.
 - `scripts/public_proof_card.sh` wraps the same gate and prints a
   screenshot-friendly proof card with commit, scope, non-proof boundaries,
   review issue, and external-review record form.

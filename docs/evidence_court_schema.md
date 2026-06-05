@@ -97,3 +97,20 @@ Supported event kinds are `task`, `read`, `edit`, `command`, and `final_claim`.
 
 This is an evidence audit of the supplied record only. It does not prove that a
 command actually ran outside the record.
+
+## Supplied Codex-Style Transcript Builder
+
+`record from-codex-transcript` converts a small Codex-style JSON transcript into
+the same audit record shape. This is a repository-defined supplied transcript
+format, not native Codex product log ingestion and not live Codex control.
+
+```bash
+openmako evidence-court record from-codex-transcript transcript.json
+openmako evidence-court record from-codex-transcript --output run.json transcript.json
+openmako evidence-court audit --ci --json run.json
+```
+
+The transcript must be a JSON object with `messages`. Supported tool calls are
+read, edit/apply-patch, and shell command calls. Unsupported tool calls are
+listed under `adapter_report.unsupported`, and missing command or test evidence
+is still judged by the normal Evidence Court audit.

@@ -393,6 +393,88 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
     return record
 
 
+def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dict[str, object]:
+    path = Path(transcript_path).expanduser().resolve(strict=False)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("Codex transcript must be a JSON object")
+
+    messages = payload.get("messages")
+    if not isinstance(messages, list):
+        raise ValueError("Codex transcript must include a messages array")
+
+    record: dict[str, object] = {
+        "source_agent": "codex",
+        "source_format": "codex-transcript/v0.1",
+        "claimed_task": str(payload.get("claimed_task") or payload.get("task") or "").strip(),
+        "allowed_files": _string_list(payload.get("allowed_files")),
+        "files_read": [],
+        "files_edited": [],
+        "commands_run": [],
+        "test_output": "",
+        "run_metrics": {},
+        "final_claim": str(payload.get("final_claim") or "").strip(),
+        "adapter_report": {
+            "unsupported": [],
+        },
+    }
+    files_read: list[str] = []
+    files_edited: list[str] = []
+    commands_run: list[dict[str, object]] = []
+    run_metrics: dict[str, object] = {}
+    unsupported: list[str] = []
+    test_output = ""
+
+    for message_index, message in enumerate(messages):
+        if not isinstance(message, dict):
+            raise ValueError(f"Codex transcript message {message_index} must be an object")
+        role = str(message.get("role") or "").strip().lower()
+        content = _codex_content_text(message.get("content"))
+        if role == "user" and content and not record["claimed_task"]:
+            record["claimed_task"] = content
+        if role == "assistant" and content:
+            record["final_claim"] = content
+
+        for tool_path, tool_call in _codex_tool_calls(message, message_index):
+            tool_payload = _codex_tool_payload(tool_call)
+            tool_kind = _codex_tool_kind(tool_call, tool_payload)
+            if tool_kind in {"read", "read_file", "open", "cat"}:
+                files_read.extend(_codex_tool_files(tool_payload))
+            elif tool_kind in {"edit", "write", "write_file", "apply_patch", "patch"}:
+                files_edited.extend(_codex_tool_files(tool_payload))
+            elif tool_kind in {"command", "shell", "exec", "exec_command", "run_command"}:
+                command = str(tool_payload.get("command") or tool_payload.get("cmd") or "").strip()
+                if not command:
+                    unsupported.append(f"{tool_path}: missing command")
+                    continue
+                item: dict[str, object] = {"command": command}
+                if isinstance(tool_payload.get("exit_code"), int):
+                    item["exit_code"] = tool_payload["exit_code"]
+                commands_run.append(item)
+                metrics = _event_run_metrics(tool_payload)
+                if metrics:
+                    _merge_run_metrics(run_metrics, metrics)
+                output = _codex_command_output(tool_payload)
+                if output:
+                    test_output = output
+            else:
+                unsupported.append(f"{tool_path}: {tool_kind or 'unsupported'}")
+
+    if commands_run and "command_count" not in run_metrics:
+        run_metrics["command_count"] = len(commands_run)
+    record["files_read"] = files_read
+    record["files_edited"] = files_edited
+    record["commands_run"] = commands_run
+    record["test_output"] = test_output
+    if run_metrics:
+        record["run_metrics"] = run_metrics
+    else:
+        record.pop("run_metrics")
+    adapter_report = {"unsupported": unsupported}
+    record["adapter_report"] = adapter_report
+    return record
+
+
 def render_evidence_court_report(report: AgentAutopsyReport) -> str:
     verdict = _verdict(report)
     claim_evidence = next((item for item in report.evidence if item.name == "claimed_task"), None)
@@ -603,6 +685,86 @@ def _event_files(event: dict[str, object]) -> list[str]:
     if isinstance(event.get("file"), str):
         return [str(event["file"])]
     raise ValueError("read/edit JSONL events must include file or files")
+
+
+def _codex_tool_calls(message: dict[str, object], message_index: int) -> list[tuple[str, dict[str, object]]]:
+    calls: list[tuple[str, dict[str, object]]] = []
+    for field in ("tool_calls", "tool_uses", "tools"):
+        value = message.get(field)
+        if value is None:
+            continue
+        if not isinstance(value, list):
+            raise ValueError(f"Codex transcript messages[{message_index}].{field} must be an array")
+        for call_index, item in enumerate(value):
+            if not isinstance(item, dict):
+                raise ValueError(
+                    f"Codex transcript messages[{message_index}].{field}[{call_index}] must be an object"
+                )
+            calls.append((f"messages[{message_index}].{field}[{call_index}]", item))
+    return calls
+
+
+def _codex_tool_payload(tool_call: dict[str, object]) -> dict[str, object]:
+    payload = dict(tool_call)
+    for field in ("arguments", "input", "params"):
+        nested = tool_call.get(field)
+        if isinstance(nested, dict):
+            payload.update(nested)
+        elif isinstance(nested, str) and nested.strip().startswith("{"):
+            try:
+                decoded = json.loads(nested)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(decoded, dict):
+                payload.update(decoded)
+    return payload
+
+
+def _codex_tool_kind(tool_call: dict[str, object], tool_payload: dict[str, object]) -> str:
+    value = (
+        tool_payload.get("kind")
+        or tool_payload.get("type")
+        or tool_payload.get("tool")
+        or tool_payload.get("name")
+        or tool_call.get("kind")
+        or tool_call.get("type")
+        or tool_call.get("name")
+        or ""
+    )
+    return str(value).strip().lower().replace("-", "_")
+
+
+def _codex_tool_files(tool_payload: dict[str, object]) -> list[str]:
+    if "files" in tool_payload:
+        return _string_list(tool_payload.get("files"))
+    if "paths" in tool_payload:
+        return _string_list(tool_payload.get("paths"))
+    for field in ("file", "path"):
+        if isinstance(tool_payload.get(field), str):
+            return [str(tool_payload[field])]
+    return []
+
+
+def _codex_content_text(value: object) -> str:
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, list):
+        parts: list[str] = []
+        for item in value:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict) and isinstance(item.get("text"), str):
+                parts.append(str(item["text"]))
+        return "\n".join(part.strip() for part in parts if part.strip())
+    return ""
+
+
+def _codex_command_output(tool_payload: dict[str, object]) -> str:
+    parts: list[str] = []
+    for field in ("output", "stdout", "stderr", "summary"):
+        if isinstance(tool_payload.get(field), str) and str(tool_payload[field]).strip():
+            parts.append(str(tool_payload[field]).strip())
+    return "\n".join(parts)
 
 
 def _test_output_status(test_output: object, commands_run: object) -> tuple[str, str]:
