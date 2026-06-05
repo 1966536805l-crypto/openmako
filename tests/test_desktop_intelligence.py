@@ -425,7 +425,7 @@ class DesktopIntelligenceTest(unittest.TestCase):
         visible = self.tokenization((DesktopToken("OCR0001", "OpenMako", "text", "ocr", bbox=(1, 1, 100, 30), center=(50, 15), clickable=True, confidence=0.8),))
 
         with tempfile.TemporaryDirectory(prefix="desktop daemon type pass ") as tmp:
-            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[pre, pre, visible, visible]), patch.object(
+            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[pre, pre, pre, visible, visible]), patch.object(
                 desktop_intelligence,
                 "decide_desktop_action",
                 side_effect=[type_decision, hold],
@@ -433,7 +433,7 @@ class DesktopIntelligenceTest(unittest.TestCase):
                 passed = run_desktop_daemon(Path(tmp), "输入 OpenMako", execute=True, reviewed=True, allow_actions=True, max_steps=2, delay=0)
 
         with tempfile.TemporaryDirectory(prefix="desktop daemon type fail ") as tmp:
-            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[pre, pre, pre]), patch.object(
+            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[pre, pre, pre, pre]), patch.object(
                 desktop_intelligence,
                 "decide_desktop_action",
                 return_value=type_decision,
@@ -448,9 +448,25 @@ class DesktopIntelligenceTest(unittest.TestCase):
 
     def test_daemon_type_decision_uses_focused_target_fast_preflight(self) -> None:
         pre = self.focused_text_tokenization()
-        visible = self.tokenization((DesktopToken("OCR0001", "OpenMako", "text", "ocr", bbox=(1, 1, 100, 30), center=(50, 15), clickable=True, confidence=0.8),))
+        ax_visible = self.tokenization(
+            (
+                DesktopToken(
+                    "AX0002",
+                    "Search field OpenMako",
+                    "AXTextField",
+                    "ax",
+                    bbox=(10, 80, 210, 110),
+                    center=(110, 95),
+                    clickable=True,
+                    confidence=0.9,
+                    raw={"role": "AXTextField", "focused": "true", "value": "OpenMako"},
+                ),
+            ),
+            observation_id="obs-ax-visible",
+            screen_hash="",
+        )
         with tempfile.TemporaryDirectory(prefix="desktop daemon focused type ") as tmp:
-            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[pre, pre, visible]) as tokenize, patch.object(
+            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[pre, pre, ax_visible]) as tokenize, patch.object(
                 desktop_intelligence,
                 "_execute_step",
                 return_value=DesktopResult("type", True, "typed"),
@@ -467,8 +483,84 @@ class DesktopIntelligenceTest(unittest.TestCase):
         self.assertEqual(preflight_kwargs["skip_screenshot_if_ax_only"], True)
         verify_kwargs = tokenize.call_args_list[2].kwargs
         self.assertEqual(verify_kwargs["include_ax"], True)
-        self.assertEqual(verify_kwargs["include_ocr"], True)
+        self.assertEqual(verify_kwargs["include_ocr"], False)
         self.assertEqual(verify_kwargs["include_som"], False)
+        self.assertEqual(verify_kwargs["skip_screenshot_if_ax_only"], True)
+        verify_records = [record for record in result.records if record.phase == "verify"]
+        self.assertTrue(verify_records)
+        self.assertIn("typed text visible in AX", verify_records[0].summary)
+        self.assertFalse(verify_records[0].data["fast_type_verify"]["fallback_required"])
+
+    def test_daemon_type_verify_falls_back_to_ocr_when_ax_value_is_not_updated(self) -> None:
+        pre = self.focused_text_tokenization()
+        ax_unchanged = self.focused_text_tokenization()
+        visible = self.tokenization((DesktopToken("OCR0001", "OpenMako", "text", "ocr", bbox=(1, 1, 100, 30), center=(50, 15), clickable=True, confidence=0.8),))
+        with tempfile.TemporaryDirectory(prefix="desktop daemon focused type fallback ") as tmp:
+            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[pre, pre, ax_unchanged, visible]) as tokenize, patch.object(
+                desktop_intelligence,
+                "_execute_step",
+                return_value=DesktopResult("type", True, "typed"),
+            ):
+                result = run_desktop_daemon(Path(tmp), "输入 OpenMako", execute=True, reviewed=True, allow_actions=True, max_steps=1, delay=0)
+
+        self.assertTrue(result.ok)
+        self.assertEqual(result.status, "step_budget_exhausted")
+        self.assertEqual(tokenize.call_count, 4)
+        fast_kwargs = tokenize.call_args_list[2].kwargs
+        self.assertEqual(fast_kwargs["include_ax"], True)
+        self.assertEqual(fast_kwargs["include_ocr"], False)
+        self.assertEqual(fast_kwargs["skip_screenshot_if_ax_only"], True)
+        fallback_kwargs = tokenize.call_args_list[3].kwargs
+        self.assertEqual(fallback_kwargs["include_ax"], True)
+        self.assertEqual(fallback_kwargs["include_ocr"], True)
+        self.assertEqual(fallback_kwargs["include_som"], False)
+        verify_records = [record for record in result.records if record.phase == "verify"]
+        self.assertTrue(verify_records)
+        self.assertTrue(verify_records[0].data["fast_type_verify"]["fallback_required"])
+        self.assertEqual(verify_records[0].data["fast_type_verify"]["fallback_reason"], "typed_text_not_visible_in_target_ax")
+
+    def test_daemon_type_fast_verify_is_bound_to_original_target(self) -> None:
+        pre = self.focused_text_tokenization()
+        target_unchanged = DesktopToken(
+            "AX0002",
+            "Search field",
+            "AXTextField",
+            "ax",
+            bbox=(10, 80, 210, 110),
+            center=(110, 95),
+            clickable=True,
+            confidence=0.9,
+            raw={"role": "AXTextField", "focused": "true", "value": ""},
+        )
+        unrelated_visible = DesktopToken(
+            "AX0099",
+            "OpenMako result",
+            "AXStaticText",
+            "ax",
+            bbox=(240, 80, 340, 110),
+            center=(290, 95),
+            clickable=False,
+            confidence=0.7,
+            raw={"role": "AXStaticText", "value": "OpenMako"},
+        )
+        ax_unrelated_match = self.tokenization((target_unchanged, unrelated_visible), observation_id="obs-ax-unrelated", screen_hash="")
+        visible = self.tokenization((DesktopToken("OCR0001", "OpenMako", "text", "ocr", bbox=(1, 1, 100, 30), center=(50, 15), clickable=True, confidence=0.8),))
+        with tempfile.TemporaryDirectory(prefix="desktop daemon target scoped type ") as tmp:
+            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[pre, pre, ax_unrelated_match, visible]) as tokenize, patch.object(
+                desktop_intelligence,
+                "_execute_step",
+                return_value=DesktopResult("type", True, "typed"),
+            ):
+                result = run_desktop_daemon(Path(tmp), "输入 OpenMako", execute=True, reviewed=True, allow_actions=True, max_steps=1, delay=0)
+
+        self.assertTrue(result.ok)
+        self.assertEqual(tokenize.call_count, 4)
+        fallback_kwargs = tokenize.call_args_list[3].kwargs
+        self.assertEqual(fallback_kwargs["include_ocr"], True)
+        verify_records = [record for record in result.records if record.phase == "verify"]
+        self.assertTrue(verify_records)
+        self.assertTrue(verify_records[0].data["fast_type_verify"]["fallback_required"])
+        self.assertEqual(verify_records[0].data["fast_type_verify"]["fallback_reason"], "typed_text_not_visible_in_target_ax")
 
     def test_daemon_does_not_execute_type_for_selected_only_target(self) -> None:
         selected = DesktopToken("AX0003", "Search field", "AXTextField", "ax", bbox=(10, 80, 210, 110), center=(110, 95), clickable=True, confidence=0.9, raw={"role": "AXTextField", "selected": "true", "value": ""})

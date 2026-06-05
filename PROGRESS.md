@@ -198,6 +198,13 @@ Current public proof:
   the fresh AX check uses cached AX fallback tokens, so the fast path does
   not treat stale accessibility state as proof. This is local call-count
   evidence, not a live latency benchmark or external desktop-control claim.
+- Focused AX text input verification now checks the original AX target first,
+  without taking another screenshot. If that target's fresh AX state shows the
+  typed text, verification passes on the fast path. If not, it falls back to OCR
+  and keeps the stricter check. Regression tests cover the no-OCR fast path, OCR
+  fallback, and the case where matching text appears only on a different AX
+  token. This is local call-path evidence, not a live latency benchmark or public
+  L4/L5 desktop-control proof.
 - Screenshot failure diagnostics now support the
   `OPENMAKO_DESKTOP_FAST_DIAGNOSTICS=1` local fast path, which skips the slower
   display probe while still returning front-app/window/console context and a

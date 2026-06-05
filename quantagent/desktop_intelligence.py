@@ -1658,28 +1658,23 @@ def _verify_action_semantics(
     include_grid: bool,
     token_limit: int,
 ) -> DesktopActionVerification:
+    fast_type_verification = _verify_type_with_fast_ax_path(
+        project,
+        decision,
+        previous,
+        result,
+        include_grid=include_grid,
+        token_limit=token_limit,
+    )
+    if fast_type_verification is not None and fast_type_verification.ok:
+        return fast_type_verification
+
     verify_kwargs = _verification_tokenization_kwargs(decision, previous, include_grid=include_grid, token_limit=token_limit)
     verified = _safe_build_desktop_tokenization(project, **verify_kwargs)
-    comparable_sources = _comparable_token_sources(verified, verify_kwargs)
-    previous_token_signature = _token_signature(previous, sources=comparable_sources)
-    current_token_signature = _token_signature(verified, sources=comparable_sources)
-    previous_focus_signature = _focus_signature(previous, sources=comparable_sources)
-    current_focus_signature = _focus_signature(verified, sources=comparable_sources)
-    data = _tokenization_record_data(verified) | {
-        "action": decision.action,
-        "result_ok": result.ok,
-        "previous_observation": previous.observation_id,
-        "previous_screen_hash": _short_hash(previous.screen_hash),
-        "current_screen_hash": _short_hash(verified.screen_hash),
-        "screen_hash_changed": bool(previous.screen_hash and verified.screen_hash and previous.screen_hash != verified.screen_hash),
-        "previous_token_signature": _short_hash(previous_token_signature),
-        "current_token_signature": _short_hash(current_token_signature),
-        "token_tree_changed": previous_token_signature != current_token_signature,
-        "previous_focus_signature": _short_hash(previous_focus_signature),
-        "current_focus_signature": _short_hash(current_focus_signature),
-        "focus_changed": previous_focus_signature != current_focus_signature,
-        "verification_sources": sorted(comparable_sources),
-    }
+    data, comparable_sources = _verification_record_data(verified, verify_kwargs, previous, decision, result)
+    if fast_type_verification is not None:
+        data["fast_type_verify"] = fast_type_verification.data.get("fast_type_verify", {})
+
     targetless_hotkey = decision.action == "hotkey" and not decision.target_id and not decision.args.get("target_id")
     if not verified.ok and not verified.tokens and not targetless_hotkey:
         return DesktopActionVerification(False, "verify_failed", verified.summary, verified, data)
@@ -1718,6 +1713,84 @@ def _verify_action_semantics(
             return DesktopActionVerification(True, "ok", "semantic verify passed: desktop state changed after hotkey", verified, data)
         return DesktopActionVerification(False, "verify_failed", "semantic verify failed: no visible progress after hotkey", verified, data)
     return DesktopActionVerification(True, "ok", f"capture verify passed for {decision.action}", verified, data)
+
+
+def _verify_type_with_fast_ax_path(
+    project: Path,
+    decision: DesktopDecision,
+    previous: DesktopTokenization,
+    result: DesktopResult,
+    *,
+    include_grid: bool,
+    token_limit: int,
+) -> DesktopActionVerification | None:
+    if decision.action != "type":
+        return None
+    typed = str(decision.args.get("text") or "")
+    target_id = decision.target_id or str(decision.args.get("target_id") or "")
+    previous_token = _find_token(previous, target_id) if target_id else None
+    if not typed or previous_token is None or str(previous_token.source or "").strip().lower() != "ax":
+        return None
+
+    verify_kwargs = _preflight_tokenization_kwargs(
+        previous_token,
+        include_grid=include_grid,
+        token_limit=token_limit,
+        skip_screenshot_if_ax_only=True,
+    )
+    verified = _safe_build_desktop_tokenization(project, **verify_kwargs)
+    data, _comparable_sources = _verification_record_data(verified, verify_kwargs, previous, decision, result)
+    fast_data = {
+        "mode": "ax_only",
+        "fallback_required": True,
+        "artifact_path": verified.path,
+        "tokens": len(verified.tokens),
+        "screen_hash": _short_hash(verified.screen_hash),
+    }
+    data["fast_type_verify"] = fast_data
+    if not verified.ok and not verified.tokens:
+        fast_data["fallback_reason"] = "ax_tokenization_failed"
+        return DesktopActionVerification(False, "needs_fallback", f"fast AX type verify needs OCR fallback: {verified.summary}", verified, data)
+    if _tokenization_uses_cached_ax(verified):
+        data["cached_ax_fallback"] = True
+        fast_data["fallback_reason"] = "cached_ax_fallback"
+        return DesktopActionVerification(False, "needs_fallback", "fast AX type verify needs OCR fallback: cached AX fallback", verified, data)
+    current_token = _find_token(verified, target_id)
+    if current_token is not None and _tokens_contain_text((current_token,), typed):
+        fast_data["fallback_required"] = False
+        return DesktopActionVerification(True, "ok", "semantic verify passed: typed text visible in AX", verified, data)
+    fast_data["fallback_reason"] = "typed_text_not_visible_in_target_ax"
+    return DesktopActionVerification(False, "needs_fallback", f"fast AX type verify needs OCR fallback: typed text not visible in target AX: {typed}", verified, data)
+
+
+def _verification_record_data(
+    verified: DesktopTokenization,
+    verify_kwargs: Mapping[str, Any],
+    previous: DesktopTokenization,
+    decision: DesktopDecision,
+    result: DesktopResult,
+) -> tuple[dict[str, Any], set[str]]:
+    comparable_sources = _comparable_token_sources(verified, verify_kwargs)
+    previous_token_signature = _token_signature(previous, sources=comparable_sources)
+    current_token_signature = _token_signature(verified, sources=comparable_sources)
+    previous_focus_signature = _focus_signature(previous, sources=comparable_sources)
+    current_focus_signature = _focus_signature(verified, sources=comparable_sources)
+    data = _tokenization_record_data(verified) | {
+        "action": decision.action,
+        "result_ok": result.ok,
+        "previous_observation": previous.observation_id,
+        "previous_screen_hash": _short_hash(previous.screen_hash),
+        "current_screen_hash": _short_hash(verified.screen_hash),
+        "screen_hash_changed": bool(previous.screen_hash and verified.screen_hash and previous.screen_hash != verified.screen_hash),
+        "previous_token_signature": _short_hash(previous_token_signature),
+        "current_token_signature": _short_hash(current_token_signature),
+        "token_tree_changed": previous_token_signature != current_token_signature,
+        "previous_focus_signature": _short_hash(previous_focus_signature),
+        "current_focus_signature": _short_hash(current_focus_signature),
+        "focus_changed": previous_focus_signature != current_focus_signature,
+        "verification_sources": sorted(comparable_sources),
+    }
+    return data, comparable_sources
 
 
 def _verification_tokenization_kwargs(
