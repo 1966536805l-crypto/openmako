@@ -934,7 +934,7 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
     assert "332 / 424 mixed bucket" in text
     assert "patch-shape bucket separately from the final SWT-bench score" in text
     assert "expected F2P failure mode from source edits under model_patch" in text
-    assert "where `mixed_test_source` is machine-readable and still separate from any score claim" in text
+    assert "A concrete supplied-record shape for this is a fixture where `mixed_test_source` is machine-readable" in text
     assert "examples/evidence_court/swtbench_patch_artifact.json" in text
     assert "mixed test+source patch" in text
     assert "first-class verdict/metadata field rather than a post-hoc explanation" in text
@@ -943,8 +943,9 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
     assert "eval-time patch stripping changes" in text
     assert "eval rule version, runner version or commit, input/output hashes" in text
     assert "patch-shape bucket" in text
-    assert "metadata shape I mean: eval rule version, runner commit, input/output hashes" in text
+    assert "A concrete supplied-record shape for this is a fixture with eval rule version, runner commit, input/output hashes" in text
     assert "while still not treating it as historical re-scoring or native OpenHands/SWTBench ingestion" in text
+    assert "my own audit harness" not in text
     assert "Same boundary question here" in text
     assert "runner commit + input/output hashes enough to compare artifacts" in text
     assert "should patch-shape be first-class metadata too" in text

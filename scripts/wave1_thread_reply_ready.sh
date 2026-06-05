@@ -67,7 +67,7 @@ The 332 / 424 mixed bucket feels like the key metadata, not just an implementati
 
 If a run writes both the test and a source-code fix, I would want the published row to expose the patch-shape bucket separately from the final SWT-bench score. Otherwise it is hard to tell whether a low score means weak test generation or just the expected F2P failure mode from source edits under model_patch.
 
-I added a small supplied-record fixture for this shape in my own audit harness, where `mixed_test_source` is machine-readable and still separate from any score claim:
+A concrete supplied-record shape for this is a fixture where `mixed_test_source` is machine-readable and still separate from any score claim:
 https://github.com/1966536805l-crypto/openmako/blob/main/examples/evidence_court/swtbench_patch_artifact.json
 
 Same boundary question here: should "mixed test+source patch" be a first-class verdict/metadata field rather than a post-hoc explanation?
@@ -79,7 +79,7 @@ I think this comes down to artifact identity, not just the score delta.
 
 If the same output.jsonl can produce a different output.swtbench.jsonl after eval-time patch stripping changes, I would expect the published artifact to carry eval rule version, runner version or commit, input/output hashes, and maybe a patch-shape bucket.
 
-I added a small supplied-record fixture for the metadata shape I mean: eval rule version, runner commit, input/output hashes, and a `mixed_test_source` patch bucket, while still not treating it as historical re-scoring or native OpenHands/SWTBench ingestion:
+A concrete supplied-record shape for this is a fixture with eval rule version, runner commit, input/output hashes, and a `mixed_test_source` patch bucket, while still not treating it as historical re-scoring or native OpenHands/SWTBench ingestion:
 https://github.com/1966536805l-crypto/openmako/blob/main/examples/evidence_court/swtbench_patch_artifact.json
 
 Same boundary question here: are rule version + runner commit + input/output hashes enough to compare artifacts, or should patch-shape be first-class metadata too?
