@@ -167,6 +167,12 @@ Current public proof:
   SoM. The regression test now asserts the AX click verification path skips
   OCR/SoM; this is narrower local work, not a benchmarked live-control speed
   claim.
+- Text actions that pass the local review gates now bind to the focused AX
+  text/search target when that target is visible, carrying `target_id`,
+  `target_hash`, and `observation_id` into the action. This lets the daemon
+  execute focused input through AX-only preflight instead of producing an
+  unfenced type action that is blocked before execution. It remains local
+  bounded control hardening, not live desktop-control proof.
 - Screenshot failure diagnostics now support the
   `OPENMAKO_DESKTOP_FAST_DIAGNOSTICS=1` local fast path, which skips the slower
   display probe while still returning front-app/window/console context and a

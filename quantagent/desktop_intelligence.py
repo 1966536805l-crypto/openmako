@@ -69,6 +69,7 @@ TYPE_RE = re.compile(r"(?:输入|type)\s+(.+)", re.IGNORECASE)
 HOTKEY_RE = re.compile(r"(?:快捷键|hotkey|按)\s+([a-z0-9+,\- ]{1,80})", re.IGNORECASE)
 SEARCH_RE = re.compile(r"(?:搜索|搜|search)\s+(.+)", re.IGNORECASE)
 OPEN_RE = re.compile(r"(?:打开|启动|open)\s+([A-Za-z][A-Za-z0-9 ._-]{1,60})", re.IGNORECASE)
+TEXT_INPUT_ROLE_RE = re.compile(r"(text\s*field|textfield|textarea|search\s*field|searchfield|combo\s*box|combobox)", re.IGNORECASE)
 
 
 def _redact_sensitive_text(value: object) -> str:
@@ -618,7 +619,16 @@ def decide_desktop_action(
         safety, reason = classify_gui_action("type", text=typed)
         if safety == "deny":
             return _decision(False, "blocked", "type", {"text": typed}, reason)
-        return _decision(True, "action", "type", {"text": typed}, "type requested text", requires_review=True, confidence=0.88)
+        args: dict[str, Any] = {"text": typed}
+        target = _focused_text_target(observed)
+        target_id = ""
+        if target is not None:
+            args |= _target_fence_args(target, observed)
+            target_id = target.token_id
+            reason = f"type requested text into focused target {target.token_id}: {target.text}"
+        else:
+            reason = "type requested text"
+        return _decision(True, "action", "type", args, reason, target_id=target_id, requires_review=True, confidence=0.88)
 
     keys = _hotkey_keys(text)
     if keys:
@@ -670,7 +680,7 @@ def decide_desktop_action(
 
     query = _search_query(text)
     if query:
-        return _decide_search(query, last_action=last_action, browser=_browser_from_text(text, default=browser), engine=engine)
+        return _decide_search(query, observed, last_action=last_action, browser=_browser_from_text(text, default=browser), engine=engine)
 
     app = _open_app(text)
     if app and not last_action:
@@ -1333,7 +1343,7 @@ def _decision(
     return DesktopDecision(ok, status, action, args, target_id, reason, requires_review, needs, confidence, step)
 
 
-def _decide_search(query: str, *, last_action: str, browser: str, engine: str) -> DesktopDecision:
+def _decide_search(query: str, observed: DesktopTokenization, *, last_action: str, browser: str, engine: str) -> DesktopDecision:
     url = search_url(query, engine=engine)
     marker = last_action.strip().lower()
     if not marker:
@@ -1341,7 +1351,15 @@ def _decide_search(query: str, *, last_action: str, browser: str, engine: str) -
     if marker.startswith("activate"):
         return _decision(True, "action", "hotkey", {"keys": ["cmd", "l"]}, "focus address/search bar", requires_review=True, confidence=0.78)
     if marker == "hotkey:cmd+l":
-        return _decision(True, "action", "type", {"text": url}, "type deterministic search URL", requires_review=True, confidence=0.82)
+        args: dict[str, Any] = {"text": url}
+        target = _focused_text_target(observed)
+        target_id = ""
+        reason = "type deterministic search URL"
+        if target is not None:
+            args |= _target_fence_args(target, observed)
+            target_id = target.token_id
+            reason = f"type deterministic search URL into focused target {target.token_id}: {target.text}"
+        return _decision(True, "action", "type", args, reason, target_id=target_id, requires_review=True, confidence=0.82)
     if marker.startswith("type:"):
         return _decision(True, "action", "hotkey", {"keys": ["return"]}, "submit search", requires_review=True, confidence=0.8)
     if marker == "hotkey:return":
@@ -2056,6 +2074,39 @@ def _tokenization_record_data(tokenization: DesktopTokenization) -> dict[str, An
         "observation_id": tokenization.observation_id,
         "screen_hash": _short_hash(tokenization.screen_hash),
         "front_app": tokenization.front_app,
+    }
+
+
+def _focused_text_target(tokenization: DesktopTokenization) -> DesktopToken | None:
+    candidates: list[DesktopToken] = []
+    for token in tokenization.tokens:
+        raw = token.raw if isinstance(token.raw, dict) else {}
+        if not token.center or not token.bbox:
+            continue
+        if not _truthy_state(raw.get("focused") or raw.get("focus")):
+            continue
+        role_text = " ".join(str(part or "") for part in (token.role, raw.get("role"), raw.get("subrole")))
+        if not TEXT_INPUT_ROLE_RE.search(role_text):
+            continue
+        candidates.append(token)
+    if not candidates:
+        return None
+    return sorted(
+        candidates,
+        key=lambda item: (
+            0 if str(item.source or "").strip().lower() == "ax" else 1,
+            -float(item.confidence or 0.0),
+            item.token_id,
+        ),
+    )[0]
+
+
+def _target_fence_args(token: DesktopToken, tokenization: DesktopTokenization) -> dict[str, Any]:
+    return {
+        "target_id": token.token_id,
+        "target_text": token.text,
+        "target_hash": _token_hash(token),
+        "observation_id": tokenization.observation_id,
     }
 
 

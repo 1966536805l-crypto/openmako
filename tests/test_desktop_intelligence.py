@@ -61,6 +61,10 @@ class DesktopIntelligenceTest(unittest.TestCase):
             DesktopStep("click", {"x": 60, "y": 35, "target_id": "AX0001", "target_hash": target_hash, "observation_id": tokenized.observation_id}, "click test"),
         )
 
+    def focused_text_tokenization(self) -> DesktopTokenization:
+        field = DesktopToken("AX0002", "Search field", "AXTextField", "ax", bbox=(10, 80, 210, 110), center=(110, 95), clickable=True, confidence=0.9, raw={"role": "AXTextField", "focused": "true", "value": ""})
+        return self.tokenization((field,), observation_id="obs-field", screen_hash="screen-field")
+
     def test_tokens_from_ax_and_ocr_normalize_bounds_and_clickability(self) -> None:
         ax = [DesktopElement("AX0001", "Safari", 1, role="AXButton", title="Search", bounds=(10, 20, 100, 30))]
         ocr = [DesktopTextBlock("OCR0001", "Result", bounds=(200, 100, 260, 130), confidence=0.8)]
@@ -127,14 +131,36 @@ class DesktopIntelligenceTest(unittest.TestCase):
     def test_decider_search_state_machine_is_single_step(self) -> None:
         first = decide_desktop_action("搜索 OpenMako", self.tokenization(), browser="Safari")
         second = decide_desktop_action("搜索 OpenMako", self.tokenization(), last_action=desktop_decision_marker(first))
-        third = decide_desktop_action("搜索 OpenMako", self.tokenization(), last_action=desktop_decision_marker(second))
+        third = decide_desktop_action("搜索 OpenMako", self.focused_text_tokenization(), last_action=desktop_decision_marker(second))
         fourth = decide_desktop_action("搜索 OpenMako", self.tokenization(), last_action=desktop_decision_marker(third))
 
         self.assertEqual(first.action, "activate")
         self.assertEqual(second.args["keys"], ["cmd", "l"])
         self.assertEqual(third.action, "type")
         self.assertIn("OpenMako", third.args["text"])
+        self.assertEqual(third.target_id, "AX0002")
+        self.assertEqual(third.args["observation_id"], "obs-field")
+        self.assertTrue(third.args["target_hash"])
         self.assertEqual(fourth.args["keys"], ["return"])
+
+    def test_decider_types_into_focused_text_target_with_observation_fence(self) -> None:
+        decision = decide_desktop_action("输入 OpenMako", self.focused_text_tokenization())
+
+        self.assertTrue(decision.ok)
+        self.assertEqual(decision.action, "type")
+        self.assertEqual(decision.target_id, "AX0002")
+        self.assertEqual(decision.args["target_id"], "AX0002")
+        self.assertEqual(decision.args["observation_id"], "obs-field")
+        self.assertTrue(decision.args["target_hash"])
+
+    def test_decider_does_not_bind_type_to_selected_text_target(self) -> None:
+        selected = DesktopToken("AX0003", "Search field", "AXTextField", "ax", bbox=(10, 80, 210, 110), center=(110, 95), clickable=True, confidence=0.9, raw={"role": "AXTextField", "selected": "true", "value": ""})
+        decision = decide_desktop_action("输入 OpenMako", self.tokenization((selected,)))
+
+        self.assertTrue(decision.ok)
+        self.assertEqual(decision.action, "type")
+        self.assertEqual(decision.target_id, "")
+        self.assertNotIn("target_id", decision.args)
 
     def test_daemon_skips_side_effects_without_required_flags(self) -> None:
         click = self.click_decision()
@@ -262,6 +288,43 @@ class DesktopIntelligenceTest(unittest.TestCase):
         self.assertFalse(failed.ok)
         self.assertEqual(failed.status, "verify_failed")
         self.assertIn("typed text not visible", failed.summary)
+
+    def test_daemon_type_decision_uses_focused_target_fast_preflight(self) -> None:
+        pre = self.focused_text_tokenization()
+        visible = self.tokenization((DesktopToken("OCR0001", "OpenMako", "text", "ocr", bbox=(1, 1, 100, 30), center=(50, 15), clickable=True, confidence=0.8),))
+        with tempfile.TemporaryDirectory(prefix="desktop daemon focused type ") as tmp:
+            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[pre, pre, visible]) as tokenize, patch.object(
+                desktop_intelligence,
+                "_execute_step",
+                return_value=DesktopResult("type", True, "typed"),
+            ) as execute:
+                result = run_desktop_daemon(Path(tmp), "输入 OpenMako", execute=True, reviewed=True, allow_actions=True, max_steps=1, delay=0)
+
+        self.assertTrue(result.ok)
+        self.assertEqual(result.status, "step_budget_exhausted")
+        self.assertEqual(execute.call_count, 1)
+        preflight_kwargs = tokenize.call_args_list[1].kwargs
+        self.assertEqual(preflight_kwargs["include_ax"], True)
+        self.assertEqual(preflight_kwargs["include_ocr"], False)
+        self.assertEqual(preflight_kwargs["include_som"], False)
+        verify_kwargs = tokenize.call_args_list[2].kwargs
+        self.assertEqual(verify_kwargs["include_ax"], True)
+        self.assertEqual(verify_kwargs["include_ocr"], True)
+        self.assertEqual(verify_kwargs["include_som"], False)
+
+    def test_daemon_does_not_execute_type_for_selected_only_target(self) -> None:
+        selected = DesktopToken("AX0003", "Search field", "AXTextField", "ax", bbox=(10, 80, 210, 110), center=(110, 95), clickable=True, confidence=0.9, raw={"role": "AXTextField", "selected": "true", "value": ""})
+        with tempfile.TemporaryDirectory(prefix="desktop daemon selected type ") as tmp:
+            with patch.object(desktop_intelligence, "build_desktop_tokenization", return_value=self.tokenization((selected,))), patch.object(
+                desktop_intelligence,
+                "_execute_step",
+            ) as execute:
+                result = run_desktop_daemon(Path(tmp), "输入 OpenMako", execute=True, reviewed=True, allow_actions=True, max_steps=1, delay=0)
+
+        self.assertFalse(result.ok)
+        self.assertEqual(result.status, "blocked")
+        self.assertIn("missing observation fence", result.summary)
+        execute.assert_not_called()
 
     def test_hotkey_verify_fails_on_stagnant_desktop_state(self) -> None:
         tokenized = self.tokenization()
