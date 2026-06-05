@@ -1679,7 +1679,13 @@ def _verify_action_semantics(
     if fast_hotkey_verification is not None and fast_hotkey_verification.ok:
         return fast_hotkey_verification
 
-    verify_kwargs = _verification_tokenization_kwargs(decision, previous, include_grid=include_grid, token_limit=token_limit)
+    verify_kwargs = _verification_tokenization_kwargs(
+        decision,
+        previous,
+        include_grid=include_grid,
+        token_limit=token_limit,
+        fast_type_fallback=fast_type_verification is not None,
+    )
     verified = _safe_build_desktop_tokenization(project, **verify_kwargs)
     data, comparable_sources = _verification_record_data(verified, verify_kwargs, previous, decision, result)
     if fast_type_verification is not None:
@@ -1857,10 +1863,19 @@ def _verification_tokenization_kwargs(
     *,
     include_grid: bool,
     token_limit: int,
+    fast_type_fallback: bool = False,
 ) -> dict[str, Any]:
     target_id = decision.target_id or str(decision.args.get("target_id") or "")
     previous_token = _find_token(previous, target_id) if target_id else None
     if decision.action == "type":
+        if fast_type_fallback:
+            return {
+                "include_ax": False,
+                "include_ocr": True,
+                "include_som": False,
+                "include_grid": False,
+                "limit": token_limit,
+            }
         return {"include_ax": True, "include_ocr": True, "include_som": False, "include_grid": False, "limit": token_limit}
     if decision.action in {"click", "move", "hotkey"} and previous_token is not None:
         return _preflight_tokenization_kwargs(

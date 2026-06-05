@@ -218,6 +218,12 @@ Current public proof:
   fallback, and the case where matching text appears only on a different AX
   token. This is local call-path evidence, not a live latency benchmark or public
   L4/L5 desktop-control proof.
+- Focused AX text input fallback now avoids a second AX snapshot after the
+  AX-only fast check already failed to show the typed text. The fallback goes
+  straight to OCR verification and keeps the original target-scoped AX result
+  in `fast_type_verify`, so the daemon does less repeated AX work without
+  treating unrelated AX text as target proof. This is local call-path evidence,
+  not a live speed benchmark or public L4/L5 desktop-control proof.
 - Focused AX text-field hotkeys now carry the same `target_id`, `target_hash`,
   and `observation_id` fence for single-key `return`, `enter`, and `tab`
   actions. The daemon can verify AX-visible focus/value changes without a

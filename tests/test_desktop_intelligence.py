@@ -529,7 +529,7 @@ class DesktopIntelligenceTest(unittest.TestCase):
         self.assertEqual(fast_kwargs["include_ocr"], False)
         self.assertEqual(fast_kwargs["skip_screenshot_if_ax_only"], True)
         fallback_kwargs = tokenize.call_args_list[3].kwargs
-        self.assertEqual(fallback_kwargs["include_ax"], True)
+        self.assertEqual(fallback_kwargs["include_ax"], False)
         self.assertEqual(fallback_kwargs["include_ocr"], True)
         self.assertEqual(fallback_kwargs["include_som"], False)
         verify_records = [record for record in result.records if record.phase == "verify"]
@@ -574,6 +574,7 @@ class DesktopIntelligenceTest(unittest.TestCase):
         self.assertTrue(result.ok)
         self.assertEqual(tokenize.call_count, 4)
         fallback_kwargs = tokenize.call_args_list[3].kwargs
+        self.assertEqual(fallback_kwargs["include_ax"], False)
         self.assertEqual(fallback_kwargs["include_ocr"], True)
         verify_records = [record for record in result.records if record.phase == "verify"]
         self.assertTrue(verify_records)
