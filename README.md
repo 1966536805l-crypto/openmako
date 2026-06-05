@@ -59,8 +59,10 @@ external endorsement.
 The useful review is not "do you like this project?" It is narrower:
 
 1. Run `./scripts/public_review_gate.sh`.
-2. Check whether the README claims more than that command proves.
-3. If a boundary is unclear, leave the concrete mismatch on
+2. For artifact-identity questions, inspect the supplied-record fixture:
+   `./bin/openmako --no-trust-prompt evidence-court audit --ci --json examples/evidence_court/artifact_provenance.json`.
+3. Check whether the README claims more than those commands prove.
+4. If a boundary is unclear, leave the concrete mismatch on
    [issue #2](https://github.com/1966536805l-crypto/openmako/issues/2).
 
 If something is unclear, please point to the file, command, workflow, or

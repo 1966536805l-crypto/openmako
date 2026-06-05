@@ -78,9 +78,10 @@ Current public proof:
   proof commands. It frames OpenMako as an inspectable-evidence harness and
   asks for concrete claim/proof mismatches, not promotion.
 - The README now includes an `If You Came From A Benchmark Thread` path that
-  tells external benchmark/eval readers to run the gate, compare README claims
-  against that command, and leave concrete mismatches on issue #2. It is a
-  review path, not outreach evidence, endorsement, stars, or reposts.
+  tells external benchmark/eval readers to run the gate, inspect the
+  `artifact_provenance` fixture for artifact-identity questions, compare README
+  claims against the proof commands, and leave concrete mismatches on issue #2.
+  It is a review path, not outreach evidence, endorsement, stars, or reposts.
 - The technical review packet includes a minimal issue-comment template for
   boundary-clear, overclaim, or unclear findings.
 - The technical review packet also links the supplied Codex/OpenHands/SWE-agent

@@ -206,7 +206,12 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "Start with the public gate:" in proof_section
     assert 'The useful review is not "do you like this project?"' in proof_section
     assert "Run `./scripts/public_review_gate.sh`." in proof_section
-    assert "Check whether the README claims more than that command proves." in proof_section
+    assert "For artifact-identity questions, inspect the supplied-record fixture:" in proof_section
+    assert (
+        "./bin/openmako --no-trust-prompt evidence-court audit --ci --json "
+        "examples/evidence_court/artifact_provenance.json"
+    ) in proof_section
+    assert "Check whether the README claims more than those commands prove." in proof_section
     assert "leave the concrete mismatch on\n   [issue #2]" in proof_section
     assert "If something is unclear, please point to the file, command, workflow, or\nmissing artifact." in proof_section
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
@@ -448,7 +453,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "`Why It Is Worth Checking` hook before the\n  proof commands" in progress
     assert "asks for concrete claim/proof mismatches, not promotion" in progress
     assert "`If You Came From A Benchmark Thread` path" in progress
-    assert "compare README claims\n  against that command" in progress
+    assert "inspect the\n  `artifact_provenance` fixture for artifact-identity questions" in progress
+    assert "compare README\n  claims against the proof commands" in progress
     assert "leave concrete mismatches on issue #2" in progress
     assert "not outreach evidence, endorsement, stars, or reposts" in progress
     assert "minimal issue-comment template" in progress
