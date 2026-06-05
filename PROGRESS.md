@@ -183,6 +183,11 @@ Current public proof:
   AX click targets. This reduces redundant perception work before reviewed
   control actions, but it is still an internal local hardening step, not a
   public live-control claim.
+- Initial desktop-control decision observation now tries an AX-only no-screenshot
+  path for deterministic click/type/hotkey intents, then falls back to the full
+  screenshot/OCR/SoM observation when AX cannot resolve a click target. Focused
+  tests assert both the fast hit path and the fallback path. This is local
+  call-path evidence, not a live latency benchmark or public L4/L5 claim.
 - Desktop L4 soak live preflight now refreshes fenced targets before
   click/type-style actions. AX targets use the AX-only fast path, and stale
   target hashes block execution. Scope: local safety guard only, with no public

@@ -288,6 +288,12 @@ class DesktopIntelligenceTest(unittest.TestCase):
         self.assertTrue(result.ok)
         self.assertEqual(result.status, "step_budget_exhausted")
         self.assertGreaterEqual(tokenize.call_count, 3)
+        initial_kwargs = tokenize.call_args_list[0].kwargs
+        self.assertEqual(initial_kwargs["include_ax"], True)
+        self.assertEqual(initial_kwargs["include_ocr"], False)
+        self.assertEqual(initial_kwargs["include_som"], False)
+        self.assertEqual(initial_kwargs["include_grid"], False)
+        self.assertEqual(initial_kwargs["skip_screenshot_if_ax_only"], True)
         preflight_kwargs = tokenize.call_args_list[1].kwargs
         self.assertEqual(preflight_kwargs["include_ax"], True)
         self.assertEqual(preflight_kwargs["include_ocr"], False)
@@ -300,6 +306,44 @@ class DesktopIntelligenceTest(unittest.TestCase):
         self.assertEqual(verify_kwargs["include_som"], False)
         self.assertEqual(verify_kwargs["include_grid"], False)
         self.assertEqual(verify_kwargs["skip_screenshot_if_ax_only"], True)
+
+    def test_daemon_fast_decision_falls_back_to_full_observation_for_ocr_click(self) -> None:
+        fast_empty = self.tokenization((), observation_id="obs-fast-empty", screen_hash="")
+        ocr_target = DesktopToken(
+            "OCR0001",
+            "Result",
+            "text",
+            "ocr",
+            bbox=(200, 100, 260, 130),
+            center=(230, 115),
+            clickable=True,
+            confidence=0.8,
+        )
+        full = self.tokenization((ocr_target,), observation_id="obs-full", screen_hash="screen-full")
+        after_click = self.tokenization((), observation_id="obs-after-click", screen_hash="screen-after-click")
+        with tempfile.TemporaryDirectory(prefix="desktop daemon fast fallback ") as tmp:
+            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[fast_empty, full, full, after_click]) as tokenize, patch.object(
+                desktop_intelligence,
+                "_execute_step",
+                return_value=DesktopResult("click", True, "click ok"),
+            ):
+                result = run_desktop_daemon(Path(tmp), "点击 Result", execute=True, reviewed=True, allow_actions=True, max_steps=1, delay=0)
+
+        self.assertTrue(result.ok, result.to_json())
+        self.assertEqual(result.status, "step_budget_exhausted")
+        fast_kwargs = tokenize.call_args_list[0].kwargs
+        self.assertEqual(fast_kwargs["include_ax"], True)
+        self.assertEqual(fast_kwargs["include_ocr"], False)
+        self.assertEqual(fast_kwargs["skip_screenshot_if_ax_only"], True)
+        full_kwargs = tokenize.call_args_list[1].kwargs
+        self.assertEqual(full_kwargs["include_grid"], False)
+        preflight_kwargs = tokenize.call_args_list[2].kwargs
+        self.assertEqual(preflight_kwargs["include_ax"], False)
+        self.assertEqual(preflight_kwargs["include_ocr"], True)
+        verify_kwargs = tokenize.call_args_list[3].kwargs
+        self.assertEqual(verify_kwargs["include_ax"], False)
+        self.assertEqual(verify_kwargs["include_ocr"], True)
+        self.assertTrue(any(record.phase == "fast_tokenize" for record in result.records))
 
     def test_daemon_ax_click_uses_fast_ax_preflight_and_verification(self) -> None:
         with tempfile.TemporaryDirectory(prefix="desktop daemon ax preflight capture ") as tmp:
@@ -343,7 +387,7 @@ class DesktopIntelligenceTest(unittest.TestCase):
 
         self.assertTrue(result.ok, result.to_json())
         self.assertEqual(result.status, "step_budget_exhausted")
-        self.assertEqual(screenshot.call_count, 1)
+        self.assertEqual(screenshot.call_count, 0)
         self.assertIn("semantic verify passed", [record.summary for record in result.records if record.phase == "verify"][0])
 
     def test_daemon_ax_preflight_blocks_cached_ax_fallback(self) -> None:
@@ -385,7 +429,7 @@ class DesktopIntelligenceTest(unittest.TestCase):
         self.assertFalse(result.ok, result.to_json())
         self.assertEqual(result.status, "blocked")
         self.assertIn("cached AX fallback", result.summary)
-        self.assertEqual(screenshot.call_count, 1)
+        self.assertEqual(screenshot.call_count, 0)
         execute.assert_not_called()
 
     def test_daemon_ax_verification_blocks_cached_ax_fallback(self) -> None:

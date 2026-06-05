@@ -803,7 +803,46 @@ def run_desktop_daemon(
                 failure_class="stopped",
             )
 
-        tokenized = _safe_build_desktop_tokenization(project_path, include_grid=include_grid, limit=token_limit)
+        fast_decision_kwargs = _fast_decision_tokenization_kwargs(
+            goal,
+            include_grid=include_grid,
+            token_limit=token_limit,
+        )
+        if fast_decision_kwargs:
+            tokenized = _safe_build_desktop_tokenization(project_path, **fast_decision_kwargs)
+        else:
+            tokenized = _safe_build_desktop_tokenization(project_path, include_grid=include_grid, limit=token_limit)
+        decision = decide_desktop_action(goal, tokenized, last_action=last_action, last_result=last_result, browser=browser, engine=engine)
+        if fast_decision_kwargs and _fast_decision_needs_full_fallback(decision):
+            fast_summary = f"fast AX decision fallback: {decision.reason}"
+            records.append(
+                DesktopDaemonRecord(
+                    step_no,
+                    "fast_tokenize",
+                    tokenized.status,
+                    _redact_sensitive_text(fast_summary),
+                    _tokenization_record_data(tokenized) | {"decision": decision.to_payload(), "fast_decision_kwargs": dict(fast_decision_kwargs)},
+                )
+            )
+            record_observation(
+                trajectory_path,
+                f"desktop-daemon step {step_no} fast-tokenize: {_redact_sensitive_text(fast_summary)}",
+                step=step_no,
+                ok=tokenized.ok,
+                phase="fast_tokenize",
+                tokens=len(tokenized.tokens),
+                artifact_path=tokenized.path,
+                decision=decision.to_payload(),
+            )
+            runtime.post_tool(
+                "desktop_tokenize_fast",
+                step=step_no,
+                ok=tokenized.ok,
+                summary=_redact_sensitive_text(fast_summary),
+                data=_tokenization_record_data(tokenized) | {"decision": decision.to_payload(), "fast_decision_kwargs": dict(fast_decision_kwargs)},
+            )
+            tokenized = _safe_build_desktop_tokenization(project_path, include_grid=include_grid, limit=token_limit)
+            decision = decide_desktop_action(goal, tokenized, last_action=last_action, last_result=last_result, browser=browser, engine=engine)
         records.append(
             DesktopDaemonRecord(
                 step_no,
@@ -848,7 +887,6 @@ def run_desktop_daemon(
                 failure_class="desktop_tokenize_failed",
             )
 
-        decision = decide_desktop_action(goal, tokenized, last_action=last_action, last_result=last_result, browser=browser, engine=engine)
         records.append(DesktopDaemonRecord(step_no, "decide", decision.status, _redact_sensitive_text(decision.reason), decision.to_payload()))
         record_action(
             trajectory_path,
@@ -1639,6 +1677,27 @@ def _preflight_tokenization_kwargs(
     if source == "som":
         return {"include_ax": True, "include_ocr": True, "include_som": True, "include_grid": include_grid, "limit": token_limit}
     return {"include_grid": include_grid, "limit": token_limit}
+
+
+def _fast_decision_tokenization_kwargs(goal: str, *, include_grid: bool, token_limit: int) -> dict[str, Any] | None:
+    del include_grid
+    text = " ".join(goal.strip().split())
+    if not text or _observe_only(text):
+        return None
+    if CLICK_RE.search(text) or _type_text(text) or _hotkey_keys(text):
+        return {
+            "include_ax": True,
+            "include_ocr": False,
+            "include_som": False,
+            "include_grid": False,
+            "limit": token_limit,
+            "skip_screenshot_if_ax_only": True,
+        }
+    return None
+
+
+def _fast_decision_needs_full_fallback(decision: DesktopDecision) -> bool:
+    return decision.status == "no_match" or (decision.status == "skipped" and not decision.action)
 
 
 def _safe_build_desktop_tokenization(project: Path, **kwargs: Any) -> DesktopTokenization:
