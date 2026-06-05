@@ -428,6 +428,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "leave concrete mismatches on issue #2" in progress
     assert "not outreach evidence, endorsement, stars, or reposts" in progress
     assert "minimal issue-comment template" in progress
+    assert "links the supplied Codex/OpenHands/SWE-agent\n  transcript adapter checks" in progress
+    assert "repository-defined supplied formats only, not native\n  exports, live control, benchmark ingestion, or endorsement" in progress
     assert "scripts/public_review_gate.sh" in progress
     assert "scripts/public_proof_card.sh" in progress
     assert "screenshot-friendly proof card with commit, scope, non-proof boundaries,\n  review issue, and external-review record form" in progress
