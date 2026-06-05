@@ -156,6 +156,18 @@ def test_readme_links_public_proof_issue() -> None:
     assert "docs/PUBLIC_SHARE_PACKET.md" in readme
 
 
+def test_agent_trend_radar_tracks_current_next_build_target() -> None:
+    radar = (ROOT / "docs" / "AGENT_TREND_RADAR.md").read_text(encoding="utf-8")
+
+    assert "Last refreshed: 2026-06-05." in radar
+    assert "## Current Build Target" in radar
+    assert "run-record adapter matrix for supplied transcripts" in radar
+    assert "The `run-metrics` evidence extension is already on `main`" in radar
+    assert "one fixture and one CLI smoke test per adapter" in radar
+    assert "cross-agent supplied-record audit\ncoverage" in radar
+    assert "not prove live orchestration, ACP control, broad SWE-bench repair, or\nexternal endorsement" in radar
+
+
 def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
@@ -434,7 +446,7 @@ def test_agent_trend_radar_maps_sources_to_non_claim_development_bets() -> None:
     radar = (ROOT / "docs" / "AGENT_TREND_RADAR.md").read_text(encoding="utf-8")
 
     assert "OpenMako Agent Trend Radar" in radar
-    assert "Last refreshed: 2026-06-04." in radar
+    assert "Last refreshed: 2026-06-05." in radar
     assert "not proof that OpenMako already implements these\ncapabilities" in radar
     assert "not evidence of external review, endorsement, stars, or\nreposts" in radar
     assert "https://hermes-agent.nousresearch.com/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-hermes-agent" in radar
@@ -453,8 +465,9 @@ def test_agent_trend_radar_maps_sources_to_non_claim_development_bets() -> None:
     assert "Full-Cycle And Secure-Coding Gates" in radar
     assert "Do not claim OpenMako is a Hermes, OpenClaw, OpenHands, SWE-agent, or\n  Terminal-Bench replacement." in radar
     assert "Do not claim ACP, MCP orchestration, long-term memory, skill self-evolution,\n  cloud agent execution, or secure-code benchmarking as current public v0.1\n  capability." in radar
-    assert "The next high-leverage public build is a `run-metrics` evidence extension" in radar
-    assert "missing-telemetry fields" in radar
+    assert "The `run-metrics` evidence extension is already on `main`" in radar
+    assert "run-record adapter matrix for supplied transcripts" in radar
+    assert "one fixture and one CLI smoke test per adapter" in radar
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in radar.lower()
 

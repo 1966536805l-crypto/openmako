@@ -1,6 +1,6 @@
 # OpenMako Agent Trend Radar
 
-Last refreshed: 2026-06-04.
+Last refreshed: 2026-06-05.
 
 This is a source-linked planning map for deciding what OpenMako should build
 next after v0.1. It is not proof that OpenMako already implements these
@@ -11,11 +11,11 @@ reposts.
 
 | Signal | Source | What is moving |
 | --- | --- | --- |
-| Self-improving skills and memory | `https://hermes-agent.nousresearch.com/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-hermes-agent` | Hermes positions persistent memory, reusable skills, profiles, gateways, plugins, MCP, cron, and provider switching as agent runtime primitives. |
-| External-harness sessions | `https://docs.openclaw.ai/tools/acp-agents` | OpenClaw uses Agent Client Protocol sessions to spawn external coding harnesses as tracked background tasks, with readiness checks before exposing ACP guidance. |
+| Self-improving skills and memory | `https://hermes-agent.nousresearch.com/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-hermes-agent` | Hermes positions persistent memory, reusable skills, profiles, gateways, plugins, MCP, cron, provider switching, and worktree-style parallel runs as agent runtime primitives. |
+| External-harness sessions | `https://docs.openclaw.ai/tools/acp-agents` | OpenClaw uses Agent Client Protocol sessions to spawn external coding harnesses as tracked background tasks, with explicit bind/thread modes and fail-clear model overrides. |
 | Composable agent surfaces | `https://github.com/OpenHands/OpenHands` | OpenHands exposes the same agent core through SDK, CLI, local GUI, cloud, and enterprise surfaces, with integrations and permissions in the cloud product. |
-| Terminal-first evaluation | `https://github.com/harbor-framework/terminal-bench` | Terminal-Bench evaluates agents in sandboxed terminal environments with task instructions, verifier scripts, and oracle solutions. |
-| Cost and telemetry as benchmark output | `https://github.com/Vexp-ai/vexp-swe-bench` | SWE-bench-style harnesses increasingly report resolution rate together with cost, duration, token usage, and unique wins. |
+| Terminal-first evaluation | `https://github.com/harbor-framework/terminal-bench` | Terminal-Bench evaluates agents in sandboxed terminal environments with task instructions, verifier scripts, oracle solutions, dataset versions, and leaderboard submission paths. |
+| Cost and telemetry as benchmark output | `https://github.com/Vexp-ai/vexp-swe-bench` | SWE-bench-style harnesses increasingly report resolution rate together with cost, duration, token usage, turn counts, and unique wins. |
 | Chained maintenance tasks | `https://arxiv.org/abs/2605.14415` | SWE-Chain evaluates release-level package upgrades where each transition inherits the agent's prior codebase. |
 | Full-cycle autonomy | `https://arxiv.org/abs/2605.13139` | SWE-Cycle separates environment reconstruction, implementation, verification generation, and end-to-end full-cycle execution. |
 | Correct-and-secure coding | `https://arxiv.org/abs/2509.22097` | SecureVibeBench combines functionality testing with static and dynamic security oracles for multi-file secure coding tasks. |
@@ -102,9 +102,21 @@ exist.
 - Do not use this trend radar as evidence of endorsement, external review,
   star traction, or repost traction.
 
-## Next Build Target
+## Current Build Target
 
-The next high-leverage public build is a `run-metrics` evidence extension:
-add optional duration, token, cost, command-count, and missing-telemetry fields
-to supplied run records, then make Evidence Court preserve those fields in its
-audit JSON without changing the v0.1 claim.
+The `run-metrics` evidence extension is already on `main`, so it should not be
+listed as the next build target. The next concrete build target is an external
+run-record adapter matrix for supplied transcripts:
+
+- keep Codex, Claude, OpenHands, and SWE-agent imports as supplied-record
+  adapters first
+- normalize command, diff, test, duration, token, cost, and unsupported-field
+  evidence into one Evidence Court record shape
+- make every adapter fail closed when a transcript omits command, diff, or test
+  proof
+- add one fixture and one CLI smoke test per adapter before listing it as
+  public-supported
+
+Public claim boundary: this would improve cross-agent supplied-record audit
+coverage, not prove live orchestration, ACP control, broad SWE-bench repair, or
+external endorsement.

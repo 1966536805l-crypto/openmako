@@ -33,10 +33,12 @@ Current public proof:
   `docs/REVIEWER_TARGETS.md`. It separates technical-review targets from
   broader writer/community targets and forbids star, repost, promotion, or
   endorsement asks.
-- A source-linked agent trend radar is available at:
+- A source-linked agent trend radar refreshed on 2026-06-05 is available at:
   `docs/AGENT_TREND_RADAR.md`. It maps Hermes/OpenClaw/OpenHands/eval trends to
-  future OpenMako build bets and marks them as non-claims until code, fixtures,
-  and CI exist.
+  future OpenMako build bets, marks them as non-claims until code, fixtures,
+  and CI exist, and points the next build target at an external run-record
+  adapter matrix for supplied transcripts rather than the completed
+  `run-metrics` extension.
 - Wave 1 copyable review requests are available at:
   `docs/WAVE1_REVIEW_REQUESTS.md`. They target technical reviewers only and are
   not proof that outreach, review, endorsement, stars, or reposts happened.
@@ -96,6 +98,7 @@ public result.
 
 Next smallest hygiene task:
 
-- Post a short issue #2 update that points reviewers to commit `570cfc4` and
-  asks for overclaim or missing-proof criticism. Do not ask for stars, reposts,
-  endorsement, or promotion.
+- After the current reviewer-surface branch is merged, post a short issue #2
+  update that points reviewers to the merged commit and asks for overclaim or
+  missing-proof criticism. Do not ask for stars, reposts, endorsement, or
+  promotion.
