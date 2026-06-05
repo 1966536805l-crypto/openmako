@@ -88,6 +88,15 @@ Current public proof:
   repository-defined JSON transcript shape into an Evidence Court audit record
   with `source_format=codex-transcript/v0.1` and unsupported tool-call markers.
   It is not native Codex product log ingestion or live Codex control.
+- `docs/evidence_court_schema.md` now also documents the supplied Claude-style
+  transcript adapter. The reviewer packet link list will be updated in a
+  separate small batch to keep this change within the local file-count limit.
+- A supplied Claude-style transcript adapter is available through
+  `openmako evidence-court record from-claude-transcript`. It converts a
+  repository-defined JSON transcript shape into an Evidence Court audit record
+  with `source_format=claude-transcript/v0.1` and unsupported tool-call
+  markers. It is not native Claude or Claude Code export parsing or live Claude
+  control.
 - A supplied OpenHands-style transcript adapter is available through
   `openmako evidence-court record from-openhands-transcript`. It converts a
   repository-defined JSON transcript shape into an Evidence Court audit record

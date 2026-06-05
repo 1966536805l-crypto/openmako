@@ -115,6 +115,25 @@ read, edit/apply-patch, and shell command calls. Unsupported tool calls are
 listed under `adapter_report.unsupported`, and missing command or test evidence
 is still judged by the normal Evidence Court audit.
 
+## Supplied Claude-Style Transcript Builder
+
+`record from-claude-transcript` converts a small Claude-style JSON transcript
+into the same audit record shape. This is a repository-defined supplied
+transcript format, not native Claude or Claude Code export parsing and not live
+Claude control.
+
+```bash
+openmako evidence-court record from-claude-transcript transcript.json
+openmako evidence-court record from-claude-transcript --output run.json transcript.json
+openmako evidence-court audit --ci --json run.json
+```
+
+The transcript must be a JSON object with `messages`. Supported Claude-style
+content blocks are text and `tool_use` blocks for read, edit/apply-patch, and
+shell command calls. Unsupported tool calls are listed under
+`adapter_report.unsupported`, and missing command or test evidence is still
+judged by the normal Evidence Court audit.
+
 ## Supplied OpenHands-Style Transcript Builder
 
 `record from-openhands-transcript` converts a small OpenHands-style JSON

@@ -475,6 +475,89 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
     return record
 
 
+def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> dict[str, object]:
+    path = Path(transcript_path).expanduser().resolve(strict=False)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("Claude transcript must be a JSON object")
+
+    messages = payload.get("messages")
+    if not isinstance(messages, list):
+        raise ValueError("Claude transcript must include a messages array")
+
+    record: dict[str, object] = {
+        "source_agent": "claude",
+        "source_format": "claude-transcript/v0.1",
+        "claimed_task": str(payload.get("claimed_task") or payload.get("task") or "").strip(),
+        "allowed_files": _string_list(payload.get("allowed_files")),
+        "files_read": [],
+        "files_edited": [],
+        "commands_run": [],
+        "test_output": "",
+        "run_metrics": {},
+        "final_claim": str(payload.get("final_claim") or "").strip(),
+        "adapter_report": {
+            "unsupported": [],
+        },
+    }
+    files_read: list[str] = []
+    files_edited: list[str] = []
+    commands_run: list[dict[str, object]] = []
+    run_metrics: dict[str, object] = {}
+    unsupported: list[str] = []
+    test_output = ""
+
+    for message_index, message in enumerate(messages):
+        if not isinstance(message, dict):
+            raise ValueError(f"Claude transcript message {message_index} must be an object")
+        role = str(message.get("role") or "").strip().lower()
+        content = _codex_content_text(message.get("content"))
+        if role == "user" and content and not record["claimed_task"]:
+            record["claimed_task"] = content
+        if role == "assistant" and content:
+            record["final_claim"] = content
+
+        tool_calls = _codex_tool_calls(message, message_index)
+        tool_calls.extend(_claude_content_tool_uses(message, message_index))
+        for tool_path, tool_call in tool_calls:
+            tool_payload = _codex_tool_payload(tool_call)
+            tool_kind = _codex_tool_kind(tool_call, tool_payload)
+            if tool_kind in {"read", "read_file", "open", "view", "cat"}:
+                files_read.extend(_codex_tool_files(tool_payload))
+            elif tool_kind in {"edit", "write", "write_file", "apply_patch", "patch", "multi_edit", "multiedit"}:
+                files_edited.extend(_codex_tool_files(tool_payload))
+            elif tool_kind in {"command", "shell", "exec", "exec_command", "run_command", "bash"}:
+                command = str(tool_payload.get("command") or tool_payload.get("cmd") or "").strip()
+                if not command:
+                    unsupported.append(f"{tool_path}: missing command")
+                    continue
+                item: dict[str, object] = {"command": command}
+                if isinstance(tool_payload.get("exit_code"), int):
+                    item["exit_code"] = tool_payload["exit_code"]
+                commands_run.append(item)
+                metrics = _event_run_metrics(tool_payload)
+                if metrics:
+                    _merge_run_metrics(run_metrics, metrics)
+                output = _codex_command_output(tool_payload)
+                if output:
+                    test_output = output
+            else:
+                unsupported.append(f"{tool_path}: {tool_kind or 'unsupported'}")
+
+    if commands_run and "command_count" not in run_metrics:
+        run_metrics["command_count"] = len(commands_run)
+    record["files_read"] = files_read
+    record["files_edited"] = files_edited
+    record["commands_run"] = commands_run
+    record["test_output"] = test_output
+    if run_metrics:
+        record["run_metrics"] = run_metrics
+    else:
+        record.pop("run_metrics")
+    record["adapter_report"] = {"unsupported": unsupported}
+    return record
+
+
 def build_audit_record_from_openhands_transcript(transcript_path: str | Path) -> dict[str, object]:
     path = Path(transcript_path).expanduser().resolve(strict=False)
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -866,6 +949,23 @@ def _codex_tool_calls(message: dict[str, object], message_index: int) -> list[tu
     return calls
 
 
+def _claude_content_tool_uses(message: dict[str, object], message_index: int) -> list[tuple[str, dict[str, object]]]:
+    content = message.get("content")
+    if content is None:
+        return []
+    if not isinstance(content, list):
+        return []
+    calls: list[tuple[str, dict[str, object]]] = []
+    for block_index, block in enumerate(content):
+        if not isinstance(block, dict):
+            continue
+        block_type = str(block.get("type") or "").strip().lower().replace("-", "_")
+        if block_type not in {"tool_use", "server_tool_use"}:
+            continue
+        calls.append((f"messages[{message_index}].content[{block_index}]", block))
+    return calls
+
+
 def _codex_tool_payload(tool_call: dict[str, object]) -> dict[str, object]:
     payload = dict(tool_call)
     for field in ("arguments", "input", "params"):
@@ -883,6 +983,11 @@ def _codex_tool_payload(tool_call: dict[str, object]) -> dict[str, object]:
 
 
 def _codex_tool_kind(tool_call: dict[str, object], tool_payload: dict[str, object]) -> str:
+    block_type = str(tool_payload.get("type") or tool_call.get("type") or "").strip().lower().replace("-", "_")
+    if block_type in {"tool_use", "server_tool_use"} and (
+        isinstance(tool_payload.get("name"), str) or isinstance(tool_call.get("name"), str)
+    ):
+        return str(tool_payload.get("name") or tool_call.get("name") or "").strip().lower().replace("-", "_")
     value = (
         tool_payload.get("kind")
         or tool_payload.get("type")
@@ -901,7 +1006,7 @@ def _codex_tool_files(tool_payload: dict[str, object]) -> list[str]:
         return _string_list(tool_payload.get("files"))
     if "paths" in tool_payload:
         return _string_list(tool_payload.get("paths"))
-    for field in ("file", "path"):
+    for field in ("file", "path", "file_path"):
         if isinstance(tool_payload.get(field), str):
             return [str(tool_payload[field])]
     return []
