@@ -281,9 +281,9 @@ class DesktopIntelligenceTest(unittest.TestCase):
         self.assertEqual(verify_kwargs["include_ocr"], False)
         self.assertEqual(verify_kwargs["include_som"], False)
         self.assertEqual(verify_kwargs["include_grid"], False)
-        self.assertEqual(verify_kwargs["skip_screenshot_if_ax_only"], False)
+        self.assertEqual(verify_kwargs["skip_screenshot_if_ax_only"], True)
 
-    def test_daemon_ax_preflight_skips_screenshot_but_verification_captures(self) -> None:
+    def test_daemon_ax_click_uses_fast_ax_preflight_and_verification(self) -> None:
         with tempfile.TemporaryDirectory(prefix="desktop daemon ax preflight capture ") as tmp:
             project = Path(tmp)
             image = project / "shot.png"
@@ -325,7 +325,7 @@ class DesktopIntelligenceTest(unittest.TestCase):
 
         self.assertTrue(result.ok, result.to_json())
         self.assertEqual(result.status, "step_budget_exhausted")
-        self.assertEqual(screenshot.call_count, 2)
+        self.assertEqual(screenshot.call_count, 1)
         self.assertIn("semantic verify passed", [record.summary for record in result.records if record.phase == "verify"][0])
 
     def test_daemon_ax_preflight_blocks_cached_ax_fallback(self) -> None:
@@ -369,6 +369,36 @@ class DesktopIntelligenceTest(unittest.TestCase):
         self.assertIn("cached AX fallback", result.summary)
         self.assertEqual(screenshot.call_count, 1)
         execute.assert_not_called()
+
+    def test_daemon_ax_verification_blocks_cached_ax_fallback(self) -> None:
+        source = self.tokenization()
+        cached = DesktopToken(
+            "AX0001",
+            "Search",
+            "AXButton",
+            "ax",
+            bbox=(10, 20, 110, 50),
+            center=(60, 35),
+            clickable=False,
+            confidence=0.25,
+            raw={"recovered_from": "cached_ax"},
+        )
+        verified = self.tokenization((cached,), observation_id="obs-cached-verify", screen_hash="")
+        click = self.click_decision()
+        with tempfile.TemporaryDirectory(prefix="desktop daemon ax cached verify ") as tmp:
+            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[source, source, verified]) as tokenize, patch.object(
+                desktop_intelligence,
+                "decide_desktop_action",
+                return_value=click,
+            ), patch.object(desktop_intelligence, "_execute_step", return_value=DesktopResult("click", True, "click ok")) as execute:
+                result = run_desktop_daemon(Path(tmp), "点击 Search", execute=True, reviewed=True, allow_actions=True, max_steps=1, delay=0)
+
+        self.assertFalse(result.ok, result.to_json())
+        self.assertEqual(result.status, "verify_failed")
+        self.assertIn("cached AX fallback", result.summary)
+        self.assertEqual(execute.call_count, 1)
+        verify_kwargs = tokenize.call_args_list[2].kwargs
+        self.assertEqual(verify_kwargs["skip_screenshot_if_ax_only"], True)
 
     def test_daemon_rejects_target_action_without_observation_metadata(self) -> None:
         stale_click = DesktopDecision(True, "action", "click", {"x": 60, "y": 35, "target_id": "AX0001"}, "AX0001", "old decision", True, (), 0.9, DesktopStep("click", {"x": 60, "y": 35, "target_id": "AX0001"}, "old decision"))

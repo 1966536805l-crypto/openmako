@@ -176,10 +176,16 @@ Current public proof:
   bounded control hardening, not live desktop-control proof.
 - AX-only target preflight can now skip the screenshot step when no visual
   sources are requested. This makes the stale-target check for AX click/type
-  fences lighter while leaving post-action semantic verification on its normal
-  capture/source path. The focused regression test asserts that the fast AX-only
+  fences lighter while leaving typed-text verification on its normal
+  AX+OCR capture/source path. The focused regression test asserts that the fast AX-only
   tokenization path does not call screenshot capture. This is local hardening,
   not a live speed benchmark or public L4/L5 desktop-control proof.
+- AX click/move post-action verification now uses the same AX-only no-screenshot
+  refresh when the original target was an AX token, reducing one redundant
+  screenshot capture in the focused daemon path. Verification now also fails if
+  the fresh AX check can only recover cached AX tokens, so the fast path does
+  not treat stale accessibility state as proof. This is local call-count
+  evidence, not a live latency benchmark or external desktop-control claim.
 - Screenshot failure diagnostics now support the
   `OPENMAKO_DESKTOP_FAST_DIAGNOSTICS=1` local fast path, which skips the slower
   display probe while still returning front-app/window/console context and a

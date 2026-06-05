@@ -1695,6 +1695,15 @@ def _verify_action_semantics(
         expected_hash = str(decision.args.get("target_hash") or "")
         current_token = _find_token(verified, target_id) if target_id else None
         data["target_id"] = target_id
+        if _tokenization_uses_cached_ax(verified):
+            data["cached_ax_fallback"] = True
+            return DesktopActionVerification(
+                False,
+                "verify_failed",
+                "semantic verify failed: fresh AX verification used cached AX fallback",
+                verified,
+                data,
+            )
         if target_id and current_token is None:
             return DesktopActionVerification(True, "ok", f"semantic verify passed: target disappeared: {target_id}", verified, data)
         if current_token is not None and expected_hash and _token_hash(current_token) != expected_hash:
@@ -1723,7 +1732,12 @@ def _verification_tokenization_kwargs(
     if decision.action == "type":
         return {"include_ax": True, "include_ocr": True, "include_som": False, "include_grid": False, "limit": token_limit}
     if decision.action in {"click", "move", "hotkey"} and previous_token is not None:
-        return _preflight_tokenization_kwargs(previous_token, include_grid=include_grid, token_limit=token_limit)
+        return _preflight_tokenization_kwargs(
+            previous_token,
+            include_grid=include_grid,
+            token_limit=token_limit,
+            skip_screenshot_if_ax_only=decision.action in {"click", "move"},
+        )
     if decision.action == "hotkey":
         return {"include_ax": False, "include_ocr": False, "include_som": False, "include_grid": False, "limit": token_limit}
     return {"include_grid": include_grid, "limit": token_limit}
@@ -2036,6 +2050,10 @@ def _find_token(tokenization: DesktopTokenization, token_id: str) -> DesktopToke
 def _token_is_cached_ax(token: DesktopToken) -> bool:
     raw = token.raw if isinstance(token.raw, dict) else {}
     return str(token.source or "").strip().lower() == "ax" and str(raw.get("recovered_from") or "").strip().lower() == "cached_ax"
+
+
+def _tokenization_uses_cached_ax(tokenization: DesktopTokenization) -> bool:
+    return any(_token_is_cached_ax(token) for token in tokenization.tokens)
 
 
 def _center_drift(previous: tuple[int, int] | None, current: tuple[int, int] | None) -> float | None:
