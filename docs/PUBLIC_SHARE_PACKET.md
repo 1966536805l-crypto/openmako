@@ -16,6 +16,10 @@ an Evidence Court CLI that audits supplied records.
 - v0.1.0 release: https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0
 - Local proof command: `./scripts/public_review_gate.sh`
 - Technical review packet: `docs/TECHNICAL_REVIEW_PACKET.md`
+- Optional review card: `docs/openmako-review-card.svg`
+
+Use the review card only as a visual summary after checking the public gate.
+It is not evidence of external review, endorsement, stars, or reposts.
 
 ## Safe Public Wording
 

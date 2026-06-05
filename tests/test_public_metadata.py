@@ -437,6 +437,9 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "scripts/public_proof_card.sh" in progress
     assert "screenshot-friendly proof card with commit, scope, non-proof boundaries,\n  review issue, and external-review record form" in progress
     assert "docs/PUBLIC_SHARE_PACKET.md" in progress
+    assert "docs/openmako-review-card.svg" in progress
+    assert "optional visual summary for the public\n  gate and issue #2 boundary review" in progress
+    assert "not evidence of external review,\n  endorsement, stars, or reposts" in progress
     assert "<=280 character technical\n  review post" in progress
     assert "blocks\n  general-influencer outreach until at least one public technical boundary\n  review exists" in progress
     assert "`run-metrics` evidence extension" in progress
@@ -642,6 +645,9 @@ def test_public_share_packet_preserves_review_boundary_without_promotion() -> No
     assert "https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0" in share_packet
     assert "./scripts/public_review_gate.sh" in share_packet
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in share_packet
+    assert "docs/openmako-review-card.svg" in share_packet
+    assert "Use the review card only as a visual summary after checking the public gate." in share_packet
+    assert "not evidence of external review, endorsement, stars, or reposts" in share_packet
     assert "Do not say it proves broad unknown-repository SWE repair." in share_packet
     assert "Do not say it replaces Claude Code, Codex, Cursor, Devin, or other agents." in share_packet
     assert "Do not ask readers to star, repost, or promote the repository." in share_packet
@@ -655,6 +661,21 @@ def test_public_share_packet_preserves_review_boundary_without_promotion() -> No
     assert len(short_post_match.group("post")) <= 280
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in share_packet.lower()
+
+
+def test_openmako_review_card_is_boundary_focused_not_promotional() -> None:
+    card = (ROOT / "docs" / "openmako-review-card.svg").read_text(encoding="utf-8")
+
+    assert "OpenMako public review card" in card
+    assert "Evidence checks for agent run records" in card
+    assert "Current public proof covers: learning effect, patch scope," in card
+    assert "test proof, and supplied-record audit." in card
+    assert "Boundary check" in card
+    assert "github.com/1966536805l-crypto/openmako/issues/2" in card
+    assert "Does not claim broad repair or external review." in card
+    assert "Tell us where" not in card
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in card.lower()
 
 
 def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:

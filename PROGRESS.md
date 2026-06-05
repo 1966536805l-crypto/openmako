@@ -114,6 +114,9 @@ Current public proof:
   review issue, and external-review record form.
 - `docs/PUBLIC_SHARE_PACKET.md` provides boundary-preserving public wording for
   reviewers who independently choose to discuss the project.
+- `docs/openmako-review-card.svg` is an optional visual summary for the public
+  gate and issue #2 boundary review. It is not evidence of external review,
+  endorsement, stars, or reposts.
 - `docs/PUBLIC_SHARE_PACKET.md` also includes a <=280 character technical
   review post and a boundary-clear follow-up that must not be used before a
   named reviewer gives public feedback.
