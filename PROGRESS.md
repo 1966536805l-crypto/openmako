@@ -17,6 +17,10 @@ Current public proof:
 - External technical boundary criticism is requested in issue #2:
   `https://github.com/1966536805l-crypto/openmako/issues/2`.
   This is a review request, not evidence of endorsement or promotion.
+- Issue #2 was updated on 2026-06-05 after PR #4 merged into `main` at
+  `f2659e1aa17a18b8ab015e1f6c1245425bb6d2ca`. The update keeps the same
+  ask: point out README, release, or docs wording that sounds broader than the
+  code and tests prove.
 - A structured technical boundary issue form is available at:
   `.github/ISSUE_TEMPLATE/technical-boundary-check.yml`.
 - A structured external review record form is available at:
@@ -113,7 +117,5 @@ public result.
 
 Next smallest hygiene task:
 
-- After the current reviewer-surface branch is merged, post a short issue #2
-  update that points reviewers to the merged commit and asks for overclaim or
-  missing-proof criticism. Do not ask for stars, reposts, endorsement, or
-  promotion.
+- Link the merged supplied-transcript adapters from the reviewer packet only if
+  it reduces reviewer lookup friction without broadening the v0.1 claim.
