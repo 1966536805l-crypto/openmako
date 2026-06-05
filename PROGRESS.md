@@ -155,6 +155,12 @@ Current public proof:
   AX click targets. This reduces redundant perception work before reviewed
   control actions, but it is still an internal local hardening step, not a
   public live-control claim.
+- Internal desktop-control verification now uses the same source-scoped refresh
+  path where safe: AX targets verify with AX-only evidence, typed text verifies
+  with AX+OCR, and global hotkeys can use screenshot capture without rebuilding
+  SoM. The regression test now asserts the AX click verification path skips
+  OCR/SoM; this is narrower local work, not a benchmarked live-control speed
+  claim.
 - `scripts/desktop_control_local_gate.sh` provides a bounded local desktop
   control gate: it runs focused desktop intelligence/policy tests and a
   `suite_l4` dry-run eval, then checks that the result remains conservative

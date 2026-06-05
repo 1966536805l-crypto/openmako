@@ -211,6 +211,11 @@ class DesktopIntelligenceTest(unittest.TestCase):
         self.assertEqual(preflight_kwargs["include_ocr"], False)
         self.assertEqual(preflight_kwargs["include_som"], False)
         self.assertEqual(preflight_kwargs["include_grid"], False)
+        verify_kwargs = tokenize.call_args_list[2].kwargs
+        self.assertEqual(verify_kwargs["include_ax"], True)
+        self.assertEqual(verify_kwargs["include_ocr"], False)
+        self.assertEqual(verify_kwargs["include_som"], False)
+        self.assertEqual(verify_kwargs["include_grid"], False)
 
     def test_daemon_rejects_target_action_without_observation_metadata(self) -> None:
         stale_click = DesktopDecision(True, "action", "click", {"x": 60, "y": 35, "target_id": "AX0001"}, "AX0001", "old decision", True, (), 0.9, DesktopStep("click", {"x": 60, "y": 35, "target_id": "AX0001"}, "old decision"))

@@ -1619,7 +1619,13 @@ def _verify_action_semantics(
     include_grid: bool,
     token_limit: int,
 ) -> DesktopActionVerification:
-    verified = _safe_build_desktop_tokenization(project, include_grid=include_grid, limit=token_limit)
+    verify_kwargs = _verification_tokenization_kwargs(decision, previous, include_grid=include_grid, token_limit=token_limit)
+    verified = _safe_build_desktop_tokenization(project, **verify_kwargs)
+    comparable_sources = _comparable_token_sources(verified, verify_kwargs)
+    previous_token_signature = _token_signature(previous, sources=comparable_sources)
+    current_token_signature = _token_signature(verified, sources=comparable_sources)
+    previous_focus_signature = _focus_signature(previous, sources=comparable_sources)
+    current_focus_signature = _focus_signature(verified, sources=comparable_sources)
     data = _tokenization_record_data(verified) | {
         "action": decision.action,
         "result_ok": result.ok,
@@ -1627,20 +1633,22 @@ def _verify_action_semantics(
         "previous_screen_hash": _short_hash(previous.screen_hash),
         "current_screen_hash": _short_hash(verified.screen_hash),
         "screen_hash_changed": bool(previous.screen_hash and verified.screen_hash and previous.screen_hash != verified.screen_hash),
-        "previous_token_signature": _short_hash(_token_signature(previous)),
-        "current_token_signature": _short_hash(_token_signature(verified)),
-        "token_tree_changed": _token_signature(previous) != _token_signature(verified),
-        "previous_focus_signature": _short_hash(_focus_signature(previous)),
-        "current_focus_signature": _short_hash(_focus_signature(verified)),
-        "focus_changed": _focus_signature(previous) != _focus_signature(verified),
+        "previous_token_signature": _short_hash(previous_token_signature),
+        "current_token_signature": _short_hash(current_token_signature),
+        "token_tree_changed": previous_token_signature != current_token_signature,
+        "previous_focus_signature": _short_hash(previous_focus_signature),
+        "current_focus_signature": _short_hash(current_focus_signature),
+        "focus_changed": previous_focus_signature != current_focus_signature,
+        "verification_sources": sorted(comparable_sources),
     }
-    if not verified.ok and not verified.tokens:
+    targetless_hotkey = decision.action == "hotkey" and not decision.target_id and not decision.args.get("target_id")
+    if not verified.ok and not verified.tokens and not targetless_hotkey:
         return DesktopActionVerification(False, "verify_failed", verified.summary, verified, data)
     if decision.action == "type":
         typed = str(decision.args.get("text") or "")
         if typed and _tokens_contain_text(verified.tokens, typed):
             return DesktopActionVerification(True, "ok", f"semantic verify passed: typed text visible", verified, data)
-        if _post_action_progress(previous, verified, decision):
+        if _post_action_progress(previous, verified, decision, sources=comparable_sources):
             return DesktopActionVerification(True, "ok", "semantic verify passed: desktop state changed after type", verified, data)
         return DesktopActionVerification(False, "verify_failed", f"semantic verify failed: typed text not visible: {typed}", verified, data)
     if decision.action in {"click", "move"}:
@@ -1652,16 +1660,50 @@ def _verify_action_semantics(
             return DesktopActionVerification(True, "ok", f"semantic verify passed: target disappeared: {target_id}", verified, data)
         if current_token is not None and expected_hash and _token_hash(current_token) != expected_hash:
             return DesktopActionVerification(True, "ok", f"semantic verify passed: target changed: {target_id}", verified, data)
-        if _post_action_progress(previous, verified, decision):
+        if _post_action_progress(previous, verified, decision, sources=comparable_sources):
             return DesktopActionVerification(True, "ok", "semantic verify passed: desktop tokens changed", verified, data)
         return DesktopActionVerification(False, "verify_failed", "semantic verify failed: no visible progress after target action", verified, data)
     if decision.action == "hotkey":
         if not decision.target_id and not decision.args.get("target_id"):
             return DesktopActionVerification(True, "ok", "capture verify passed for global hotkey", verified, data)
-        if _post_action_progress(previous, verified, decision):
+        if _post_action_progress(previous, verified, decision, sources=comparable_sources):
             return DesktopActionVerification(True, "ok", "semantic verify passed: desktop state changed after hotkey", verified, data)
         return DesktopActionVerification(False, "verify_failed", "semantic verify failed: no visible progress after hotkey", verified, data)
     return DesktopActionVerification(True, "ok", f"capture verify passed for {decision.action}", verified, data)
+
+
+def _verification_tokenization_kwargs(
+    decision: DesktopDecision,
+    previous: DesktopTokenization,
+    *,
+    include_grid: bool,
+    token_limit: int,
+) -> dict[str, Any]:
+    target_id = decision.target_id or str(decision.args.get("target_id") or "")
+    previous_token = _find_token(previous, target_id) if target_id else None
+    if decision.action == "type":
+        return {"include_ax": True, "include_ocr": True, "include_som": False, "include_grid": False, "limit": token_limit}
+    if decision.action in {"click", "move", "hotkey"} and previous_token is not None:
+        return _preflight_tokenization_kwargs(previous_token, include_grid=include_grid, token_limit=token_limit)
+    if decision.action == "hotkey":
+        return {"include_ax": False, "include_ocr": False, "include_som": False, "include_grid": False, "limit": token_limit}
+    return {"include_grid": include_grid, "limit": token_limit}
+
+
+def _comparable_token_sources(tokenization: DesktopTokenization, kwargs: Mapping[str, Any]) -> set[str]:
+    sources = {str(token.source or "").strip().lower() for token in tokenization.tokens if str(token.source or "").strip()}
+    if sources:
+        return sources
+    requested: set[str] = set()
+    if kwargs.get("include_ax", True):
+        requested.add("ax")
+    if kwargs.get("include_ocr", True):
+        requested.add("ocr")
+    if kwargs.get("include_som", True):
+        requested.add("som")
+    if kwargs.get("include_grid", False):
+        requested.add("grid")
+    return requested
 
 @contextlib.contextmanager
 def _desktop_action_lock(step: DesktopStep) -> Iterator[dict[str, Any]]:
@@ -1871,14 +1913,22 @@ def _token_hash(token: DesktopToken) -> str:
     return hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
 
 
-def _token_signature(tokenization: DesktopTokenization) -> str:
-    payload = [_token_hash(token) for token in tokenization.tokens]
+def _token_signature(tokenization: DesktopTokenization, *, sources: set[str] | None = None) -> str:
+    wanted = {str(source).strip().lower() for source in sources or set() if str(source).strip()}
+    payload = [
+        _token_hash(token)
+        for token in tokenization.tokens
+        if not wanted or str(token.source or "").strip().lower() in wanted
+    ]
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
 
 
-def _focus_signature(tokenization: DesktopTokenization) -> str:
+def _focus_signature(tokenization: DesktopTokenization, *, sources: set[str] | None = None) -> str:
+    wanted = {str(source).strip().lower() for source in sources or set() if str(source).strip()}
     focused: list[dict[str, Any]] = []
     for token in tokenization.tokens:
+        if wanted and str(token.source or "").strip().lower() not in wanted:
+            continue
         raw = token.raw if isinstance(token.raw, dict) else {}
         if _truthy_state(raw.get("focused") or raw.get("focus") or raw.get("selected")):
             focused.append(
@@ -1893,12 +1943,18 @@ def _focus_signature(tokenization: DesktopTokenization) -> str:
     return hashlib.sha256(json.dumps(focused, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
 
 
-def _post_action_progress(previous: DesktopTokenization, current: DesktopTokenization, decision: DesktopDecision) -> bool:
+def _post_action_progress(
+    previous: DesktopTokenization,
+    current: DesktopTokenization,
+    decision: DesktopDecision,
+    *,
+    sources: set[str] | None = None,
+) -> bool:
     if previous.screen_hash and current.screen_hash and previous.screen_hash != current.screen_hash:
         return True
-    if _token_signature(previous) != _token_signature(current):
+    if _token_signature(previous, sources=sources) != _token_signature(current, sources=sources):
         return True
-    if _focus_signature(previous) != _focus_signature(current):
+    if _focus_signature(previous, sources=sources) != _focus_signature(current, sources=sources):
         return True
     target_id = decision.target_id or str(decision.args.get("target_id") or "")
     expected_hash = str(decision.args.get("target_hash") or "")
