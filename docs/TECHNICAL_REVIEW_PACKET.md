@@ -76,6 +76,18 @@ Expected public snapshot signal:
 The demo audits supplied JSON records. It does not claim native Claude Code,
 Codex, Cursor, Devin, or SWE-bench transcript ingestion.
 
+To inspect the artifact-provenance boundary used for benchmark-style
+comparability questions:
+
+```bash
+./bin/openmako --no-trust-prompt evidence-court audit --ci --json \
+  examples/evidence_court/artifact_provenance.json
+```
+
+That fixture preserves supplied eval rule, runner, input hash, output hash, and
+missing-provenance fields. It does not mean OpenMako ingests native benchmark
+artifacts or validates benchmark scores.
+
 ## Optional Supplied-Transcript Adapter Checks
 
 If you want to inspect the newly merged adapter surface, use the schema notes:

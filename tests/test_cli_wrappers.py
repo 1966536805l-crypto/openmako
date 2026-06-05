@@ -225,6 +225,25 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("## Artifact Provenance", text_result.stdout)
         self.assertIn("eval_rule_version=swtbench-strip-model-patch/v2", text_result.stdout)
 
+    def test_openmako_evidence_court_artifact_provenance_fixture_is_auditable(self) -> None:
+        result = self.run_openmako(
+            "--no-trust-prompt",
+            "evidence-court",
+            "audit",
+            "--ci",
+            "--json",
+            "examples/evidence_court/artifact_provenance.json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "PASS")
+        self.assertEqual(payload["artifact_provenance"]["eval_rule_version"], "swtbench-strip-model-patch/v2")
+        self.assertEqual(
+            payload["artifact_provenance"]["output_hashes"],
+            {"output.swtbench.jsonl": "sha256:222"},
+        )
+
     def test_openmako_evidence_court_audit_ci_returns_nonzero_for_fail(self) -> None:
         result = self.run_openmako(
             "--no-trust-prompt",

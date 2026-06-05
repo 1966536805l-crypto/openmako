@@ -105,6 +105,10 @@ Current public proof:
   `artifact_provenance` in audit JSON and the Markdown report. This adds
   comparability metadata, but it does not mean OpenMako ingests native benchmark
   artifacts or validates benchmark scores.
+- A public `artifact_provenance` fixture is available at
+  `examples/evidence_court/artifact_provenance.json` and is now checked by
+  `scripts/public_review_gate.sh`, so reviewers can reproduce the supplied
+  artifact-identity boundary without relying on prose.
 - A supplied Codex-style transcript adapter is available through
   `openmako evidence-court record from-codex-transcript`. It converts a
   repository-defined JSON transcript shape into an Evidence Court audit record

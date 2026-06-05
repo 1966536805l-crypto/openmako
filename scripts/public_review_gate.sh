@@ -56,4 +56,18 @@ if ! grep -q '"failed_at": "scope_check"' "$TMP_DIR/audit.json"; then
   exit 1
 fi
 
+echo "public-review-gate: auditing artifact provenance fixture"
+"$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court audit --ci --json \
+  examples/evidence_court/artifact_provenance.json > "$TMP_DIR/artifact_provenance.json"
+
+if ! grep -q '"artifact_provenance"' "$TMP_DIR/artifact_provenance.json"; then
+  echo "public-review-gate: expected artifact_provenance in audit JSON" >&2
+  exit 1
+fi
+
+if ! grep -q '"eval_rule_version": "swtbench-strip-model-patch/v2"' "$TMP_DIR/artifact_provenance.json"; then
+  echo "public-review-gate: expected eval_rule_version in artifact provenance audit JSON" >&2
+  exit 1
+fi
+
 echo "public-review-gate: PASS"
