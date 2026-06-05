@@ -254,6 +254,100 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
     return record
 
 
+def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> dict[str, object]:
+    path = Path(transcript_path).expanduser().resolve(strict=False)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("claude transcript must be a JSON object")
+    messages = payload.get("messages") or payload.get("turns") or payload.get("events")
+    if not isinstance(messages, list):
+        raise ValueError("claude transcript must include a messages, turns, or events array")
+
+    task = payload.get("task") if isinstance(payload.get("task"), dict) else {}
+    record: dict[str, object] = {
+        "source_agent": str(payload.get("source_agent") or payload.get("source") or "claude"),
+        "claimed_task": _first_text(payload.get("claimed_task"), task.get("claimed_task"), task.get("prompt")),
+        "allowed_files": _file_list(payload.get("allowed_files") or task.get("allowed_files")),
+        "files_read": [],
+        "files_edited": [],
+        "commands_run": [],
+        "test_output": "",
+        "final_claim": "",
+    }
+    files_read: list[str] = []
+    files_edited: list[str] = []
+    commands_run: list[dict[str, object]] = []
+    run_metrics: dict[str, object] = {}
+    unsupported_fields: list[str] = []
+    pending_command_index: int | None = None
+
+    for message_index, raw_message in enumerate(messages):
+        if not isinstance(raw_message, dict):
+            raise ValueError(f"claude transcript message {message_index} must be an object")
+        message = dict(raw_message)
+        role = str(message.get("role") or "").strip().lower()
+        content = message.get("content")
+        if role == "assistant" and isinstance(content, str) and content.strip():
+            record["final_claim"] = content.strip()
+        _merge_run_metrics(run_metrics, _extract_metrics(message))
+
+        blocks = content if isinstance(content, list) else []
+        for block_index, raw_block in enumerate(blocks):
+            if not isinstance(raw_block, dict):
+                continue
+            block = dict(raw_block)
+            block_type = str(block.get("type") or "").strip().lower()
+            name = str(block.get("name") or block.get("tool_name") or "").strip().lower()
+            input_payload = block.get("input") if isinstance(block.get("input"), dict) else {}
+            _collect_unsupported_fields(block, block_index, unsupported_fields, prefix=f"messages[{message_index}].content")
+            _merge_run_metrics(run_metrics, _extract_metrics(block))
+
+            if block_type == "tool_use":
+                if name in {"read", "read_file", "view", "view_file"}:
+                    files_read.extend(_file_list(block.get("files") or block.get("file") or block.get("path") or input_payload))
+                    continue
+                if name in {"edit", "write", "write_file", "apply_patch", "multiedit"}:
+                    files_edited.extend(_file_list(block.get("files") or block.get("file") or block.get("path") or input_payload))
+                    continue
+                if name in {"bash", "shell", "run_command", "exec_command"}:
+                    command = _first_text(block.get("command"), input_payload.get("command"), input_payload.get("cmd"))
+                    if command:
+                        command_item: dict[str, object] = {"command": command}
+                        if isinstance(block.get("exit_code"), int):
+                            command_item["exit_code"] = block["exit_code"]
+                        commands_run.append(command_item)
+                        pending_command_index = len(commands_run) - 1
+                    output = _first_text(block.get("output"), block.get("stdout"), block.get("stderr"))
+                    if output:
+                        record["test_output"] = output
+                    continue
+                unsupported_fields.append(f"messages[{message_index}].content[{block_index}].tool:{name or 'missing'}")
+                continue
+
+            if block_type == "tool_result":
+                output = _first_text(block.get("content"), block.get("output"), block.get("stdout"), block.get("stderr"))
+                if output:
+                    record["test_output"] = output
+                if pending_command_index is not None and isinstance(block.get("exit_code"), int):
+                    commands_run[pending_command_index]["exit_code"] = block["exit_code"]
+                continue
+
+    record["files_read"] = _dedupe(files_read)
+    record["files_edited"] = _dedupe(files_edited)
+    record["commands_run"] = commands_run
+    if run_metrics:
+        if commands_run and "command_count" not in run_metrics:
+            run_metrics["command_count"] = len(commands_run)
+        record["run_metrics"] = run_metrics
+    record["adapter_report"] = {
+        "source_format": "claude-transcript/v0.1",
+        "unsupported_fields": _dedupe(unsupported_fields),
+        "missing_evidence": _missing_evidence(record),
+        "claim_boundary": "import-and-audit supplied transcript records only; not live Claude control",
+    }
+    return record
+
+
 def _first_text(*values: object) -> str:
     for value in values:
         if isinstance(value, str) and value.strip():
@@ -270,7 +364,7 @@ def _file_list(value: object) -> list[str]:
         for key in ("files", "paths"):
             if key in value:
                 return _file_list(value[key])
-        for key in ("file", "path"):
+        for key in ("file", "path", "file_path"):
             if isinstance(value.get(key), str):
                 return _file_list(value[key])
         return []
