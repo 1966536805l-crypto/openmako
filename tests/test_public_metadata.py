@@ -179,8 +179,9 @@ def test_agent_trend_radar_tracks_current_next_build_target() -> None:
 
     assert "Last refreshed: 2026-06-05." in radar
     assert "## Current Build Target" in radar
-    assert "run-record adapter matrix for supplied transcripts" in radar
-    assert "The `run-metrics` evidence extension is already on `main`" in radar
+    assert "rejects success claims when command/test\nproof is missing and when validation exists but edited-file evidence is\nmissing" in radar
+    assert "real diff-content evidence\nfor supplied transcripts" in radar
+    assert "The `run-metrics` evidence extension and the first supplied-transcript adapter\nmatrix are already on `main`" in radar
     assert "one fixture and one CLI smoke test per adapter" in radar
     assert "cross-agent supplied-record audit\ncoverage" in radar
     assert "not prove live orchestration, ACP control, broad SWE-bench repair, or\nexternal endorsement" in radar
@@ -501,8 +502,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "not native benchmark ingestion or score validation" in progress
     assert "scripts/supplied_transcript_adapter_matrix.sh" in progress
     assert "repository-defined Codex, Claude, OpenHands, and SWE-agent style transcripts" in progress
-    assert "verifies that each adapter rejects a success claim when\n  command/test proof is missing" in progress
-    assert "supplied-format smoke test, not native\n  product export parsing, live agent control, benchmark ingestion, or\n  endorsement" in progress
+    assert "verifies that each adapter rejects a success claim when\n  command/test proof is missing or when validation exists but edited-file\n  evidence is missing" in progress
+    assert "supplied-format smoke test, not native product\n  export parsing, live agent control, benchmark ingestion, diff-content proof,\n  or endorsement" in progress
     assert "scripts/public_proof_card.sh" in progress
     assert "screenshot-friendly proof card with commit, scope, non-proof boundaries,\n  review issue, and external-review record form" in progress
     assert "docs/PUBLIC_SHARE_PACKET.md" in progress
@@ -555,8 +556,8 @@ def test_agent_trend_radar_maps_sources_to_non_claim_development_bets() -> None:
     assert "Full-Cycle And Secure-Coding Gates" in radar
     assert "Do not claim OpenMako is a Hermes, OpenClaw, OpenHands, SWE-agent, or\n  Terminal-Bench replacement." in radar
     assert "Do not claim ACP, MCP orchestration, long-term memory, skill self-evolution,\n  cloud agent execution, or secure-code benchmarking as current public v0.1\n  capability." in radar
-    assert "The `run-metrics` evidence extension is already on `main`" in radar
-    assert "run-record adapter matrix for supplied transcripts" in radar
+    assert "The `run-metrics` evidence extension and the first supplied-transcript adapter\nmatrix are already on `main`" in radar
+    assert "current adapter matrix now rejects success claims" in radar
     assert "one fixture and one CLI smoke test per adapter" in radar
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in radar.lower()
@@ -635,8 +636,8 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in guide
     assert "./scripts/supplied_transcript_adapter_matrix.sh" in guide
     assert "repository-defined Codex, Claude, OpenHands,\nand SWE-agent style transcripts" in guide
-    assert "checks that each adapter rejects a\nsuccess claim when command/test proof is missing" in guide
-    assert "not native product export parsing or live agent control" in guide
+    assert "checks that each adapter rejects a\nsuccess claim when command/test proof is missing or when validation exists but\nedited-file evidence is missing" in guide
+    assert "not\nnative product export parsing, diff-content proof, or live agent control" in guide
     assert "It does not prove broad unknown-repository SWE repair." in guide
     assert "It does not prove external endorsement." in guide
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):

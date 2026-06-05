@@ -104,18 +104,23 @@ exist.
 
 ## Current Build Target
 
-The `run-metrics` evidence extension is already on `main`, so it should not be
-listed as the next build target. The next concrete build target is an external
-run-record adapter matrix for supplied transcripts:
+The `run-metrics` evidence extension and the first supplied-transcript adapter
+matrix are already on `main`, so they should not be listed as untouched future
+targets. The current adapter matrix now rejects success claims when command/test
+proof is missing and when validation exists but edited-file evidence is
+missing. The next concrete build target is narrower: real diff-content evidence
+for supplied transcripts, without claiming native product-log ingestion.
 
 - keep Codex, Claude, OpenHands, and SWE-agent imports as supplied-record
   adapters first
 - normalize command, diff, test, duration, token, cost, and unsupported-field
   evidence into one Evidence Court record shape
-- make every adapter fail closed when a transcript omits command, diff, or test
-  proof
-- add one fixture and one CLI smoke test per adapter before listing it as
-  public-supported
+- make every adapter fail closed when a transcript omits command/test evidence
+  or edited-file evidence for a repair claim
+- keep one fixture and one CLI smoke test per adapter before broadening any
+  adapter claim
+- add true patch/diff-content evidence only after the supplied record shape can
+  distinguish file names from actual diff hunks
 
 Public claim boundary: this would improve cross-agent supplied-record audit
 coverage, not prove live orchestration, ACP control, broad SWE-bench repair, or
