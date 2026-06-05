@@ -451,7 +451,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "not proof that messages\n  were sent or that anyone reviewed the project" in progress
     assert "bash scripts/wave1_thread_reply_ready.sh" in progress
     assert "one thread-specific reply draft" in progress
-    assert "does not send messages, create issues, or record outreach as evidence" in progress
+    assert "target URL, and final-confirmation\n  guard" in progress
+    assert "does not send messages,\n  create issues, or record outreach as evidence" in progress
     assert "`openhands-benchmarks-718` thread draft was refreshed" in progress
     assert "`output.jsonl` to\n  `output.swtbench.jsonl` artifact identity" in progress
     assert "links only the concrete\n  `swtbench_patch_artifact` fixture" in progress
@@ -929,7 +930,10 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
     assert "openhands-benchmarks-708" in text
     assert "openhands-benchmarks-718" in text
     assert "bash scripts/public_review_gate.sh" in text
+    assert "target-url: ${target_url}" in text
+    assert "https://github.com/OpenHands/benchmarks/issues/718" in text
     assert "decision: read the thread first; do not post if stale, closed, or off-topic" in text
+    assert "requires-confirmation: yes; do not submit a public comment without final user confirmation" in text
     assert "cost/version/proof metadata" in text
     assert "332 / 424 mixed bucket" in text
     assert "patch-shape bucket separately from the final SWT-bench score" in text

@@ -42,13 +42,27 @@ case "$thread" in
     ;;
 esac
 
+case "$thread" in
+  terminal-bench-1357)
+    target_url="https://github.com/harbor-framework/terminal-bench/discussions/1357"
+    ;;
+  openhands-benchmarks-708)
+    target_url="https://github.com/OpenHands/benchmarks/issues/708"
+    ;;
+  openhands-benchmarks-718)
+    target_url="https://github.com/OpenHands/benchmarks/issues/718"
+    ;;
+esac
+
 echo "wave1-thread-reply-ready: checking public proof gate"
 bash scripts/public_review_gate.sh
 
 echo
 echo "wave1-thread-reply-ready: thread=${thread}"
+echo "target-url: ${target_url}"
 echo "queue: docs/WAVE1_PUBLIC_TARGET_QUEUE.md"
 echo "decision: read the thread first; do not post if stale, closed, or off-topic"
+echo "requires-confirmation: yes; do not submit a public comment without final user confirmation"
 echo "message:"
 echo
 
