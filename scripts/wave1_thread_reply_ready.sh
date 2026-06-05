@@ -76,7 +76,7 @@ I think this comes down to artifact identity, not just the score delta.
 
 If the same output.jsonl can produce a different output.swtbench.jsonl after eval-time patch stripping changes, I would expect the published artifact to carry eval rule version, runner version or commit, input/output hashes, and maybe a patch-shape bucket.
 
-I am working on a much smaller supplied-record audit, so I am not claiming to solve historical re-scoring or native OpenHands/SWTBench ingestion. Same boundary question here: are rule version + runner version + artifact hashes enough, or should patch-shape be first-class metadata?
+In smaller supplied-record audits, I would make those fields explicit metadata, but I still would not treat that as historical re-scoring or native OpenHands/SWTBench ingestion. Same boundary question here: are rule version + runner commit + input/output hashes enough to compare artifacts, or should patch-shape be first-class metadata too?
 EOF
     ;;
 esac

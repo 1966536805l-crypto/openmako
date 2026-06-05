@@ -899,9 +899,11 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
     assert "eval-time patch stripping changes" in text
     assert "eval rule version, runner version or commit, input/output hashes" in text
     assert "patch-shape bucket" in text
-    assert "not claiming to solve historical re-scoring or native OpenHands/SWTBench ingestion" in text
+    assert "smaller supplied-record audits" in text
+    assert "would not treat that as historical re-scoring or native OpenHands/SWTBench ingestion" in text
     assert "Same boundary question here" in text
-    assert "should patch-shape be first-class metadata" in text
+    assert "runner commit + input/output hashes enough to compare artifacts" in text
+    assert "should patch-shape be first-class metadata too" in text
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()
