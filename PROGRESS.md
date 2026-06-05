@@ -80,6 +80,11 @@ Current public proof:
   repository-defined JSON transcript shape into an Evidence Court audit record
   with `source_format=codex-transcript/v0.1` and unsupported tool-call markers.
   It is not native Codex product log ingestion or live Codex control.
+- A supplied OpenHands-style transcript adapter is available through
+  `openmako evidence-court record from-openhands-transcript`. It converts a
+  repository-defined JSON transcript shape into an Evidence Court audit record
+  with `source_format=openhands-transcript/v0.1` and unsupported event markers.
+  It is not native OpenHands export parsing or live OpenHands control.
 - `scripts/public_proof_card.sh` wraps the same gate and prints a
   screenshot-friendly proof card with commit, scope, non-proof boundaries,
   review issue, and external-review record form.

@@ -475,6 +475,87 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
     return record
 
 
+def build_audit_record_from_openhands_transcript(transcript_path: str | Path) -> dict[str, object]:
+    path = Path(transcript_path).expanduser().resolve(strict=False)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("OpenHands transcript must be a JSON object")
+
+    events = payload.get("events")
+    if not isinstance(events, list):
+        raise ValueError("OpenHands transcript must include an events array")
+
+    record: dict[str, object] = {
+        "source_agent": "openhands",
+        "source_format": "openhands-transcript/v0.1",
+        "claimed_task": str(payload.get("claimed_task") or payload.get("task") or "").strip(),
+        "allowed_files": _string_list(payload.get("allowed_files")),
+        "files_read": [],
+        "files_edited": [],
+        "commands_run": [],
+        "test_output": "",
+        "run_metrics": {},
+        "final_claim": str(payload.get("final_claim") or "").strip(),
+        "adapter_report": {
+            "unsupported": [],
+        },
+    }
+    files_read: list[str] = []
+    files_edited: list[str] = []
+    commands_run: list[dict[str, object]] = []
+    run_metrics: dict[str, object] = {}
+    unsupported: list[str] = []
+    test_output = ""
+
+    for event_index, event in enumerate(events):
+        if not isinstance(event, dict):
+            raise ValueError(f"OpenHands transcript event {event_index} must be an object")
+        event_kind = _openhands_event_kind(event)
+        event_path = f"events[{event_index}]"
+        if event_kind in {"task", "instruction"}:
+            text = _openhands_event_text(event)
+            if text and not record["claimed_task"]:
+                record["claimed_task"] = text
+        elif event_kind in {"read", "read_file", "file_read"}:
+            files_read.extend(_codex_tool_files(event))
+        elif event_kind in {"edit", "write", "write_file", "apply_patch", "patch"}:
+            files_edited.extend(_codex_tool_files(event))
+        elif event_kind in {"command", "shell", "run", "execute", "run_command"}:
+            command = str(event.get("command") or event.get("cmd") or "").strip()
+            if not command:
+                unsupported.append(f"{event_path}: missing command")
+                continue
+            item: dict[str, object] = {"command": command}
+            if isinstance(event.get("exit_code"), int):
+                item["exit_code"] = event["exit_code"]
+            commands_run.append(item)
+            metrics = _event_run_metrics(event)
+            if metrics:
+                _merge_run_metrics(run_metrics, metrics)
+            output = _codex_command_output(event)
+            if output:
+                test_output = output
+        elif event_kind in {"finish", "final", "final_claim", "message"}:
+            text = _openhands_event_text(event)
+            if text:
+                record["final_claim"] = text
+        else:
+            unsupported.append(f"{event_path}: {event_kind or 'unsupported'}")
+
+    if commands_run and "command_count" not in run_metrics:
+        run_metrics["command_count"] = len(commands_run)
+    record["files_read"] = files_read
+    record["files_edited"] = files_edited
+    record["commands_run"] = commands_run
+    record["test_output"] = test_output
+    if run_metrics:
+        record["run_metrics"] = run_metrics
+    else:
+        record.pop("run_metrics")
+    record["adapter_report"] = {"unsupported": unsupported}
+    return record
+
+
 def render_evidence_court_report(report: AgentAutopsyReport) -> str:
     verdict = _verdict(report)
     claim_evidence = next((item for item in report.evidence if item.name == "claimed_task"), None)
@@ -761,10 +842,22 @@ def _codex_content_text(value: object) -> str:
 
 def _codex_command_output(tool_payload: dict[str, object]) -> str:
     parts: list[str] = []
-    for field in ("output", "stdout", "stderr", "summary"):
+    for field in ("output", "stdout", "stderr", "summary", "observation"):
         if isinstance(tool_payload.get(field), str) and str(tool_payload[field]).strip():
             parts.append(str(tool_payload[field]).strip())
     return "\n".join(parts)
+
+
+def _openhands_event_kind(event: dict[str, object]) -> str:
+    value = event.get("kind") or event.get("type") or event.get("action") or event.get("operation") or ""
+    return str(value).strip().lower().replace("-", "_")
+
+
+def _openhands_event_text(event: dict[str, object]) -> str:
+    for field in ("message", "content", "text", "instruction", "final_claim"):
+        if isinstance(event.get(field), str) and str(event[field]).strip():
+            return str(event[field]).strip()
+    return ""
 
 
 def _test_output_status(test_output: object, commands_run: object) -> tuple[str, str]:
