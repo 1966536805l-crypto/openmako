@@ -33,6 +33,41 @@ smoke_adapter() {
   fi
 }
 
+smoke_adapter_missing_tests() {
+  local adapter="$1"
+  local input="$TMP_DIR/${adapter}.missing-tests.json"
+  local record="$TMP_DIR/${adapter}.missing-tests.record.json"
+  local audit="$TMP_DIR/${adapter}.missing-tests.audit.json"
+
+  echo "adapter-matrix: recording ${adapter} missing-test-proof"
+  "$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court record "from-${adapter}-transcript" \
+    --output "$record" "$input"
+
+  echo "adapter-matrix: auditing ${adapter} missing-test-proof"
+  set +e
+  "$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court audit --ci --fail-on suspicious --json "$record" > "$audit"
+  local audit_exit=$?
+  set -e
+
+  if [ "$audit_exit" -ne 1 ]; then
+    echo "adapter-matrix: expected missing-test-proof audit exit 1 for ${adapter}, got ${audit_exit}" >&2
+    cat "$audit" >&2
+    exit 1
+  fi
+
+  if ! grep -q '"verdict": "SUSPICIOUS"' "$audit"; then
+    echo "adapter-matrix: expected SUSPICIOUS verdict for ${adapter} missing-test-proof" >&2
+    cat "$audit" >&2
+    exit 1
+  fi
+
+  if ! grep -q '"failure_class": "missing_test_evidence"' "$audit"; then
+    echo "adapter-matrix: expected missing_test_evidence for ${adapter} missing-test-proof" >&2
+    cat "$audit" >&2
+    exit 1
+  fi
+}
+
 cat > "$TMP_DIR/codex.json" <<'JSON'
 {
   "claimed_task": "Fix calculator.py and tests/test_calculator.py.",
@@ -54,6 +89,23 @@ cat > "$TMP_DIR/codex.json" <<'JSON'
           "provider": "openai",
           "model": "gpt-5"
         }
+      ]
+    }
+  ]
+}
+JSON
+
+cat > "$TMP_DIR/codex.missing-tests.json" <<'JSON'
+{
+  "claimed_task": "Fix calculator.py.",
+  "allowed_files": ["calculator.py"],
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "Fixed and verified.",
+      "tool_calls": [
+        {"type": "read_file", "path": "calculator.py"},
+        {"type": "apply_patch", "files": ["calculator.py"]}
       ]
     }
   ]
@@ -92,6 +144,23 @@ cat > "$TMP_DIR/claude.json" <<'JSON'
 }
 JSON
 
+cat > "$TMP_DIR/claude.missing-tests.json" <<'JSON'
+{
+  "claimed_task": "Fix calculator.py.",
+  "allowed_files": ["calculator.py"],
+  "messages": [
+    {
+      "role": "assistant",
+      "content": [
+        {"type": "text", "text": "Fixed and verified."},
+        {"type": "tool_use", "name": "Read", "input": {"file_path": "calculator.py"}},
+        {"type": "tool_use", "name": "Edit", "input": {"file_path": "calculator.py"}}
+      ]
+    }
+  ]
+}
+JSON
+
 cat > "$TMP_DIR/openhands.json" <<'JSON'
 {
   "task": "Fix calculator.py and tests/test_calculator.py.",
@@ -110,6 +179,18 @@ cat > "$TMP_DIR/openhands.json" <<'JSON'
       "provider": "openai",
       "model": "gpt-5"
     },
+    {"action": "finish", "message": "Fixed and verified."}
+  ]
+}
+JSON
+
+cat > "$TMP_DIR/openhands.missing-tests.json" <<'JSON'
+{
+  "task": "Fix calculator.py.",
+  "allowed_files": ["calculator.py"],
+  "events": [
+    {"action": "read", "path": "calculator.py"},
+    {"action": "edit", "path": "calculator.py"},
     {"action": "finish", "message": "Fixed and verified."}
   ]
 }
@@ -138,9 +219,25 @@ cat > "$TMP_DIR/swe-agent.json" <<'JSON'
 }
 JSON
 
+cat > "$TMP_DIR/swe-agent.missing-tests.json" <<'JSON'
+{
+  "issue": "Fix calculator.py.",
+  "allowed_files": ["calculator.py"],
+  "steps": [
+    {"action": "read", "path": "calculator.py"},
+    {"action": "edit", "path": "calculator.py"},
+    {"action": "submit", "message": "Fixed and verified."}
+  ]
+}
+JSON
+
 smoke_adapter codex
+smoke_adapter_missing_tests codex
 smoke_adapter claude
+smoke_adapter_missing_tests claude
 smoke_adapter openhands
+smoke_adapter_missing_tests openhands
 smoke_adapter swe-agent
+smoke_adapter_missing_tests swe-agent
 
 echo "adapter-matrix: PASS"

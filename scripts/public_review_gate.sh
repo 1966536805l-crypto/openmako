@@ -70,4 +70,7 @@ if ! grep -q '"eval_rule_version": "swtbench-strip-model-patch/v2"' "$TMP_DIR/ar
   exit 1
 fi
 
+echo "public-review-gate: running supplied transcript adapter matrix"
+bash scripts/supplied_transcript_adapter_matrix.sh
+
 echo "public-review-gate: PASS"

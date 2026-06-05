@@ -46,13 +46,17 @@ public-review-gate: running planner focused public test
 public-review-gate: running learning-effect focused public test
 public-review-gate: running public metadata boundary tests
 public-review-gate: auditing supplied Evidence Court record
+public-review-gate: running supplied transcript adapter matrix
+adapter-matrix: PASS
 public-review-gate: PASS
 ```
 
-What this proves is narrow: the focused learning-effect gate passes, public
-metadata stays inside the v0.1 boundary, and Evidence Court fails closed on a
-supplied bad-run record. It does not prove broad unknown-repository repair or
-external endorsement.
+What this checks is narrow: the focused learning-effect gate passes, public
+metadata stays inside the v0.1 boundary, Evidence Court fails closed on a
+supplied bad-run record, and supplied transcript adapters preserve complete
+supplied proof fields while rejecting missing-test-proof success claims. It
+does not prove broad unknown-repository repair or external endorsement. This
+is a local script result, not external reviewer approval.
 
 ## If You Came From A Benchmark Thread
 

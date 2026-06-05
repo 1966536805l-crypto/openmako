@@ -200,8 +200,13 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "./scripts/public_review_gate.sh" in proof_section
     assert "bash scripts/public_proof_card.sh" in proof_section
     assert "screenshot-friendly summary" in proof_section
+    assert "public-review-gate: running supplied transcript adapter matrix" in proof_section
+    assert "adapter-matrix: PASS" in proof_section
     assert "public-review-gate: PASS" in proof_section
-    assert "It does not prove broad unknown-repository repair or\nexternal endorsement." in proof_section
+    assert "What this checks is narrow" in proof_section
+    assert "supplied transcript adapters preserve complete\nsupplied proof fields while rejecting missing-test-proof success claims" in proof_section
+    assert "It\ndoes not prove broad unknown-repository repair or external endorsement." in proof_section
+    assert "This\nis a local script result, not external reviewer approval." in proof_section
     assert "## If You Came From A Benchmark Thread" in proof_section
     assert "Start with the public gate:" in proof_section
     assert 'The useful review is not "do you like this project?"' in proof_section
@@ -463,7 +468,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "scripts/public_review_gate.sh" in progress
     assert "scripts/supplied_transcript_adapter_matrix.sh" in progress
     assert "repository-defined Codex, Claude, OpenHands, and SWE-agent style transcripts" in progress
-    assert "supplied-format smoke test, not native product export\n  parsing, live agent control, benchmark ingestion, or endorsement" in progress
+    assert "verifies that each adapter rejects a success claim when\n  command/test proof is missing" in progress
+    assert "supplied-format smoke test, not native\n  product export parsing, live agent control, benchmark ingestion, or\n  endorsement" in progress
     assert "scripts/public_proof_card.sh" in progress
     assert "screenshot-friendly proof card with commit, scope, non-proof boundaries,\n  review issue, and external-review record form" in progress
     assert "docs/PUBLIC_SHARE_PACKET.md" in progress
@@ -727,6 +733,8 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
     assert "expected Evidence Court audit exit 1" in text
     assert '"failure_class": "scope_violation"' in text
     assert '"failed_at": "scope_check"' in text
+    assert "public-review-gate: running supplied transcript adapter matrix" in text
+    assert "bash scripts/supplied_transcript_adapter_matrix.sh" in text
     assert "public-review-gate: PASS" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()
@@ -744,7 +752,14 @@ def test_supplied_transcript_adapter_matrix_script_is_reviewer_runnable() -> Non
     assert "smoke_adapter claude" in text
     assert "smoke_adapter openhands" in text
     assert "smoke_adapter swe-agent" in text
+    assert "smoke_adapter_missing_tests codex" in text
+    assert "smoke_adapter_missing_tests claude" in text
+    assert "smoke_adapter_missing_tests openhands" in text
+    assert "smoke_adapter_missing_tests swe-agent" in text
     assert '"verdict": "PASS"' in text
+    assert "--fail-on suspicious --json" in text
+    assert '"verdict": "SUSPICIOUS"' in text
+    assert '"failure_class": "missing_test_evidence"' in text
     assert "adapter-matrix: PASS" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()
