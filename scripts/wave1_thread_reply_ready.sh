@@ -63,10 +63,11 @@ EOF
     ;;
   openhands-benchmarks-708)
     cat <<'EOF'
-This issue is a good example of why patch shape needs to be part of the evidence, not just the final score.
+The 332 / 424 mixed bucket feels like the key metadata, not just an implementation detail.
 
-OpenMako v0.1 is much smaller than this benchmark work, but it treats "changed files outside the claimed scope" as a failing signal. If that framing is wrong or too weak, I would value the criticism here:
-https://github.com/1966536805l-crypto/openmako/issues/2
+If a run writes both the test and a source-code fix, I would want the published row to expose the patch-shape bucket separately from the final SWT-bench score. Otherwise it is hard to tell whether a low score means weak test generation or just the expected F2P failure mode from source edits under model_patch.
+
+Same boundary question I am using for a smaller audit harness: should "mixed test+source patch" be a first-class verdict/metadata field rather than a post-hoc explanation?
 EOF
     ;;
   openhands-benchmarks-718)

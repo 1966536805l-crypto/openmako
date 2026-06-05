@@ -64,6 +64,10 @@ Current public proof:
   the public issue page on 2026-06-05. It now discusses `output.jsonl` to
   `output.swtbench.jsonl` artifact identity and omits a self-link to reduce
   promotional risk. This is send-ready text only, not proof of posting.
+- The `openhands-benchmarks-708` thread draft was refreshed after re-checking
+  the public issue page on 2026-06-05. It now discusses the `332 / 424` mixed
+  test+source patch bucket and patch-shape metadata without a self-link. This
+  is send-ready text only, not proof of posting.
 - The README exposes issue #2, the technical review packet, and focused CI as
   technical review entry points before the v0.1 scope section.
 - The README now exposes a `60-Second Proof` section before the review links so

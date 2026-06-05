@@ -436,6 +436,9 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "`output.jsonl` to\n  `output.swtbench.jsonl` artifact identity" in progress
     assert "omits a self-link to reduce\n  promotional risk" in progress
     assert "send-ready text only, not proof of posting" in progress
+    assert "`openhands-benchmarks-708` thread draft was refreshed" in progress
+    assert "`332 / 424` mixed\n  test+source patch bucket" in progress
+    assert "patch-shape metadata without a self-link" in progress
     assert "bash scripts/wave1_review_request.sh" in progress
     assert "without sending messages or recording outreach as evidence" in progress
     assert "bash scripts/wave1_send_ready.sh" in progress
@@ -882,7 +885,11 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
     assert "bash scripts/public_review_gate.sh" in text
     assert "decision: read the thread first; do not post if stale, closed, or off-topic" in text
     assert "cost/version/proof metadata" in text
-    assert "patch shape needs to be part of the evidence" in text
+    assert "332 / 424 mixed bucket" in text
+    assert "patch-shape bucket separately from the final SWT-bench score" in text
+    assert "expected F2P failure mode from source edits under model_patch" in text
+    assert "mixed test+source patch" in text
+    assert "first-class verdict/metadata field rather than a post-hoc explanation" in text
     assert "artifact identity, not just the score delta" in text
     assert "output.jsonl can produce a different output.swtbench.jsonl" in text
     assert "eval-time patch stripping changes" in text
