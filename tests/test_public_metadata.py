@@ -470,7 +470,7 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "bash scripts/wave1_thread_reply_ready.sh" in progress
     assert "one thread-specific reply draft" in progress
     assert "target URL, and final-confirmation\n  guard" in progress
-    assert "does not send messages,\n  create issues, or record outreach as evidence" in progress
+    assert "still does not send messages, create issues, or record\n  outreach as evidence" in progress
     assert "`openhands-benchmarks-718` thread draft was refreshed" in progress
     assert "`output.jsonl` to\n  `output.swtbench.jsonl` artifact identity" in progress
     assert "links only the concrete\n  `swtbench_patch_artifact` fixture" in progress
@@ -1210,13 +1210,17 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
 
     assert script.exists()
     assert script.stat().st_mode & 0o111
-    assert "Runs the public review gate" in text
+    assert "Checks that the target thread still looks on-topic, runs the public review\ngate" in text
+    assert "checking target thread page" in text
+    assert "OPENMAKO_THREAD_PAGE_FIXTURE" in text
+    assert "expected topic markers" in text
     assert "This does not send messages, create issues" in text
     assert "terminal-bench-1357" in text
     assert "openhands-benchmarks-708" in text
     assert "openhands-benchmarks-718" in text
     assert "bash scripts/public_review_gate.sh" in text
     assert "target-url: ${target_url}" in text
+    assert "preflight: target thread page matched expected topic markers" in text
     assert "https://github.com/OpenHands/benchmarks/issues/718" in text
     assert "decision: read the thread first; do not post if stale, closed, or off-topic" in text
     assert "requires-confirmation: yes; do not submit a public comment without final user confirmation" in text
@@ -1252,22 +1256,79 @@ def test_wave1_thread_reply_ready_script_gates_and_prints_specific_messages() ->
             "#!/usr/bin/env bash\necho public-review-gate: PASS\n",
             encoding="utf-8",
         )
+        good_thread = tmp_root / "terminal-bench-1357.html"
+        good_thread.write_text(
+            "<title>How costly is it to execute a test? · harbor-framework/terminal-bench · Discussion #1357 · GitHub</title>"
+            " terminal-bench cost test discussion",
+            encoding="utf-8",
+        )
+        openhands_708 = tmp_root / "openhands-benchmarks-708.html"
+        openhands_708.write_text(
+            "<title>swtbench: qwen3-coder-next score is artificially low — agent writes source-code fix alongside the test "
+            "(78% of patches) · Issue #708 · OpenHands/benchmarks · GitHub</title>"
+            ' {"state":"OPEN"} 332 424 model_patch non-test patch',
+            encoding="utf-8",
+        )
+        openhands_718 = tmp_root / "openhands-benchmarks-718.html"
+        openhands_718.write_text(
+            "<title>Assess impact of swtbench non-test patch stripping on historical runs · Issue #718 · OpenHands/benchmarks · GitHub</title>"
+            ' {"state":"OPEN"} output.jsonl output.swtbench.jsonl historical patch',
+            encoding="utf-8",
+        )
+        bad_thread = tmp_root / "off-topic.html"
+        bad_thread.write_text(
+            "<title>Unrelated thread · GitHub</title> promotion stars repost",
+            encoding="utf-8",
+        )
         for path in scripts.iterdir():
             path.chmod(0o755)
 
         result = subprocess.run(
             ["bash", str(scripts / "wave1_thread_reply_ready.sh"), "terminal-bench-1357"],
             cwd=tmp_root,
+            env={**os.environ, "OPENMAKO_THREAD_PAGE_FIXTURE": str(good_thread)},
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=True,
         )
 
+        assert "wave1-thread-reply-ready: checking target thread page" in result.stdout
         assert "public-review-gate: PASS" in result.stdout
+        assert result.stdout.index("checking target thread page") < result.stdout.index("public-review-gate: PASS")
         assert "wave1-thread-reply-ready: thread=terminal-bench-1357" in result.stdout
+        assert "preflight: target thread page matched expected topic markers" in result.stdout
         assert "leaderboard row without cost/version/proof metadata" in result.stdout
         assert "I would rather get criticism on the boundary than repo promotion" in result.stdout
+
+        for thread, fixture, expected in (
+            ("openhands-benchmarks-708", openhands_708, "332 / 424 mixed bucket"),
+            ("openhands-benchmarks-718", openhands_718, "artifact identity, not just the score delta"),
+        ):
+            specific = subprocess.run(
+                ["bash", str(scripts / "wave1_thread_reply_ready.sh"), thread],
+                cwd=tmp_root,
+                env={**os.environ, "OPENMAKO_THREAD_PAGE_FIXTURE": str(fixture)},
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=True,
+            )
+            assert "preflight: target thread page matched expected topic markers" in specific.stdout
+            assert expected in specific.stdout
+
+        off_topic = subprocess.run(
+            ["bash", str(scripts / "wave1_thread_reply_ready.sh"), "terminal-bench-1357"],
+            cwd=tmp_root,
+            env={**os.environ, "OPENMAKO_THREAD_PAGE_FIXTURE": str(bad_thread)},
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        assert off_topic.returncode == 2
+        assert "target thread does not match expected topic" in off_topic.stderr
+        assert "public-review-gate: PASS" not in off_topic.stdout
 
         unknown = subprocess.run(
             ["bash", str(scripts / "wave1_thread_reply_ready.sh"), "unknown"],

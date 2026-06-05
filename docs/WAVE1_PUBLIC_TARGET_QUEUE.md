@@ -12,7 +12,9 @@ meta/tooling review requests there.
 
 For a thread-specific draft, run
 `bash scripts/wave1_thread_reply_ready.sh THREAD`. This still does not send the
-message or record outreach as evidence.
+message or record outreach as evidence. The helper re-fetches the selected
+thread and refuses to print a draft if the page no longer matches the expected
+topic markers.
 
 ## Verified Public Surfaces
 

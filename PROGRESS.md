@@ -63,8 +63,10 @@ Current public proof:
   overread the current proof; it is not a launch note and not outreach evidence.
 - `bash scripts/wave1_thread_reply_ready.sh` runs the public review gate before
   printing one thread-specific reply draft, target URL, and final-confirmation
-  guard for selected public discussions. It still does not send messages,
-  create issues, or record outreach as evidence.
+  guard for selected public discussions. It now re-fetches the target page and
+  checks expected topic markers before the proof gate, so stale or off-topic
+  pages fail closed. It still does not send messages, create issues, or record
+  outreach as evidence.
 - The `openhands-benchmarks-718` thread draft was refreshed after re-checking
   the public issue page on 2026-06-05. It now discusses `output.jsonl` to
   `output.swtbench.jsonl` artifact identity and links only the concrete
