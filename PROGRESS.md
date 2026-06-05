@@ -165,6 +165,11 @@ Current public proof:
   SoM. The regression test now asserts the AX click verification path skips
   OCR/SoM; this is narrower local work, not a benchmarked live-control speed
   claim.
+- Screenshot failure diagnostics now support the
+  `OPENMAKO_DESKTOP_FAST_DIAGNOSTICS=1` local fast path, which skips the slower
+  display probe while still returning front-app/window/console context and a
+  conservative permission hint. This speeds local diagnosis only; it is not
+  live desktop-control proof or a public L4/L5 claim.
 - `scripts/desktop_control_local_gate.sh` provides a bounded local desktop
   control gate: it runs focused desktop intelligence/policy tests and a
   `suite_l4` dry-run eval, then checks that the result remains conservative

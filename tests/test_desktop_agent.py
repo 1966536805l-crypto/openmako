@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import os
 import subprocess
 import tempfile
 import unittest
@@ -123,6 +124,36 @@ class DesktopAgentTest(unittest.TestCase):
         self.assertEqual(result.data["diagnostics"]["console_user"], "testuser")
         self.assertEqual(result.data["diagnostics"]["display_available"], True)
         self.assertIn("permission_hint", result.data["diagnostics"])
+
+    def test_fast_screenshot_diagnostics_skip_display_probe(self) -> None:
+        calls: list[list[str]] = []
+
+        def fake_run(args: object, timeout: int = 20) -> subprocess.CompletedProcess[str]:
+            command = [str(item) for item in args]  # type: ignore[union-attr]
+            calls.append(command)
+            if command[0] == "screencapture":
+                return subprocess.CompletedProcess(command, 1, "", "could not create image from display")
+            if command[0] == "osascript":
+                return subprocess.CompletedProcess(command, 0, "Terminal\n", "")
+            if command[0] == "stat":
+                return subprocess.CompletedProcess(command, 0, "testuser\n", "")
+            if command[0] == "system_profiler":
+                raise AssertionError("fast diagnostics should not run system_profiler")
+            raise AssertionError(f"unexpected command: {command}")
+
+        with tempfile.TemporaryDirectory(prefix="desktop agent fast diag ") as tmp:
+            with patch.object(desktop_control, "_run", side_effect=fake_run), patch.object(
+                desktop_control.time,
+                "sleep",
+            ), patch.dict(os.environ, {desktop_control.FAST_SCREENSHOT_DIAGNOSTICS_ENV: "1"}, clear=False):
+                result = desktop_control.screenshot(Path(tmp), name="fast-fail.png")
+
+        self.assertFalse(result.ok)
+        self.assertEqual(len([call for call in calls if call[0] == "screencapture"]), 3)
+        self.assertFalse(any(call[0] == "system_profiler" for call in calls))
+        self.assertEqual(result.data["diagnostics"]["display_probe"], "skipped_fast_diagnostics")
+        self.assertEqual(result.data["diagnostics"]["display_available"], "skipped")
+        self.assertIn("may be missing", result.data["diagnostics"]["permission_hint"]["probable_cause"])
 
 
 if __name__ == "__main__":

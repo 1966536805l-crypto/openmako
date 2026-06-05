@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from .exception_audit import audit_suppressed_exception
 import json
+import os
 import shlex
 import subprocess
 import time
@@ -99,6 +100,8 @@ MODIFIERS = {
     "ctrl": "control down",
     "control": "control down",
 }
+
+FAST_SCREENSHOT_DIAGNOSTICS_ENV = "OPENMAKO_DESKTOP_FAST_DIAGNOSTICS"
 
 
 def desktop_dir(project: Path) -> Path:
@@ -210,17 +213,26 @@ def _proc_detail(proc: subprocess.CompletedProcess[str]) -> str:
     return proc.stderr.strip() or proc.stdout.strip() or f"exit {proc.returncode}"
 
 
-def _screenshot_diagnostics() -> dict[str, object]:
-    diagnostics: dict[str, object] = {}
+def _screenshot_diagnostics(*, fast: bool | None = None) -> dict[str, object]:
+    fast = _fast_screenshot_diagnostics_enabled() if fast is None else fast
+    diagnostics: dict[str, object] = {"fast": fast}
     front = frontmost_app()
     diagnostics["frontmost_app"] = _diagnostic_result(front)
     window = front_window()
     diagnostics["front_window"] = _diagnostic_result(window)
     console = _run(["stat", "-f", "%Su", "/dev/console"], timeout=5)
     diagnostics["console_user"] = _proc_detail(console) if console.returncode != 0 else console.stdout.strip()
-    displays = _run(["system_profiler", "SPDisplaysDataType"], timeout=20)
-    diagnostics["display_available"] = displays.returncode == 0 and "Resolution:" in displays.stdout
+    if fast:
+        diagnostics["display_available"] = "skipped"
+        diagnostics["display_probe"] = "skipped_fast_diagnostics"
+    else:
+        displays = _run(["system_profiler", "SPDisplaysDataType"], timeout=20)
+        diagnostics["display_available"] = displays.returncode == 0 and "Resolution:" in displays.stdout
     return diagnostics
+
+
+def _fast_screenshot_diagnostics_enabled() -> bool:
+    return os.environ.get(FAST_SCREENSHOT_DIAGNOSTICS_ENV, "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _diagnostic_result(result: DesktopResult) -> dict[str, object]:
@@ -243,14 +255,21 @@ def _screenshot_permission_hint(
     diagnostics: dict[str, object],
 ) -> dict[str, str] | None:
     attempt_text = " ".join(str(attempt.get("detail") or "") for attempt in attempts).lower()
-    display_available = diagnostics.get("display_available") is True
-    if "could not create image from display" in (failure.lower() + " " + attempt_text) and display_available:
+    display_available = diagnostics.get("display_available")
+    display_error = "could not create image from display" in (failure.lower() + " " + attempt_text)
+    if display_error and display_available is True:
         front = diagnostics.get("frontmost_app")
         front_summary = front.get("summary") if isinstance(front, dict) else ""
         runner = str(front_summary or "the shell runner")
         return {
             "probable_cause": f"macOS Screen Recording permission is missing for {runner}/Python/screencapture",
             "next_action": "Grant Screen Recording to the terminal app running mako, then restart that terminal session.",
+            "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture",
+        }
+    if display_error and display_available == "skipped":
+        return {
+            "probable_cause": "macOS Screen Recording permission may be missing, or display capture may be unavailable",
+            "next_action": f"Unset {FAST_SCREENSHOT_DIAGNOSTICS_ENV} for a full display probe, or grant Screen Recording to the terminal app running mako.",
             "settings_url": "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture",
         }
     window = diagnostics.get("front_window")
