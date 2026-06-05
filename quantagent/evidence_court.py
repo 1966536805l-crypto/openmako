@@ -22,6 +22,31 @@ RUN_METRIC_FIELDS = (
     "model",
     "missing_telemetry",
 )
+SOURCE_FILE_SUFFIXES = (
+    ".py",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".mjs",
+    ".cjs",
+    ".go",
+    ".rs",
+    ".java",
+    ".kt",
+    ".kts",
+    ".cs",
+    ".c",
+    ".cc",
+    ".cpp",
+    ".h",
+    ".hpp",
+    ".rb",
+    ".php",
+    ".swift",
+    ".scala",
+    ".sh",
+)
 
 
 def build_bad_run_demo_report(project: str | Path) -> AgentAutopsyReport:
@@ -730,6 +755,7 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
     post_edit_failure = next((item for item in report.findings if item.finding_type == "post_edit_validation_failure"), None)
     missing_test_evidence = next((item for item in report.findings if item.finding_type == "missing_test_evidence"), None)
     test_failure = next((item for item in report.evidence if item.source == "failure" or item.kind == "test"), None)
+    patch_shape = _report_patch_shape(report)
 
     lines = [
         "# Evidence Court Report",
@@ -751,6 +777,13 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
         "",
         f"- file_scope: {'FAIL' if scope_violation else 'PASS'}",
         f"- reason: {scope_violation.summary if scope_violation else 'no out-of-scope edit evidence was supplied in this record.'}",
+        "",
+        "## Patch Shape",
+        "",
+        f"- bucket: {patch_shape.get('bucket', 'unknown')}",
+        f"- test_files: {', '.join(patch_shape.get('test_files', ())) or 'none'}",
+        f"- source_files: {', '.join(patch_shape.get('source_files', ())) or 'none'}",
+        f"- other_files: {', '.join(patch_shape.get('other_files', ())) or 'none'}",
         "",
         "## Test Verification",
         "",
@@ -781,6 +814,7 @@ def dumps_evidence_court_json(report: AgentAutopsyReport) -> str:
         "failure_class": report.failure_class or "",
         "failed_at": report.failed_at,
         "finding_types": [item.finding_type for item in report.findings],
+        "patch_shape": _report_patch_shape(report),
         "run_metrics": _report_run_metrics(report),
         "report": report.to_dict(),
     }
@@ -908,6 +942,59 @@ def _report_run_metrics(report: AgentAutopsyReport) -> dict[str, object]:
         return {}
     metrics = item.data.get("run_metrics")
     return dict(metrics) if isinstance(metrics, dict) else {}
+
+
+def _report_patch_shape(report: AgentAutopsyReport) -> dict[str, object]:
+    edited_files = [
+        str(item.data.get("file"))
+        for item in report.evidence
+        if item.kind == "edit" and isinstance(item.data, dict) and item.data.get("file")
+    ]
+    return _patch_shape(edited_files)
+
+
+def _patch_shape(files_edited: list[str]) -> dict[str, object]:
+    unique_files = list(dict.fromkeys(item for item in files_edited if item))
+    test_files = [item for item in unique_files if _is_test_file(item)]
+    source_files = [item for item in unique_files if item not in test_files and _is_source_file(item)]
+    other_files = [item for item in unique_files if item not in test_files and item not in source_files]
+    bucket = "no_edits"
+    if test_files and source_files:
+        bucket = "mixed_test_source"
+    elif test_files and other_files:
+        bucket = "test_and_other"
+    elif source_files and other_files:
+        bucket = "source_and_other"
+    elif test_files:
+        bucket = "test_only"
+    elif source_files:
+        bucket = "source_only"
+    elif other_files:
+        bucket = "other_only"
+    return {
+        "bucket": bucket,
+        "edited_files": unique_files,
+        "test_files": test_files,
+        "source_files": source_files,
+        "other_files": other_files,
+    }
+
+
+def _is_test_file(path: str) -> bool:
+    normalized = path.replace("\\", "/")
+    name = normalized.rsplit("/", 1)[-1]
+    parts = normalized.split("/")
+    return (
+        any(part in {"test", "tests", "testing"} for part in parts[:-1])
+        or name.startswith("test_")
+        or name.endswith("_test.py")
+        or name == "conftest.py"
+    )
+
+
+def _is_source_file(path: str) -> bool:
+    normalized = path.replace("\\", "/").lower()
+    return normalized.endswith(SOURCE_FILE_SUFFIXES)
 
 
 def _run_metrics_summary(metrics: dict[str, object]) -> str:

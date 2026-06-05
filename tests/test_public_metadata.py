@@ -469,6 +469,10 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "`run-metrics` evidence extension" in progress
     assert "optional duration, token, cost, command-count, and missing-telemetry fields" in progress
     assert "preserved in Evidence Court audit JSON" in progress
+    assert "`patch-shape` evidence extension" in progress
+    assert "machine-readable `patch_shape` bucket" in progress
+    assert "`mixed_test_source` for runs that edit both test-like and\n  source-like files" in progress
+    assert "does not\n  prove a benchmark score should be higher or lower by itself" in progress
     assert "stale internal notes" in progress
     for forbidden in FORBIDDEN_PUBLIC_PROGRESS_CLAIMS:
         assert forbidden not in progress

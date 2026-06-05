@@ -72,8 +72,23 @@ The JSON envelope includes:
 - `failure_class`
 - `failed_at`
 - `finding_types`
+- `patch_shape`
 - `run_metrics`
 - `report`
+
+`patch_shape` is derived from `files_edited` and is preserved as audit metadata:
+
+- `mixed_test_source`: both test-like files and source-like files were edited.
+- `test_only`: only test-like files were edited.
+- `source_only`: only source-like files were edited.
+- `other_only`, `test_and_other`, `source_and_other`, or `no_edits` for the
+  remaining shapes.
+
+Test-like files include paths under `test/`, `tests/`, or `testing/`, plus
+`test_*.py`, `*_test.py`, and `conftest.py`. Source-like files are common code
+file extensions outside that test shape. This classification improves artifact
+comparability; it does not prove that a benchmark score should be higher or
+lower by itself.
 
 `--ci` returns `0` for `PASS` and `SUSPICIOUS`, and `1` for `FAIL`.
 Use `SUSPICIOUS` as a review queue unless your workflow chooses to block on it.

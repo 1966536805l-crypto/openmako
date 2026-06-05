@@ -94,6 +94,11 @@ Current public proof:
   are also preserved when supplied. The fields are preserved in Evidence Court audit JSON.
   They improve comparability, but they are not treated as proof that validation
   ran.
+- The `patch-shape` evidence extension is on `main`: Evidence Court derives a
+  machine-readable `patch_shape` bucket from supplied `files_edited` evidence,
+  including `mixed_test_source` for runs that edit both test-like and
+  source-like files. This improves artifact comparability, but it does not
+  prove a benchmark score should be higher or lower by itself.
 - A supplied Codex-style transcript adapter is available through
   `openmako evidence-court record from-codex-transcript`. It converts a
   repository-defined JSON transcript shape into an Evidence Court audit record

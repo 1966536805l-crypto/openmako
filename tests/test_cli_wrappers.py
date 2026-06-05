@@ -67,6 +67,8 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("## Claim", result.stdout)
         self.assertIn("## Evidence", result.stdout)
         self.assertIn("## Scope Violations", result.stdout)
+        self.assertIn("## Patch Shape", result.stdout)
+        self.assertIn("- bucket: no_edits", result.stdout)
         self.assertIn("## Test Verification", result.stdout)
         self.assertIn("## Suspicious Behavior", result.stdout)
         self.assertIn("## Verdict: FAIL", result.stdout)
@@ -87,6 +89,7 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("# Evidence Court Report", result.stdout)
         self.assertIn("- file_scope: FAIL", result.stdout)
+        self.assertIn("- bucket: mixed_test_source", result.stdout)
         self.assertIn("tests/test_calculator.py", result.stdout)
         self.assertIn("## Verdict: FAIL", result.stdout)
         self.assertIn("crossed the claimed patch scope", result.stdout)
@@ -122,7 +125,38 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["status"], "FAILED")
         self.assertEqual(payload["failure_class"], "scope_violation")
         self.assertEqual(payload["finding_types"], ["scope_violation"])
+        self.assertEqual(
+            payload["patch_shape"],
+            {
+                "bucket": "mixed_test_source",
+                "edited_files": ["calculator.py", "tests/test_calculator.py"],
+                "other_files": [],
+                "source_files": ["calculator.py"],
+                "test_files": ["tests/test_calculator.py"],
+            },
+        )
         self.assertEqual(payload["report"]["evidence"][0]["source"], "task")
+
+    def test_openmako_evidence_court_audit_json_reports_patch_shape_without_changing_verdict(self) -> None:
+        record = {
+            "claimed_task": "Add regression test and implementation.",
+            "files_edited": ["tests/test_api.py", "src/api.py", "README.md"],
+            "commands_run": [{"command": "python3 -m pytest tests/test_api.py -q", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "final_claim": "Fixed and verified.",
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "PASS")
+        self.assertEqual(payload["patch_shape"]["bucket"], "mixed_test_source")
+        self.assertEqual(payload["patch_shape"]["test_files"], ["tests/test_api.py"])
+        self.assertEqual(payload["patch_shape"]["source_files"], ["src/api.py"])
+        self.assertEqual(payload["patch_shape"]["other_files"], ["README.md"])
 
     def test_openmako_evidence_court_audit_json_preserves_run_metrics(self) -> None:
         record = {
@@ -678,6 +712,10 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("`test_output`", schema)
         self.assertIn("Use `--json` for CI or scripts.", schema)
         self.assertIn("`schema_version`", schema)
+        self.assertIn("`patch_shape`", schema)
+        self.assertIn("`mixed_test_source`: both test-like files and source-like files were edited.", schema)
+        self.assertIn("This classification improves artifact\ncomparability", schema)
+        self.assertIn("does not prove that a benchmark score should be higher or\nlower by itself", schema)
         self.assertIn("`evidence-court/v0.1`", schema)
         self.assertIn("Use `--ci` to return exit code 1 for `FAIL`.", schema)
         self.assertIn("Use `--fail-on suspicious` to also block `SUSPICIOUS`.", schema)
