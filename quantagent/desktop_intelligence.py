@@ -306,6 +306,7 @@ def build_desktop_tokenization(
     rows: int = 8,
     limit: int = 240,
     name: str | None = None,
+    skip_screenshot_if_ax_only: bool = False,
 ) -> DesktopTokenization:
     project_path = Path(project).expanduser().resolve(strict=False)
     errors: list[str] = []
@@ -313,16 +314,19 @@ def build_desktop_tokenization(
 
     image = _resolve_image(project_path, image_path)
     if image is None:
-        shot = screenshot(project_path, name=f"tokenize_shot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
-        sources["screenshot"] = shot.data
-        if not shot.ok:
-            errors.append(shot.summary)
-            return _write_tokenization(
-                project_path,
-                DesktopTokenization(False, "failed", f"tokenize screenshot failed: {shot.summary}", "", 0, 0, (), tuple(errors), sources),
-                name=name,
-            )
-        image = Path(str(shot.data["path"]))
+        if skip_screenshot_if_ax_only and _ax_only_tokenization_requested(include_ax, include_ocr, include_som, include_grid):
+            sources["screenshot"] = {"skipped": True, "reason": "ax_only_tokenization"}
+        else:
+            shot = screenshot(project_path, name=f"tokenize_shot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
+            sources["screenshot"] = shot.data
+            if not shot.ok:
+                errors.append(shot.summary)
+                return _write_tokenization(
+                    project_path,
+                    DesktopTokenization(False, "failed", f"tokenize screenshot failed: {shot.summary}", "", 0, 0, (), tuple(errors), sources),
+                    name=name,
+                )
+            image = Path(str(shot.data["path"]))
     elif not image.exists():
         errors.append(f"image not found: {image}")
         return _write_tokenization(
@@ -332,10 +336,11 @@ def build_desktop_tokenization(
         )
 
     width = height = 0
-    try:
-        width, height = _image_size(image)
-    except Exception as exc:
-        errors.append(f"image size failed: {type(exc).__name__}: {exc}")
+    if image is not None:
+        try:
+            width, height = _image_size(image)
+        except Exception as exc:
+            errors.append(f"image size failed: {type(exc).__name__}: {exc}")
 
     ax_elements: list[DesktopElement] = []
     ocr_blocks: list[DesktopTextBlock] = []
@@ -408,17 +413,18 @@ def build_desktop_tokenization(
     raw_tokens.extend(tokens_from_som(som_targets))
     tokens = dedupe_desktop_tokens(raw_tokens, limit=limit)
     status = "ok" if tokens else "empty"
-    summary = f"{len(tokens)} desktop token(s) from {image}"
+    image_label = str(image) if image is not None else "ax-only observation"
+    summary = f"{len(tokens)} desktop token(s) from {image_label}"
     created_at = datetime.now().isoformat(timespec="seconds")
-    screen_hash = _file_sha256(image)
-    observation_id = _observation_id(image, screen_hash, created_at)
+    screen_hash = _file_sha256(image) if image is not None else ""
+    observation_id = _observation_id(image, screen_hash, created_at) if image is not None else _source_observation_id(tokens, created_at)
     return _write_tokenization(
         project_path,
         DesktopTokenization(
             bool(tokens),
             status,
             summary,
-            str(image),
+            str(image or ""),
             width,
             height,
             tuple(tokens),
@@ -472,6 +478,10 @@ def _cached_ax_tokens(project: Path, errors: list[str], sources: dict[str, Any])
         sources["ax"] = {"fallback": fallback}
     errors.append(f"AX fallback used cached_ax tokenization: {len(recovered)} token(s)")
     return recovered
+
+
+def _ax_only_tokenization_requested(include_ax: bool, include_ocr: bool, include_som: bool, include_grid: bool) -> bool:
+    return bool(include_ax and not include_ocr and not include_som and not include_grid)
 
 
 def tokens_from_ax(elements: Iterable[DesktopElement]) -> list[DesktopToken]:
@@ -1565,7 +1575,7 @@ def _preflight_target_check(
         )
     current = _safe_build_desktop_tokenization(
         project,
-        **_preflight_tokenization_kwargs(previous_token, include_grid=include_grid, token_limit=token_limit),
+        **_preflight_tokenization_kwargs(previous_token, include_grid=include_grid, token_limit=token_limit, skip_screenshot_if_ax_only=True),
     )
     current_token = _find_token(current, target_id)
     data = {
@@ -1584,6 +1594,9 @@ def _preflight_target_check(
         return DesktopActionVerification(False, "stale_target", f"fresh target observation failed: {current.summary}", current, data)
     if current_token is None:
         return DesktopActionVerification(False, "stale_target", f"target disappeared before action: {target_id}", current, data)
+    if _token_is_cached_ax(current_token):
+        data["cached_ax_fallback"] = True
+        return DesktopActionVerification(False, "stale_target", f"fresh target observation used cached AX fallback: {target_id}", current, data)
     current_hash = _token_hash(current_token)
     data["expected_target_hash"] = _short_hash(expected_hash)
     data["current_target_hash"] = _short_hash(current_hash)
@@ -1609,10 +1622,18 @@ def _preflight_tokenization_kwargs(
     *,
     include_grid: bool,
     token_limit: int,
+    skip_screenshot_if_ax_only: bool = False,
 ) -> dict[str, Any]:
     source = str(previous_token.source or "").strip().lower()
     if source == "ax":
-        return {"include_ax": True, "include_ocr": False, "include_som": False, "include_grid": False, "limit": token_limit}
+        return {
+            "include_ax": True,
+            "include_ocr": False,
+            "include_som": False,
+            "include_grid": False,
+            "limit": token_limit,
+            "skip_screenshot_if_ax_only": skip_screenshot_if_ax_only,
+        }
     if source == "ocr":
         return {"include_ax": False, "include_ocr": True, "include_som": False, "include_grid": False, "limit": token_limit}
     if source == "som":
@@ -2012,6 +2033,11 @@ def _find_token(tokenization: DesktopTokenization, token_id: str) -> DesktopToke
     return next((token for token in tokenization.tokens if token.token_id == wanted), None)
 
 
+def _token_is_cached_ax(token: DesktopToken) -> bool:
+    raw = token.raw if isinstance(token.raw, dict) else {}
+    return str(token.source or "").strip().lower() == "ax" and str(raw.get("recovered_from") or "").strip().lower() == "cached_ax"
+
+
 def _center_drift(previous: tuple[int, int] | None, current: tuple[int, int] | None) -> float | None:
     if previous is None or current is None:
         return None
@@ -2053,6 +2079,14 @@ def _observation_id(image: Path, screen_hash: str, created_at: str) -> str:
     if not screen_hash:
         return ""
     seed = f"{image}|{screen_hash}|{created_at}"
+    return "obs-" + hashlib.sha256(seed.encode("utf-8")).hexdigest()[:16]
+
+
+def _source_observation_id(tokens: Sequence[DesktopToken], created_at: str) -> str:
+    if not tokens:
+        return ""
+    payload = [_token_hash(token) for token in tokens]
+    seed = json.dumps({"tokens": payload, "created_at": created_at}, ensure_ascii=False, sort_keys=True)
     return "obs-" + hashlib.sha256(seed.encode("utf-8")).hexdigest()[:16]
 
 

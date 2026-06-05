@@ -174,6 +174,12 @@ Current public proof:
   execute focused input through AX-only preflight instead of producing an
   unfenced type action that is blocked before execution. It remains local
   bounded control hardening, not live desktop-control proof.
+- AX-only target preflight can now skip the screenshot step when no visual
+  sources are requested. This makes the stale-target check for AX click/type
+  fences lighter while leaving post-action semantic verification on its normal
+  capture/source path. The focused regression test asserts that the fast AX-only
+  tokenization path does not call screenshot capture. This is local hardening,
+  not a live speed benchmark or public L4/L5 desktop-control proof.
 - Screenshot failure diagnostics now support the
   `OPENMAKO_DESKTOP_FAST_DIAGNOSTICS=1` local fast path, which skips the slower
   display probe while still returning front-app/window/console context and a

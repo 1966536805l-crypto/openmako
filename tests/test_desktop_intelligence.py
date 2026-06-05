@@ -110,6 +110,44 @@ class DesktopIntelligenceTest(unittest.TestCase):
             self.assertGreaterEqual(len(result.tokens), 2)
             self.assertTrue(any(token.source == "som" for token in result.tokens))
 
+    def test_build_ax_only_tokenization_can_skip_screenshot(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="desktop ax only fast ") as tmp:
+            project = Path(tmp)
+            desktop_dir = project / ".quantagent" / "desktop"
+            desktop_dir.mkdir(parents=True)
+            ax_path = desktop_dir / "ax_fast.json"
+            ax_element = DesktopElement("AX0001", "Safari", 1, role="AXButton", title="Search", bounds=(10, 20, 100, 30))
+            ax_path.write_text(json.dumps({"app": "Safari", "elements": [ax_element.to_payload()]}), encoding="utf-8")
+
+            with patch.object(desktop_intelligence, "screenshot") as screenshot, patch.object(
+                desktop_intelligence,
+                "_image_size",
+            ) as image_size, patch.object(
+                desktop_intelligence,
+                "ax_snapshot",
+                return_value=DesktopResult("ax", True, "ax ok", {"path": str(ax_path)}),
+            ):
+                result = build_desktop_tokenization(
+                    project,
+                    include_ax=True,
+                    include_ocr=False,
+                    include_som=False,
+                    include_grid=False,
+                    skip_screenshot_if_ax_only=True,
+                    name="ax_only_fast",
+                )
+
+        self.assertTrue(result.ok, result.to_json())
+        self.assertEqual(result.image_path, "")
+        self.assertEqual((result.width, result.height), (0, 0))
+        self.assertEqual(result.screen_hash, "")
+        self.assertTrue(result.observation_id.startswith("obs-"))
+        self.assertTrue(any(token.source == "ax" for token in result.tokens))
+        self.assertTrue(result.sources["screenshot"]["skipped"])
+        self.assertEqual(result.sources["screenshot"]["reason"], "ax_only_tokenization")
+        screenshot.assert_not_called()
+        image_size.assert_not_called()
+
     def test_decider_clicks_best_matching_token(self) -> None:
         decision = decide_desktop_action("点击 Search", self.tokenization())
 
@@ -237,11 +275,100 @@ class DesktopIntelligenceTest(unittest.TestCase):
         self.assertEqual(preflight_kwargs["include_ocr"], False)
         self.assertEqual(preflight_kwargs["include_som"], False)
         self.assertEqual(preflight_kwargs["include_grid"], False)
+        self.assertEqual(preflight_kwargs["skip_screenshot_if_ax_only"], True)
         verify_kwargs = tokenize.call_args_list[2].kwargs
         self.assertEqual(verify_kwargs["include_ax"], True)
         self.assertEqual(verify_kwargs["include_ocr"], False)
         self.assertEqual(verify_kwargs["include_som"], False)
         self.assertEqual(verify_kwargs["include_grid"], False)
+        self.assertEqual(verify_kwargs["skip_screenshot_if_ax_only"], False)
+
+    def test_daemon_ax_preflight_skips_screenshot_but_verification_captures(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="desktop daemon ax preflight capture ") as tmp:
+            project = Path(tmp)
+            image = project / "shot.png"
+            image.write_bytes(b"fake")
+            desktop_dir = project / ".quantagent" / "desktop"
+            desktop_dir.mkdir(parents=True)
+            ax_path = desktop_dir / "ax_preflight.json"
+            ax_changed_path = desktop_dir / "ax_verified.json"
+            source_element = DesktopElement("AX0001", "Safari", 1, role="AXButton", title="Search", bounds=(10, 20, 100, 30))
+            changed_element = DesktopElement("AX0001", "Safari", 1, role="AXButton", title="Search result", bounds=(10, 20, 100, 30))
+            ax_path.write_text(json.dumps({"app": "Safari", "elements": [source_element.to_payload()]}), encoding="utf-8")
+            ax_changed_path.write_text(json.dumps({"app": "Safari", "elements": [changed_element.to_payload()]}), encoding="utf-8")
+
+            def fake_screenshot(_project: Path, **_kwargs: object) -> DesktopResult:
+                return DesktopResult("screenshot", True, "shot ok", {"path": str(image)})
+
+            with patch.object(desktop_intelligence, "screenshot", side_effect=fake_screenshot) as screenshot, patch.object(
+                desktop_intelligence,
+                "_image_size",
+                return_value=(800, 600),
+            ), patch.object(
+                desktop_intelligence,
+                "ax_snapshot",
+                side_effect=[
+                    DesktopResult("ax", True, "ax initial", {"path": str(ax_path)}),
+                    DesktopResult("ax", True, "ax preflight", {"path": str(ax_path)}),
+                    DesktopResult("ax", True, "ax verified", {"path": str(ax_changed_path)}),
+                ],
+            ), patch.object(
+                desktop_intelligence,
+                "ocr_image",
+                return_value=DesktopResult("ocr", False, "ocr disabled", {}),
+            ), patch.object(
+                desktop_intelligence,
+                "build_som_targets",
+                return_value=[],
+            ), patch.object(desktop_intelligence, "_execute_step", return_value=DesktopResult("click", True, "click ok")):
+                result = run_desktop_daemon(project, "点击 Search", execute=True, reviewed=True, allow_actions=True, max_steps=1, delay=0)
+
+        self.assertTrue(result.ok, result.to_json())
+        self.assertEqual(result.status, "step_budget_exhausted")
+        self.assertEqual(screenshot.call_count, 2)
+        self.assertIn("semantic verify passed", [record.summary for record in result.records if record.phase == "verify"][0])
+
+    def test_daemon_ax_preflight_blocks_cached_ax_fallback(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="desktop daemon ax cached preflight ") as tmp:
+            project = Path(tmp)
+            image = project / "shot.png"
+            image.write_bytes(b"fake")
+            desktop_dir = project / ".quantagent" / "desktop"
+            desktop_dir.mkdir(parents=True)
+            ax_path = desktop_dir / "ax_initial.json"
+            source_element = DesktopElement("AX0001", "Safari", 1, role="AXButton", title="Search", bounds=(10, 20, 100, 30))
+            ax_path.write_text(json.dumps({"app": "Safari", "elements": [source_element.to_payload()]}), encoding="utf-8")
+
+            def fake_screenshot(_project: Path, **_kwargs: object) -> DesktopResult:
+                return DesktopResult("screenshot", True, "shot ok", {"path": str(image)})
+
+            with patch.object(desktop_intelligence, "screenshot", side_effect=fake_screenshot) as screenshot, patch.object(
+                desktop_intelligence,
+                "_image_size",
+                return_value=(800, 600),
+            ), patch.object(
+                desktop_intelligence,
+                "ax_snapshot",
+                side_effect=[
+                    DesktopResult("ax", True, "ax initial", {"path": str(ax_path)}),
+                    RuntimeError("AX timeout"),
+                ],
+            ), patch.object(
+                desktop_intelligence,
+                "ocr_image",
+                return_value=DesktopResult("ocr", False, "ocr disabled", {}),
+            ), patch.object(
+                desktop_intelligence,
+                "build_som_targets",
+                return_value=[],
+            ), patch.object(desktop_intelligence, "_execute_step") as execute:
+                result = run_desktop_daemon(project, "点击 Search", execute=True, reviewed=True, allow_actions=True, max_steps=1, delay=0)
+
+        self.assertFalse(result.ok, result.to_json())
+        self.assertEqual(result.status, "blocked")
+        self.assertIn("cached AX fallback", result.summary)
+        self.assertEqual(screenshot.call_count, 1)
+        execute.assert_not_called()
 
     def test_daemon_rejects_target_action_without_observation_metadata(self) -> None:
         stale_click = DesktopDecision(True, "action", "click", {"x": 60, "y": 35, "target_id": "AX0001"}, "AX0001", "old decision", True, (), 0.9, DesktopStep("click", {"x": 60, "y": 35, "target_id": "AX0001"}, "old decision"))
@@ -307,6 +434,7 @@ class DesktopIntelligenceTest(unittest.TestCase):
         self.assertEqual(preflight_kwargs["include_ax"], True)
         self.assertEqual(preflight_kwargs["include_ocr"], False)
         self.assertEqual(preflight_kwargs["include_som"], False)
+        self.assertEqual(preflight_kwargs["skip_screenshot_if_ax_only"], True)
         verify_kwargs = tokenize.call_args_list[2].kwargs
         self.assertEqual(verify_kwargs["include_ax"], True)
         self.assertEqual(verify_kwargs["include_ocr"], True)
