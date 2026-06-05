@@ -10,6 +10,7 @@ Targets:
   terminal-bench
   aider
   openhands
+  agent-runtime
 
 Prints one short technical-boundary review request. It does not send messages,
 ask for stars, ask for reposts, or record outreach as evidence.
@@ -74,6 +75,19 @@ The current claim is not that OpenMako is a full software agent. It is an
 evidence harness for coding-agent repair runs, with one focused public
 learning-effect gate and Evidence Court audit for supplied records. The useful
 review is whether README, tests, and CI prove only that claim.
+
+Repo: ${repo}
+Proof command: ${proof}
+Review issue: ${issue}
+EOF
+    ;;
+  agent-runtime)
+    cat <<EOF
+Could you sanity-check whether OpenMako's runtime-adjacent docs overread the current proof?
+
+It references skills, memory, ACP-style sessions, and desktop-control work as trends or future bets. The current public proof is narrower: evidence harness, patch-scope checks, test-proof checks, and supplied-record audit.
+
+I'm looking for any README/docs wording that makes it sound like those runtime features are already public v0.1 proof.
 
 Repo: ${repo}
 Proof command: ${proof}

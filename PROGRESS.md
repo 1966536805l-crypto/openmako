@@ -57,6 +57,10 @@ Current public proof:
 - `bash scripts/wave1_send_ready.sh` runs the public review gate before printing
   a target-specific Wave 1 short message. It still does not send messages or
   record outreach as evidence.
+- `agent-runtime` is now a send-ready Wave 1 target for reviewers already
+  discussing skills, memory, ACP-style sessions, desktop control, or external
+  harness orchestration. The message asks whether runtime-adjacent docs
+  overread the current proof; it is not a launch note and not outreach evidence.
 - `bash scripts/wave1_thread_reply_ready.sh` runs the public review gate before
   printing one thread-specific reply draft, target URL, and final-confirmation
   guard for selected public discussions. It still does not send messages,

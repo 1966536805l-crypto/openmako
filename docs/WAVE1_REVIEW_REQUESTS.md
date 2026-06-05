@@ -83,6 +83,24 @@ Proof command: bash scripts/public_proof_card.sh
 Review issue: https://github.com/1966536805l-crypto/openmako/issues/2
 ```
 
+## Agent Runtime / OpenClaw-Hermes Review Request
+
+Use this only for reviewers already discussing agent runtime mechanics such as
+skills, memory, ACP-style sessions, desktop control, or external harness
+orchestration. Do not send it as a general launch note.
+
+```text
+Could you sanity-check whether OpenMako's runtime-adjacent docs overread the current proof?
+
+It references skills, memory, ACP-style sessions, and desktop-control work as trends or future bets. The current public proof is narrower: evidence harness, patch-scope checks, test-proof checks, and supplied-record audit.
+
+I'm looking for any README/docs wording that makes it sound like those runtime features are already public v0.1 proof.
+
+Repo: https://github.com/1966536805l-crypto/openmako
+Proof command: bash scripts/public_proof_card.sh
+Review issue: https://github.com/1966536805l-crypto/openmako/issues/2
+```
+
 ## Do Not Send
 
 - Do not ask the reviewer to star, repost, endorse, or promote the repository.

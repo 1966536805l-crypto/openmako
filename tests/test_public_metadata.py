@@ -1039,6 +1039,7 @@ def test_wave1_send_ready_script_gates_before_printing_message() -> None:
     assert "This does not send messages, create issues" in text
     assert "bash scripts/public_review_gate.sh" in text
     assert "bash scripts/wave1_review_request.sh \"$target\"" in text
+    assert "swe-agent|terminal-bench|aider|openhands|agent-runtime" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()
 
@@ -1070,6 +1071,18 @@ def test_wave1_send_ready_script_gates_before_printing_message() -> None:
         assert "wave1-send-ready: target=swe-agent" in result.stdout
         assert "stub-message-swe-agent" in result.stdout
         assert result.stdout.index("stub-gate-pass") < result.stdout.index("stub-message-swe-agent")
+
+        agent_runtime = subprocess.run(
+            ["bash", str(scripts / "wave1_send_ready.sh"), "agent-runtime"],
+            cwd=tmp_root,
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        assert agent_runtime.returncode == 0
+        assert "stub-gate-pass" in agent_runtime.stdout
+        assert "wave1-send-ready: target=agent-runtime" in agent_runtime.stdout
+        assert "stub-message-agent-runtime" in agent_runtime.stdout
 
         unknown = subprocess.run(
             ["bash", str(scripts / "wave1_send_ready.sh"), "unknown"],
@@ -1109,6 +1122,12 @@ def test_wave1_review_requests_are_copyable_without_promotion() -> None:
     assert "OpenHands / Software-Agent Review Request" in requests
     assert "Could you check OpenMako v0.1 for overclaim?" in requests
     assert "not that OpenMako is a full software agent" in requests
+    assert "Agent Runtime / OpenClaw-Hermes Review Request" in requests
+    assert "Use this only for reviewers already discussing agent runtime mechanics" in requests
+    assert "skills, memory, ACP-style sessions, desktop control" in requests
+    assert "Could you sanity-check whether OpenMako's runtime-adjacent docs overread the current proof?" in requests
+    assert "trends or future bets" in requests
+    assert "already public v0.1 proof" in requests
     assert "Do not send the boundary-clear follow-up before a named reviewer posts public\n  feedback." in requests
     assert "Do not summarize private feedback as public evidence." in requests
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
@@ -1127,11 +1146,14 @@ def test_wave1_review_request_script_prints_short_non_promotional_messages() -> 
     assert "terminal-bench" in text
     assert "aider" in text
     assert "openhands" in text
+    assert "agent-runtime" in text
     assert "Can you point out where OpenMako v0.1 overclaims its evidence boundary?" in text
     assert "Can you check OpenMako v0.1's evidence boundary?" in text
     assert "I'm mainly looking for README lines or proof-command gaps that overclaim." in text
     assert "useful or too noisy from a coding-agent user's view" in text
     assert "Could you check OpenMako v0.1 for overclaim?" in text
+    assert "runtime-adjacent docs overread the current proof" in text
+    assert "skills, memory, ACP-style sessions, and desktop-control work as trends or future bets" in text
     assert "unknown target" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()
@@ -1141,6 +1163,7 @@ def test_wave1_review_request_script_prints_short_non_promotional_messages() -> 
         ("terminal-bench", "Can you check OpenMako v0.1's evidence boundary?"),
         ("aider", "useful or too noisy from a coding-agent user's view"),
         ("openhands", "Could you check OpenMako v0.1 for overclaim?"),
+        ("agent-runtime", "runtime-adjacent docs overread the current proof"),
     ):
         result = subprocess.run(
             ["bash", str(script), target],

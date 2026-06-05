@@ -24,7 +24,7 @@ cd "$ROOT_DIR"
 target="$1"
 
 case "$target" in
-  swe-agent|terminal-bench|aider|openhands)
+  swe-agent|terminal-bench|aider|openhands|agent-runtime)
     ;;
   -h|--help|help)
     usage
