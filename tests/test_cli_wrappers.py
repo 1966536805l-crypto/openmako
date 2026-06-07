@@ -35,6 +35,36 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("agent-autopsy", result.stdout)
 
+    def test_despair_gate_smoke_uses_limited_real_cli_bench(self) -> None:
+        env = os.environ.copy()
+        env["PYTHON"] = sys.executable
+        env["QUANTAGENT_SECRETS_FILE"] = "/dev/null"
+        env["PYTHONPATH"] = str(ROOT) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+        result = subprocess.run(
+            [
+                "bash",
+                "scripts/despair_gate.sh",
+                "--bench-limit",
+                "1",
+                "--skip-external-regression",
+                "--skip-full-pytest",
+                "--skip-public-gate",
+                "--skip-desktop-gate",
+            ],
+            cwd=str(ROOT),
+            env=env,
+            text=True,
+            capture_output=True,
+            timeout=20,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("despair-gate: coding-bench solved=1/1 success_rate=100.0", result.stdout)
+        self.assertIn("despair-gate: skipping full repository pytest", result.stdout)
+        self.assertIn("despair-gate: PASS", result.stdout)
+        self.assertIn("not-proof=external review", result.stdout)
+
     def test_openmako_bad_run_demo_reports_failed_verification(self) -> None:
         result = self.run_openmako(
             "--no-trust-prompt",
