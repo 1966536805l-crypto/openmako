@@ -114,6 +114,34 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(summary["coding_bench"]["repeats"], 2)
         self.assertEqual(summary["coding_bench"]["success_rate"], 100.0)
 
+    def test_despair_gate_smoke_does_not_overwrite_default_summary(self) -> None:
+        default_summary = ROOT / ".quantagent" / "despair_gate" / "last_summary.json"
+        default_summary.parent.mkdir(parents=True, exist_ok=True)
+        previous_summary = default_summary.read_text(encoding="utf-8") if default_summary.exists() else None
+
+        def restore_default_summary() -> None:
+            if previous_summary is None:
+                default_summary.unlink(missing_ok=True)
+            else:
+                default_summary.write_text(previous_summary, encoding="utf-8")
+
+        self.addCleanup(restore_default_summary)
+        sentinel = {
+            "schema_version": "despair-gate/v0.1",
+            "status": "outer-running",
+            "coding_bench": {"solved": 30, "total": 30, "limit": None},
+            "segments": {"full_pytest": "running"},
+        }
+        default_summary.write_text(json.dumps(sentinel, sort_keys=True) + "\n", encoding="utf-8")
+
+        result = self.run_despair_gate_smoke("--bench-limit", "1")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(default_summary.read_text(encoding="utf-8")), sentinel)
+        smoke_summary = json.loads((ROOT / DESPAIR_SMOKE_SUMMARY_REL).read_text(encoding="utf-8"))
+        self.assertEqual(smoke_summary["status"], "passed")
+        self.assertEqual(smoke_summary["coding_bench"]["limit"], 1)
+
     def test_despair_gate_records_failed_segment_summary(self) -> None:
         result = self.run_despair_gate_public_gate_failure_smoke()
 
