@@ -11,7 +11,7 @@
 
   <text x="120" y="304" fill="#0f172a" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700">Evidence checks for agent run records</text>
   <text x="120" y="354" fill="#334155" font-family="Arial, Helvetica, sans-serif" font-size="27">Current public proof covers: learning effect, patch scope,</text>
-  <text x="120" y="396" fill="#334155" font-family="Arial, Helvetica, sans-serif" font-size="27">test proof, and supplied-record audit.</text>
+  <text x="120" y="396" fill="#334155" font-family="Arial, Helvetica, sans-serif" font-size="27">test proof, supplied audits, provenance, and adapters.</text>
 
   <rect x="120" y="472" width="452" height="156" rx="16" fill="#ecfdf5" stroke="#86efac" stroke-width="2"/>
   <text x="154" y="532" fill="#14532d" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">checks</text>

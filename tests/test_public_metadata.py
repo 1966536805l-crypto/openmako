@@ -873,7 +873,8 @@ def test_openmako_review_card_is_boundary_focused_not_promotional() -> None:
     assert "OpenMako public review card" in card
     assert "Evidence checks for agent run records" in card
     assert "Current public proof covers: learning effect, patch scope," in card
-    assert "test proof, and supplied-record audit." in card
+    assert "test proof, supplied audits, provenance, and adapters." in card
+    assert "test proof, and supplied-record audit." not in card
     assert "Boundary check" in card
     assert "github.com/1966536805l-crypto/openmako/issues/2" in card
     assert "Does not claim broad repair or external review." in card
@@ -1580,6 +1581,7 @@ def test_wave1_review_requests_are_copyable_without_promotion() -> None:
     assert "short notes for asking technical reviewers to check the v0.1 boundary" in requests
     assert "Can you point out where OpenMako v0.1 overclaims its evidence boundary?" in requests
     assert "Current public proof covers one focused learning-effect gate" in requests
+    assert "supplied-record/provenance audits, and a supplied\ntranscript adapter matrix" in requests
     assert "It does not claim\nSWE-bench-scale repair." in requests
     assert "I'm mainly looking for README lines or proof-command gaps that overclaim." in requests
     assert "Terminal-Bench / Agent-Eval Review Request" in requests
@@ -1597,6 +1599,8 @@ def test_wave1_review_requests_are_copyable_without_promotion() -> None:
     assert "skills, memory, ACP-style sessions, desktop control" in requests
     assert "Could you sanity-check whether OpenMako's runtime-adjacent docs overread the current proof?" in requests
     assert "trends or future bets" in requests
+    assert "test-proof checks, supplied-record/provenance audits, and a supplied transcript adapter matrix" in requests
+    assert "test-proof checks, and supplied-record audit" not in requests
     assert "already public v0.1 proof" in requests
     assert "Do not send the boundary-clear follow-up before a named reviewer posts public\n  feedback." in requests
     assert "Do not summarize private feedback as public evidence." in requests
@@ -1622,12 +1626,15 @@ def test_wave1_review_request_script_prints_short_non_promotional_messages() -> 
     assert "openhands" in text
     assert "agent-runtime" in text
     assert "Can you point out where OpenMako v0.1 overclaims its evidence boundary?" in text
+    assert "supplied-record/provenance audits, and a supplied\ntranscript adapter matrix" in text
     assert "Can you check OpenMako v0.1's evidence boundary?" in text
     assert "I'm mainly looking for README lines or proof-command gaps that overclaim." in text
     assert "useful or too noisy from a coding-agent user's view" in text
     assert "Could you check OpenMako v0.1 for overclaim?" in text
     assert "runtime-adjacent docs overread the current proof" in text
     assert "skills, memory, ACP-style sessions, and desktop-control work as trends or future bets" in text
+    assert "test-proof checks, supplied-record/provenance audits, and a supplied transcript adapter matrix" in text
+    assert "test-proof checks, and supplied-record audit" not in text
     assert "THREAD_HOOK: replace this with the specific eval-proof point from the thread." in text
     assert "for a narrow repair run, would touched-file scope, exact test\ncommand, and exit status be enough" in text
     assert "specific test-cost or eval-proof point from\nthe thread" in text

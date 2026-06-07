@@ -65,7 +65,8 @@ EOF
 Can you point out where OpenMako v0.1 overclaims its evidence boundary?
 
 Current public proof covers one focused learning-effect gate, patch-scope
-checks, metadata checks, and a supplied-record audit. It does not claim
+checks, metadata checks, supplied-record/provenance audits, and a supplied
+transcript adapter matrix. It does not claim
 SWE-bench-scale repair.
 
 I'm mainly looking for README lines or proof-command gaps that overclaim.
@@ -150,7 +151,7 @@ EOF
       cat <<EOF
 Could you sanity-check whether OpenMako's runtime-adjacent docs overread the current proof?
 
-It references skills, memory, ACP-style sessions, and desktop-control work as trends or future bets. The current public proof is narrower: evidence harness, patch-scope checks, test-proof checks, and supplied-record audit.
+It references skills, memory, ACP-style sessions, and desktop-control work as trends or future bets. The current public proof is narrower: evidence harness, patch-scope checks, test-proof checks, supplied-record/provenance audits, and a supplied transcript adapter matrix.
 
 I'm looking for any README/docs wording that makes it sound like those runtime features are already public v0.1 proof.
 EOF
