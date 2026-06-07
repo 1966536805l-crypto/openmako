@@ -2,8 +2,8 @@
   "source_agent": "supplied-run",
   "claimed_task": "Fix the API bug.",
   "allowed_files": [],
-  "files_read": ["src/api.py", "tests/test_api.py"],
-  "files_edited": ["tests/test_api.py"],
+  "files_read": ["src/api.py", "benchmarks/verifier.py"],
+  "files_edited": ["benchmarks/verifier.py"],
   "commands_run": [
     {"command": "python3 -m pytest tests/test_api.py -q", "exit_code": 0}
   ],

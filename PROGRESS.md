@@ -198,6 +198,11 @@ Current public proof:
   `artifact_provenance` in audit JSON and the Markdown report. This adds
   comparability metadata, but it does not mean OpenMako ingests native benchmark
   artifacts or validates benchmark scores.
+- The `verifier-tamper-risk` evidence extension is supported for supplied records:
+  Evidence Court flags successful repair claims that edit verifier, oracle,
+  harness, CI, or test-only paths as `SUSPICIOUS` review items. A public fixture
+  checks the verifier/harness path branch; this is supplied-record risk metadata,
+  not proof of malicious intent or native benchmark enforcement.
 - A public `artifact_provenance` fixture is available at
   `examples/evidence_court/artifact_provenance.json` and is now checked by
   `scripts/public_review_gate.sh`, so reviewers can reproduce the supplied
