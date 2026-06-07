@@ -186,6 +186,7 @@ def test_despair_gate_is_repeatable_but_not_a_public_claim() -> None:
     assert '"invocation"' in text
     assert '"git_commit"' in text
     assert '"argv"' in text
+    assert '"segment_elapsed_seconds"' in text
     assert "tests/test_external_benchmark_multimodule_regression.py" in text
     assert '"$PYTHON_BIN" -m pytest -p no:cacheprovider -q' in text
     assert "bash scripts/public_review_gate.sh" in text
@@ -219,6 +220,7 @@ def test_despair_gate_is_repeatable_but_not_a_public_claim() -> None:
     assert "`.quantagent/despair_gate/last_summary.json` as a local machine-readable\n  run summary" in progress
     assert "Failed segments are also\n  recorded in that summary" in progress
     assert "Smoke-test calls can write to a separate\n  summary path" in progress
+    assert "invoking commit, argv, and per-segment elapsed\n  seconds" in progress
 
 
 def test_agent_trend_radar_tracks_current_next_build_target() -> None:

@@ -116,6 +116,7 @@ class CliWrapperTest(unittest.TestCase):
             ],
         )
         self.assertEqual(summary["segments"]["full_pytest"], "skipped")
+        self.assertEqual(summary["segment_elapsed_seconds"], {})
         self.assertIn("external review", summary["not_proof"])
 
     def test_despair_gate_smoke_summarizes_repeated_coding_bench(self) -> None:
@@ -173,6 +174,8 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(summary["segments"]["full_pytest"], "skipped")
         self.assertEqual(summary["segments"]["public_gate"], "failed")
         self.assertEqual(summary["segments"]["desktop_gate"], "skipped")
+        self.assertIsInstance(summary["segment_elapsed_seconds"]["public_gate"], int)
+        self.assertGreaterEqual(summary["segment_elapsed_seconds"]["public_gate"], 0)
         self.assertEqual(summary["coding_bench"]["solved"], 1)
 
     def test_openmako_bad_run_demo_reports_failed_verification(self) -> None:

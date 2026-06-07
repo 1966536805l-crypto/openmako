@@ -48,7 +48,9 @@ Current public proof:
   run summary with the same non-proof boundary. Failed segments are also
   recorded in that summary so interrupted local gates do not look like
   successful or still-pending proof. Smoke-test calls can write to a separate
-  summary path so full pytest does not overwrite the outer gate summary.
+  summary path so full pytest does not overwrite the outer gate summary. The
+  summary also records the invoking commit, argv, and per-segment elapsed
+  seconds for local debugging.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:

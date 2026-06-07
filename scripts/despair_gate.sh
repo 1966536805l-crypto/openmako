@@ -19,6 +19,7 @@ SUMMARY_JSON="${OPENMAKO_DESPAIR_GATE_SUMMARY_JSON:-.quantagent/despair_gate/las
 SUMMARY_DIR="$(dirname -- "$SUMMARY_JSON")"
 TMP_DIR="$(mktemp -d)"
 CURRENT_SEGMENT=""
+CURRENT_SEGMENT_STARTED_AT=0
 
 cleanup() {
   rm -rf "$TMP_DIR"
@@ -43,15 +44,45 @@ path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True
 PY
 }
 
+start_segment() {
+  CURRENT_SEGMENT="$1"
+  CURRENT_SEGMENT_STARTED_AT="$(date +%s)"
+}
+
+finish_segment() {
+  segment="$1"
+  status="$2"
+  elapsed=$(( $(date +%s) - CURRENT_SEGMENT_STARTED_AT ))
+  "$PYTHON_BIN" - "$SUMMARY_JSON" "$segment" "$status" "$elapsed" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+segment = sys.argv[2]
+status = sys.argv[3]
+elapsed = int(sys.argv[4])
+payload["segments"][segment] = status
+payload.setdefault("segment_elapsed_seconds", {})[segment] = elapsed
+path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+  CURRENT_SEGMENT=""
+  CURRENT_SEGMENT_STARTED_AT=0
+}
+
 on_error() {
   rc="$1"
   trap - ERR
   if [ -f "$SUMMARY_JSON" ]; then
     if [ -n "$CURRENT_SEGMENT" ]; then
-      update_summary "$CURRENT_SEGMENT" failed || true
+      failed_segment="$CURRENT_SEGMENT"
+      finish_segment "$failed_segment" failed || true
+    else
+      failed_segment="unknown"
     fi
     update_summary "" failed || true
-    echo "despair-gate: FAILED segment=${CURRENT_SEGMENT:-unknown} summary=$SUMMARY_JSON" >&2
+    echo "despair-gate: FAILED segment=$failed_segment summary=$SUMMARY_JSON" >&2
   fi
   exit "$rc"
 }
@@ -201,6 +232,7 @@ gate_summary = {
         "public_gate": "pending" if sys.argv[5] == "1" else "skipped",
         "desktop_gate": "pending" if sys.argv[6] == "1" else "skipped",
     },
+    "segment_elapsed_seconds": {},
     "not_proof": [
         "external review",
         "benchmark ranking",
@@ -218,47 +250,43 @@ PY
 trap 'on_error "$?"' ERR
 
 if [ "$RUN_EXTERNAL_REGRESSION" -eq 1 ]; then
-  CURRENT_SEGMENT="external_regression"
+  start_segment "external_regression"
   maybe_inject_test_failure "$CURRENT_SEGMENT"
   echo "despair-gate: running external multimodule hidden regression"
   "$PYTHON_BIN" -m pytest -p no:cacheprovider \
     tests/test_external_benchmark_multimodule_regression.py \
     -q
-  update_summary "$CURRENT_SEGMENT" passed
-  CURRENT_SEGMENT=""
+  finish_segment "$CURRENT_SEGMENT" passed
 else
   echo "despair-gate: skipping external multimodule hidden regression"
 fi
 
 if [ "$RUN_FULL_PYTEST" -eq 1 ]; then
-  CURRENT_SEGMENT="full_pytest"
+  start_segment "full_pytest"
   maybe_inject_test_failure "$CURRENT_SEGMENT"
   echo "despair-gate: running full repository pytest"
   "$PYTHON_BIN" -m pytest -p no:cacheprovider -q
-  update_summary "$CURRENT_SEGMENT" passed
-  CURRENT_SEGMENT=""
+  finish_segment "$CURRENT_SEGMENT" passed
 else
   echo "despair-gate: skipping full repository pytest"
 fi
 
 if [ "$RUN_PUBLIC_GATE" -eq 1 ]; then
-  CURRENT_SEGMENT="public_gate"
+  start_segment "public_gate"
   maybe_inject_test_failure "$CURRENT_SEGMENT"
   echo "despair-gate: running public review gate"
   bash scripts/public_review_gate.sh
-  update_summary "$CURRENT_SEGMENT" passed
-  CURRENT_SEGMENT=""
+  finish_segment "$CURRENT_SEGMENT" passed
 else
   echo "despair-gate: skipping public review gate"
 fi
 
 if [ "$RUN_DESKTOP_GATE" -eq 1 ]; then
-  CURRENT_SEGMENT="desktop_gate"
+  start_segment "desktop_gate"
   maybe_inject_test_failure "$CURRENT_SEGMENT"
   echo "despair-gate: running desktop control local gate"
   bash scripts/desktop_control_local_gate.sh
-  update_summary "$CURRENT_SEGMENT" passed
-  CURRENT_SEGMENT=""
+  finish_segment "$CURRENT_SEGMENT" passed
 else
   echo "despair-gate: skipping desktop control local gate"
 fi
