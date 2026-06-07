@@ -103,6 +103,8 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(summary["status"], "passed")
         self.assertEqual(summary["coding_bench"]["solved"], 1)
         self.assertEqual(summary["coding_bench"]["total"], 1)
+        self.assertIsInstance(summary["coding_bench"]["elapsed_seconds"], int)
+        self.assertGreaterEqual(summary["coding_bench"]["elapsed_seconds"], 0)
         self.assertEqual(summary["invocation"]["git_commit"], self.current_git_commit())
         self.assertEqual(
             summary["invocation"]["argv"],

@@ -175,6 +175,7 @@ BENCH_JSON="$TMP_DIR/coding_bench.json"
 mkdir -p "$SUMMARY_DIR"
 
 echo "despair-gate: running built-in CodingBench pack with real OpenMako CLI agent"
+BENCH_STARTED_AT="$(date +%s)"
 if [ -n "$BENCH_LIMIT" ]; then
   "$PYTHON_BIN" -m quantagent.cli --no-trust-prompt coding-bench \
     --limit "$BENCH_LIMIT" \
@@ -189,8 +190,9 @@ else
     --repeats "$BENCH_REPEATS" \
     --json > "$BENCH_JSON"
 fi
+BENCH_ELAPSED_SECONDS=$(( $(date +%s) - BENCH_STARTED_AT ))
 
-"$PYTHON_BIN" - "$BENCH_JSON" "$SUMMARY_JSON" "$RUN_EXTERNAL_REGRESSION" "$RUN_FULL_PYTEST" "$RUN_PUBLIC_GATE" "$RUN_DESKTOP_GATE" "$BENCH_REPEATS" "${BENCH_LIMIT:-}" "$GIT_COMMIT" "${ORIGINAL_ARGS[@]}" <<'PY'
+"$PYTHON_BIN" - "$BENCH_JSON" "$SUMMARY_JSON" "$RUN_EXTERNAL_REGRESSION" "$RUN_FULL_PYTEST" "$RUN_PUBLIC_GATE" "$RUN_DESKTOP_GATE" "$BENCH_REPEATS" "${BENCH_LIMIT:-}" "$BENCH_ELAPSED_SECONDS" "$GIT_COMMIT" "${ORIGINAL_ARGS[@]}" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -221,10 +223,11 @@ gate_summary = {
         "success_rate": success_rate,
         "repeats": int(sys.argv[7]),
         "limit": int(sys.argv[8]) if sys.argv[8] else None,
+        "elapsed_seconds": int(sys.argv[9]),
     },
     "invocation": {
-        "git_commit": sys.argv[9],
-        "argv": sys.argv[10:],
+        "git_commit": sys.argv[10],
+        "argv": sys.argv[11:],
     },
     "segments": {
         "external_regression": "pending" if sys.argv[3] == "1" else "skipped",
