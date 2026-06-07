@@ -548,6 +548,11 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     progress = (ROOT / "PROGRESS.md").read_text(encoding="utf-8")
 
     assert "public status boundary" in progress
+    assert "The public v0.1 proof command is `./scripts/public_review_gate.sh`" in progress
+    assert "Remote focused CI is live GitHub state, not a durable fact in this file." in progress
+    assert "A 2026-06-07 GitHub API snapshot showed `.github/workflows/focused.yml`\n  run `27096660497` completed with `conclusion=success`" in progress
+    assert "665a12912822218f81442598ece268175f30f1c3" in progress
+    assert "Re-check the latest `openmako/main` run before claiming current remote CI;\n  the snapshot is not external review, endorsement, stars, or reposts." in progress
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in progress
     assert "External technical boundary criticism is requested in issue #2" in progress
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in progress

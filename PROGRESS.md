@@ -4,7 +4,14 @@ This file is a public status boundary, not an internal scoreboard.
 
 Current public proof:
 
-- The public v0.1 claim is the focused learning-effect gate in `README.md`.
+- The public v0.1 proof command is `./scripts/public_review_gate.sh`; `README.md`
+  defines the narrower claim and non-proof boundaries.
+- Remote focused CI is live GitHub state, not a durable fact in this file.
+  A 2026-06-07 GitHub API snapshot showed `.github/workflows/focused.yml`
+  run `27096660497` completed with `conclusion=success` on commit
+  `665a12912822218f81442598ece268175f30f1c3` before this note was added.
+  Re-check the latest `openmako/main` run before claiming current remote CI;
+  the snapshot is not external review, endorsement, stars, or reposts.
 - Latest local send-ready check on 2026-06-05 passed:
   `./scripts/public_review_gate.sh` ended with `public-review-gate: PASS`;
   `bash scripts/wave1_send_ready.sh swe-agent` re-ran the gate and printed a
