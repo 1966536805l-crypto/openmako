@@ -200,7 +200,9 @@ def test_despair_gate_is_repeatable_but_not_a_public_claim() -> None:
     assert "if: always()" in workflow
     assert "actions/upload-artifact@v4" in workflow
     assert "name: despair-gate-coding-bench" in workflow
-    assert "path: .quantagent/coding_bench" in workflow
+    assert "path: |" in workflow
+    assert ".quantagent/coding_bench" in workflow
+    assert ".quantagent/despair_gate" in workflow
     assert "if-no-files-found: ignore" in workflow
 
     assert "`bash scripts/despair_gate.sh` now wraps that high-intensity local loop" in progress
@@ -208,6 +210,7 @@ def test_despair_gate_is_repeatable_but_not_a_public_claim() -> None:
     assert "`.github/workflows/despair-gate.yml` exposes that gate as a manual\n  `workflow_dispatch` check" in progress
     assert "not attached to default push\n  or pull-request CI" in progress
     assert "uploads CodingBench artifacts for\n  debugging failed manual runs" in progress
+    assert "`.quantagent/despair_gate/last_summary.json` as a local machine-readable\n  run summary" in progress
 
 
 def test_agent_trend_radar_tracks_current_next_build_target() -> None:

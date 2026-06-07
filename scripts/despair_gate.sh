@@ -13,6 +13,8 @@ RUN_PUBLIC_GATE=1
 RUN_DESKTOP_GATE=1
 BENCH_REPEATS=1
 BENCH_LIMIT=""
+SUMMARY_DIR=".quantagent/despair_gate"
+SUMMARY_JSON="$SUMMARY_DIR/last_summary.json"
 TMP_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -97,6 +99,7 @@ fi
 
 AGENT_COMMAND="{python} -m quantagent.cli --no-trust-prompt agent --project {workspace} --json --max-steps 12 --learning-context off {instruction}"
 BENCH_JSON="$TMP_DIR/coding_bench.json"
+mkdir -p "$SUMMARY_DIR"
 
 echo "despair-gate: running built-in CodingBench pack with real OpenMako CLI agent"
 if [ -n "$BENCH_LIMIT" ]; then
@@ -114,12 +117,13 @@ else
     --json > "$BENCH_JSON"
 fi
 
-"$PYTHON_BIN" - "$BENCH_JSON" <<'PY'
+"$PYTHON_BIN" - "$BENCH_JSON" "$SUMMARY_JSON" "$RUN_EXTERNAL_REGRESSION" "$RUN_FULL_PYTEST" "$RUN_PUBLIC_GATE" "$RUN_DESKTOP_GATE" "$BENCH_REPEATS" "${BENCH_LIMIT:-}" <<'PY'
 import json
 import sys
 from pathlib import Path
 
 payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+summary_path = Path(sys.argv[2])
 summary = payload.get("summary") or {}
 artifact_dir = payload.get("artifact_dir") or ""
 if "runs" in payload:
@@ -134,6 +138,35 @@ else:
     success_rate = summary.get("success_rate")
 print(f"despair-gate: coding-bench solved={solved}/{total} success_rate={success_rate}")
 print(f"despair-gate: coding-bench artifact_dir={artifact_dir}")
+gate_summary = {
+    "schema_version": "despair-gate/v0.1",
+    "status": "running",
+    "coding_bench": {
+        "artifact_dir": artifact_dir,
+        "solved": solved,
+        "total": total,
+        "success_rate": success_rate,
+        "repeats": int(sys.argv[7]),
+        "limit": int(sys.argv[8]) if sys.argv[8] else None,
+    },
+    "segments": {
+        "external_regression": "pending" if sys.argv[3] == "1" else "skipped",
+        "full_pytest": "pending" if sys.argv[4] == "1" else "skipped",
+        "public_gate": "pending" if sys.argv[5] == "1" else "skipped",
+        "desktop_gate": "pending" if sys.argv[6] == "1" else "skipped",
+    },
+    "not_proof": [
+        "external review",
+        "benchmark ranking",
+        "live desktop control",
+        "L4",
+        "L5",
+        "stars",
+        "reposts",
+        "endorsement",
+    ],
+}
+summary_path.write_text(json.dumps(gate_summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 PY
 
 if [ "$RUN_EXTERNAL_REGRESSION" -eq 1 ]; then
@@ -141,6 +174,16 @@ if [ "$RUN_EXTERNAL_REGRESSION" -eq 1 ]; then
   "$PYTHON_BIN" -m pytest -p no:cacheprovider \
     tests/test_external_benchmark_multimodule_regression.py \
     -q
+  "$PYTHON_BIN" - "$SUMMARY_JSON" external_regression passed <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+payload["segments"][sys.argv[2]] = sys.argv[3]
+path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
 else
   echo "despair-gate: skipping external multimodule hidden regression"
 fi
@@ -148,6 +191,16 @@ fi
 if [ "$RUN_FULL_PYTEST" -eq 1 ]; then
   echo "despair-gate: running full repository pytest"
   "$PYTHON_BIN" -m pytest -p no:cacheprovider -q
+  "$PYTHON_BIN" - "$SUMMARY_JSON" full_pytest passed <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+payload["segments"][sys.argv[2]] = sys.argv[3]
+path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
 else
   echo "despair-gate: skipping full repository pytest"
 fi
@@ -155,6 +208,16 @@ fi
 if [ "$RUN_PUBLIC_GATE" -eq 1 ]; then
   echo "despair-gate: running public review gate"
   bash scripts/public_review_gate.sh
+  "$PYTHON_BIN" - "$SUMMARY_JSON" public_gate passed <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+payload["segments"][sys.argv[2]] = sys.argv[3]
+path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
 else
   echo "despair-gate: skipping public review gate"
 fi
@@ -162,9 +225,31 @@ fi
 if [ "$RUN_DESKTOP_GATE" -eq 1 ]; then
   echo "despair-gate: running desktop control local gate"
   bash scripts/desktop_control_local_gate.sh
+  "$PYTHON_BIN" - "$SUMMARY_JSON" desktop_gate passed <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+payload["segments"][sys.argv[2]] = sys.argv[3]
+path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
 else
   echo "despair-gate: skipping desktop control local gate"
 fi
 
+"$PYTHON_BIN" - "$SUMMARY_JSON" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+payload["status"] = "passed"
+path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+
 echo "despair-gate: PASS"
+echo "despair-gate: summary=$SUMMARY_JSON"
 echo "despair-gate: not-proof=external review, benchmark ranking, live desktop control, L4, L5, stars, reposts, endorsement"

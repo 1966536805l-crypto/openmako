@@ -65,7 +65,15 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("despair-gate: coding-bench solved=1/1 success_rate=100.0", result.stdout)
         self.assertIn("despair-gate: skipping full repository pytest", result.stdout)
         self.assertIn("despair-gate: PASS", result.stdout)
+        self.assertIn("despair-gate: summary=.quantagent/despair_gate/last_summary.json", result.stdout)
         self.assertIn("not-proof=external review", result.stdout)
+        summary = json.loads((ROOT / ".quantagent" / "despair_gate" / "last_summary.json").read_text(encoding="utf-8"))
+        self.assertEqual(summary["schema_version"], "despair-gate/v0.1")
+        self.assertEqual(summary["status"], "passed")
+        self.assertEqual(summary["coding_bench"]["solved"], 1)
+        self.assertEqual(summary["coding_bench"]["total"], 1)
+        self.assertEqual(summary["segments"]["full_pytest"], "skipped")
+        self.assertIn("external review", summary["not_proof"])
 
     def test_despair_gate_smoke_summarizes_repeated_coding_bench(self) -> None:
         result = self.run_despair_gate_smoke("--bench-limit", "1", "--bench-repeats", "2")
@@ -74,6 +82,9 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("despair-gate: coding-bench solved=2/2 success_rate=100.0", result.stdout)
         self.assertIn("despair-gate: PASS", result.stdout)
         self.assertNotIn("success_rate=None", result.stdout)
+        summary = json.loads((ROOT / ".quantagent" / "despair_gate" / "last_summary.json").read_text(encoding="utf-8"))
+        self.assertEqual(summary["coding_bench"]["repeats"], 2)
+        self.assertEqual(summary["coding_bench"]["success_rate"], 100.0)
 
     def test_openmako_bad_run_demo_reports_failed_verification(self) -> None:
         result = self.run_openmako(

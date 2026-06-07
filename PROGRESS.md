@@ -43,7 +43,9 @@ Current public proof:
   or pull-request CI because it is slow and local-regression oriented, not a
   public endorsement signal. The workflow uploads CodingBench artifacts for
   debugging failed manual runs; those artifacts are not external review or
-  endorsement evidence.
+  endorsement evidence. The gate also writes
+  `.quantagent/despair_gate/last_summary.json` as a local machine-readable
+  run summary with the same non-proof boundary.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:

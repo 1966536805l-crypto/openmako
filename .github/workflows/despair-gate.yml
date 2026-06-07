@@ -33,5 +33,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: despair-gate-coding-bench
-          path: .quantagent/coding_bench
+          path: |
+            .quantagent/coding_bench
+            .quantagent/despair_gate
           if-no-files-found: ignore
