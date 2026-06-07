@@ -46,9 +46,10 @@ python -m pip install -e . pytest
 ./scripts/public_review_gate.sh
 ```
 
-That script runs the focused public gate, metadata boundary checks, and the
-supplied Evidence Court bad-run audit. To run only the focused learning-effect
-gate:
+That script runs the focused public gate, metadata boundary checks, the
+supplied Evidence Court bad-run audit, the artifact-provenance fixture, the
+SWTBench patch-artifact fixture, and the supplied transcript adapter matrix.
+To run only the focused learning-effect gate:
 
 For exact expected output and smaller checks, see `docs/REPRODUCE_V0_1.md`.
 
@@ -87,6 +88,18 @@ comparability questions:
 That fixture preserves supplied eval rule, runner, input hash, output hash, and
 missing-provenance fields. It does not mean OpenMako ingests native benchmark
 artifacts or validates benchmark scores.
+
+To inspect the SWTBench-style patch artifact boundary used by benchmark-thread
+questions:
+
+```bash
+./bin/openmako --no-trust-prompt evidence-court audit --ci --json \
+  examples/evidence_court/swtbench_patch_artifact.json
+```
+
+That fixture combines supplied patch-shape metadata with artifact identity
+metadata. It does not validate a SWTBench score or ingest native benchmark
+exports.
 
 ## Optional Supplied-Transcript Adapter Checks
 

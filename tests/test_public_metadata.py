@@ -668,10 +668,15 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "docs/REPRODUCE_V0_1.md" in packet
     assert "docs/PUBLIC_SHARE_PACKET.md" in packet
     assert "./scripts/public_review_gate.sh" in packet
+    assert "the\nsupplied Evidence Court bad-run audit, the artifact-provenance fixture, the\nSWTBench patch-artifact fixture, and the supplied transcript adapter matrix" in packet
     assert "tests/test_agent_planner_contract.py::AgentPlannerContractTest" in packet
     assert "tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest" in packet
     assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in packet
     assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in packet
+    assert "examples/evidence_court/artifact_provenance.json" in packet
+    assert "examples/evidence_court/swtbench_patch_artifact.json" in packet
+    assert "combines supplied patch-shape metadata with artifact identity\nmetadata" in packet
+    assert "does not validate a SWTBench score or ingest native benchmark\nexports" in packet
     assert "does not claim native Claude Code" in packet
     assert "## Optional Supplied-Transcript Adapter Checks" in packet
     assert "docs/evidence_court_schema.md" in packet
