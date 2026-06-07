@@ -1767,9 +1767,13 @@ def test_high_risk_planning_docs_are_not_public_claims() -> None:
         "docs/COMPARISON.md",
         "docs/DESKTOP_DAEMON_L4.md",
         "docs/DESKTOP_L5_ROADMAP.md",
+        "docs/AGENT_PORTING_SWARM.md",
+        "docs/HERMES_OPENCLAW_SOURCE_SCAN.md",
         "docs/LAUNCH_PLAYBOOK.md",
         "docs/MARKET_TOOL_COPY_SCAN.md",
+        "docs/OPENCLAW_HERMES_FULL_PORT_PLAN.md",
         "docs/OPENCLAW_HERMES_COPY_WHITELIST.md",
+        "docs/OPENCLAW_LEVEL_TARGET.md",
         "docs/SOURCE_COPY_BORROW_MATRIX.md",
     )
 

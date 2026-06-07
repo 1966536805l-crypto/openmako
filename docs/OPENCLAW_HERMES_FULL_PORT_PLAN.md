@@ -1,6 +1,6 @@
 # OpenClaw / Hermes Full Port Plan
 
-Internal clean-room planning note. This is not the current public v0.1 capability claim; the current public proof is the focused learning-effect gate linked from `README.md` and issue #1.
+Internal clean-room planning note. This is not the current public v0.1 capability claim; the current public proof command is `./scripts/public_review_gate.sh`.
 
 This is the clean-room port map for borrowing the useful runtime mechanics from
 OpenClaw and Hermes without copying private Claude Code code or bundled upstream
