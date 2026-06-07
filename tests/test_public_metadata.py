@@ -1254,9 +1254,14 @@ def test_desktop_control_local_gate_is_bounded_and_conservative() -> None:
     assert '"suite_is_l4"' in text
     assert '"status_is_dry_run"' in text
     assert '"scenario_count_is_8"' in text
+    assert '"roadmap_metrics_are_present"' in text
+    assert '"roadmap_safety_rates_are_explicit"' in text
+    assert '"level_reasons_do_not_hide_missing_safety_rate"' in text
     assert '"all_scenarios_are_suite_l4"' in text
     assert '"all_scenarios_disable_execute"' in text
     assert '"level_is_not_l4_claim"' in text
+    assert "desktop-control-local-gate: misoperation_rate=" in text
+    assert "desktop-control-local-gate: crash_rate=" in text
     assert "not-proof=live desktop control, L4, L5, external endorsement, star or repost traction" in text
     assert "desktop-control-local-gate: PASS" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):

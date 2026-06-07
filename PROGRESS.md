@@ -317,6 +317,8 @@ Current public proof:
   `suite_l4` dry-run eval, then checks that the result remains conservative
   rather than claiming live L4/L5 desktop control. The gate also verifies that
   every scenario remains in `suite_l4` dry-run mode with execution disabled.
+  It now also fails closed if the roadmap-style count/rate metrics are missing
+  from the dry-run output or if `level_reasons` hides a missing safety rate.
 - `desktop-eval` metrics now expose the roadmap-style count fields and explicit
   `misoperation_rate`, `crash_rate`, `total_actions`, and missing-autopsy
   counters so dry-run scoring does not hide missing safety rates. This improves
