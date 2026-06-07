@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "agent_autopsy" / "agent_modified_test_failed"
 DESPAIR_SMOKE_SUMMARY_REL = ".quantagent/despair_gate/test_smoke_summary.json"
 DESPAIR_FAILURE_SUMMARY_REL = ".quantagent/despair_gate/test_failure_summary.json"
+DESPAIR_CORRUPT_SUMMARY_REL = ".quantagent/despair_gate/test_corrupt_summary.json"
 
 
 class CliWrapperTest(unittest.TestCase):
@@ -73,6 +74,32 @@ class CliWrapperTest(unittest.TestCase):
                 "1",
                 "--skip-external-regression",
                 "--skip-full-pytest",
+                "--skip-desktop-gate",
+            ],
+            cwd=str(ROOT),
+            env=env,
+            text=True,
+            capture_output=True,
+            timeout=20,
+            check=False,
+        )
+
+    def run_despair_gate_corrupt_summary_smoke(self) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["PYTHON"] = sys.executable
+        env["QUANTAGENT_SECRETS_FILE"] = "/dev/null"
+        env["OPENMAKO_DESPAIR_GATE_TEST_CORRUPT_SUMMARY"] = "missing_bench_fields"
+        env["OPENMAKO_DESPAIR_GATE_SUMMARY_JSON"] = DESPAIR_CORRUPT_SUMMARY_REL
+        env["PYTHONPATH"] = str(ROOT) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+        return subprocess.run(
+            [
+                "bash",
+                "scripts/despair_gate.sh",
+                "--bench-limit",
+                "1",
+                "--skip-external-regression",
+                "--skip-full-pytest",
+                "--skip-public-gate",
                 "--skip-desktop-gate",
             ],
             cwd=str(ROOT),
@@ -180,6 +207,22 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIsInstance(summary["segment_elapsed_seconds"]["public_gate"], int)
         self.assertGreaterEqual(summary["segment_elapsed_seconds"]["public_gate"], 0)
         self.assertEqual(summary["coding_bench"]["solved"], 1)
+
+    def test_despair_gate_rejects_corrupt_pass_summary(self) -> None:
+        result = self.run_despair_gate_corrupt_summary_smoke()
+
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertIn(
+            "despair-gate: corrupting summary for test=missing_bench_fields",
+            result.stderr,
+        )
+        self.assertIn("despair-gate: invalid summary fields=", result.stderr)
+        self.assertIn("coding_bench.solved", result.stderr)
+        self.assertIn("coding_bench.total", result.stderr)
+        self.assertNotIn("despair-gate: PASS", result.stdout)
+        summary = json.loads((ROOT / DESPAIR_CORRUPT_SUMMARY_REL).read_text(encoding="utf-8"))
+        self.assertEqual(summary["status"], "failed")
+        self.assertEqual(summary["failure"], {"segment": "unknown", "exit_code": 1})
 
     def test_openmako_bad_run_demo_reports_failed_verification(self) -> None:
         result = self.run_openmako(

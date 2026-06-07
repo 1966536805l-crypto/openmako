@@ -205,6 +205,8 @@ def test_despair_gate_is_repeatable_but_not_a_public_claim() -> None:
     assert "--bench-limit" in text
     assert "OPENMAKO_DESPAIR_GATE_SUMMARY_JSON" in text
     assert "OPENMAKO_DESPAIR_GATE_TEST_FAIL_SEGMENT" in text
+    assert "OPENMAKO_DESPAIR_GATE_TEST_CORRUPT_SUMMARY" in text
+    assert "missing_bench_fields" in text
     assert "despair-gate: FAILED segment=" in text
     assert "not-proof=external review, benchmark ranking, live desktop control, L4, L5, stars, reposts, endorsement" in text
 
@@ -233,7 +235,8 @@ def test_despair_gate_is_repeatable_but_not_a_public_claim() -> None:
     assert "invoking commit, argv,\n  CodingBench elapsed seconds, and per-segment elapsed seconds" in progress
     assert "validates the summary before printing `PASS`" in progress
     assert "CodingBench solved, total, success rate, artifact directory, and elapsed\n  fields are also type-checked" in progress
-    assert "Failed summaries are validated after failure metadata is\n  written" in progress
+    assert "A corrupt-summary smoke path deletes those fields\n  before validation and must fail closed" in progress
+    assert "Failed summaries are validated after\n  failure metadata is written" in progress
     assert "internally inconsistent summaries fail closed" in progress
 
 

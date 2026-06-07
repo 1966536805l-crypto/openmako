@@ -220,6 +220,25 @@ maybe_inject_test_failure() {
   return 0
 }
 
+maybe_corrupt_summary_for_test() {
+  if [ "${OPENMAKO_DESPAIR_GATE_TEST_CORRUPT_SUMMARY:-}" != "missing_bench_fields" ]; then
+    return 0
+  fi
+  echo "despair-gate: corrupting summary for test=missing_bench_fields" >&2
+  "$PYTHON_BIN" - "$SUMMARY_JSON" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+bench = payload.setdefault("coding_bench", {})
+for key in ["solved", "total", "success_rate", "artifact_dir", "elapsed_seconds"]:
+    bench.pop(key, None)
+path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --skip-full-pytest)
@@ -420,7 +439,10 @@ else
 fi
 
 update_summary "" passed
-validate_summary
+maybe_corrupt_summary_for_test
+if ! validate_summary; then
+  on_error 1
+fi
 
 echo "despair-gate: PASS"
 echo "despair-gate: summary=$SUMMARY_JSON"
