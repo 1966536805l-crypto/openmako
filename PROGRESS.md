@@ -320,6 +320,10 @@ Current public proof:
   the same supplied-record/provenance plus supplied transcript fixture boundary.
   They still exclude native Claude/Codex/Cursor/SWE-bench export ingestion and
   are not proof that a new release was tagged.
+- The clean-room/source-copy planning docs now point their public-proof
+  disclaimer at `./scripts/public_review_gate.sh` instead of the older issue #1
+  shorthand. This keeps internal planning boundaries tied to a reproducible
+  command, not a claim that those plans are current v0.1 capability.
 - `bash scripts/public_share_ready.sh review-request` now runs the public proof
   gate before printing the short public review-request text. It does not post,
   ask for stars or reposts, or record outreach as evidence.

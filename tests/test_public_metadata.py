@@ -1763,11 +1763,25 @@ def test_legacy_quant_test_artifacts_are_archived_out_of_repository_root() -> No
 
 
 def test_high_risk_planning_docs_are_not_public_claims() -> None:
+    updated_boundary_docs = (
+        "docs/MARKET_TOOL_COPY_SCAN.md",
+        "docs/OPENCLAW_HERMES_COPY_WHITELIST.md",
+        "docs/SOURCE_COPY_BORROW_MATRIX.md",
+    )
+
     for relative_path in INTERNAL_PLANNING_DOCS:
         text = (ROOT / relative_path).read_text(encoding="utf-8")
 
-        assert "current public proof is the focused learning-effect gate" in text
+        assert (
+            "current public proof is the focused learning-effect gate" in text
+            or 'current public proof command is `./scripts/public_review_gate.sh`' in text
+        )
         assert "not the current public v0.1 capability claim" in text or "not a public capability claim" in text
+
+    for relative_path in updated_boundary_docs:
+        text = (ROOT / relative_path).read_text(encoding="utf-8")
+        assert 'current public proof command is `./scripts/public_review_gate.sh`' in text
+        assert "issue #1" not in text.splitlines()[2]
 
     market_scan = (ROOT / "docs" / "MARKET_TOOL_COPY_SCAN.md").read_text(encoding="utf-8")
     assert "Highest-Value Things To Steal Next" not in market_scan

@@ -1,6 +1,6 @@
 # Market Tool Copy Scan
 
-Internal clean-room research note. This is not launch copy, not a public capability claim, and not permission to copy closed-source or license-incompatible code. The current public proof is the focused learning-effect gate linked from `README.md` and issue #1.
+Internal clean-room research note. This is not launch copy, not a public capability claim, and not permission to copy closed-source or license-incompatible code. The current public proof command is `./scripts/public_review_gate.sh`.
 
 Scan date: 2026-05-24.
 
