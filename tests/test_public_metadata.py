@@ -284,6 +284,10 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "./scripts/public_review_gate.sh" in proof_section
     assert "bash scripts/public_proof_card.sh" in proof_section
     assert "screenshot-friendly summary" in proof_section
+    assert "public-review-gate: recording Evidence Court bad-run fixture" in proof_section
+    assert "public-review-gate: auditing supplied Evidence Court record" in proof_section
+    assert "public-review-gate: auditing artifact provenance fixture" in proof_section
+    assert "public-review-gate: auditing SWTBench patch artifact fixture" in proof_section
     assert "public-review-gate: running supplied transcript adapter matrix" in proof_section
     assert "adapter-matrix: PASS" in proof_section
     assert "public-review-gate: PASS" in proof_section
@@ -713,7 +717,10 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "metadata-test count is intentionally not fixed" in guide
     assert "25 passed" not in guide
     assert "public-review-gate: PASS" in guide
+    assert "public-review-gate: recording Evidence Court bad-run fixture" in guide
+    assert "public-review-gate: auditing supplied Evidence Court record" in guide
     assert "public-review-gate: auditing artifact provenance fixture" in guide
+    assert "public-review-gate: auditing SWTBench patch artifact fixture" in guide
     assert "public-review-gate: running supplied transcript adapter matrix" in guide
     assert "adapter-matrix: PASS" in guide
     assert "PYTHONPATH" in guide

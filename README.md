@@ -45,7 +45,10 @@ Expected high-level signal:
 public-review-gate: running planner focused public test
 public-review-gate: running learning-effect focused public test
 public-review-gate: running public metadata boundary tests
+public-review-gate: recording Evidence Court bad-run fixture
 public-review-gate: auditing supplied Evidence Court record
+public-review-gate: auditing artifact provenance fixture
+public-review-gate: auditing SWTBench patch artifact fixture
 public-review-gate: running supplied transcript adapter matrix
 adapter-matrix: PASS
 public-review-gate: PASS
