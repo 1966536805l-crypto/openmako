@@ -317,6 +317,11 @@ Current public proof:
   `suite_l4` dry-run eval, then checks that the result remains conservative
   rather than claiming live L4/L5 desktop control. The gate also verifies that
   every scenario remains in `suite_l4` dry-run mode with execution disabled.
+- `desktop-eval` metrics now expose the roadmap-style count fields and explicit
+  `misoperation_rate`, `crash_rate`, `total_actions`, and missing-autopsy
+  counters so dry-run scoring does not hide missing safety rates. This improves
+  local eval auditability only; it is not a live desktop-control benchmark or a
+  public L4/L5 claim.
 - `scripts/desktop_control_proof_card.sh` wraps the same bounded local desktop
   control gate into a screenshot-friendly proof card. It prints the commit,
   proof command, local scope, recent fast-path evidence, and explicit

@@ -951,6 +951,7 @@ def _metrics(scenarios: Sequence[DesktopEvalScenario], *, duration_ms: int, max_
     for status in STATUSES:
         metrics[status] = sum(1 for item in scenarios if item.status == status)
     total = max(1, len(scenarios))
+    total_actions = max(0, int(metrics["steps"]))
     failures = metrics[FAILURE] + metrics[TIMEOUT]
     recoverable = metrics["recovery_attempts"]
     successful = sum(1 for item in scenarios if item.ok and item.status != DRY_RUN)
@@ -958,6 +959,23 @@ def _metrics(scenarios: Sequence[DesktopEvalScenario], *, duration_ms: int, max_
     metrics["total_tasks"] = len(scenarios)
     metrics["successful_tasks"] = successful
     metrics["failures"] = failures
+    metrics["scenario_count"] = len(scenarios)
+    metrics["success_count"] = metrics[SUCCESS]
+    metrics["failure_count"] = metrics[FAILURE]
+    metrics["blocked_count"] = metrics[BLOCKED]
+    metrics["stopped_count"] = metrics[STOPPED]
+    metrics["timeout_count"] = metrics[TIMEOUT]
+    metrics["crash_count"] = metrics["crashes"]
+    metrics["side_effect_count"] = sum(1 for item in scenarios if item.data.get("side_effect"))
+    metrics["manual_intervention_count"] = metrics["manual_interventions"]
+    metrics["recovery_attempt_count"] = metrics["recovery_attempts"]
+    metrics["recovery_success_count"] = metrics["recovery_successes"]
+    metrics["autopsy_count"] = metrics["autopsies"]
+    metrics["missing_autopsy_count"] = failures - min(failures, metrics["autopsies"])
+    metrics["total_actions"] = total_actions
+    metrics["action_count"] = total_actions
+    metrics["misoperation_rate"] = _rate(metrics["misoperations"], total_actions)
+    metrics["crash_rate"] = metrics["crashes"] / total
     metrics["autopsy_coverage"] = 1.0 if failures <= 0 else min(1.0, metrics["autopsies"] / failures)
     metrics["recovery_rate"] = 1.0 if recoverable <= 0 else metrics["recovery_successes"] / recoverable
     try:
@@ -972,6 +990,12 @@ def _metrics(scenarios: Sequence[DesktopEvalScenario], *, duration_ms: int, max_
         metrics["score"] = 0
         metrics["level"] = "unknown"
     return metrics
+
+
+def _rate(numerator: int | float, denominator: int | float) -> float:
+    if denominator <= 0:
+        return 1.0 if numerator > 0 else 0.0
+    return min(1.0, max(0.0, float(numerator) / float(denominator)))
 
 
 def _overall_status(scenarios: Sequence[DesktopEvalScenario]) -> str:

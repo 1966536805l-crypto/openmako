@@ -640,6 +640,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "the issue page\n  contains structured review record fields" in progress
     assert "not proof of reposts, stars,\n  or endorsement" in progress
     assert "blocks\n  general-influencer outreach until at least one public technical boundary\n  review exists" in progress
+    assert "`desktop-eval` metrics now expose the roadmap-style count fields and explicit\n  `misoperation_rate`, `crash_rate`, `total_actions`, and missing-autopsy\n  counters" in progress
+    assert "local eval auditability only; it is not a live desktop-control benchmark or a\n  public L4/L5 claim" in progress
     assert "`run-metrics` evidence extension" in progress
     assert "optional duration, token, cost, command-count, and missing-telemetry fields" in progress
     assert "preserved in Evidence Court audit JSON" in progress
