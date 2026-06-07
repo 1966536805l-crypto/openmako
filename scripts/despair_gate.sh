@@ -125,6 +125,19 @@ on_error() {
       failed_segment="unknown"
     fi
     update_summary "" failed || true
+    "$PYTHON_BIN" - "$SUMMARY_JSON" "$failed_segment" "$rc" <<'PY' || true
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+payload["failure"] = {
+    "segment": sys.argv[2],
+    "exit_code": int(sys.argv[3]),
+}
+path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
     echo "despair-gate: FAILED segment=$failed_segment summary=$SUMMARY_JSON" >&2
   fi
   exit "$rc"

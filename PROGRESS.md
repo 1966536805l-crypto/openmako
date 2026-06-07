@@ -46,13 +46,13 @@ Current public proof:
   endorsement evidence. The gate also writes
   `.quantagent/despair_gate/last_summary.json` as a local machine-readable
   run summary with the same non-proof boundary. Failed segments are also
-  recorded in that summary so interrupted local gates do not look like
-  successful or still-pending proof. Smoke-test calls can write to a separate
-  summary path so full pytest does not overwrite the outer gate summary. The
-  summary also records the invoking commit, argv, CodingBench elapsed seconds,
-  and per-segment elapsed seconds for local debugging. The gate validates the
-  summary before printing `PASS` so stale, pending, failed, or internally
-  inconsistent summaries fail closed.
+  recorded in that summary with the failed segment and exit code so interrupted
+  local gates do not look like successful or still-pending proof. Smoke-test
+  calls can write to a separate summary path so full pytest does not overwrite
+  the outer gate summary. The summary also records the invoking commit, argv,
+  CodingBench elapsed seconds, and per-segment elapsed seconds for local
+  debugging. The gate validates the summary before printing `PASS` so stale,
+  pending, failed, or internally inconsistent summaries fail closed.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:

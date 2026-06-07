@@ -188,6 +188,8 @@ def test_despair_gate_is_repeatable_but_not_a_public_claim() -> None:
     assert '"argv"' in text
     assert '"elapsed_seconds"' in text
     assert '"segment_elapsed_seconds"' in text
+    assert '"failure"' in text
+    assert '"exit_code"' in text
     assert "validate_summary" in text
     assert "despair-gate: invalid summary fields=" in text
     assert "tests/test_external_benchmark_multimodule_regression.py" in text
@@ -221,10 +223,11 @@ def test_despair_gate_is_repeatable_but_not_a_public_claim() -> None:
     assert "not attached to default push\n  or pull-request CI" in progress
     assert "uploads CodingBench artifacts for\n  debugging failed manual runs" in progress
     assert "`.quantagent/despair_gate/last_summary.json` as a local machine-readable\n  run summary" in progress
-    assert "Failed segments are also\n  recorded in that summary" in progress
-    assert "Smoke-test calls can write to a separate\n  summary path" in progress
-    assert "invoking commit, argv, CodingBench elapsed seconds,\n  and per-segment elapsed seconds" in progress
-    assert "validates the\n  summary before printing `PASS`" in progress
+    assert "Failed segments are also\n  recorded in that summary with the failed segment and exit code" in progress
+    assert "Smoke-test\n  calls can write to a separate summary path" in progress
+    assert "invoking commit, argv,\n  CodingBench elapsed seconds, and per-segment elapsed seconds" in progress
+    assert "validates the summary before printing `PASS`" in progress
+    assert "internally inconsistent summaries fail closed" in progress
 
 
 def test_agent_trend_radar_tracks_current_next_build_target() -> None:

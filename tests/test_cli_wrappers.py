@@ -176,6 +176,7 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(summary["segments"]["full_pytest"], "skipped")
         self.assertEqual(summary["segments"]["public_gate"], "failed")
         self.assertEqual(summary["segments"]["desktop_gate"], "skipped")
+        self.assertEqual(summary["failure"], {"segment": "public_gate", "exit_code": 1})
         self.assertIsInstance(summary["segment_elapsed_seconds"]["public_gate"], int)
         self.assertGreaterEqual(summary["segment_elapsed_seconds"]["public_gate"], 0)
         self.assertEqual(summary["coding_bench"]["solved"], 1)
