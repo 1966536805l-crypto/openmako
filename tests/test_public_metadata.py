@@ -1182,8 +1182,11 @@ def test_desktop_control_local_gate_is_bounded_and_conservative() -> None:
     assert "tests/test_desktop_intelligence.py" in text
     assert "tests/test_desktop_daemon_policy.py" in text
     assert "desktop-eval run --suite suite_l4 --json" in text
+    assert '"suite_is_l4"' in text
     assert '"status_is_dry_run"' in text
     assert '"scenario_count_is_8"' in text
+    assert '"all_scenarios_are_suite_l4"' in text
+    assert '"all_scenarios_disable_execute"' in text
     assert '"level_is_not_l4_claim"' in text
     assert "not-proof=live desktop control, L4, L5, external endorsement, star or repost traction" in text
     assert "desktop-control-local-gate: PASS" in text

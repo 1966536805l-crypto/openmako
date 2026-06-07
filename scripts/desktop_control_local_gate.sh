@@ -33,8 +33,11 @@ metrics = payload.get("metrics") or {}
 scenarios = payload.get("scenarios") or []
 
 checks = {
+    "suite_is_l4": payload.get("suite") == "suite_l4",
     "status_is_dry_run": payload.get("status") == "dry_run",
     "scenario_count_is_8": metrics.get("total") == 8 and len(scenarios) == 8,
+    "all_scenarios_are_suite_l4": all(item.get("suite") == "suite_l4" for item in scenarios),
+    "all_scenarios_disable_execute": all((item.get("data") or {}).get("execute") is False for item in scenarios),
     "all_scenarios_are_dry_run": all(item.get("status") == "dry_run" for item in scenarios),
     "level_is_not_l4_claim": metrics.get("level") in {"L0", "L1", "L2", "L3"},
     "score_is_conservative": int(metrics.get("score") or 0) < 60,

@@ -295,7 +295,8 @@ Current public proof:
 - `scripts/desktop_control_local_gate.sh` provides a bounded local desktop
   control gate: it runs focused desktop intelligence/policy tests and a
   `suite_l4` dry-run eval, then checks that the result remains conservative
-  rather than claiming live L4/L5 desktop control.
+  rather than claiming live L4/L5 desktop control. The gate also verifies that
+  every scenario remains in `suite_l4` dry-run mode with execution disabled.
 - `scripts/desktop_control_proof_card.sh` wraps the same bounded local desktop
   control gate into a screenshot-friendly proof card. It prints the commit,
   proof command, local scope, recent fast-path evidence, and explicit
