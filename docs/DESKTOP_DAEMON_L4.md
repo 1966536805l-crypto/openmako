@@ -1,6 +1,6 @@
 # Desktop Daemon L4 Contract
 
-Internal desktop planning note. This is not the current public v0.1 capability claim; the current public proof is the focused learning-effect gate linked from README.md and issue #1.
+Internal desktop planning note. This is not the current public v0.1 capability claim; the current public proof command is `./scripts/public_review_gate.sh`.
 
 Date: 2026-05-26
 

@@ -1,6 +1,6 @@
 # OpenMako Launch Playbook
 
-Internal launch-planning note. This is not the current public v0.1 capability claim; the current public proof is the focused learning-effect gate linked from `README.md` and issue #1.
+Internal launch-planning note. This is not the current public v0.1 capability claim; the current public proof command is `./scripts/public_review_gate.sh`.
 
 Goal: convert OpenMako from a strong local codebase into a repo that a developer can understand in 30 seconds, run in 5 minutes, and share after one successful demo.
 
