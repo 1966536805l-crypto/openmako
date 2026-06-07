@@ -316,6 +316,11 @@ Current public proof:
 - `docs/PUBLIC_SHARE_PACKET.md` also includes a <=280 character technical
   review post and a boundary-clear follow-up that must not be used before a
   named reviewer gives public feedback.
+- `scripts/public_proof_card.sh` now prints the full current public gate scope
+  in its final screenshot-friendly block: focused learning-effect, metadata
+  boundary, supplied Evidence Court audit, artifact provenance, SWTBench patch
+  artifact, and supplied transcript adapter matrix. This is proof-card wording
+  alignment, not new capability proof or outreach evidence.
 - `docs/LARGE_REPOST_PACKET.md` defines the second-stage broader share packet
   for writer/community surfaces, and `bash scripts/large_repost_ready.sh
   REVIEW_RECORD_ISSUE_URL --confirm-external-review` refuses to print it unless

@@ -25,7 +25,7 @@ Expected final block:
 
 ```text
 openmako-public-proof-card: PASS
-scope: focused learning-effect gate; public metadata boundary; supplied-record Evidence Court audit
+scope: focused learning-effect gate; public metadata boundary; supplied Evidence Court audit; artifact provenance; SWTBench patch artifact; supplied transcript adapter matrix
 not-proof: broad unknown-repository SWE repair; external endorsement; star or repost traction
 review-request: https://github.com/1966536805l-crypto/openmako/issues/2
 record-external-review: https://github.com/1966536805l-crypto/openmako/issues/new?template=external-review-record.yml
@@ -37,7 +37,8 @@ record-external-review: https://github.com/1966536805l-crypto/openmako/issues/ne
 Can you point out where OpenMako v0.1 overclaims its evidence boundary?
 
 Current public proof covers one focused learning-effect gate, patch-scope
-checks, metadata checks, and a supplied-record audit. It does not claim
+checks, metadata checks, supplied-record/provenance audits, and a supplied
+transcript adapter matrix. It does not claim
 SWE-bench-scale repair.
 
 I'm mainly looking for README lines or proof-command gaps that overclaim.
