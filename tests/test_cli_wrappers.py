@@ -131,6 +131,19 @@ class CliWrapperTest(unittest.TestCase):
                 check=False,
             )
 
+    def run_desktop_control_proof_card(self) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(ROOT) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+        return subprocess.run(
+            ["bash", "scripts/desktop_control_proof_card.sh"],
+            cwd=str(ROOT),
+            env=env,
+            text=True,
+            capture_output=True,
+            timeout=20,
+            check=False,
+        )
+
     def test_openmako_help_uses_real_cli(self) -> None:
         result = self.run_openmako("--help")
 
@@ -204,6 +217,23 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("run-id=789", result.stdout)
         self.assertIn("status=in_progress conclusion=None", result.stdout)
         self.assertIn("focused workflow is not completed/success", result.stderr)
+
+    def test_desktop_control_proof_card_surfaces_safety_rates_and_boundaries(self) -> None:
+        result = self.run_desktop_control_proof_card()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("proof-command: bash scripts/desktop_control_local_gate.sh", result.stdout)
+        self.assertIn("desktop-control-local-gate: status=dry_run", result.stdout)
+        self.assertIn("desktop-control-local-gate: scenarios=8", result.stdout)
+        self.assertIn("desktop-control-local-gate: level=L2", result.stdout)
+        self.assertIn("desktop-control-local-gate: misoperation_rate=0.0", result.stdout)
+        self.assertIn("desktop-control-local-gate: crash_rate=0.0", result.stdout)
+        self.assertIn(
+            "desktop-control-local-gate: not-proof=live desktop control, L4, L5, "
+            "external endorsement, star or repost traction",
+            result.stdout,
+        )
+        self.assertIn("openmako-desktop-control-proof-card: PASS", result.stdout)
 
     def test_despair_gate_smoke_uses_limited_real_cli_bench(self) -> None:
         result = self.run_despair_gate_smoke("--bench-limit", "1")
