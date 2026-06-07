@@ -71,6 +71,49 @@ PY
   CURRENT_SEGMENT_STARTED_AT=0
 }
 
+validate_summary() {
+  "$PYTHON_BIN" - "$SUMMARY_JSON" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+errors = []
+
+if payload.get("schema_version") != "despair-gate/v0.1":
+    errors.append("schema_version")
+if payload.get("status") != "passed":
+    errors.append("status")
+
+bench = payload.get("coding_bench") or {}
+if bench.get("solved") != bench.get("total"):
+    errors.append("coding_bench.solved")
+if not isinstance(bench.get("elapsed_seconds"), int) or bench["elapsed_seconds"] < 0:
+    errors.append("coding_bench.elapsed_seconds")
+
+invocation = payload.get("invocation") or {}
+if not invocation.get("git_commit"):
+    errors.append("invocation.git_commit")
+if not isinstance(invocation.get("argv"), list):
+    errors.append("invocation.argv")
+
+segments = payload.get("segments") or {}
+elapsed = payload.get("segment_elapsed_seconds") or {}
+for segment, status in segments.items():
+    if status not in {"passed", "skipped"}:
+        errors.append(f"segments.{segment}")
+    if status == "passed":
+        value = elapsed.get(segment)
+        if not isinstance(value, int) or value < 0:
+            errors.append(f"segment_elapsed_seconds.{segment}")
+
+if errors:
+    print("despair-gate: invalid summary fields=" + ",".join(errors), file=sys.stderr)
+    raise SystemExit(1)
+PY
+}
+
 on_error() {
   rc="$1"
   trap - ERR
@@ -295,6 +338,7 @@ else
 fi
 
 update_summary "" passed
+validate_summary
 
 echo "despair-gate: PASS"
 echo "despair-gate: summary=$SUMMARY_JSON"
