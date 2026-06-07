@@ -52,9 +52,11 @@ Current public proof:
   the outer gate summary. The summary also records the invoking commit, argv,
   CodingBench elapsed seconds, and per-segment elapsed seconds for local
   debugging. The gate validates the summary before printing `PASS` so stale,
-  pending, failed, or internally inconsistent summaries fail closed. Failed
-  summaries are validated after failure metadata is written for the same local
-  artifact boundary.
+  pending, failed, or internally inconsistent summaries fail closed.
+  CodingBench solved, total, success rate, artifact directory, and elapsed
+  fields are also type-checked so missing upstream fields cannot pass as
+  equality by accident. Failed summaries are validated after failure metadata is
+  written for the same local artifact boundary.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:

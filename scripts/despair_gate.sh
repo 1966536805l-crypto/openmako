@@ -87,8 +87,20 @@ if payload.get("status") != "passed":
     errors.append("status")
 
 bench = payload.get("coding_bench") or {}
-if bench.get("solved") != bench.get("total"):
+solved = bench.get("solved")
+total = bench.get("total")
+success_rate = bench.get("success_rate")
+artifact_dir = bench.get("artifact_dir")
+if type(solved) is not int or solved < 0:
     errors.append("coding_bench.solved")
+if type(total) is not int or total < 1:
+    errors.append("coding_bench.total")
+if type(solved) is int and type(total) is int and solved != total:
+    errors.append("coding_bench.solved")
+if type(success_rate) not in {int, float} or float(success_rate) != 100.0:
+    errors.append("coding_bench.success_rate")
+if not isinstance(artifact_dir, str) or not artifact_dir:
+    errors.append("coding_bench.artifact_dir")
 if not isinstance(bench.get("elapsed_seconds"), int) or bench["elapsed_seconds"] < 0:
     errors.append("coding_bench.elapsed_seconds")
 
@@ -135,6 +147,24 @@ if not segment:
     errors.append("failure.segment")
 if not isinstance(failure.get("exit_code"), int) or failure["exit_code"] == 0:
     errors.append("failure.exit_code")
+
+bench = payload.get("coding_bench") or {}
+solved = bench.get("solved")
+total = bench.get("total")
+success_rate = bench.get("success_rate")
+artifact_dir = bench.get("artifact_dir")
+if type(solved) is not int or solved < 0:
+    errors.append("coding_bench.solved")
+if type(total) is not int or total < 1:
+    errors.append("coding_bench.total")
+if type(solved) is int and type(total) is int and solved != total:
+    errors.append("coding_bench.solved")
+if type(success_rate) not in {int, float} or float(success_rate) != 100.0:
+    errors.append("coding_bench.success_rate")
+if not isinstance(artifact_dir, str) or not artifact_dir:
+    errors.append("coding_bench.artifact_dir")
+if not isinstance(bench.get("elapsed_seconds"), int) or bench["elapsed_seconds"] < 0:
+    errors.append("coding_bench.elapsed_seconds")
 
 segments = payload.get("segments") or {}
 if segment and segment != "unknown" and segments.get(segment) != "failed":
