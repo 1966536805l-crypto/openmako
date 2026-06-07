@@ -31,19 +31,21 @@ Allowed claim:
 
 ```text
 OpenMako v0.1 audits supplied Evidence Court records for scope violations,
-missing or failed validation evidence, and unsupported success claims.
+missing or failed validation evidence, unsupported success claims, supplied
+artifact provenance, and supplied transcript adapter proof gaps.
 ```
 
 Required caveat:
 
 ```text
-v0.1 audits supplied records only. It does not yet ingest native Claude Code,
-Codex, Cursor, or SWE-bench transcripts.
+v0.1 audits repository-defined supplied records and supplied transcript
+fixtures only. It does not yet ingest native Claude Code, Codex, Cursor, or
+SWE-bench exports.
 ```
 
 ### Not Included In v0.1
 
-- Native Claude Code, Codex, Cursor, or SWE-bench transcript ingestion.
+- Native Claude Code, Codex, Cursor, or SWE-bench export ingestion.
 - Broad unknown-repository SWE repair claims.
 - A published Marketplace GitHub Action.
 - Full-suite or hidden benchmark claims unless the exact command was run on the

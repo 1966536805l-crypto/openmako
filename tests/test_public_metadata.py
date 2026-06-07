@@ -450,14 +450,16 @@ def test_release_checklist_keeps_v01_claims_evidence_gated() -> None:
     assert "tests/test_cli_wrappers.py" in checklist
     assert "artifact named `evidence-court-report`" in checklist
     assert "evidence-court-report.json" in checklist
-    assert "Do not claim native Claude Code, Codex, Cursor, or SWE-bench transcript" in checklist
+    assert "Do not claim native Claude Code, Codex, Cursor, or SWE-bench export" in checklist
+    assert "Current adapter checks cover repository-defined supplied\n  transcript fixtures only." in checklist
     assert "Do not claim broad unknown-repository SWE repair." in checklist
     assert "Do not claim full pytest or hidden benchmark numbers" in checklist
     assert "repository-local composite action" in checklist
     assert "published\n  Marketplace action" in checklist
     assert "git tag -a v0.1.0" in checklist
     assert "git push origin v0.1.0" in checklist
-    assert "v0.1 audits supplied records only" in checklist
+    assert "v0.1 audits repository-defined supplied records and supplied transcript\nfixtures only" in checklist
+    assert "supplied\nartifact provenance, and supplied transcript adapter proof gaps" in checklist
 
 
 def test_changelog_v01_draft_stays_inside_public_evidence_boundary() -> None:
@@ -475,8 +477,9 @@ def test_changelog_v01_draft_stays_inside_public_evidence_boundary() -> None:
     assert ".github/workflows/focused.yml" in changelog
     assert ".github/workflows/evidence-court-demo.yml" in changelog
     assert "OpenMako v0.1 audits supplied Evidence Court records" in changelog
-    assert "v0.1 audits supplied records only" in changelog
-    assert "Native Claude Code, Codex, Cursor, or SWE-bench transcript ingestion" in changelog
+    assert "supplied\nartifact provenance, and supplied transcript adapter proof gaps" in changelog
+    assert "v0.1 audits repository-defined supplied records and supplied transcript\nfixtures only" in changelog
+    assert "Native Claude Code, Codex, Cursor, or SWE-bench export ingestion" in changelog
     assert "Broad unknown-repository SWE repair claims" in changelog
     assert "published Marketplace GitHub Action" in changelog
     assert "Full-suite or hidden benchmark claims" in changelog
@@ -491,6 +494,7 @@ def test_v01_release_notes_draft_is_publishable_without_overclaiming() -> None:
     assert "# OpenMako v0.1.0 Release Notes Draft" in notes
     assert "Do not publish this text until the v0.1 release checklist has passed" in notes
     assert "OpenMako v0.1 audits supplied Evidence Court records" in notes
+    assert "supplied\nartifact provenance, and supplied transcript adapter proof gaps" in notes
     assert "not a replacement for coding agents" in notes
     assert "evidence-court/v0.1" in notes
     assert "openmako evidence-court audit --ci" in notes
@@ -504,8 +508,8 @@ def test_v01_release_notes_draft_is_publishable_without_overclaiming() -> None:
     assert ".github/workflows/focused.yml" in notes
     assert ".github/workflows/evidence-court-demo.yml" in notes
     assert "docs/release_checklist.md" in notes
-    assert "v0.1 audits supplied records only" in notes
-    assert "does not yet ingest native Claude Code,\nCodex, Cursor, or SWE-bench transcripts" in notes
+    assert "v0.1 audits repository-defined supplied records and supplied transcript\nfixtures only" in notes
+    assert "does not yet ingest native Claude Code, Codex, Cursor, or\nSWE-bench exports" in notes
     assert "broad unknown-repository SWE repair" in notes
     assert "published Marketplace GitHub Action" in notes
     assert "has been released" not in notes

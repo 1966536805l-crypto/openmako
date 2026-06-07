@@ -316,6 +316,10 @@ Current public proof:
   supplied-record/provenance audits plus supplied transcript adapter checks,
   rather than supplied-record audits only. This keeps short public text aligned
   with the current gate output without claiming external review or traction.
+- The v0.1 draft release notes, changelog draft, and release checklist now use
+  the same supplied-record/provenance plus supplied transcript fixture boundary.
+  They still exclude native Claude/Codex/Cursor/SWE-bench export ingestion and
+  are not proof that a new release was tagged.
 - `bash scripts/public_share_ready.sh review-request` now runs the public proof
   gate before printing the short public review-request text. It does not post,
   ask for stars or reposts, or record outreach as evidence.

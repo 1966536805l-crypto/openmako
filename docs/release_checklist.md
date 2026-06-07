@@ -31,8 +31,9 @@ python3 -m pytest -p no:cacheprovider \
 
 ## Boundary Checks
 
-- Do not claim native Claude Code, Codex, Cursor, or SWE-bench transcript
-  ingestion unless a real adapter and tests exist.
+- Do not claim native Claude Code, Codex, Cursor, or SWE-bench export
+  ingestion. Current adapter checks cover repository-defined supplied
+  transcript fixtures only.
 - Do not claim broad unknown-repository SWE repair.
 - Do not claim full pytest or hidden benchmark numbers unless those commands
   were run on the release commit.
@@ -55,12 +56,14 @@ Allowed claim:
 
 ```text
 OpenMako v0.1 audits supplied Evidence Court records for scope violations,
-missing or failed validation evidence, and unsupported success claims.
+missing or failed validation evidence, unsupported success claims, supplied
+artifact provenance, and supplied transcript adapter proof gaps.
 ```
 
 Required caveat:
 
 ```text
-v0.1 audits supplied records only. It does not yet ingest native Claude Code,
-Codex, Cursor, or SWE-bench transcripts.
+v0.1 audits repository-defined supplied records and supplied transcript
+fixtures only. It does not yet ingest native Claude Code, Codex, Cursor, or
+SWE-bench exports.
 ```
