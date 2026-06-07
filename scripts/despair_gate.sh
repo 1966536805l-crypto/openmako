@@ -123,15 +123,16 @@ payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 summary = payload.get("summary") or {}
 artifact_dir = payload.get("artifact_dir") or ""
 if "runs" in payload:
-    runs = payload.get("runs") or []
     summary = payload.get("summary") or {}
     artifact_dir = payload.get("artifact_dir") or ""
     solved = summary.get("solved")
     total = summary.get("total_task_attempts")
+    success_rate = summary.get("overall_success_rate")
 else:
     solved = summary.get("solved")
     total = summary.get("total")
-print(f"despair-gate: coding-bench solved={solved}/{total} success_rate={summary.get('success_rate')}")
+    success_rate = summary.get("success_rate")
+print(f"despair-gate: coding-bench solved={solved}/{total} success_rate={success_rate}")
 print(f"despair-gate: coding-bench artifact_dir={artifact_dir}")
 PY
 

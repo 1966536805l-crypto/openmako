@@ -29,23 +29,16 @@ class CliWrapperTest(unittest.TestCase):
             check=False,
         )
 
-    def test_openmako_help_uses_real_cli(self) -> None:
-        result = self.run_openmako("--help")
-
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("agent-autopsy", result.stdout)
-
-    def test_despair_gate_smoke_uses_limited_real_cli_bench(self) -> None:
+    def run_despair_gate_smoke(self, *extra_args: str) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
         env["PYTHON"] = sys.executable
         env["QUANTAGENT_SECRETS_FILE"] = "/dev/null"
         env["PYTHONPATH"] = str(ROOT) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
-        result = subprocess.run(
+        return subprocess.run(
             [
                 "bash",
                 "scripts/despair_gate.sh",
-                "--bench-limit",
-                "1",
+                *extra_args,
                 "--skip-external-regression",
                 "--skip-full-pytest",
                 "--skip-public-gate",
@@ -59,11 +52,28 @@ class CliWrapperTest(unittest.TestCase):
             check=False,
         )
 
+    def test_openmako_help_uses_real_cli(self) -> None:
+        result = self.run_openmako("--help")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("agent-autopsy", result.stdout)
+
+    def test_despair_gate_smoke_uses_limited_real_cli_bench(self) -> None:
+        result = self.run_despair_gate_smoke("--bench-limit", "1")
+
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("despair-gate: coding-bench solved=1/1 success_rate=100.0", result.stdout)
         self.assertIn("despair-gate: skipping full repository pytest", result.stdout)
         self.assertIn("despair-gate: PASS", result.stdout)
         self.assertIn("not-proof=external review", result.stdout)
+
+    def test_despair_gate_smoke_summarizes_repeated_coding_bench(self) -> None:
+        result = self.run_despair_gate_smoke("--bench-limit", "1", "--bench-repeats", "2")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("despair-gate: coding-bench solved=2/2 success_rate=100.0", result.stdout)
+        self.assertIn("despair-gate: PASS", result.stdout)
+        self.assertNotIn("success_rate=None", result.stdout)
 
     def test_openmako_bad_run_demo_reports_failed_verification(self) -> None:
         result = self.run_openmako(

@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 import time
+import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -164,6 +165,10 @@ def coding_bench_dir(project: str | Path) -> Path:
     return Path(project).expanduser().resolve(strict=False) / ".quantagent" / "coding_bench"
 
 
+def _new_coding_bench_run_id(prefix: str) -> str:
+    return f"{prefix}-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:8]}"
+
+
 def builtin_coding_bench_tasks() -> list[CodingBenchTask]:
     return [_task(spec) for spec in _builtin_specs()]
 
@@ -223,7 +228,7 @@ def run_coding_bench(
     tasks = load_coding_bench_tasks(task_file) if task_file else builtin_coding_bench_tasks()
     if limit is not None:
         tasks = tasks[: max(limit, 0)]
-    run_id = datetime.now().strftime("cbench-%Y%m%d-%H%M%S")
+    run_id = _new_coding_bench_run_id("cbench")
     artifact_dir = coding_bench_dir(project_path) / "runs" / run_id
     workspace_root = artifact_dir / "workspaces"
     workspace_root.mkdir(parents=True, exist_ok=True)
@@ -331,7 +336,7 @@ def run_coding_bench_stability(
     _validate_agent_command_template(agent_command)
 
     project_path = Path(project).expanduser().resolve(strict=False)
-    run_id = datetime.now().strftime("cbench-stability-%Y%m%d-%H%M%S")
+    run_id = _new_coding_bench_run_id("cbench-stability")
     artifact_dir = coding_bench_dir(project_path) / "stability" / run_id
     runs: list[CodingBenchRun] = []
     for index in range(1, repeats + 1):

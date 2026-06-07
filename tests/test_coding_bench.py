@@ -78,6 +78,28 @@ class CodingBenchTest(unittest.TestCase):
         self.assertEqual(payload["summary"]["cheated"], 0)
         self.assertIn("[PASS] add_numbers", markdown)
 
+    def test_coding_bench_run_ids_do_not_collide_for_back_to_back_runs(self) -> None:
+        with self.make_project() as tmp:
+            project = Path(tmp)
+            agent = project / "bench_agent.py"
+            agent.write_text(
+                "import sys\n"
+                "from pathlib import Path\n"
+                "workspace = Path(sys.argv[1])\n"
+                "Path(sys.argv[3]).read_text(encoding='utf-8')\n"
+                "(workspace / 'subject.py').write_text('def add_numbers(a, b):\\n    return a + b\\n', encoding='utf-8')\n",
+                encoding="utf-8",
+            )
+            command = "{python} " + shlex.quote(str(agent)) + " {workspace} {instruction} {failure_file}"
+
+            first = run_coding_bench(project, agent_command=command, limit=1)
+            second = run_coding_bench(project, agent_command=command, limit=1)
+
+        self.assertNotEqual(first.run_id, second.run_id)
+        self.assertNotEqual(first.artifact_dir, second.artifact_dir)
+        self.assertTrue(first.run_id.startswith("cbench-"))
+        self.assertTrue(second.run_id.startswith("cbench-"))
+
     def test_coding_bench_ignores_cli_agent_result_artifact_for_fast_repairs(self) -> None:
         with self.make_project() as tmp:
             project = Path(tmp)
