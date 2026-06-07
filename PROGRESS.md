@@ -33,6 +33,11 @@ Current public proof:
   `status=dry_run`, `scenarios=8`, and `level=L2`, so this is local
   regression evidence only, not live desktop-control proof, external review,
   benchmark ranking, stars, or endorsement.
+- `bash scripts/despair_gate.sh` now wraps that high-intensity local loop into
+  a repeatable gate. By default it runs the real-CLI CodingBench pack, the
+  external multimodule regression file, full repository pytest, the public
+  review gate, and the desktop local gate. Its skip and limit flags are for
+  script smoke testing only; they do not create public proof.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:
