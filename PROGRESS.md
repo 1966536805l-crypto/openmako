@@ -12,6 +12,12 @@ Current public proof:
   `665a12912822218f81442598ece268175f30f1c3` before this note was added.
   Re-check the latest `openmako/main` run before claiming current remote CI;
   the snapshot is not external review, endorsement, stars, or reposts.
+- `bash scripts/remote_focused_ci_snapshot.sh` is the fail-closed re-check tool
+  for the latest focused workflow on current `openmako/main`. It prints
+  `not-proof=external review; endorsement; stars; reposts` and returns nonzero
+  if the latest focused run is stale, still running, failed, missing, or rate
+  limited. Passing this script is current focused-CI evidence only, not external
+  review or traction.
 - Latest local send-ready check on 2026-06-05 passed:
   `./scripts/public_review_gate.sh` ended with `public-review-gate: PASS`;
   `bash scripts/wave1_send_ready.sh swe-agent` re-ran the gate and printed a

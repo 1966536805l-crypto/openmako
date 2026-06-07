@@ -557,6 +557,11 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "A 2026-06-07 GitHub API snapshot showed `.github/workflows/focused.yml`\n  run `27096660497` completed with `conclusion=success`" in progress
     assert "665a12912822218f81442598ece268175f30f1c3" in progress
     assert "Re-check the latest `openmako/main` run before claiming current remote CI;\n  the snapshot is not external review, endorsement, stars, or reposts." in progress
+    assert "bash scripts/remote_focused_ci_snapshot.sh" in progress
+    assert "the fail-closed re-check tool\n  for the latest focused workflow on current `openmako/main`" in progress
+    assert "not-proof=external review; endorsement; stars; reposts" in progress
+    assert "returns nonzero\n  if the latest focused run is stale, still running, failed, missing, or rate\n  limited" in progress
+    assert "Passing this script is current focused-CI evidence only, not external\n  review or traction." in progress
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in progress
     assert "External technical boundary criticism is requested in issue #2" in progress
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in progress
