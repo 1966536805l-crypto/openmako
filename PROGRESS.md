@@ -10,6 +10,9 @@ Current public proof:
   A 2026-06-07 GitHub API snapshot showed `.github/workflows/focused.yml`
   run `27096660497` completed with `conclusion=success` on commit
   `665a12912822218f81442598ece268175f30f1c3` before this note was added.
+  A 2026-06-08 re-check showed focused workflow run `27098553051`
+  completed with `conclusion=success` on commit
+  `322b1d8446bad309bfb960f5a3e8c976c3a02772`.
   Re-check the latest `openmako/main` run before claiming current remote CI;
   the snapshot is not external review, endorsement, stars, or reposts.
 - `bash scripts/remote_focused_ci_snapshot.sh` is the fail-closed re-check tool
