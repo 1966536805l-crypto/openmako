@@ -365,6 +365,8 @@ def test_readme_has_runnable_bad_run_demo() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     assert "## CI Quickstart" in readme
+    assert "a matching CI workflow\nresult for that exact claim" in readme
+    assert "passing CI for that exact\nclaim" not in readme
     assert (
         "./bin/openmako --no-trust-prompt evidence-court record from-jsonl "
         "--output run.json examples/evidence_court/simple_events.jsonl"

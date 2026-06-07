@@ -112,8 +112,8 @@ and fail closed when patch scope, test proof, or run evidence is missing.
 
 The repository also contains older and experimental implementation paths. Those
 paths are inspectable source, but they are not v0.1 launch claims until each has
-a reproducible command, linked public evidence, and passing CI for that exact
-claim.
+a reproducible command, linked public evidence, and a matching CI workflow
+result for that exact claim.
 
 ## CI Quickstart
 
