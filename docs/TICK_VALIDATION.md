@@ -1,6 +1,6 @@
 # Tick Validation System
 
-Internal legacy quant documentation. This is not the current public v0.1 capability claim; the current public proof is the focused learning-effect gate linked from README.md and issue #1.
+Internal legacy quant documentation. This is not the current public v0.1 capability claim; the current public proof command is `./scripts/public_review_gate.sh`.
 
 ## Overview
 

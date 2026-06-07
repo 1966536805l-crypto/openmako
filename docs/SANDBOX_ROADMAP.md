@@ -1,6 +1,6 @@
 # QuantAgent Sandbox Roadmap
 
-Internal legacy QuantAgent roadmap. This is not the current public v0.1 capability claim; the current public proof is the focused learning-effect gate linked from README.md and issue #1.
+Internal legacy QuantAgent roadmap. This is not the current public v0.1 capability claim; the current public proof command is `./scripts/public_review_gate.sh`.
 
 This roadmap adapts sandbox and tool-policy separation concepts from OpenClaw
 under its MIT license. QuantAgent keeps the implementation project-native; this

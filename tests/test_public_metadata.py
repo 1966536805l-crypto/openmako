@@ -1774,7 +1774,11 @@ def test_high_risk_planning_docs_are_not_public_claims() -> None:
         "docs/OPENCLAW_HERMES_FULL_PORT_PLAN.md",
         "docs/OPENCLAW_HERMES_COPY_WHITELIST.md",
         "docs/OPENCLAW_LEVEL_TARGET.md",
+        "docs/OPENAI_COMPATIBLE_SETUP.md",
+        "docs/SAFETY_POLICY.md",
+        "docs/SANDBOX_ROADMAP.md",
         "docs/SOURCE_COPY_BORROW_MATRIX.md",
+        "docs/TICK_VALIDATION.md",
     )
 
     for relative_path in INTERNAL_PLANNING_DOCS:
