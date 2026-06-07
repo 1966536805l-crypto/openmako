@@ -196,6 +196,16 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn(f"run-sha={stale_sha}", result.stdout)
         self.assertIn("latest focused run does not match remote main", result.stderr)
 
+    def test_remote_focused_ci_snapshot_rejects_empty_run_list(self) -> None:
+        result = self.run_remote_focused_ci_snapshot(
+            {"workflow_runs": []},
+            "d" * 40,
+        )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("no focused workflow runs found", result.stderr)
+
     def test_remote_focused_ci_snapshot_rejects_matching_in_progress_run(self) -> None:
         remote_sha = "d" * 40
         result = self.run_remote_focused_ci_snapshot(
@@ -217,6 +227,20 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("run-id=789", result.stdout)
         self.assertIn("status=in_progress conclusion=None", result.stdout)
         self.assertIn("focused workflow is not completed/success", result.stderr)
+
+    def test_remote_focused_ci_snapshot_rejects_missing_run_fields(self) -> None:
+        remote_sha = "e" * 40
+        result = self.run_remote_focused_ci_snapshot(
+            {"workflow_runs": [{"id": 999}]},
+            remote_sha,
+        )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(f"remote-main-sha={remote_sha}", result.stdout)
+        self.assertIn("run-id=999", result.stdout)
+        self.assertIn("run-sha=None", result.stdout)
+        self.assertIn("status=None conclusion=None", result.stdout)
+        self.assertIn("latest focused run does not match remote main", result.stderr)
 
     def test_desktop_control_proof_card_surfaces_safety_rates_and_boundaries(self) -> None:
         result = self.run_desktop_control_proof_card()
