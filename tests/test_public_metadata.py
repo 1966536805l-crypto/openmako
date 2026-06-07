@@ -1764,6 +1764,7 @@ def test_legacy_quant_test_artifacts_are_archived_out_of_repository_root() -> No
 
 def test_high_risk_planning_docs_are_not_public_claims() -> None:
     updated_boundary_docs = (
+        "docs/CLAUDE_SRC_ABSORPTION_PLAN.md",
         "docs/COMPARISON.md",
         "docs/DESKTOP_DAEMON_L4.md",
         "docs/DESKTOP_L5_ROADMAP.md",
