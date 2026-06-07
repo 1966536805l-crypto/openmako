@@ -261,6 +261,8 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     benchmark_thread_index = readme.index("## If You Came From A Benchmark Thread")
     review_index = readme.index("## Technical Review Entry Points")
     scope_index = readme.index("## Public v0.1 Scope")
+    install_index = readme.index("## Install And Reproduce")
+    evidence_links_index = readme.index("## Public Evidence Links")
 
     assert why_index < proof_index
     assert proof_index < review_index
@@ -309,6 +311,11 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "If something is unclear, please point to the file, command, workflow, or\nmissing artifact." in proof_section
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in proof_section.lower()
+    install_section = readme[install_index:evidence_links_index]
+    assert (
+        "the\nsupplied Evidence Court bad-run audit, the artifact-provenance fixture, "
+        "the\nSWTBench patch-artifact fixture, and the supplied transcript adapter matrix"
+    ) in install_section
     review_section = readme[review_index:scope_index]
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in review_section
     assert "issues/new?template=technical-boundary-check.yml" in review_section

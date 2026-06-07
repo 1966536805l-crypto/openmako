@@ -207,8 +207,10 @@ python -m pip install -e . pytest
 ./scripts/public_review_gate.sh
 ```
 
-That script runs the focused public gate, metadata boundary checks, and supplied
-Evidence Court bad-run audit. To run only the focused learning-effect gate:
+That script runs the focused public gate, metadata boundary checks, the
+supplied Evidence Court bad-run audit, the artifact-provenance fixture, the
+SWTBench patch-artifact fixture, and the supplied transcript adapter matrix.
+To run only the focused learning-effect gate:
 
 ```bash
 python -m pytest -p no:cacheprovider \

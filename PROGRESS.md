@@ -333,6 +333,12 @@ Current public proof:
   public proof command instead of a separate pytest-only subset.
 - GitHub Actions also runs the supplied-record Evidence Court demo through
   `.github/workflows/evidence-court-demo.yml`.
+- The README install/reproduce path now names every current public gate
+  subcheck: focused tests, metadata boundary tests, the supplied bad-run audit,
+  artifact provenance, SWTBench patch-artifact provenance, and the supplied
+  transcript adapter matrix. Metadata tests lock this wording against the gate
+  output. This is documentation/proof-surface alignment, not new capability
+  proof.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
