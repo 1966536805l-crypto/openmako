@@ -13,6 +13,8 @@ RUN_PUBLIC_GATE=1
 RUN_DESKTOP_GATE=1
 BENCH_REPEATS=1
 BENCH_LIMIT=""
+ORIGINAL_ARGS=("$@")
+GIT_COMMIT="$(git rev-parse HEAD 2>/dev/null || printf unknown)"
 SUMMARY_JSON="${OPENMAKO_DESPAIR_GATE_SUMMARY_JSON:-.quantagent/despair_gate/last_summary.json}"
 SUMMARY_DIR="$(dirname -- "$SUMMARY_JSON")"
 TMP_DIR="$(mktemp -d)"
@@ -157,7 +159,7 @@ else
     --json > "$BENCH_JSON"
 fi
 
-"$PYTHON_BIN" - "$BENCH_JSON" "$SUMMARY_JSON" "$RUN_EXTERNAL_REGRESSION" "$RUN_FULL_PYTEST" "$RUN_PUBLIC_GATE" "$RUN_DESKTOP_GATE" "$BENCH_REPEATS" "${BENCH_LIMIT:-}" <<'PY'
+"$PYTHON_BIN" - "$BENCH_JSON" "$SUMMARY_JSON" "$RUN_EXTERNAL_REGRESSION" "$RUN_FULL_PYTEST" "$RUN_PUBLIC_GATE" "$RUN_DESKTOP_GATE" "$BENCH_REPEATS" "${BENCH_LIMIT:-}" "$GIT_COMMIT" "${ORIGINAL_ARGS[@]}" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -188,6 +190,10 @@ gate_summary = {
         "success_rate": success_rate,
         "repeats": int(sys.argv[7]),
         "limit": int(sys.argv[8]) if sys.argv[8] else None,
+    },
+    "invocation": {
+        "git_commit": sys.argv[9],
+        "argv": sys.argv[10:],
     },
     "segments": {
         "external_regression": "pending" if sys.argv[3] == "1" else "skipped",

@@ -17,6 +17,9 @@ DESPAIR_FAILURE_SUMMARY_REL = ".quantagent/despair_gate/test_failure_summary.jso
 
 
 class CliWrapperTest(unittest.TestCase):
+    def current_git_commit(self) -> str:
+        return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=str(ROOT), text=True).strip()
+
     def run_openmako(self, *args: str) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
         env["QUANTAGENT_SECRETS_FILE"] = "/dev/null"
@@ -100,6 +103,18 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(summary["status"], "passed")
         self.assertEqual(summary["coding_bench"]["solved"], 1)
         self.assertEqual(summary["coding_bench"]["total"], 1)
+        self.assertEqual(summary["invocation"]["git_commit"], self.current_git_commit())
+        self.assertEqual(
+            summary["invocation"]["argv"],
+            [
+                "--bench-limit",
+                "1",
+                "--skip-external-regression",
+                "--skip-full-pytest",
+                "--skip-public-gate",
+                "--skip-desktop-gate",
+            ],
+        )
         self.assertEqual(summary["segments"]["full_pytest"], "skipped")
         self.assertIn("external review", summary["not_proof"])
 

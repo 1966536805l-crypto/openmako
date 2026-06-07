@@ -183,6 +183,9 @@ def test_despair_gate_is_repeatable_but_not_a_public_claim() -> None:
 
     assert os.access(script, os.X_OK)
     assert "coding-bench solved=" in text
+    assert '"invocation"' in text
+    assert '"git_commit"' in text
+    assert '"argv"' in text
     assert "tests/test_external_benchmark_multimodule_regression.py" in text
     assert '"$PYTHON_BIN" -m pytest -p no:cacheprovider -q' in text
     assert "bash scripts/public_review_gate.sh" in text
