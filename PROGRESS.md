@@ -158,7 +158,9 @@ Current public proof:
   exports, live control, benchmark ingestion, or endorsement.
 - `scripts/public_review_gate.sh` wraps the local reviewer proof command:
   focused public tests, metadata boundary checks, and supplied-record
-  Evidence Court bad-run audit.
+  Evidence Court bad-run audit. It parses Evidence Court audit JSON fields for
+  `failure_class`, `failed_at`, `patch_shape.bucket`, and
+  `artifact_provenance.eval_rule_version` instead of grepping raw output.
 - The `run-metrics` evidence extension is on `main`: Evidence Court preserves
   optional duration, token, cost, command-count, and missing-telemetry fields
   as `run_metrics` in supplied records and audit JSON. Provider/model fields
