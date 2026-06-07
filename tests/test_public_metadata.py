@@ -539,6 +539,8 @@ def test_readme_uses_reviewable_public_claims() -> None:
     assert "desktop-control-local-gate: status=dry_run" in beyond
     assert "desktop-control-local-gate: scenarios=8" in beyond
     assert "desktop-control-local-gate: level=L2" in beyond
+    assert "desktop-control-local-gate: misoperation_rate=0.0" in beyond
+    assert "desktop-control-local-gate: crash_rate=0.0" in beyond
     assert "not-proof=live desktop control, L4, L5, external endorsement, star or repost traction" in beyond
     assert "It is useful implementation evidence, not a claim\nthat OpenMako has live L4/L5 desktop autonomy." in beyond
     assert "OpenMako's project policy is clean-room implementation for closed-source tools" in readme
@@ -740,6 +742,8 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "desktop-control-local-gate: status=dry_run" in packet
     assert "desktop-control-local-gate: scenarios=8" in packet
     assert "desktop-control-local-gate: level=L2" in packet
+    assert "desktop-control-local-gate: misoperation_rate=0.0" in packet
+    assert "desktop-control-local-gate: crash_rate=0.0" in packet
     assert "not-proof=live desktop control, L4, L5, external endorsement, star or repost traction" in packet
     assert "It is not evidence that OpenMako has live L4/L5 desktop autonomy." in packet
     assert "Does README claim more than the focused tests and CI prove?" in packet

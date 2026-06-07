@@ -297,6 +297,8 @@ Expected boundary signal:
 desktop-control-local-gate: status=dry_run
 desktop-control-local-gate: scenarios=8
 desktop-control-local-gate: level=L2
+desktop-control-local-gate: misoperation_rate=0.0
+desktop-control-local-gate: crash_rate=0.0
 desktop-control-local-gate: not-proof=live desktop control, L4, L5, external endorsement, star or repost traction
 desktop-control-local-gate: PASS
 ```
