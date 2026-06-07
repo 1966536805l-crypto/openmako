@@ -114,6 +114,44 @@ if errors:
 PY
 }
 
+validate_failure_summary() {
+  "$PYTHON_BIN" - "$SUMMARY_JSON" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+errors = []
+
+if payload.get("schema_version") != "despair-gate/v0.1":
+    errors.append("schema_version")
+if payload.get("status") != "failed":
+    errors.append("status")
+
+failure = payload.get("failure") or {}
+segment = failure.get("segment")
+if not segment:
+    errors.append("failure.segment")
+if not isinstance(failure.get("exit_code"), int) or failure["exit_code"] == 0:
+    errors.append("failure.exit_code")
+
+segments = payload.get("segments") or {}
+if segment and segment != "unknown" and segments.get(segment) != "failed":
+    errors.append(f"segments.{segment}")
+
+elapsed = payload.get("segment_elapsed_seconds") or {}
+if segment and segment != "unknown":
+    value = elapsed.get(segment)
+    if not isinstance(value, int) or value < 0:
+        errors.append(f"segment_elapsed_seconds.{segment}")
+
+if errors:
+    print("despair-gate: invalid failure summary fields=" + ",".join(errors), file=sys.stderr)
+    raise SystemExit(1)
+PY
+}
+
 on_error() {
   rc="$1"
   trap - ERR
@@ -138,6 +176,7 @@ payload["failure"] = {
 }
 path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 PY
+    validate_failure_summary || true
     echo "despair-gate: FAILED segment=$failed_segment summary=$SUMMARY_JSON" >&2
   fi
   exit "$rc"

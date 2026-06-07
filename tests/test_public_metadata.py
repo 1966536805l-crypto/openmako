@@ -191,7 +191,9 @@ def test_despair_gate_is_repeatable_but_not_a_public_claim() -> None:
     assert '"failure"' in text
     assert '"exit_code"' in text
     assert "validate_summary" in text
+    assert "validate_failure_summary" in text
     assert "despair-gate: invalid summary fields=" in text
+    assert "despair-gate: invalid failure summary fields=" in text
     assert "tests/test_external_benchmark_multimodule_regression.py" in text
     assert '"$PYTHON_BIN" -m pytest -p no:cacheprovider -q' in text
     assert "bash scripts/public_review_gate.sh" in text
@@ -227,6 +229,7 @@ def test_despair_gate_is_repeatable_but_not_a_public_claim() -> None:
     assert "Smoke-test\n  calls can write to a separate summary path" in progress
     assert "invoking commit, argv,\n  CodingBench elapsed seconds, and per-segment elapsed seconds" in progress
     assert "validates the summary before printing `PASS`" in progress
+    assert "Failed\n  summaries are validated after failure metadata is written" in progress
     assert "internally inconsistent summaries fail closed" in progress
 
 
