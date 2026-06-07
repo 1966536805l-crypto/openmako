@@ -670,6 +670,7 @@ def test_remote_focused_ci_snapshot_script_is_fail_closed_and_token_aware() -> N
     assert "latest focused run does not match remote main" in text
     assert "focused workflow is not completed/success" in text
     assert "GitHub API rate limit; re-check later" in text
+    assert "or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN for authenticated API reads" in text
     for forbidden in FORBIDDEN_README_CLAIMS:
         assert forbidden.lower() not in text.lower()
 

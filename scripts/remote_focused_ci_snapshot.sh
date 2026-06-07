@@ -56,7 +56,11 @@ try:
 except urllib.error.HTTPError as exc:
     body = exc.read().decode("utf-8", errors="replace")
     if exc.code == 403 and "rate limit" in body.lower():
-        print("remote-focused-ci-snapshot: GitHub API rate limit; re-check later", file=sys.stderr)
+        print(
+            "remote-focused-ci-snapshot: GitHub API rate limit; re-check later "
+            "or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN for authenticated API reads",
+            file=sys.stderr,
+        )
         sys.exit(2)
     print(f"remote-focused-ci-snapshot: GitHub API error {exc.code}: {body}", file=sys.stderr)
     sys.exit(2)
