@@ -16,11 +16,51 @@ BENCH_LIMIT=""
 SUMMARY_DIR=".quantagent/despair_gate"
 SUMMARY_JSON="$SUMMARY_DIR/last_summary.json"
 TMP_DIR="$(mktemp -d)"
+CURRENT_SEGMENT=""
 
 cleanup() {
   rm -rf "$TMP_DIR"
 }
 trap cleanup EXIT
+
+update_summary() {
+  "$PYTHON_BIN" - "$SUMMARY_JSON" "$1" "$2" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+segment = sys.argv[2]
+status = sys.argv[3]
+if segment:
+    payload["segments"][segment] = status
+else:
+    payload["status"] = status
+path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
+on_error() {
+  rc="$1"
+  trap - ERR
+  if [ -f "$SUMMARY_JSON" ]; then
+    if [ -n "$CURRENT_SEGMENT" ]; then
+      update_summary "$CURRENT_SEGMENT" failed || true
+    fi
+    update_summary "" failed || true
+    echo "despair-gate: FAILED segment=${CURRENT_SEGMENT:-unknown} summary=$SUMMARY_JSON" >&2
+  fi
+  exit "$rc"
+}
+
+maybe_inject_test_failure() {
+  if [ "${OPENMAKO_DESPAIR_GATE_TEST_FAIL_SEGMENT:-}" = "$1" ]; then
+    echo "despair-gate: injecting test failure for segment=$1" >&2
+    return 1
+  fi
+  return 0
+}
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -169,86 +209,55 @@ gate_summary = {
 summary_path.write_text(json.dumps(gate_summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 PY
 
+trap 'on_error "$?"' ERR
+
 if [ "$RUN_EXTERNAL_REGRESSION" -eq 1 ]; then
+  CURRENT_SEGMENT="external_regression"
+  maybe_inject_test_failure "$CURRENT_SEGMENT"
   echo "despair-gate: running external multimodule hidden regression"
   "$PYTHON_BIN" -m pytest -p no:cacheprovider \
     tests/test_external_benchmark_multimodule_regression.py \
     -q
-  "$PYTHON_BIN" - "$SUMMARY_JSON" external_regression passed <<'PY'
-import json
-import sys
-from pathlib import Path
-
-path = Path(sys.argv[1])
-payload = json.loads(path.read_text(encoding="utf-8"))
-payload["segments"][sys.argv[2]] = sys.argv[3]
-path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-PY
+  update_summary "$CURRENT_SEGMENT" passed
+  CURRENT_SEGMENT=""
 else
   echo "despair-gate: skipping external multimodule hidden regression"
 fi
 
 if [ "$RUN_FULL_PYTEST" -eq 1 ]; then
+  CURRENT_SEGMENT="full_pytest"
+  maybe_inject_test_failure "$CURRENT_SEGMENT"
   echo "despair-gate: running full repository pytest"
   "$PYTHON_BIN" -m pytest -p no:cacheprovider -q
-  "$PYTHON_BIN" - "$SUMMARY_JSON" full_pytest passed <<'PY'
-import json
-import sys
-from pathlib import Path
-
-path = Path(sys.argv[1])
-payload = json.loads(path.read_text(encoding="utf-8"))
-payload["segments"][sys.argv[2]] = sys.argv[3]
-path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-PY
+  update_summary "$CURRENT_SEGMENT" passed
+  CURRENT_SEGMENT=""
 else
   echo "despair-gate: skipping full repository pytest"
 fi
 
 if [ "$RUN_PUBLIC_GATE" -eq 1 ]; then
+  CURRENT_SEGMENT="public_gate"
+  maybe_inject_test_failure "$CURRENT_SEGMENT"
   echo "despair-gate: running public review gate"
   bash scripts/public_review_gate.sh
-  "$PYTHON_BIN" - "$SUMMARY_JSON" public_gate passed <<'PY'
-import json
-import sys
-from pathlib import Path
-
-path = Path(sys.argv[1])
-payload = json.loads(path.read_text(encoding="utf-8"))
-payload["segments"][sys.argv[2]] = sys.argv[3]
-path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-PY
+  update_summary "$CURRENT_SEGMENT" passed
+  CURRENT_SEGMENT=""
 else
   echo "despair-gate: skipping public review gate"
 fi
 
 if [ "$RUN_DESKTOP_GATE" -eq 1 ]; then
+  CURRENT_SEGMENT="desktop_gate"
+  maybe_inject_test_failure "$CURRENT_SEGMENT"
   echo "despair-gate: running desktop control local gate"
   bash scripts/desktop_control_local_gate.sh
-  "$PYTHON_BIN" - "$SUMMARY_JSON" desktop_gate passed <<'PY'
-import json
-import sys
-from pathlib import Path
-
-path = Path(sys.argv[1])
-payload = json.loads(path.read_text(encoding="utf-8"))
-payload["segments"][sys.argv[2]] = sys.argv[3]
-path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-PY
+  update_summary "$CURRENT_SEGMENT" passed
+  CURRENT_SEGMENT=""
 else
   echo "despair-gate: skipping desktop control local gate"
 fi
 
-"$PYTHON_BIN" - "$SUMMARY_JSON" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-path = Path(sys.argv[1])
-payload = json.loads(path.read_text(encoding="utf-8"))
-payload["status"] = "passed"
-path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-PY
+update_summary "" passed
 
 echo "despair-gate: PASS"
 echo "despair-gate: summary=$SUMMARY_JSON"

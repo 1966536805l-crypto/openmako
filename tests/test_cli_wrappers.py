@@ -52,6 +52,30 @@ class CliWrapperTest(unittest.TestCase):
             check=False,
         )
 
+    def run_despair_gate_public_gate_failure_smoke(self) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["PYTHON"] = sys.executable
+        env["QUANTAGENT_SECRETS_FILE"] = "/dev/null"
+        env["OPENMAKO_DESPAIR_GATE_TEST_FAIL_SEGMENT"] = "public_gate"
+        env["PYTHONPATH"] = str(ROOT) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+        return subprocess.run(
+            [
+                "bash",
+                "scripts/despair_gate.sh",
+                "--bench-limit",
+                "1",
+                "--skip-external-regression",
+                "--skip-full-pytest",
+                "--skip-desktop-gate",
+            ],
+            cwd=str(ROOT),
+            env=env,
+            text=True,
+            capture_output=True,
+            timeout=20,
+            check=False,
+        )
+
     def test_openmako_help_uses_real_cli(self) -> None:
         result = self.run_openmako("--help")
 
@@ -85,6 +109,24 @@ class CliWrapperTest(unittest.TestCase):
         summary = json.loads((ROOT / ".quantagent" / "despair_gate" / "last_summary.json").read_text(encoding="utf-8"))
         self.assertEqual(summary["coding_bench"]["repeats"], 2)
         self.assertEqual(summary["coding_bench"]["success_rate"], 100.0)
+
+    def test_despair_gate_records_failed_segment_summary(self) -> None:
+        result = self.run_despair_gate_public_gate_failure_smoke()
+
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertIn("despair-gate: injecting test failure for segment=public_gate", result.stderr)
+        self.assertIn(
+            "despair-gate: FAILED segment=public_gate summary=.quantagent/despair_gate/last_summary.json",
+            result.stderr,
+        )
+        summary = json.loads((ROOT / ".quantagent" / "despair_gate" / "last_summary.json").read_text(encoding="utf-8"))
+        self.assertEqual(summary["schema_version"], "despair-gate/v0.1")
+        self.assertEqual(summary["status"], "failed")
+        self.assertEqual(summary["segments"]["external_regression"], "skipped")
+        self.assertEqual(summary["segments"]["full_pytest"], "skipped")
+        self.assertEqual(summary["segments"]["public_gate"], "failed")
+        self.assertEqual(summary["segments"]["desktop_gate"], "skipped")
+        self.assertEqual(summary["coding_bench"]["solved"], 1)
 
     def test_openmako_bad_run_demo_reports_failed_verification(self) -> None:
         result = self.run_openmako(

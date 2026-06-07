@@ -45,7 +45,9 @@ Current public proof:
   debugging failed manual runs; those artifacts are not external review or
   endorsement evidence. The gate also writes
   `.quantagent/despair_gate/last_summary.json` as a local machine-readable
-  run summary with the same non-proof boundary.
+  run summary with the same non-proof boundary. Failed segments are also
+  recorded in that summary so interrupted local gates do not look like
+  successful or still-pending proof.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:
