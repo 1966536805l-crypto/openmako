@@ -706,6 +706,7 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "not-proof=live desktop control, L4, L5, external endorsement, star or repost traction" in packet
     assert "It is not evidence that OpenMako has live L4/L5 desktop autonomy." in packet
     assert "Does README claim more than the focused tests and CI prove?" in packet
+    assert "Are `./scripts/public_review_gate.sh` and issue #1 enough public proof for\n  the narrow claim?" in packet
     assert "A useful review points to a specific file, line, command, workflow, or missing\nartifact." in packet
     assert "## Minimal Review Comment Template" in packet
     assert "Verdict: boundary clear / overclaim / unclear" in packet

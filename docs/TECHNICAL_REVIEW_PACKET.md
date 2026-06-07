@@ -151,7 +151,8 @@ guards. It is not evidence that OpenMako has live L4/L5 desktop autonomy.
 
 - Does README claim more than the focused tests and CI prove?
 - Are old or experimental code paths clearly separated from v0.1 public claims?
-- Is issue #1 enough public proof for the narrow claim?
+- Are `./scripts/public_review_gate.sh` and issue #1 enough public proof for
+  the narrow claim?
 - Does issue #2 ask for technical criticism rather than endorsement?
 - Are there unsupported words such as broad, general, autonomous, L5, or
   unknown-repository repair that should be removed or qualified?
