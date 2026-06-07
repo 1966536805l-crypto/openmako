@@ -1,8 +1,7 @@
 # OpenMako Next Ports
 
 Internal planning note. This is not the current public v0.1 capability claim;
-the current public proof is the focused learning-effect gate linked from
-`README.md` and issue #1.
+the current public proof command is `./scripts/public_review_gate.sh`.
 
 ## Clean-Room Absorption Spine
 

@@ -1,8 +1,7 @@
 # QuantAgent Operator Trust Model
 
 Internal operator-model note. This is not the current public v0.1 capability claim;
-the current public proof is the focused learning-effect gate linked from
-`README.md` and issue #1.
+the current public proof command is `./scripts/public_review_gate.sh`.
 
 This document adapts local-first operator and sandbox-policy concepts from
 OpenClaw under its MIT license. See `docs/UPSTREAM_ATTRIBUTION.md` and the

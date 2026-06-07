@@ -1770,17 +1770,21 @@ def test_high_risk_planning_docs_are_not_public_claims() -> None:
         "docs/DESKTOP_DAEMON_L4.md",
         "docs/DESKTOP_L5_ROADMAP.md",
         "docs/AGENT_PORTING_SWARM.md",
+        "docs/DESIGN_DECISIONS.md",
         "docs/HERMES_OPENCLAW_SOURCE_SCAN.md",
         "docs/LAUNCH_PLAYBOOK.md",
         "docs/MARKET_TOOL_COPY_SCAN.md",
+        "docs/OPENMAKO_NEXT_PORTS.md",
         "docs/OPENCLAW_HERMES_FULL_PORT_PLAN.md",
         "docs/OPENCLAW_HERMES_COPY_WHITELIST.md",
         "docs/OPENCLAW_LEVEL_TARGET.md",
         "docs/OPENAI_COMPATIBLE_SETUP.md",
+        "docs/OPERATOR_TRUST_MODEL.md",
         "docs/SAFETY_POLICY.md",
         "docs/SANDBOX_ROADMAP.md",
         "docs/SOURCE_COPY_BORROW_MATRIX.md",
         "docs/TICK_VALIDATION.md",
+        "docs/UPSTREAM_ATTRIBUTION.md",
     )
 
     for relative_path in INTERNAL_PLANNING_DOCS:
