@@ -13,8 +13,8 @@ RUN_PUBLIC_GATE=1
 RUN_DESKTOP_GATE=1
 BENCH_REPEATS=1
 BENCH_LIMIT=""
-SUMMARY_DIR=".quantagent/despair_gate"
-SUMMARY_JSON="$SUMMARY_DIR/last_summary.json"
+SUMMARY_JSON="${OPENMAKO_DESPAIR_GATE_SUMMARY_JSON:-.quantagent/despair_gate/last_summary.json}"
+SUMMARY_DIR="$(dirname -- "$SUMMARY_JSON")"
 TMP_DIR="$(mktemp -d)"
 CURRENT_SEGMENT=""
 

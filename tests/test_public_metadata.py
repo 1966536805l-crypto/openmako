@@ -189,6 +189,7 @@ def test_despair_gate_is_repeatable_but_not_a_public_claim() -> None:
     assert "bash scripts/desktop_control_local_gate.sh" in text
     assert "--skip-full-pytest" in text
     assert "--bench-limit" in text
+    assert "OPENMAKO_DESPAIR_GATE_SUMMARY_JSON" in text
     assert "OPENMAKO_DESPAIR_GATE_TEST_FAIL_SEGMENT" in text
     assert "despair-gate: FAILED segment=" in text
     assert "not-proof=external review, benchmark ranking, live desktop control, L4, L5, stars, reposts, endorsement" in text
@@ -214,6 +215,7 @@ def test_despair_gate_is_repeatable_but_not_a_public_claim() -> None:
     assert "uploads CodingBench artifacts for\n  debugging failed manual runs" in progress
     assert "`.quantagent/despair_gate/last_summary.json` as a local machine-readable\n  run summary" in progress
     assert "Failed segments are also\n  recorded in that summary" in progress
+    assert "Smoke-test calls can write to a separate\n  summary path" in progress
 
 
 def test_agent_trend_radar_tracks_current_next_build_target() -> None:

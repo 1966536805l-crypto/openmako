@@ -12,6 +12,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "agent_autopsy" / "agent_modified_test_failed"
+DESPAIR_SMOKE_SUMMARY_REL = ".quantagent/despair_gate/test_smoke_summary.json"
+DESPAIR_FAILURE_SUMMARY_REL = ".quantagent/despair_gate/test_failure_summary.json"
 
 
 class CliWrapperTest(unittest.TestCase):
@@ -33,6 +35,7 @@ class CliWrapperTest(unittest.TestCase):
         env = os.environ.copy()
         env["PYTHON"] = sys.executable
         env["QUANTAGENT_SECRETS_FILE"] = "/dev/null"
+        env["OPENMAKO_DESPAIR_GATE_SUMMARY_JSON"] = DESPAIR_SMOKE_SUMMARY_REL
         env["PYTHONPATH"] = str(ROOT) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
         return subprocess.run(
             [
@@ -57,6 +60,7 @@ class CliWrapperTest(unittest.TestCase):
         env["PYTHON"] = sys.executable
         env["QUANTAGENT_SECRETS_FILE"] = "/dev/null"
         env["OPENMAKO_DESPAIR_GATE_TEST_FAIL_SEGMENT"] = "public_gate"
+        env["OPENMAKO_DESPAIR_GATE_SUMMARY_JSON"] = DESPAIR_FAILURE_SUMMARY_REL
         env["PYTHONPATH"] = str(ROOT) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
         return subprocess.run(
             [
@@ -89,9 +93,9 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("despair-gate: coding-bench solved=1/1 success_rate=100.0", result.stdout)
         self.assertIn("despair-gate: skipping full repository pytest", result.stdout)
         self.assertIn("despair-gate: PASS", result.stdout)
-        self.assertIn("despair-gate: summary=.quantagent/despair_gate/last_summary.json", result.stdout)
+        self.assertIn(f"despair-gate: summary={DESPAIR_SMOKE_SUMMARY_REL}", result.stdout)
         self.assertIn("not-proof=external review", result.stdout)
-        summary = json.loads((ROOT / ".quantagent" / "despair_gate" / "last_summary.json").read_text(encoding="utf-8"))
+        summary = json.loads((ROOT / DESPAIR_SMOKE_SUMMARY_REL).read_text(encoding="utf-8"))
         self.assertEqual(summary["schema_version"], "despair-gate/v0.1")
         self.assertEqual(summary["status"], "passed")
         self.assertEqual(summary["coding_bench"]["solved"], 1)
@@ -106,7 +110,7 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("despair-gate: coding-bench solved=2/2 success_rate=100.0", result.stdout)
         self.assertIn("despair-gate: PASS", result.stdout)
         self.assertNotIn("success_rate=None", result.stdout)
-        summary = json.loads((ROOT / ".quantagent" / "despair_gate" / "last_summary.json").read_text(encoding="utf-8"))
+        summary = json.loads((ROOT / DESPAIR_SMOKE_SUMMARY_REL).read_text(encoding="utf-8"))
         self.assertEqual(summary["coding_bench"]["repeats"], 2)
         self.assertEqual(summary["coding_bench"]["success_rate"], 100.0)
 
@@ -116,10 +120,10 @@ class CliWrapperTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0, result.stdout)
         self.assertIn("despair-gate: injecting test failure for segment=public_gate", result.stderr)
         self.assertIn(
-            "despair-gate: FAILED segment=public_gate summary=.quantagent/despair_gate/last_summary.json",
+            f"despair-gate: FAILED segment=public_gate summary={DESPAIR_FAILURE_SUMMARY_REL}",
             result.stderr,
         )
-        summary = json.loads((ROOT / ".quantagent" / "despair_gate" / "last_summary.json").read_text(encoding="utf-8"))
+        summary = json.loads((ROOT / DESPAIR_FAILURE_SUMMARY_REL).read_text(encoding="utf-8"))
         self.assertEqual(summary["schema_version"], "despair-gate/v0.1")
         self.assertEqual(summary["status"], "failed")
         self.assertEqual(summary["segments"]["external_regression"], "skipped")
