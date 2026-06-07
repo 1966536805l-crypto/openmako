@@ -844,7 +844,9 @@ def test_public_share_packet_preserves_review_boundary_without_promotion() -> No
     assert "focused learning-effect gate" in share_packet
     assert "patch-scope discipline" in share_packet
     assert "test-proof evidence" in share_packet
-    assert "Evidence Court CLI that audits supplied records" in share_packet
+    assert "Evidence Court audits for supplied records, provenance, and supplied transcript\nadapters" in share_packet
+    assert "supplied-record/provenance audits, and supplied\ntranscript adapter checks" in share_packet
+    assert "Evidence Court CLI that audits supplied records" not in share_packet
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in share_packet
     assert "https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0" in share_packet
     assert "./scripts/public_review_gate.sh" in share_packet
@@ -863,6 +865,8 @@ def test_public_share_packet_preserves_review_boundary_without_promotion() -> No
     )
     assert short_post_match, "public share packet must include a short technical review post"
     assert len(short_post_match.group("post")) <= 280
+    assert "supplied/provenance audits, and adapter checks" in short_post_match.group("post")
+    assert "Looking for technical boundary criticism" in short_post_match.group("post")
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in share_packet.lower()
 

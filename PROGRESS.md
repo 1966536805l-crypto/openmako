@@ -312,6 +312,10 @@ Current public proof:
   do not confuse it with live L4/L5 autonomy proof.
 - `docs/PUBLIC_SHARE_PACKET.md` provides boundary-preserving public wording for
   reviewers who independently choose to discuss the project.
+- `docs/PUBLIC_SHARE_PACKET.md` now describes the public share scope as
+  supplied-record/provenance audits plus supplied transcript adapter checks,
+  rather than supplied-record audits only. This keeps short public text aligned
+  with the current gate output without claiming external review or traction.
 - `bash scripts/public_share_ready.sh review-request` now runs the public proof
   gate before printing the short public review-request text. It does not post,
   ask for stars or reposts, or record outreach as evidence.
