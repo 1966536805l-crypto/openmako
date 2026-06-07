@@ -26,6 +26,7 @@ from pathlib import Path
 path = Path(sys.argv[1])
 field_path = sys.argv[2]
 expected = sys.argv[3]
+expected_value = {"True": True, "False": False}.get(expected, expected)
 payload = json.loads(path.read_text(encoding="utf-8"))
 value = payload
 for part in field_path.split("."):
@@ -35,9 +36,9 @@ for part in field_path.split("."):
         raise SystemExit(1)
     value = value[part]
 
-if value != expected:
+if value != expected_value:
     print(
-        f"public-review-gate: expected {field_path}={expected!r}, got {value!r} in {path}",
+        f"public-review-gate: expected {field_path}={expected_value!r}, got {value!r} in {path}",
         file=sys.stderr,
     )
     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), file=sys.stderr)
@@ -92,7 +93,16 @@ echo "public-review-gate: auditing SWTBench patch artifact fixture"
   examples/evidence_court/swtbench_patch_artifact.json > "$TMP_DIR/swtbench_patch_artifact.json"
 
 assert_json_field "$TMP_DIR/swtbench_patch_artifact.json" patch_shape.bucket mixed_test_source
+assert_json_field "$TMP_DIR/swtbench_patch_artifact.json" verifier_tamper_risk.verifier_tamper_risk False
 assert_json_field "$TMP_DIR/swtbench_patch_artifact.json" artifact_provenance.eval_rule_version swtbench-strip-model-patch/v2
+
+echo "public-review-gate: auditing verifier tamper-risk fixture"
+"$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court audit --ci --json \
+  examples/evidence_court/verifier_tamper_risk.json > "$TMP_DIR/verifier_tamper_risk.json"
+
+assert_json_field "$TMP_DIR/verifier_tamper_risk.json" verdict SUSPICIOUS
+assert_json_field "$TMP_DIR/verifier_tamper_risk.json" failure_class verifier_tamper_risk
+assert_json_field "$TMP_DIR/verifier_tamper_risk.json" verifier_tamper_risk.verifier_tamper_risk True
 
 echo "public-review-gate: running supplied transcript adapter matrix"
 bash scripts/supplied_transcript_adapter_matrix.sh
