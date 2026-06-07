@@ -16,7 +16,9 @@ Current public proof:
   for the latest focused workflow on current `openmako/main`. It prints
   `not-proof=external review; endorsement; stars; reposts` and returns nonzero
   if the latest focused run is stale, still running, failed, missing, or rate
-  limited. Passing this script is current focused-CI evidence only, not external
+  limited. It supports `OPENMAKO_GITHUB_TOKEN` or `GITHUB_TOKEN` for
+  authenticated GitHub API checks to reduce rate-limit failures; tokens are not
+  printed. Passing this script is current focused-CI evidence only, not external
   review or traction.
 - Latest local send-ready check on 2026-06-05 passed:
   `./scripts/public_review_gate.sh` ended with `public-review-gate: PASS`;

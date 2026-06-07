@@ -183,6 +183,28 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn(f"run-sha={stale_sha}", result.stdout)
         self.assertIn("latest focused run does not match remote main", result.stderr)
 
+    def test_remote_focused_ci_snapshot_rejects_matching_in_progress_run(self) -> None:
+        remote_sha = "d" * 40
+        result = self.run_remote_focused_ci_snapshot(
+            {
+                "workflow_runs": [
+                    {
+                        "id": 789,
+                        "head_sha": remote_sha,
+                        "status": "in_progress",
+                        "conclusion": None,
+                    }
+                ]
+            },
+            remote_sha,
+        )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(f"remote-main-sha={remote_sha}", result.stdout)
+        self.assertIn("run-id=789", result.stdout)
+        self.assertIn("status=in_progress conclusion=None", result.stdout)
+        self.assertIn("focused workflow is not completed/success", result.stderr)
+
     def test_despair_gate_smoke_uses_limited_real_cli_bench(self) -> None:
         result = self.run_despair_gate_smoke("--bench-limit", "1")
 

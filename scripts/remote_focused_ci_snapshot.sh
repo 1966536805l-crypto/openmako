@@ -31,8 +31,16 @@ repo, workflow, remote_sha = sys.argv[1:4]
 fixture = os.environ.get("OPENMAKO_FOCUSED_RUNS_JSON")
 api_url = (
     f"https://api.github.com/repos/{repo}/actions/workflows/"
-    f"{workflow}/runs?branch=main&per_page=5"
+    f"{workflow}/runs?branch=main&per_page=1"
 )
+token = os.environ.get("OPENMAKO_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
+headers = {
+    "Accept": "application/vnd.github+json",
+    "User-Agent": "openmako-remote-focused-ci-snapshot",
+}
+if token:
+    headers["Authorization"] = f"Bearer {token}"
+    headers["X-GitHub-Api-Version"] = "2022-11-28"
 
 try:
     if fixture:
@@ -41,10 +49,7 @@ try:
     else:
         request = urllib.request.Request(
             api_url,
-            headers={
-                "Accept": "application/vnd.github+json",
-                "User-Agent": "openmako-remote-focused-ci-snapshot",
-            },
+            headers=headers,
         )
         with urllib.request.urlopen(request, timeout=20) as response:
             data = json.load(response)
