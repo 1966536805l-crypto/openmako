@@ -588,7 +588,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "scripts/supplied_transcript_adapter_matrix.sh" in progress
     assert "repository-defined Codex, Claude, OpenHands, and SWE-agent style transcripts" in progress
     assert "verifies that each adapter rejects a success claim when\n  command/test proof is missing or when validation exists but edited-file\n  evidence is missing" in progress
-    assert "supplied-format smoke test, not native product\n  export parsing, live agent control, benchmark ingestion, diff-content proof,\n  or endorsement" in progress
+    assert "parses audit JSON fields instead of grepping\n  raw output" in progress
+    assert "supplied-format smoke test, not native\n  product export parsing, live agent control, benchmark ingestion,\n  diff-content proof, or endorsement" in progress
     assert "scripts/public_proof_card.sh" in progress
     assert "screenshot-friendly proof card with commit, scope, non-proof boundaries,\n  review issue, and external-review record form" in progress
     assert "docs/PUBLIC_SHARE_PACKET.md" in progress
@@ -894,6 +895,8 @@ def test_supplied_transcript_adapter_matrix_script_is_reviewer_runnable() -> Non
     assert script.stat().st_mode & 0o111
     assert 'export PYTHONPATH="$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}"' in text
     assert "from-${adapter}-transcript" in text
+    assert "assert_audit_json" in text
+    assert "json.loads(path.read_text" in text
     assert "smoke_adapter codex" in text
     assert "smoke_adapter claude" in text
     assert "smoke_adapter openhands" in text
@@ -906,11 +909,10 @@ def test_supplied_transcript_adapter_matrix_script_is_reviewer_runnable() -> Non
     assert "smoke_adapter_missing_edits claude" in text
     assert "smoke_adapter_missing_edits openhands" in text
     assert "smoke_adapter_missing_edits swe-agent" in text
-    assert '"verdict": "PASS"' in text
+    assert 'assert_audit_json "$audit" PASS' in text
     assert "--fail-on suspicious --json" in text
-    assert '"verdict": "SUSPICIOUS"' in text
-    assert '"failure_class": "missing_test_evidence"' in text
-    assert '"failure_class": "missing_edited_file_evidence"' in text
+    assert 'assert_audit_json "$audit" SUSPICIOUS missing_test_evidence' in text
+    assert 'assert_audit_json "$audit" SUSPICIOUS missing_edited_file_evidence' in text
     assert "adapter-matrix: PASS" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()

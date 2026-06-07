@@ -13,6 +13,39 @@ cleanup() {
 }
 trap cleanup EXIT
 
+assert_audit_json() {
+  local audit="$1"
+  local expected_verdict="$2"
+  local expected_failure_class="${3:-}"
+
+  "$PYTHON_BIN" - "$audit" "$expected_verdict" "$expected_failure_class" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+expected_verdict = sys.argv[2]
+expected_failure_class = sys.argv[3]
+payload = json.loads(path.read_text(encoding="utf-8"))
+errors = []
+
+if payload.get("verdict") != expected_verdict:
+    errors.append(f"verdict={payload.get('verdict')!r}")
+if expected_failure_class and payload.get("failure_class") != expected_failure_class:
+    errors.append(f"failure_class={payload.get('failure_class')!r}")
+
+if errors:
+    print(
+        "adapter-matrix: invalid audit fields: "
+        + ", ".join(errors)
+        + f" in {path}",
+        file=sys.stderr,
+    )
+    print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), file=sys.stderr)
+    raise SystemExit(1)
+PY
+}
+
 smoke_adapter() {
   local adapter="$1"
   local input="$TMP_DIR/${adapter}.json"
@@ -26,11 +59,7 @@ smoke_adapter() {
   echo "adapter-matrix: auditing ${adapter}"
   "$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court audit --ci --json "$record" > "$audit"
 
-  if ! grep -q '"verdict": "PASS"' "$audit"; then
-    echo "adapter-matrix: expected PASS verdict for ${adapter}" >&2
-    cat "$audit" >&2
-    exit 1
-  fi
+  assert_audit_json "$audit" PASS
 }
 
 smoke_adapter_missing_tests() {
@@ -55,17 +84,7 @@ smoke_adapter_missing_tests() {
     exit 1
   fi
 
-  if ! grep -q '"verdict": "SUSPICIOUS"' "$audit"; then
-    echo "adapter-matrix: expected SUSPICIOUS verdict for ${adapter} missing-test-proof" >&2
-    cat "$audit" >&2
-    exit 1
-  fi
-
-  if ! grep -q '"failure_class": "missing_test_evidence"' "$audit"; then
-    echo "adapter-matrix: expected missing_test_evidence for ${adapter} missing-test-proof" >&2
-    cat "$audit" >&2
-    exit 1
-  fi
+  assert_audit_json "$audit" SUSPICIOUS missing_test_evidence
 }
 
 smoke_adapter_missing_edits() {
@@ -90,17 +109,7 @@ smoke_adapter_missing_edits() {
     exit 1
   fi
 
-  if ! grep -q '"verdict": "SUSPICIOUS"' "$audit"; then
-    echo "adapter-matrix: expected SUSPICIOUS verdict for ${adapter} missing-edited-file-evidence" >&2
-    cat "$audit" >&2
-    exit 1
-  fi
-
-  if ! grep -q '"failure_class": "missing_edited_file_evidence"' "$audit"; then
-    echo "adapter-matrix: expected missing_edited_file_evidence for ${adapter} missing-edited-file-evidence" >&2
-    cat "$audit" >&2
-    exit 1
-  fi
+  assert_audit_json "$audit" SUSPICIOUS missing_edited_file_evidence
 }
 
 cat > "$TMP_DIR/codex.json" <<'JSON'

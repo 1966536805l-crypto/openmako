@@ -220,9 +220,11 @@ Current public proof:
   converts each one into an Evidence Court record, audits each generated
   record, and now verifies that each adapter rejects a success claim when
   command/test proof is missing or when validation exists but edited-file
-  evidence is missing. It is a supplied-format smoke test, not native product
-  export parsing, live agent control, benchmark ingestion, diff-content proof,
-  or endorsement.
+  evidence is missing. The script parses audit JSON fields instead of grepping
+  raw output, so verdict and `failure_class` checks are tied to
+  machine-readable fields. It is a supplied-format smoke test, not native
+  product export parsing, live agent control, benchmark ingestion,
+  diff-content proof, or endorsement.
 - `scripts/public_proof_card.sh` wraps the same gate and prints a
   screenshot-friendly proof card with commit, scope, non-proof boundaries,
   review issue, and external-review record form.
