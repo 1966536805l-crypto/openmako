@@ -1764,42 +1764,12 @@ def test_legacy_quant_test_artifacts_are_archived_out_of_repository_root() -> No
 
 
 def test_high_risk_planning_docs_are_not_public_claims() -> None:
-    updated_boundary_docs = (
-        "docs/CLAUDE_SRC_ABSORPTION_PLAN.md",
-        "docs/COMPARISON.md",
-        "docs/DESKTOP_DAEMON_L4.md",
-        "docs/DESKTOP_L5_ROADMAP.md",
-        "docs/AGENT_PORTING_SWARM.md",
-        "docs/DESIGN_DECISIONS.md",
-        "docs/HERMES_OPENCLAW_SOURCE_SCAN.md",
-        "docs/LAUNCH_PLAYBOOK.md",
-        "docs/MARKET_TOOL_COPY_SCAN.md",
-        "docs/OPENMAKO_NEXT_PORTS.md",
-        "docs/OPENCLAW_HERMES_FULL_PORT_PLAN.md",
-        "docs/OPENCLAW_HERMES_COPY_WHITELIST.md",
-        "docs/OPENCLAW_LEVEL_TARGET.md",
-        "docs/OPENAI_COMPATIBLE_SETUP.md",
-        "docs/OPERATOR_TRUST_MODEL.md",
-        "docs/SAFETY_POLICY.md",
-        "docs/SANDBOX_ROADMAP.md",
-        "docs/SOURCE_COPY_BORROW_MATRIX.md",
-        "docs/TICK_VALIDATION.md",
-        "docs/UPSTREAM_ATTRIBUTION.md",
-    )
-
     for relative_path in INTERNAL_PLANNING_DOCS:
         text = (ROOT / relative_path).read_text(encoding="utf-8")
 
-        assert (
-            "current public proof is the focused learning-effect gate" in text
-            or 'current public proof command is `./scripts/public_review_gate.sh`' in text
-        )
-        assert "not the current public v0.1 capability claim" in text or "not a public capability claim" in text
-
-    for relative_path in updated_boundary_docs:
-        text = (ROOT / relative_path).read_text(encoding="utf-8")
         assert 'current public proof command is `./scripts/public_review_gate.sh`' in text
-        assert "issue #1" not in text.splitlines()[2]
+        assert "current public proof is the focused learning-effect gate" not in text
+        assert "not the current public v0.1 capability claim" in text or "not a public capability claim" in text
 
     market_scan = (ROOT / "docs" / "MARKET_TOOL_COPY_SCAN.md").read_text(encoding="utf-8")
     assert "Highest-Value Things To Steal Next" not in market_scan
