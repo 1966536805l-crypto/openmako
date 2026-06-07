@@ -571,8 +571,7 @@ def render_coding_bench_stability_markdown(run: CodingBenchStabilityRun) -> str:
 
 def _run_shell(command: str, cwd: Path, timeout_seconds: float) -> CodingBenchCommandResult:
     start = time.monotonic()
-    env = os.environ.copy()
-    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env = _subprocess_env()
     try:
         proc = subprocess.run(
             command,
@@ -599,6 +598,17 @@ def _run_shell(command: str, cwd: Path, timeout_seconds: float) -> CodingBenchCo
             stderr_preview=_preview(exc.stderr or ""),
             timed_out=True,
         )
+
+
+def _subprocess_env() -> dict[str, str]:
+    env = os.environ.copy()
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    repo_root = str(Path(__file__).resolve().parents[1])
+    existing = env.get("PYTHONPATH")
+    paths = [path for path in (existing or "").split(os.pathsep) if path]
+    if repo_root not in paths:
+        env["PYTHONPATH"] = repo_root + (os.pathsep + existing if existing else "")
+    return env
 
 
 def _validate_agent_command_template(template: str) -> None:

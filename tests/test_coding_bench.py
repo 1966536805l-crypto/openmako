@@ -109,9 +109,7 @@ class CodingBenchTest(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            repo_root = Path(__file__).resolve().parents[1]
             command = (
-                f"PYTHONPATH={shlex.quote(str(repo_root))} "
                 "{python} -m quantagent.cli --no-trust-prompt agent --project {workspace} "
                 "--json --max-steps 12 --learning-context off {instruction}"
             )

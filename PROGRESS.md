@@ -10,6 +10,17 @@ Current public proof:
   `bash scripts/wave1_send_ready.sh swe-agent` re-ran the gate and printed a
   non-promotional technical-boundary message with
   `Proof command: bash scripts/public_proof_card.sh`.
+- Latest local learning/desktop regression check on 2026-06-07 passed:
+  `python3 -m pytest -p no:cacheprovider tests/test_learning_effect.py
+  tests/test_learning_effect_cli.py tests/test_learning_effect_e2e.py
+  tests/test_extreme_learner.py tests/test_hermes_learning.py
+  tests/test_skill_learning.py tests/test_skill_learning_effect_gate.py
+  tests/test_agent_loop_core.py tests/test_agent_planner_contract.py
+  tests/test_desktop_intelligence.py tests/test_desktop_learning.py
+  tests/test_desktop_daemon_policy.py tests/test_coding_bench.py -q`
+  ended with `259 passed, 1 warning`. The warning is a deprecated
+  `run_agent_v2` call in a test. This is local regression evidence only, not
+  external review, benchmark ranking, stars, or endorsement.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:
