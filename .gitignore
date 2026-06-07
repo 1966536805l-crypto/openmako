@@ -33,6 +33,7 @@ AI_协作交接/desktop/live_probe_*
 *.sqlite-shm
 *.sqlite-wal
 *.jsonl
+!tests/fixtures/agent_autopsy/agent_modified_test_failed/*.jsonl
 live_probe_*
 ax_*.json
 AI_协作交接/desktop/agent/

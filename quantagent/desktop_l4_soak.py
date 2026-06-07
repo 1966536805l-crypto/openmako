@@ -569,6 +569,7 @@ def _refresh_target_fence(context: _CycleContext, target_id: str) -> dict[str, A
     try:
         tokenized = build_desktop_tokenization(context.project, name=f"l4_preflight_{context.cycle:04d}", **_target_refresh_kwargs(target_id))
     except Exception as exc:  # noqa: BLE001 - live desktop refresh must fail closed.
+        audit_suppressed_exception(f"{__name__}:_refresh_target_fence", exc, project=context.project, target_id=target_id)
         return {"ok": False, "summary": f"target refresh failed: {type(exc).__name__}: {exc}", "error_type": type(exc).__name__}
     payload = tokenized.to_payload() if hasattr(tokenized, "to_payload") else _payload(tokenized)
     if not bool(payload.get("ok")):

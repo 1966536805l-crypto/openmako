@@ -21,6 +21,18 @@ Current public proof:
   ended with `259 passed, 1 warning`. The warning is a deprecated
   `run_agent_v2` call in a test. This is local regression evidence only, not
   external review, benchmark ranking, stars, or endorsement.
+- Latest local high-intensity verification on 2026-06-07 passed after fixing
+  full-suite regressions exposed by the run: the built-in CodingBench pack
+  solved `30/30` tasks with the real OpenMako CLI agent, the external
+  multimodule hidden regression file ended with `17 passed`, the full
+  repository pytest command `python3 -m pytest -p no:cacheprovider -q` ended
+  with `1680 passed, 1 skipped, 32 warnings`, `bash scripts/public_review_gate.sh`
+  ended with `public-review-gate: PASS`, and
+  `bash scripts/desktop_control_local_gate.sh` ended with
+  `desktop-control-local-gate: PASS`. The desktop gate still reports
+  `status=dry_run`, `scenarios=8`, and `level=L2`, so this is local
+  regression evidence only, not live desktop-control proof, external review,
+  benchmark ranking, stars, or endorsement.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:

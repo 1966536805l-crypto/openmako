@@ -355,7 +355,7 @@ class DesktopDaemonToxicFixtureTest(unittest.TestCase):
         submit_decision = self.action_decision("hotkey", {"keys": ["return"]}, reason="submit current form")
 
         with tempfile.TemporaryDirectory(prefix="desktop daemon toxic sequence ") as tmp:
-            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[pre, pre, visible, visible]), patch.object(
+            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[pre, pre, visible, visible, visible]), patch.object(
                 desktop_intelligence,
                 "decide_desktop_action",
                 side_effect=[type_decision, submit_decision],
@@ -449,7 +449,11 @@ class DesktopDaemonToxicFixtureTest(unittest.TestCase):
         )
 
         with tempfile.TemporaryDirectory(prefix="desktop daemon textarea sequence ") as tmp:
-            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[pre, pre, visible, visible, visible, after_newline]), patch.object(
+            with patch.object(
+                desktop_intelligence,
+                "build_desktop_tokenization",
+                side_effect=[pre, pre, visible, visible, visible, visible, after_newline, after_newline],
+            ), patch.object(
                 desktop_intelligence,
                 "decide_desktop_action",
                 side_effect=[type_decision, newline_decision],
@@ -492,7 +496,11 @@ class DesktopDaemonToxicFixtureTest(unittest.TestCase):
         )
 
         with tempfile.TemporaryDirectory(prefix="desktop daemon url sequence ") as tmp:
-            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[pre, pre, visible, visible, visible, after_navigation]), patch.object(
+            with patch.object(
+                desktop_intelligence,
+                "build_desktop_tokenization",
+                side_effect=[pre, pre, visible, visible, visible, visible, after_navigation, after_navigation],
+            ), patch.object(
                 desktop_intelligence,
                 "decide_desktop_action",
                 side_effect=[type_decision, navigate_decision],
@@ -535,7 +543,11 @@ class DesktopDaemonToxicFixtureTest(unittest.TestCase):
         )
 
         with tempfile.TemporaryDirectory(prefix="desktop daemon command palette sequence ") as tmp:
-            with patch.object(desktop_intelligence, "build_desktop_tokenization", side_effect=[pre, pre, visible, visible, visible, after_confirm]), patch.object(
+            with patch.object(
+                desktop_intelligence,
+                "build_desktop_tokenization",
+                side_effect=[pre, pre, visible, visible, visible, visible, after_confirm, after_confirm],
+            ), patch.object(
                 desktop_intelligence,
                 "decide_desktop_action",
                 side_effect=[type_decision, confirm_decision],
