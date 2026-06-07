@@ -162,6 +162,10 @@ def test_readme_links_public_proof_issue() -> None:
     assert "docs/LARGE_REPOST_PACKET.md" in readme
     assert "Post-review share check" in readme
     assert "bash scripts/large_repost_ready.sh REVIEW_RECORD_ISSUE_URL --confirm-external-review" in readme
+    assert "Remote focused CI snapshot" in readme
+    assert "bash scripts/remote_focused_ci_snapshot.sh" in readme
+    assert "a fail-closed check for the latest focused workflow on current `openmako/main`" in readme
+    assert "not external review or endorsement" in readme
     assert "Why It Is Worth Checking" in readme
 
 

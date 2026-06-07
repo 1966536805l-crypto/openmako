@@ -110,11 +110,78 @@ class CliWrapperTest(unittest.TestCase):
             check=False,
         )
 
+    def run_remote_focused_ci_snapshot(
+        self,
+        runs: dict,
+        remote_sha: str,
+    ) -> subprocess.CompletedProcess[str]:
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(runs, handle)
+            handle.flush()
+            env = os.environ.copy()
+            env["OPENMAKO_FOCUSED_RUNS_JSON"] = handle.name
+            env["OPENMAKO_REMOTE_MAIN_SHA"] = remote_sha
+            return subprocess.run(
+                ["bash", "scripts/remote_focused_ci_snapshot.sh"],
+                cwd=str(ROOT),
+                env=env,
+                text=True,
+                capture_output=True,
+                timeout=10,
+                check=False,
+            )
+
     def test_openmako_help_uses_real_cli(self) -> None:
         result = self.run_openmako("--help")
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("agent-autopsy", result.stdout)
+
+    def test_remote_focused_ci_snapshot_passes_only_matching_success_run(self) -> None:
+        remote_sha = "a" * 40
+        result = self.run_remote_focused_ci_snapshot(
+            {
+                "workflow_runs": [
+                    {
+                        "id": 123,
+                        "head_sha": remote_sha,
+                        "status": "completed",
+                        "conclusion": "success",
+                        "html_url": "https://github.com/example/actions/runs/123",
+                    }
+                ]
+            },
+            remote_sha,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(f"remote-main-sha={remote_sha}", result.stdout)
+        self.assertIn("run-id=123", result.stdout)
+        self.assertIn("status=completed conclusion=success", result.stdout)
+        self.assertIn("not-proof=external review; endorsement; stars; reposts", result.stdout)
+        self.assertIn("remote-focused-ci-snapshot: PASS", result.stdout)
+
+    def test_remote_focused_ci_snapshot_rejects_stale_success_run(self) -> None:
+        remote_sha = "b" * 40
+        stale_sha = "c" * 40
+        result = self.run_remote_focused_ci_snapshot(
+            {
+                "workflow_runs": [
+                    {
+                        "id": 456,
+                        "head_sha": stale_sha,
+                        "status": "completed",
+                        "conclusion": "success",
+                    }
+                ]
+            },
+            remote_sha,
+        )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(f"remote-main-sha={remote_sha}", result.stdout)
+        self.assertIn(f"run-sha={stale_sha}", result.stdout)
+        self.assertIn("latest focused run does not match remote main", result.stderr)
 
     def test_despair_gate_smoke_uses_limited_real_cli_bench(self) -> None:
         result = self.run_despair_gate_smoke("--bench-limit", "1")
