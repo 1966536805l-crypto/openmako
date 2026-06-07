@@ -175,6 +175,34 @@ def test_focused_workflow_runs_same_public_gate_as_readme() -> None:
     assert "python -m pip install -e . pytest" in workflow
 
 
+def test_despair_gate_is_repeatable_but_not_a_public_claim() -> None:
+    script = ROOT / "scripts" / "despair_gate.sh"
+    workflow = (ROOT / ".github" / "workflows" / "despair-gate.yml").read_text(encoding="utf-8")
+    progress = (ROOT / "PROGRESS.md").read_text(encoding="utf-8")
+    text = script.read_text(encoding="utf-8")
+
+    assert os.access(script, os.X_OK)
+    assert "coding-bench solved=" in text
+    assert "tests/test_external_benchmark_multimodule_regression.py" in text
+    assert '"$PYTHON_BIN" -m pytest -p no:cacheprovider -q' in text
+    assert "bash scripts/public_review_gate.sh" in text
+    assert "bash scripts/desktop_control_local_gate.sh" in text
+    assert "--skip-full-pytest" in text
+    assert "--bench-limit" in text
+    assert "not-proof=external review, benchmark ranking, live desktop control, L4, L5, stars, reposts, endorsement" in text
+
+    assert "workflow_dispatch:" in workflow
+    assert "push:" not in workflow
+    assert "pull_request:" not in workflow
+    assert "timeout-minutes: 45" in workflow
+    assert "bash scripts/despair_gate.sh" in workflow
+
+    assert "`bash scripts/despair_gate.sh` now wraps that high-intensity local loop" in progress
+    assert "Its skip and limit flags are for\n  script smoke testing only; they do not create public proof" in progress
+    assert "`.github/workflows/despair-gate.yml` exposes that gate as a manual\n  `workflow_dispatch` check" in progress
+    assert "not attached to default push\n  or pull-request CI" in progress
+
+
 def test_agent_trend_radar_tracks_current_next_build_target() -> None:
     radar = (ROOT / "docs" / "AGENT_TREND_RADAR.md").read_text(encoding="utf-8")
 

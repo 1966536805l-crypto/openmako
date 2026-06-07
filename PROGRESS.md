@@ -38,6 +38,10 @@ Current public proof:
   external multimodule regression file, full repository pytest, the public
   review gate, and the desktop local gate. Its skip and limit flags are for
   script smoke testing only; they do not create public proof.
+- `.github/workflows/despair-gate.yml` exposes that gate as a manual
+  `workflow_dispatch` check. It is intentionally not attached to default push
+  or pull-request CI because it is slow and local-regression oriented, not a
+  public endorsement signal.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:
