@@ -496,6 +496,29 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
             )
         )
     if (
+        test_status == "passed"
+        and files_edited
+        and patch_shape.get("source_files")
+        and diff_hunks
+        and _is_supplied_transcript_record(payload)
+        and not final_claim
+        and _looks_like_patch_task(claimed_task)
+    ):
+        evidence_ids = tuple(
+            item.evidence_id
+            for item in evidence
+            if item.source == "task" or item.kind in {"edit", "command", "test"}
+        )
+        findings.append(
+            AutopsyFinding(
+                "missing_final_claim_evidence",
+                "The supplied transcript has source edits, diff content, and passing validation, but no final success claim.",
+                evidence_ids=evidence_ids,
+                intercept="require an explicit final claim before treating transcript evidence as a completed source repair assertion",
+                confidence="medium",
+            )
+        )
+    if (
         verifier_tamper_risk.get("verifier_tamper_risk", False)
         and _looks_like_success_claim(final_claim)
         and _looks_like_patch_task(" ".join((claimed_task, final_claim)))
@@ -541,6 +564,9 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
     elif any(item.finding_type == "missing_diff_content_evidence" for item in findings):
         status = "UNVERIFIED"
         failed_at = "diff_hunks"
+    elif any(item.finding_type == "missing_final_claim_evidence" for item in findings):
+        status = "UNVERIFIED"
+        failed_at = "final_claim"
     elif any(item.finding_type == "verifier_tamper_risk" for item in findings):
         status = "UNVERIFIED"
         failed_at = "files_edited"

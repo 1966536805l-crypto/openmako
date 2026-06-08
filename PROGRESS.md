@@ -542,6 +542,16 @@ Current public proof:
   passed on 2026-06-08 before this note was added. This is local supplied-record
   validation evidence only, not native export ingestion, remote CI status,
   external review, endorsement, stars, or reposts.
+- A supplied transcript adapter missing-final-claim regression now covers Codex,
+  Claude, OpenHands, and SWE-agent supplied formats: source edits,
+  diff-content evidence, and passing validation without a final success claim
+  audit as `missing_final_claim_evidence` at `final_claim`, keeping process
+  evidence separate from a completed source repair assertion. The local
+  final-claim focused test, transcript-focused tests, public metadata tests,
+  supplied transcript adapter matrix, and `git diff --check` passed on
+  2026-06-09 before this note was added. This is local supplied-record
+  validation evidence only, not native export ingestion, remote CI status,
+  external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -553,3 +563,5 @@ Next smallest hygiene task:
 
 - Re-check `docs/AGENT_TREND_RADAR.md` and pick the next code-backed target
   only if it can be reduced to a failing test and public-proof boundary.
+- Next concrete candidate: another adapter evidence edge case that can be
+  expressed as one failing transcript fixture before any public wording changes.

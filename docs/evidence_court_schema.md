@@ -125,6 +125,11 @@ diff content from `diff_hunks`, `diff`, `patch`, or `unified_diff` fields on
 edit/apply-patch events. This is still supplied evidence only: it does not
 prove the patch was actually applied in a live runtime.
 
+If a supplied transcript has source-like edits, supplied diff content, and
+passing validation but no final success claim, it is routed to `SUSPICIOUS` as
+`missing_final_claim_evidence`. This keeps process evidence separate from a
+completed source repair assertion.
+
 `verifier_tamper_risk` is derived from `files_edited` and is review metadata:
 
 - `verifier_tamper_risk`: true when a successful repair claim edits verifier,
