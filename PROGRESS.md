@@ -514,6 +514,15 @@ Current public proof:
   metadata tests passed on 2026-06-08 before this note was added. This is local
   supplied-record validation evidence only, not native export ingestion, remote
   CI status, external review, endorsement, stars, or reposts.
+- A supplied transcript adapter empty-diff regression now covers Codex, Claude,
+  OpenHands, and SWE-agent supplied formats: blank `diff_hunks` entries and
+  blank `diff`/`patch`/`unified_diff` strings are ignored as empty content, so
+  successful source repair claims still audit as `missing_diff_content_evidence`
+  instead of treating whitespace as supplied diff proof. The local empty-diff
+  focused test, transcript-focused tests, public metadata tests, and
+  `git diff --check` passed on 2026-06-08 before this note was finalized. This
+  is local supplied-record validation evidence only, not native export
+  ingestion, remote CI status, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

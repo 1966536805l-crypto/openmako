@@ -1389,6 +1389,138 @@ class CliWrapperTest(unittest.TestCase):
                     self.assertEqual(converted.stdout, "")
                     self.assertIn(expected_error, converted.stderr)
 
+    def test_openmako_evidence_court_transcript_adapters_ignore_empty_diff_strings(self) -> None:
+        def transcript_for(adapter: str) -> dict[str, object]:
+            if adapter == "codex":
+                return {
+                    "claimed_task": "Fix calculator.py.",
+                    "allowed_files": ["calculator.py"],
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": "Fixed and verified.",
+                            "tool_calls": [
+                                {"type": "read_file", "path": "calculator.py"},
+                                {
+                                    "type": "apply_patch",
+                                    "files": ["calculator.py"],
+                                    "diff_hunks": ["  "],
+                                    "diff": "\n\t",
+                                },
+                                {
+                                    "type": "exec_command",
+                                    "command": "python3 -m pytest tests/test_calculator.py -q",
+                                    "exit_code": 0,
+                                    "output": "1 passed in 0.02s",
+                                },
+                            ],
+                        }
+                    ],
+                }
+            if adapter == "claude":
+                return {
+                    "task": "Fix calculator.py.",
+                    "allowed_files": ["calculator.py"],
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": [
+                                {"type": "text", "text": "I will patch and test calculator.py."},
+                                {
+                                    "type": "tool_use",
+                                    "name": "Edit",
+                                    "input": {
+                                        "file_path": "calculator.py",
+                                        "diff_hunks": ["  "],
+                                        "patch": "\n\t",
+                                    },
+                                },
+                                {
+                                    "type": "tool_use",
+                                    "name": "Bash",
+                                    "input": {
+                                        "command": "python3 -m pytest tests/test_calculator.py -q",
+                                        "exit_code": 0,
+                                        "stdout": "1 passed in 0.02s",
+                                    },
+                                },
+                            ],
+                        },
+                        {"role": "assistant", "content": "Fixed and verified."},
+                    ],
+                }
+            if adapter == "openhands":
+                return {
+                    "task": "Fix calculator.py.",
+                    "allowed_files": ["calculator.py"],
+                    "events": [
+                        {"action": "read", "path": "calculator.py"},
+                        {
+                            "action": "edit",
+                            "path": "calculator.py",
+                            "diff_hunks": ["  "],
+                            "unified_diff": "\n\t",
+                        },
+                        {
+                            "action": "run",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "exit_code": 0,
+                            "observation": "1 passed in 0.02s",
+                        },
+                        {"action": "finish", "message": "Fixed and verified."},
+                    ],
+                }
+            if adapter == "swe-agent":
+                return {
+                    "issue": "Fix calculator.py.",
+                    "allowed_files": ["calculator.py"],
+                    "steps": [
+                        {"action": "read", "path": "calculator.py"},
+                        {
+                            "action": "edit",
+                            "path": "calculator.py",
+                            "diff_hunks": ["  "],
+                            "patch": "\n\t",
+                        },
+                        {
+                            "action": "test",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "exit_code": 0,
+                            "stdout": "1 passed in 0.02s",
+                        },
+                        {"action": "submit", "message": "Fixed and verified."},
+                    ],
+                }
+            raise AssertionError(f"unexpected adapter: {adapter}")
+
+        for adapter in ("codex", "claude", "openhands", "swe-agent"):
+            with self.subTest(adapter=adapter):
+                transcript = transcript_for(adapter)
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 0, converted.stderr)
+                record = json.loads(converted.stdout)
+                self.assertNotIn("diff_hunks", record)
+
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(record, handle)
+                    handle.flush()
+                    audited = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+                self.assertEqual(audited.returncode, 0, audited.stderr)
+                payload = json.loads(audited.stdout)
+                self.assertEqual(payload["verdict"], "SUSPICIOUS")
+                self.assertEqual(payload["failure_class"], "missing_diff_content_evidence")
+
     def test_openmako_evidence_court_record_from_claude_transcript_builds_auditable_record(self) -> None:
         transcript = {
             "task": "Fix calculator.py only. Do not edit tests.",
