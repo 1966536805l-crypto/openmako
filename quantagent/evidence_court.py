@@ -1310,7 +1310,7 @@ def _command_summaries(value: object) -> list[str]:
         elif isinstance(item, dict) and isinstance(item.get("command"), str):
             command = str(item["command"])
             if "exit_code" in item:
-                if not isinstance(item["exit_code"], int):
+                if not _is_integer_exit_code(item["exit_code"]):
                     raise ValueError("commands_run exit_code must be an integer")
                 command = f"{command} (exit_code={item['exit_code']})"
             commands.append(command)
@@ -1701,13 +1701,17 @@ def _swe_agent_step_kind(step: dict[str, object]) -> str:
     return str(value).strip().lower().replace("-", "_")
 
 
+def _is_integer_exit_code(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
 def _test_output_status(test_output: object, commands_run: object) -> tuple[str, str]:
     exit_codes = []
     if isinstance(commands_run, list):
         for item in commands_run:
             if (
                 isinstance(item, dict)
-                and isinstance(item.get("exit_code"), int)
+                and _is_integer_exit_code(item.get("exit_code"))
                 and _looks_like_validation_command(str(item.get("command") or ""))
             ):
                 exit_codes.append(int(item["exit_code"]))
@@ -1716,15 +1720,15 @@ def _test_output_status(test_output: object, commands_run: object) -> tuple[str,
     if isinstance(test_output, dict):
         status = str(test_output.get("status") or "").lower()
         text = str(test_output.get("output") or test_output.get("summary") or "").strip()
-        if "exit_code" in test_output and not isinstance(test_output["exit_code"], int):
+        if "exit_code" in test_output and not _is_integer_exit_code(test_output["exit_code"]):
             raise ValueError("test_output exit_code must be an integer")
-        if isinstance(test_output.get("exit_code"), int) and int(test_output["exit_code"]) != 0:
+        if _is_integer_exit_code(test_output.get("exit_code")) and int(test_output["exit_code"]) != 0:
             return "failed", text or f"test exit_code: {test_output['exit_code']}"
         if status in {"passed", "pass", "success"}:
             return "passed", text or "test output status: passed"
         if status in {"failed", "fail", "failure"}:
             return "failed", text or "test output status: failed"
-        if isinstance(test_output.get("exit_code"), int):
+        if _is_integer_exit_code(test_output.get("exit_code")):
             return ("passed" if int(test_output["exit_code"]) == 0 else "failed", text or f"test exit_code: {test_output['exit_code']}")
         if text:
             return _test_output_status(text, commands_run)

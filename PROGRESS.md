@@ -624,6 +624,12 @@ Current public proof:
   change on 2026-06-09. This is local supplied-record audit validation only,
   not native export ingestion, remote CI status, external review, endorsement,
   stars, or reposts.
+- Evidence Court now rejects JSON boolean exit codes in supplied command and
+  structured test-output records instead of treating `false` as `0` or `true`
+  as `1`. The focused regression failed before the change and passed with CLI
+  schema errors after the change on 2026-06-09. This is local supplied-record
+  audit validation only, not native export ingestion, remote CI status,
+  external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

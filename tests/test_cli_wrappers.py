@@ -712,6 +712,43 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertIn("test_output exit_code must be an integer", result.stderr)
 
+    def test_openmako_evidence_court_audit_rejects_boolean_exit_codes(self) -> None:
+        cases = (
+            (
+                {
+                    "commands_run": [
+                        {"command": "python3 -m pytest tests/test_calculator.py -q", "exit_code": False}
+                    ],
+                    "test_output": "1 passed in 0.02s",
+                },
+                "commands_run exit_code must be an integer",
+            ),
+            (
+                {
+                    "commands_run": [{"command": "python3 -m pytest tests/test_calculator.py -q", "exit_code": 0}],
+                    "test_output": {"status": "passed", "exit_code": False, "output": "1 passed in 0.02s"},
+                },
+                "test_output exit_code must be an integer",
+            ),
+        )
+        for evidence, message in cases:
+            with self.subTest(message=message):
+                record = {
+                    "claimed_task": "Fix calculator.py.",
+                    "files_read": ["calculator.py"],
+                    "files_edited": ["calculator.py"],
+                    "final_claim": "Fixed and verified.",
+                    **evidence,
+                }
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(record, handle)
+                    handle.flush()
+                    result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertIn(message, result.stderr)
+
     def test_openmako_evidence_court_audit_json_allows_config_only_repair_evidence(self) -> None:
         record = {
             "claimed_task": "Fix project packaging metadata.",
