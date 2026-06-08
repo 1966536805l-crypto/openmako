@@ -137,6 +137,23 @@ class DesktopAgentTest(unittest.TestCase):
         self.assertEqual(script_plan.steps[0].args["kind"], "path")
         self.assertEqual(domain_plan.steps[0].args["kind"], "url")
 
+    def test_desktop_agent_opens_quoted_paths_with_spaces(self) -> None:
+        quoted_file = Path.cwd() / "tmp quoted path test.md"
+        quoted_file.write_text("test\n", encoding="utf-8")
+        try:
+            relative_plan = build_desktop_agent_plan('打开 "tmp quoted path test.md"')
+            dotted_plan = build_desktop_agent_plan('打开 "./tmp quoted path test.md"，然后截图')
+            absolute_plan = build_desktop_agent_plan('打开 "/tmp/open mako.html"')
+        finally:
+            quoted_file.unlink(missing_ok=True)
+
+        self.assertEqual(relative_plan.steps[0].args["kind"], "path")
+        self.assertEqual(relative_plan.steps[0].args["label"], str(quoted_file.resolve(strict=False)))
+        self.assertEqual(dotted_plan.steps[0].args["kind"], "path")
+        self.assertEqual(dotted_plan.steps[0].args["label"], str(quoted_file.resolve(strict=False)))
+        self.assertEqual(absolute_plan.steps[0].args["kind"], "path")
+        self.assertTrue(absolute_plan.steps[0].args["label"].endswith("/tmp/open mako.html"))
+
     def test_preview_writes_query_events_without_side_effects(self) -> None:
         with tempfile.TemporaryDirectory(prefix="desktop agent ") as tmp:
             result = run_desktop_agent(Path(tmp), "点击 10,20", execute=False)

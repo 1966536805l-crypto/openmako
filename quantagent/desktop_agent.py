@@ -23,6 +23,7 @@ BARE_URL_RE = re.compile(
     re.IGNORECASE,
 )
 PATH_RE = re.compile(r"(?<!\S)(?:/|~[/\\]|\.{1,2}/)[^\s，。]*")
+QUOTED_PATH_RE = re.compile(r"""(?P<quote>["'])(?P<path>[^"']+\.[A-Za-z0-9]{1,12})(?P=quote)""")
 RELATIVE_FILE_RE = re.compile(r"(?<!\S)[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*\.[A-Za-z0-9]{1,12}(?!\S)")
 COORD_RE = re.compile(r"(?:click|点击|点)\s*[:：]?\s*(\d{1,5})\s*[,， ]\s*(\d{1,5})", re.IGNORECASE)
 HOTKEY_RE = re.compile(r"(?:hotkey|快捷键|按)\s+([a-z0-9+,\- ]{1,80})", re.IGNORECASE)
@@ -75,7 +76,7 @@ def build_desktop_agent_plan(instruction: str, *, browser: str = "Safari", max_a
     sequence = 0
     url_match = URL_RE.search(text)
     bare_url_match = BARE_URL_RE.search(text)
-    path_match = PATH_RE.search(text) or _existing_relative_file_match(text)
+    path_match = _path_match(text)
     search_match = SEARCH_RE.search(text)
     search_query = _search_query(text)
     app_match = OPEN_APP_RE.search(text)
@@ -97,7 +98,7 @@ def build_desktop_agent_plan(instruction: str, *, browser: str = "Safari", max_a
         )
         sequence += 1
     elif path_match:
-        path_target = _path_target(path_match.group(0))
+        path_target = _path_target(_matched_path_text(path_match))
         operations.append(
             (
                 path_match.start(),
@@ -334,6 +335,23 @@ def _absolute_path_target(text: str) -> str:
     if not path.is_absolute():
         path = Path.cwd() / path
     return str(path.resolve(strict=False))
+
+
+def _path_match(text: str) -> re.Match[str] | None:
+    return _existing_quoted_path_match(text) or PATH_RE.search(text) or _existing_relative_file_match(text)
+
+
+def _matched_path_text(match: re.Match[str]) -> str:
+    return match.groupdict().get("path") or match.group(0)
+
+
+def _existing_quoted_path_match(text: str) -> re.Match[str] | None:
+    for match in QUOTED_PATH_RE.finditer(text):
+        candidate = _path_target(match.group("path"))
+        path = Path(candidate).expanduser()
+        if path.is_absolute() or candidate.startswith(("./", "../", "~/")) or (Path.cwd() / candidate).exists():
+            return match
+    return None
 
 
 def _existing_relative_file_match(text: str) -> re.Match[str] | None:
