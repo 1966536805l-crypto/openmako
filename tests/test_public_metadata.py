@@ -572,7 +572,7 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "the fail-closed re-check tool\n  for the latest focused workflow on current `openmako/main`" in progress
     assert "not-proof=external review; endorsement; stars; reposts" in progress
     assert "returns nonzero\n  if the latest focused run is stale, still running, failed, missing, or rate\n  limited" in progress
-    assert "It supports `OPENMAKO_GITHUB_TOKEN` or `GITHUB_TOKEN` for\n  authenticated GitHub API checks to reduce rate-limit failures; tokens are not\n  printed." in progress
+    assert "It supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`\n  for authenticated GitHub API checks to reduce rate-limit failures; tokens are\n  not printed." in progress
     assert "When API data is unavailable, it still prints the remote main SHA,\n  manual Actions URL, local UTC check time, and rate-limit reset countdown\n  when available before exiting nonzero." in progress
     assert "Passing this script is current\n  focused-CI evidence only, not external review or traction." in progress
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in progress
@@ -674,6 +674,7 @@ def test_remote_focused_ci_snapshot_script_is_fail_closed_and_token_aware() -> N
     assert script.stat().st_mode & 0o111
     assert "OPENMAKO_GITHUB_TOKEN" in text
     assert "GITHUB_TOKEN" in text
+    assert "GH_TOKEN" in text
     assert "Authorization" in text
     assert "per_page=1" in text
     assert "not-proof=external review; endorsement; stars; reposts" in text
@@ -693,7 +694,7 @@ def test_remote_focused_ci_snapshot_script_is_fail_closed_and_token_aware() -> N
     assert "datetime.fromtimestamp" in text
     assert "total_seconds()" in text
     assert "GitHub API rate limit; re-check later" in text
-    assert "or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN for authenticated API reads" in text
+    assert "or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN for authenticated API reads" in text
     for forbidden in FORBIDDEN_README_CLAIMS:
         assert forbidden.lower() not in text.lower()
 

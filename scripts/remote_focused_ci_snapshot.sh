@@ -35,7 +35,11 @@ api_url = (
     f"{workflow}/runs?branch=main&per_page=1"
 )
 manual_url = f"https://github.com/{repo}/actions/workflows/{workflow}?query=branch%3Amain"
-token = os.environ.get("OPENMAKO_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
+token = (
+    os.environ.get("OPENMAKO_GITHUB_TOKEN")
+    or os.environ.get("GITHUB_TOKEN")
+    or os.environ.get("GH_TOKEN")
+)
 headers = {
     "Accept": "application/vnd.github+json",
     "User-Agent": "openmako-remote-focused-ci-snapshot",
@@ -93,7 +97,7 @@ except urllib.error.HTTPError as exc:
         print_boundary_snapshot("github_api_rate_limit", exc.headers)
         print(
             "remote-focused-ci-snapshot: GitHub API rate limit; re-check later "
-            "or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN for authenticated API reads",
+            "or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN for authenticated API reads",
             file=sys.stderr,
         )
         sys.exit(2)

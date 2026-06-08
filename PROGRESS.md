@@ -22,9 +22,9 @@ Current public proof:
   for the latest focused workflow on current `openmako/main`. It prints
   `not-proof=external review; endorsement; stars; reposts` and returns nonzero
   if the latest focused run is stale, still running, failed, missing, or rate
-  limited. It supports `OPENMAKO_GITHUB_TOKEN` or `GITHUB_TOKEN` for
-  authenticated GitHub API checks to reduce rate-limit failures; tokens are not
-  printed. When API data is unavailable, it still prints the remote main SHA,
+  limited. It supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`
+  for authenticated GitHub API checks to reduce rate-limit failures; tokens are
+  not printed. When API data is unavailable, it still prints the remote main SHA,
   manual Actions URL, local UTC check time, and rate-limit reset countdown
   when available before exiting nonzero. If GitHub includes retry/rate-limit
   reset headers, the script prints those too, including a UTC rendering of the
