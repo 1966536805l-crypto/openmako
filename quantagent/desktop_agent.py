@@ -311,7 +311,7 @@ def _search_query(text: str) -> str:
         return ""
     query = match.group(1).strip()
     query = URL_RE.sub("", query).strip(" ：:，,。.")
-    return _strip_followup_commands(query)
+    return _strip_inline_followup_commands(_strip_followup_commands(query))
 
 
 def _trim_terminal_screenshot(steps: tuple[DesktopStep, ...], *, has_followup: bool) -> tuple[DesktopStep, ...]:
@@ -321,13 +321,13 @@ def _trim_terminal_screenshot(steps: tuple[DesktopStep, ...], *, has_followup: b
 
 
 def _url_target(text: str) -> str:
-    target = _strip_url_boundary_commands(_strip_followup_commands(text)).strip("\"'").rstrip("\"'.,，。")
+    target = _strip_inline_followup_commands(_strip_followup_commands(text)).strip("\"'").rstrip("\"'.,，。")
     if re.match(r"^(?:localhost|(?:\d{1,3}\.){3}\d{1,3})(?::\d{1,5})?(?:/|$)", target, re.IGNORECASE):
         return f"http://{target}"
     return target
 
 
-def _strip_url_boundary_commands(text: str) -> str:
+def _strip_inline_followup_commands(text: str) -> str:
     value = str(text or "")
     value = re.split(
         r"\s*[,，。]\s*"

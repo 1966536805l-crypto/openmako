@@ -73,6 +73,12 @@ class DesktopAgentTest(unittest.TestCase):
         self.assertEqual(search_type_args[-1], "hello")
         self.assertFalse(any("然后输入" in item for item in search_type_args))
 
+        search_then_click = build_desktop_agent_plan("搜索 OpenMako，点击 10,20 并截图")
+        search_click_type_args = [step.args.get("text", "") for step in search_then_click.steps if step.action == "type"]
+
+        self.assertEqual(search_click_type_args[0], "https://www.google.com/search?q=OpenMako")
+        self.assertIn(("click", {"x": 10, "y": 20}), [(step.action, step.args) for step in search_then_click.steps])
+
     def test_compound_open_and_search_do_not_duplicate_terminal_screenshot(self) -> None:
         search_plan = build_desktop_agent_plan("搜索 OpenMako 然后截图")
         open_plan = build_desktop_agent_plan("打开 Safari 然后截图")
