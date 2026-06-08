@@ -207,6 +207,10 @@ Current public proof:
   `other_only` patch shape, so supplied config-only repair records can avoid
   `missing_source_edit_evidence` while README-only repair claims remain
   suspicious.
+- A public config-only repair fixture is available at
+  `examples/evidence_court/config_only_repair.json` and is checked by
+  `scripts/public_review_gate.sh`, so reviewers can reproduce that false-positive
+  boundary without reading unit tests.
 - The `artifact-provenance` evidence extension is supported for supplied records:
   Evidence Court preserves supplied eval-rule identifiers, runner identifiers,
   artifact/input/output hashes, and missing-provenance markers as

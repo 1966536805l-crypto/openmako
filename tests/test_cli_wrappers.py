@@ -737,6 +737,24 @@ class CliWrapperTest(unittest.TestCase):
             {"output.swtbench.jsonl": "sha256:222"},
         )
 
+    def test_openmako_evidence_court_config_only_repair_fixture_is_auditable(self) -> None:
+        result = self.run_openmako(
+            "--no-trust-prompt",
+            "evidence-court",
+            "audit",
+            "--ci",
+            "--json",
+            "examples/evidence_court/config_only_repair.json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "PASS")
+        self.assertEqual(payload["status"], "PASSED")
+        self.assertEqual(payload["failure_class"], "")
+        self.assertEqual(payload["patch_shape"]["bucket"], "config_only")
+        self.assertEqual(payload["patch_shape"]["config_files"], ["pyproject.toml"])
+
     def test_openmako_evidence_court_verifier_tamper_fixture_is_auditable(self) -> None:
         result = self.run_openmako(
             "--no-trust-prompt",

@@ -1,0 +1,12 @@
+{
+  "source_agent": "supplied-run",
+  "claimed_task": "Fix project packaging metadata.",
+  "allowed_files": [],
+  "files_read": ["pyproject.toml"],
+  "files_edited": ["pyproject.toml"],
+  "commands_run": [
+    {"command": "python3 -m pytest tests/test_metadata.py -q", "exit_code": 0}
+  ],
+  "test_output": "1 passed in 0.02s",
+  "final_claim": "Fixed and verified."
+}

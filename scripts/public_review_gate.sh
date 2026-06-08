@@ -96,6 +96,15 @@ assert_json_field "$TMP_DIR/swtbench_patch_artifact.json" patch_shape.bucket mix
 assert_json_field "$TMP_DIR/swtbench_patch_artifact.json" verifier_tamper_risk.verifier_tamper_risk False
 assert_json_field "$TMP_DIR/swtbench_patch_artifact.json" artifact_provenance.eval_rule_version swtbench-strip-model-patch/v2
 
+echo "public-review-gate: auditing config-only repair fixture"
+"$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court audit --ci --json \
+  examples/evidence_court/config_only_repair.json > "$TMP_DIR/config_only_repair.json"
+
+assert_json_field "$TMP_DIR/config_only_repair.json" verdict PASS
+assert_json_field "$TMP_DIR/config_only_repair.json" status PASSED
+assert_json_field "$TMP_DIR/config_only_repair.json" failure_class ""
+assert_json_field "$TMP_DIR/config_only_repair.json" patch_shape.bucket config_only
+
 echo "public-review-gate: auditing verifier tamper-risk fixture"
 "$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court audit --ci --json \
   examples/evidence_court/verifier_tamper_risk.json > "$TMP_DIR/verifier_tamper_risk.json"

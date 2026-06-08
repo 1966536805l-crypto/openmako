@@ -955,6 +955,10 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
     assert "examples/evidence_court/swtbench_patch_artifact.json" in text
     assert 'assert_json_field "$TMP_DIR/swtbench_patch_artifact.json" patch_shape.bucket mixed_test_source' in text
     assert "artifact_provenance.eval_rule_version swtbench-strip-model-patch/v2" in text
+    assert "public-review-gate: auditing config-only repair fixture" in text
+    assert "examples/evidence_court/config_only_repair.json" in text
+    assert 'assert_json_field "$TMP_DIR/config_only_repair.json" patch_shape.bucket config_only' in text
+    assert 'assert_json_field "$TMP_DIR/config_only_repair.json" failure_class ""' in text
     assert "public-review-gate: running supplied transcript adapter matrix" in text
     assert "bash scripts/supplied_transcript_adapter_matrix.sh" in text
     assert "public-review-gate: PASS" in text
