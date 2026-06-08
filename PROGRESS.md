@@ -552,6 +552,15 @@ Current public proof:
   2026-06-09 before this note was added. This is local supplied-record
   validation evidence only, not native export ingestion, remote CI status,
   external review, endorsement, stars, or reposts.
+- A supplied transcript adapter missing-command regression now covers Codex,
+  Claude, OpenHands, and SWE-agent supplied formats: command/run/test events
+  with exit-code and output but no command text are recorded as unsupported and
+  do not count as `commands_run` or `test_output` validation evidence. The
+  audit remains `missing_test_evidence` for a final successful source repair
+  claim. The local missing-command focused test passed on 2026-06-09 before
+  this note was added. This is local supplied-record validation evidence only,
+  not native export ingestion, remote CI status, external review, endorsement,
+  stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -563,5 +572,6 @@ Next smallest hygiene task:
 
 - Re-check `docs/AGENT_TREND_RADAR.md` and pick the next code-backed target
   only if it can be reduced to a failing test and public-proof boundary.
-- Next concrete candidate: another adapter evidence edge case that can be
-  expressed as one failing transcript fixture before any public wording changes.
+- Next concrete candidate: a stricter adapter validation-command identity edge
+  case that can be expressed as one transcript fixture before any public wording
+  changes.
