@@ -1724,6 +1724,10 @@ def _test_output_status(test_output: object, commands_run: object) -> tuple[str,
             raise ValueError("test_output exit_code must be an integer")
         if _is_integer_exit_code(test_output.get("exit_code")) and int(test_output["exit_code"]) != 0:
             return "failed", text or f"test exit_code: {test_output['exit_code']}"
+        if text:
+            text_status, text_summary = _test_output_status(text, commands_run)
+            if text_status == "failed":
+                return text_status, text_summary
         if status in {"passed", "pass", "success"}:
             return "passed", text or "test output status: passed"
         if status in {"failed", "fail", "failure"}:
@@ -1731,7 +1735,7 @@ def _test_output_status(test_output: object, commands_run: object) -> tuple[str,
         if _is_integer_exit_code(test_output.get("exit_code")):
             return ("passed" if int(test_output["exit_code"]) == 0 else "failed", text or f"test exit_code: {test_output['exit_code']}")
         if text:
-            return _test_output_status(text, commands_run)
+            return text_status, text_summary
     if isinstance(test_output, str) and test_output.strip():
         text = test_output.strip()
         lowered = text.lower()

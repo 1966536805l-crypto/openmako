@@ -630,6 +630,12 @@ Current public proof:
   schema errors after the change on 2026-06-09. This is local supplied-record
   audit validation only, not native export ingestion, remote CI status,
   external review, endorsement, stars, or reposts.
+- Evidence Court now lets failure-looking structured `test_output.output` text
+  override `test_output.status: passed`. The focused regression failed as
+  `PASS` before the change and passed as `post_edit_validation_failure` after
+  the change on 2026-06-09. This is local supplied-record audit validation
+  only, not native export ingestion, remote CI status, external review,
+  endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
