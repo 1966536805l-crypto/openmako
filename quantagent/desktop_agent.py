@@ -15,6 +15,13 @@ from .trajectory import record_action, record_observation
 
 
 URL_RE = re.compile(r"https?://[^\s]+", re.IGNORECASE)
+BARE_URL_RE = re.compile(
+    r"(?<![\w:/])"
+    r"(?:localhost|(?:\d{1,3}\.){3}\d{1,3}|(?:www\.)?[A-Za-z0-9][A-Za-z0-9.-]*\.[A-Za-z]{2,})"
+    r"(?::\d{1,5})?"
+    r"(?:/[^\s，。]*)?",
+    re.IGNORECASE,
+)
 COORD_RE = re.compile(r"(?:click|点击|点)\s*[:：]?\s*(\d{1,5})\s*[,， ]\s*(\d{1,5})", re.IGNORECASE)
 HOTKEY_RE = re.compile(r"(?:hotkey|快捷键|按)\s+([a-z0-9+,\- ]{1,80})", re.IGNORECASE)
 TYPE_RE = re.compile(r"(?:type|输入)\s+(.+)", re.IGNORECASE)
@@ -64,7 +71,7 @@ def build_desktop_agent_plan(instruction: str, *, browser: str = "Safari", max_a
     target_browser = _browser_from_text(text, default=browser)
     operations: list[tuple[int, int, tuple[DesktopStep, ...]]] = []
     sequence = 0
-    url_match = URL_RE.search(text)
+    url_match = URL_RE.search(text) or BARE_URL_RE.search(text)
     search_match = SEARCH_RE.search(text)
     search_query = _search_query(text)
     app_match = OPEN_APP_RE.search(text)
@@ -280,7 +287,10 @@ def _search_query(text: str) -> str:
 
 
 def _url_target(text: str) -> str:
-    return _strip_followup_commands(text).rstrip(".,，。")
+    target = _strip_followup_commands(text).rstrip(".,，。")
+    if re.match(r"^(?:localhost|(?:\d{1,3}\.){3}\d{1,3})(?::\d{1,5})?(?:/|$)", target, re.IGNORECASE):
+        return f"http://{target}"
+    return target
 
 
 def _open_app(text: str) -> str:
