@@ -104,24 +104,30 @@ exist.
 
 ## Current Build Target
 
-The `run-metrics` evidence extension and the first supplied-transcript adapter
-matrix are already on `main`, so they should not be listed as untouched future
-targets. The current adapter matrix now rejects success claims when command/test
-proof is missing and when validation exists but edited-file evidence is
-missing. The next concrete build target is narrower: real diff-content evidence
-for supplied transcripts, without claiming native product-log ingestion.
+The `run-metrics` evidence extension, the first supplied-transcript adapter
+matrix, and supplied diff-content evidence handling are already on `main`, so
+they should not be listed as untouched future targets. The current adapter
+matrix now rejects success claims when command/test proof, edited-file
+evidence, or supplied diff-content evidence is missing. Mixed source/test diff
+shape and duplicate diff-hunk handling are covered for the repository-defined
+Codex, Claude, OpenHands, and SWE-agent supplied formats.
+
+The next concrete build target is narrower: adapter evidence edge-case
+hardening, without claiming native product-log ingestion or live harness
+control.
 
 - keep Codex, Claude, OpenHands, and SWE-agent imports as supplied-record
   adapters first
 - normalize command, diff, test, duration, token, cost, and unsupported-field
   evidence into one Evidence Court record shape
-- make every adapter fail closed when a transcript omits command/test evidence
-  or edited-file evidence for a repair claim
-- keep one fixture and one CLI smoke test per adapter before broadening any
-  adapter claim
-- add true patch/diff-content evidence only after the supplied record shape can
-  distinguish file names from actual diff hunks
+- make every adapter fail closed when a repair claim omits command/test
+  evidence, edited-file evidence, supplied diff-content evidence, or final-claim
+  evidence needed for a source repair assertion
+- add small negative fixtures for empty diff strings, failed test commands,
+  unsupported edit events, and malformed diff-hunk fields
+- keep one fixture and one CLI smoke or focused regression per adapter before
+  broadening any adapter claim
 
 Public claim boundary: this would improve cross-agent supplied-record audit
-coverage, not prove live orchestration, ACP control, broad SWE-bench repair, or
-external endorsement.
+coverage and failure-class clarity, not prove live orchestration, ACP control,
+broad SWE-bench repair, native export ingestion, or external endorsement.

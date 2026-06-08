@@ -501,6 +501,12 @@ Current public proof:
   The local public metadata test passed on 2026-06-08 before this note was
   added; this is documentation/proof-surface alignment only, not new external
   review, endorsement, stars, or reposts.
+- `docs/AGENT_TREND_RADAR.md` now treats supplied diff-content handling,
+  mixed source/test diff-shape coverage, and duplicate diff-hunk handling as
+  completed `main` work, then points the next build target at adapter evidence
+  edge-case hardening. This is planning alignment only, not proof of native
+  export ingestion, live harness control, remote CI status, external review,
+  endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
