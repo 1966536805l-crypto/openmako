@@ -31,9 +31,10 @@ Current public proof:
   reset timestamp when it is parseable.
   Passing this script is current
   focused-CI evidence only, not external review or traction.
-- The README evidence-link table now documents that rate-limit fallback so users
-  know a nonzero API-unavailable result can still include the remote SHA and
-  manual Actions URL.
+- The README evidence-link table now documents the snapshot token fallbacks and
+  rate-limit fallback, so users know a nonzero API-unavailable result can still
+  include the remote SHA, local UTC check time, manual Actions URL, and
+  rate-limit reset countdown when available.
 - GitHub workflow artifact upload steps now use `actions/upload-artifact@v7`
   in the manual despair gate, Evidence Court demo workflow, and the documented
   Evidence Court example. This is CI hygiene for Node 24 action compatibility,

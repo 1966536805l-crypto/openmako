@@ -576,6 +576,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "It supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`\n  for authenticated GitHub API checks to reduce rate-limit failures; tokens are\n  not printed." in progress
     assert "When API data is unavailable, it still prints the remote main SHA,\n  manual Actions URL, local UTC check time, and rate-limit reset countdown\n  when available before exiting nonzero." in progress
     assert "Passing this script is current\n  focused-CI evidence only, not external review or traction." in progress
+    assert "The README evidence-link table now documents the snapshot token fallbacks and\n  rate-limit fallback" in progress
+    assert "include the remote SHA, local UTC check time, manual Actions URL, and\n  rate-limit reset countdown when available." in progress
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in progress
     assert "External technical boundary criticism is requested in issue #2" in progress
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in progress
