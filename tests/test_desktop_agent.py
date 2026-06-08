@@ -38,17 +38,32 @@ class DesktopAgentTest(unittest.TestCase):
         self.assertNotIn("然后按 enter", step_payload)
         self.assertNotIn("并截图", step_payload)
 
+        punctuation_hotkey_plan = build_desktop_agent_plan("输入 OpenMako，按 enter 并截图")
+        punctuation_hotkey_payload = json.dumps([step.args for step in punctuation_hotkey_plan.steps], ensure_ascii=False)
+
+        self.assertIn(("type", {"text": "OpenMako"}), [(step.action, step.args) for step in punctuation_hotkey_plan.steps])
+        self.assertIn(("hotkey", {"keys": ["enter"]}), [(step.action, step.args) for step in punctuation_hotkey_plan.steps])
+        self.assertNotIn("，按 enter", punctuation_hotkey_payload)
+
         click_plan = build_desktop_agent_plan("输入 hello 然后点击 10,20")
         click_steps = [(step.action, step.args) for step in click_plan.steps]
+        punctuation_click_plan = build_desktop_agent_plan("输入 hello，点击 10,20")
+        punctuation_click_steps = [(step.action, step.args) for step in punctuation_click_plan.steps]
 
         self.assertIn(("type", {"text": "hello"}), click_steps)
         self.assertIn(("click", {"x": 10, "y": 20}), click_steps)
+        self.assertIn(("type", {"text": "hello"}), punctuation_click_steps)
+        self.assertIn(("click", {"x": 10, "y": 20}), punctuation_click_steps)
 
         search_plan = build_desktop_agent_plan("输入 hello 然后搜索 OpenMako")
         search_step_payload = json.dumps([step.args for step in search_plan.steps], ensure_ascii=False)
+        punctuation_search_plan = build_desktop_agent_plan("输入 hello，搜索 OpenMako")
+        punctuation_search_step_payload = json.dumps([step.args for step in punctuation_search_plan.steps], ensure_ascii=False)
 
         self.assertIn(("type", {"text": "hello"}), [(step.action, step.args) for step in search_plan.steps])
         self.assertNotIn("然后搜索 OpenMako", search_step_payload)
+        self.assertIn(("type", {"text": "hello"}), [(step.action, step.args) for step in punctuation_search_plan.steps])
+        self.assertNotIn("，搜索 OpenMako", punctuation_search_step_payload)
 
         open_plan = build_desktop_agent_plan("输入 hello 然后打开 Safari")
         open_step_payload = json.dumps([step.args for step in open_plan.steps], ensure_ascii=False)

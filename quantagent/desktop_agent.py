@@ -408,7 +408,7 @@ def _type_text(text: str) -> str:
     match = TYPE_RE.search(text)
     if not match:
         return ""
-    return _strip_followup_commands(match.group(1))
+    return _strip_inline_followup_commands(_strip_followup_commands(match.group(1)))
 
 
 def _strip_followup_commands(text: str) -> str:
