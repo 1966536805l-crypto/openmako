@@ -570,6 +570,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "a32b5b29dd0fe231d2507a3e229c58c233d15db0" in progress
     assert "A 2026-06-08 re-check showed focused workflow run `27116813508`\n  completed with `conclusion=success`" in progress
     assert "a12389ba48867238218dcb704a42b80f5d7bf507" in progress
+    assert "A 2026-06-08 reset-window re-check showed focused workflow run\n  `27116934854` completed with `conclusion=success`" in progress
+    assert "e7f1e0d52c858864aed91dc3b67f04fd1016480f" in progress
     assert "Re-check the latest `openmako/main` run before claiming current remote CI;\n  the snapshot is not external review, endorsement, stars, or reposts." in progress
     assert "bash scripts/remote_focused_ci_snapshot.sh" in progress
     assert "the fail-closed re-check tool\n  for the latest focused workflow on current `openmako/main`" in progress

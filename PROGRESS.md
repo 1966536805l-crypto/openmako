@@ -19,6 +19,9 @@ Current public proof:
   A 2026-06-08 re-check showed focused workflow run `27116813508`
   completed with `conclusion=success` on commit
   `a12389ba48867238218dcb704a42b80f5d7bf507`.
+  A 2026-06-08 reset-window re-check showed focused workflow run
+  `27116934854` completed with `conclusion=success` on commit
+  `e7f1e0d52c858864aed91dc3b67f04fd1016480f`.
   Re-check the latest `openmako/main` run before claiming current remote CI;
   the snapshot is not external review, endorsement, stars, or reposts.
 - `bash scripts/remote_focused_ci_snapshot.sh` is the fail-closed re-check tool
