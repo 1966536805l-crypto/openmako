@@ -611,6 +611,12 @@ Current public proof:
   after the change on 2026-06-09. This is local audit-boundary evidence only,
   not native export ingestion, remote CI status, external review, endorsement,
   stars, or reposts.
+- Evidence Court now rejects malformed direct-record command exit codes instead
+  of silently ignoring them: `commands_run[].exit_code` must be an integer when
+  supplied. The focused regression failed before the change and passed with a
+  CLI error after the change on 2026-06-09. This is local supplied-record audit
+  validation only, not native export ingestion, remote CI status, external
+  review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

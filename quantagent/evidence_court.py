@@ -1310,6 +1310,8 @@ def _command_summaries(value: object) -> list[str]:
         elif isinstance(item, dict) and isinstance(item.get("command"), str):
             command = str(item["command"])
             if "exit_code" in item:
+                if not isinstance(item["exit_code"], int):
+                    raise ValueError("commands_run exit_code must be an integer")
                 command = f"{command} (exit_code={item['exit_code']})"
             commands.append(command)
         else:
