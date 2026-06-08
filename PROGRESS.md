@@ -507,6 +507,13 @@ Current public proof:
   edge-case hardening. This is planning alignment only, not proof of native
   export ingestion, live harness control, remote CI status, external review,
   endorsement, stars, or reposts.
+- A supplied transcript adapter malformed-diff regression now covers Codex,
+  Claude, OpenHands, and SWE-agent supplied formats: non-array `diff_hunks` and
+  non-string entries are rejected by the CLI instead of being silently treated
+  as absent diff evidence. The local focused transcript tests and public
+  metadata tests passed on 2026-06-08 before this note was added. This is local
+  supplied-record validation evidence only, not native export ingestion, remote
+  CI status, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

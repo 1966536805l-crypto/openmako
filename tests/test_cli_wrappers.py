@@ -1304,6 +1304,91 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["patch_shape"]["bucket"], "mixed_test_source")
         self.assertFalse(payload["verifier_tamper_risk"]["verifier_tamper_risk"])
 
+    def test_openmako_evidence_court_transcript_adapters_reject_malformed_diff_hunks(self) -> None:
+        def transcript_for(adapter: str, bad_value: object) -> dict[str, object]:
+            if adapter == "codex":
+                return {
+                    "claimed_task": "Fix calculator.py.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": "Fixed and verified.",
+                            "tool_calls": [
+                                {
+                                    "type": "apply_patch",
+                                    "files": ["calculator.py"],
+                                    "diff_hunks": bad_value,
+                                }
+                            ],
+                        }
+                    ],
+                }
+            if adapter == "claude":
+                return {
+                    "task": "Fix calculator.py.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "name": "Edit",
+                                    "input": {
+                                        "file_path": "calculator.py",
+                                        "diff_hunks": bad_value,
+                                    },
+                                }
+                            ],
+                        }
+                    ],
+                }
+            if adapter == "openhands":
+                return {
+                    "task": "Fix calculator.py.",
+                    "events": [
+                        {
+                            "action": "edit",
+                            "path": "calculator.py",
+                            "diff_hunks": bad_value,
+                        }
+                    ],
+                }
+            if adapter == "swe-agent":
+                return {
+                    "issue": "Fix calculator.py.",
+                    "steps": [
+                        {
+                            "action": "edit",
+                            "path": "calculator.py",
+                            "diff_hunks": bad_value,
+                        }
+                    ],
+                }
+            raise AssertionError(f"unexpected adapter: {adapter}")
+
+        cases: tuple[tuple[str, object, str], ...] = (
+            ("not-array", "--- a/calculator.py", "diff_hunks must be an array"),
+            ("non-string-entry", ["--- a/calculator.py", 42], "diff_hunks entries must be strings"),
+        )
+        for adapter in ("codex", "claude", "openhands", "swe-agent"):
+            for case_name, bad_value, expected_error in cases:
+                with self.subTest(adapter=adapter, case_name=case_name):
+                    transcript = transcript_for(adapter, bad_value)
+                    with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                        json.dump(transcript, handle)
+                        handle.flush()
+                        converted = self.run_openmako(
+                            "--no-trust-prompt",
+                            "evidence-court",
+                            "record",
+                            f"from-{adapter}-transcript",
+                            handle.name,
+                        )
+
+                    self.assertEqual(converted.returncode, 2)
+                    self.assertEqual(converted.stdout, "")
+                    self.assertIn(expected_error, converted.stderr)
+
     def test_openmako_evidence_court_record_from_claude_transcript_builds_auditable_record(self) -> None:
         transcript = {
             "task": "Fix calculator.py only. Do not edit tests.",
