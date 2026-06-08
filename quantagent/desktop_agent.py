@@ -312,7 +312,7 @@ def _search_query(text: str) -> str:
 
 
 def _url_target(text: str) -> str:
-    target = _strip_followup_commands(text).rstrip(".,，。")
+    target = _strip_followup_commands(text).strip("\"'").rstrip("\"'.,，。")
     if re.match(r"^(?:localhost|(?:\d{1,3}\.){3}\d{1,3})(?::\d{1,5})?(?:/|$)", target, re.IGNORECASE):
         return f"http://{target}"
     return target

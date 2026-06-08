@@ -97,10 +97,14 @@ class DesktopAgentTest(unittest.TestCase):
         comma_plan = build_desktop_agent_plan("打开 https://example.com，然后截图")
         period_plan = build_desktop_agent_plan("打开 https://example.com/path?q=OpenMako。然后截图")
         english_plan = build_desktop_agent_plan("打开 https://example.com, then screenshot")
+        quoted_plan = build_desktop_agent_plan('打开 "https://example.com/path?q=OpenMako"，然后截图')
+        single_quoted_plan = build_desktop_agent_plan("打开 'https://example.com/path?q=OpenMako'")
 
         self.assertEqual(comma_plan.steps[0].args["label"], "https://example.com")
         self.assertEqual(period_plan.steps[0].args["label"], "https://example.com/path?q=OpenMako")
         self.assertEqual(english_plan.steps[0].args["label"], "https://example.com")
+        self.assertEqual(quoted_plan.steps[0].args["label"], "https://example.com/path?q=OpenMako")
+        self.assertEqual(single_quoted_plan.steps[0].args["label"], "https://example.com/path?q=OpenMako")
 
     def test_desktop_agent_opens_bare_domains_and_local_urls_as_urls(self) -> None:
         edge_domain = build_desktop_agent_plan("用 Edge 打开 example.com")
