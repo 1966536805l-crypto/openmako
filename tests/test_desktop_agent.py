@@ -84,10 +84,14 @@ class DesktopAgentTest(unittest.TestCase):
         edge_search = build_desktop_agent_plan("打开 Edge 搜索 OpenMako 并截图")
         chrome_search = build_desktop_agent_plan("打开 Chrome 搜索 OpenMako")
         edge_url = build_desktop_agent_plan("用 Edge 打开 https://example.com")
+        google_browser_search = build_desktop_agent_plan("打开 谷歌浏览器 搜索 OpenMako")
+        microsoft_browser_url = build_desktop_agent_plan("用 微软浏览器 打开 https://example.com")
 
         self.assertEqual(edge_search.steps[0].args["app"], "Microsoft Edge")
         self.assertEqual(chrome_search.steps[0].args["app"], "Google Chrome")
         self.assertEqual(edge_url.steps[0].args["command"], ["open", "-a", "Microsoft Edge", "https://example.com"])
+        self.assertEqual(google_browser_search.steps[0].args["app"], "Google Chrome")
+        self.assertEqual(microsoft_browser_url.steps[0].args["command"], ["open", "-a", "Microsoft Edge", "https://example.com"])
 
     def test_preview_writes_query_events_without_side_effects(self) -> None:
         with tempfile.TemporaryDirectory(prefix="desktop agent ") as tmp:

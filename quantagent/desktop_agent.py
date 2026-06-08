@@ -290,9 +290,9 @@ def _open_app(text: str) -> str:
 
 def _browser_from_text(text: str, *, default: str) -> str:
     lowered = text.lower()
-    if "chrome" in lowered:
+    if "chrome" in lowered or "谷歌浏览器" in text:
         return "Google Chrome"
-    if "edge" in lowered:
+    if "edge" in lowered or "微软浏览器" in text:
         return "Microsoft Edge"
     if "safari" in lowered:
         return "Safari"
