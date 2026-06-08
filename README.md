@@ -254,7 +254,7 @@ qagent --help
 | Public share-ready check | `bash scripts/public_share_ready.sh review-request`, runs the public gate before printing a non-promotional share message |
 | v0.1 release | [release v0.1.0](https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0) |
 | Focused public CI | [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml) |
-| Remote focused CI snapshot | `bash scripts/remote_focused_ci_snapshot.sh`, a fail-closed check for the latest focused workflow on current `openmako/main`; not external review or endorsement |
+| Remote focused CI snapshot | `bash scripts/remote_focused_ci_snapshot.sh`, a fail-closed check for the latest focused workflow on current `openmako/main`; if the GitHub API is unavailable it prints the remote SHA and manual Actions URL before exiting nonzero; not external review or endorsement |
 | Screenshot-friendly proof card | [`scripts/public_proof_card.sh`](scripts/public_proof_card.sh), runs the public gate then prints scope and non-proof boundaries |
 | Learning-effect gate | [`quantagent/learning_effect_coding_bench.py`](quantagent/learning_effect_coding_bench.py) |
 | CodingBench execution | [`quantagent/coding_bench.py`](quantagent/coding_bench.py) |
