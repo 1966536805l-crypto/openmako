@@ -485,6 +485,14 @@ Current public proof:
   2026-06-08. This is local supplied-record evidence only, not native
   OpenHands export ingestion, remote CI status, external review, endorsement,
   stars, or reposts.
+- Supplied Claude and SWE-agent transcript duplicate-diff regressions now
+  cover the same dedupe boundary: repeated source hunks from mixed diff fields
+  collapse to one entry while a distinct test hunk is retained and the audit
+  remains `mixed_test_source` without verifier-tamper risk. The local focused
+  transcript tests, public metadata test, supplied transcript adapter matrix,
+  `git diff --check`, and `bash scripts/public_review_gate.sh` passed on
+  2026-06-08. This is supplied-record evidence only, not native export
+  ingestion, remote CI status, external review, endorsement, stars, or reposts.
 - The README and reproduction guide now align the public-proof wording with the
   supplied transcript diff-content boundary: the adapter matrix is described as
   rejecting missing-test-proof, missing edited-file evidence, and missing
