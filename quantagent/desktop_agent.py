@@ -14,7 +14,7 @@ from .query_runtime import QueryRuntime
 from .trajectory import record_action, record_observation
 
 
-URL_RE = re.compile(r"https?://[^\s]+", re.IGNORECASE)
+URL_RE = re.compile(r"(?:https?|file)://[^\s]+", re.IGNORECASE)
 BARE_URL_RE = re.compile(
     r"(?<![\w:/])"
     r"(?:localhost|(?:\d{1,3}\.){3}\d{1,3}|(?:www\.)?[A-Za-z0-9][A-Za-z0-9.-]*\.[A-Za-z]{2,})"
@@ -22,6 +22,7 @@ BARE_URL_RE = re.compile(
     r"(?:/[^\s，。]*)?",
     re.IGNORECASE,
 )
+PATH_RE = re.compile(r"(?<!\S)(?:/|~[/\\]|\.{1,2}/)[^\s，。]*")
 COORD_RE = re.compile(r"(?:click|点击|点)\s*[:：]?\s*(\d{1,5})\s*[,， ]\s*(\d{1,5})", re.IGNORECASE)
 HOTKEY_RE = re.compile(r"(?:hotkey|快捷键|按)\s+([a-z0-9+,\- ]{1,80})", re.IGNORECASE)
 TYPE_RE = re.compile(r"(?:type|输入)\s+(.+)", re.IGNORECASE)
@@ -72,6 +73,7 @@ def build_desktop_agent_plan(instruction: str, *, browser: str = "Safari", max_a
     operations: list[tuple[int, int, tuple[DesktopStep, ...]]] = []
     sequence = 0
     url_match = URL_RE.search(text) or BARE_URL_RE.search(text)
+    path_match = PATH_RE.search(text)
     search_match = SEARCH_RE.search(text)
     search_query = _search_query(text)
     app_match = OPEN_APP_RE.search(text)
@@ -91,6 +93,10 @@ def build_desktop_agent_plan(instruction: str, *, browser: str = "Safari", max_a
                 plan_open_target(Path("."), url_target, kind="url", browser=target_browser).steps,
             )
         )
+        sequence += 1
+    elif path_match:
+        path_target = _path_target(path_match.group(0))
+        operations.append((path_match.start(), sequence, plan_open_target(Path.cwd(), path_target, kind="auto").steps))
         sequence += 1
     elif search_match and search_query:
         operations.append((search_match.start(), sequence, plan_web_search(search_query, browser=target_browser).steps))
@@ -291,6 +297,18 @@ def _url_target(text: str) -> str:
     if re.match(r"^(?:localhost|(?:\d{1,3}\.){3}\d{1,3})(?::\d{1,5})?(?:/|$)", target, re.IGNORECASE):
         return f"http://{target}"
     return target
+
+
+def _path_target(text: str) -> str:
+    value = str(text or "").strip()
+    value = re.split(
+        r"\s*(?:并|然后|再|and|then)\s*"
+        r"(?=(?:截图|截屏|screenshot|等待|wait|按|hotkey|快捷键|type|输入|click|点击|点|search|搜索|搜|open|打开|启动)(?:\s|[:：]|\d|$))",
+        value,
+        maxsplit=1,
+        flags=re.IGNORECASE,
+    )[0]
+    return value.rstrip(".,，。")
 
 
 def _open_app(text: str) -> str:

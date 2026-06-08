@@ -113,6 +113,17 @@ class DesktopAgentTest(unittest.TestCase):
         self.assertEqual(localhost_plan.steps[0].args["label"], "http://localhost:3000")
         self.assertEqual(ip_plan.steps[0].args["label"], "http://127.0.0.1:8000")
 
+    def test_desktop_agent_opens_file_urls_and_local_paths(self) -> None:
+        file_url = build_desktop_agent_plan("用 Edge 打开 file:///tmp/openmako.html，然后截图")
+        absolute_path = build_desktop_agent_plan("打开 /tmp/openmako.html，然后截图")
+        relative_path = build_desktop_agent_plan("打开 ./README.md")
+
+        self.assertEqual(file_url.steps[0].args["command"], ["open", "-a", "Microsoft Edge", "file:///tmp/openmako.html"])
+        self.assertEqual(absolute_path.steps[0].args["kind"], "path")
+        self.assertTrue(absolute_path.steps[0].args["label"].endswith("/tmp/openmako.html"))
+        self.assertEqual(relative_path.steps[0].args["kind"], "path")
+        self.assertEqual(relative_path.steps[0].args["label"], str((Path.cwd() / "README.md").resolve(strict=False)))
+
     def test_preview_writes_query_events_without_side_effects(self) -> None:
         with tempfile.TemporaryDirectory(prefix="desktop agent ") as tmp:
             result = run_desktop_agent(Path(tmp), "点击 10,20", execute=False)
