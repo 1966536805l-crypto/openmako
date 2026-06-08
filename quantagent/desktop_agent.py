@@ -23,6 +23,7 @@ BARE_URL_RE = re.compile(
     re.IGNORECASE,
 )
 PATH_RE = re.compile(r"(?<!\S)(?:/|~[/\\]|\.{1,2}/)[^\s，。]*")
+RELATIVE_FILE_RE = re.compile(r"(?<!\S)[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*\.[A-Za-z0-9]{1,12}(?!\S)")
 COORD_RE = re.compile(r"(?:click|点击|点)\s*[:：]?\s*(\d{1,5})\s*[,， ]\s*(\d{1,5})", re.IGNORECASE)
 HOTKEY_RE = re.compile(r"(?:hotkey|快捷键|按)\s+([a-z0-9+,\- ]{1,80})", re.IGNORECASE)
 TYPE_RE = re.compile(r"(?:type|输入)\s+(.+)", re.IGNORECASE)
@@ -72,8 +73,9 @@ def build_desktop_agent_plan(instruction: str, *, browser: str = "Safari", max_a
     target_browser = _browser_from_text(text, default=browser)
     operations: list[tuple[int, int, tuple[DesktopStep, ...]]] = []
     sequence = 0
-    url_match = URL_RE.search(text) or BARE_URL_RE.search(text)
-    path_match = PATH_RE.search(text)
+    url_match = URL_RE.search(text)
+    bare_url_match = BARE_URL_RE.search(text)
+    path_match = PATH_RE.search(text) or _existing_relative_file_match(text)
     search_match = SEARCH_RE.search(text)
     search_query = _search_query(text)
     app_match = OPEN_APP_RE.search(text)
@@ -96,7 +98,23 @@ def build_desktop_agent_plan(instruction: str, *, browser: str = "Safari", max_a
         sequence += 1
     elif path_match:
         path_target = _path_target(path_match.group(0))
-        operations.append((path_match.start(), sequence, plan_open_target(Path.cwd(), path_target, kind="auto").steps))
+        operations.append(
+            (
+                path_match.start(),
+                sequence,
+                plan_open_target(Path.cwd(), _absolute_path_target(path_target), kind="path").steps,
+            )
+        )
+        sequence += 1
+    elif bare_url_match:
+        url_target = _url_target(bare_url_match.group(0))
+        operations.append(
+            (
+                bare_url_match.start(),
+                sequence,
+                plan_open_target(Path("."), url_target, kind="url", browser=target_browser).steps,
+            )
+        )
         sequence += 1
     elif search_match and search_query:
         operations.append((search_match.start(), sequence, plan_web_search(search_query, browser=target_browser).steps))
@@ -309,6 +327,21 @@ def _path_target(text: str) -> str:
         flags=re.IGNORECASE,
     )[0]
     return value.rstrip(".,，。")
+
+
+def _absolute_path_target(text: str) -> str:
+    path = Path(text).expanduser()
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    return str(path.resolve(strict=False))
+
+
+def _existing_relative_file_match(text: str) -> re.Match[str] | None:
+    for match in RELATIVE_FILE_RE.finditer(text):
+        candidate = _path_target(match.group(0))
+        if (Path.cwd() / candidate).exists():
+            return match
+    return None
 
 
 def _open_app(text: str) -> str:

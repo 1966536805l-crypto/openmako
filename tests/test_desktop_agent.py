@@ -124,6 +124,19 @@ class DesktopAgentTest(unittest.TestCase):
         self.assertEqual(relative_path.steps[0].args["kind"], "path")
         self.assertEqual(relative_path.steps[0].args["label"], str((Path.cwd() / "README.md").resolve(strict=False)))
 
+    def test_desktop_agent_prefers_existing_relative_files_over_bare_urls(self) -> None:
+        readme_plan = build_desktop_agent_plan("打开 README.md")
+        docs_plan = build_desktop_agent_plan("打开 docs/REPRODUCE_V0_1.md")
+        script_plan = build_desktop_agent_plan("打开 scripts/public_review_gate.sh")
+        domain_plan = build_desktop_agent_plan("打开 example.com")
+
+        self.assertEqual(readme_plan.steps[0].args["kind"], "path")
+        self.assertEqual(readme_plan.steps[0].args["label"], str((Path.cwd() / "README.md").resolve(strict=False)))
+        self.assertEqual(docs_plan.steps[0].args["kind"], "path")
+        self.assertTrue(docs_plan.steps[0].args["label"].endswith("/docs/REPRODUCE_V0_1.md"))
+        self.assertEqual(script_plan.steps[0].args["kind"], "path")
+        self.assertEqual(domain_plan.steps[0].args["kind"], "url")
+
     def test_preview_writes_query_events_without_side_effects(self) -> None:
         with tempfile.TemporaryDirectory(prefix="desktop agent ") as tmp:
             result = run_desktop_agent(Path(tmp), "点击 10,20", execute=False)
