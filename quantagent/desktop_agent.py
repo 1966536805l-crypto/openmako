@@ -76,11 +76,12 @@ def build_desktop_agent_plan(instruction: str, *, browser: str = "Safari", max_a
     hotkey = _hotkey_keys(text)
 
     if url_match:
+        url_target = _url_target(url_match.group(0))
         operations.append(
             (
                 url_match.start(),
                 sequence,
-                plan_open_target(Path("."), url_match.group(0), kind="url", browser=target_browser).steps,
+                plan_open_target(Path("."), url_target, kind="url", browser=target_browser).steps,
             )
         )
         sequence += 1
@@ -276,6 +277,10 @@ def _search_query(text: str) -> str:
     query = match.group(1).strip()
     query = URL_RE.sub("", query).strip(" ：:，,。.")
     return _strip_followup_commands(query)
+
+
+def _url_target(text: str) -> str:
+    return _strip_followup_commands(text).rstrip(".,，。")
 
 
 def _open_app(text: str) -> str:

@@ -93,6 +93,15 @@ class DesktopAgentTest(unittest.TestCase):
         self.assertEqual(google_browser_search.steps[0].args["app"], "Google Chrome")
         self.assertEqual(microsoft_browser_url.steps[0].args["command"], ["open", "-a", "Microsoft Edge", "https://example.com"])
 
+    def test_desktop_agent_trims_url_followup_commands_and_punctuation(self) -> None:
+        comma_plan = build_desktop_agent_plan("打开 https://example.com，然后截图")
+        period_plan = build_desktop_agent_plan("打开 https://example.com/path?q=OpenMako。然后截图")
+        english_plan = build_desktop_agent_plan("打开 https://example.com, then screenshot")
+
+        self.assertEqual(comma_plan.steps[0].args["label"], "https://example.com")
+        self.assertEqual(period_plan.steps[0].args["label"], "https://example.com/path?q=OpenMako")
+        self.assertEqual(english_plan.steps[0].args["label"], "https://example.com")
+
     def test_preview_writes_query_events_without_side_effects(self) -> None:
         with tempfile.TemporaryDirectory(prefix="desktop agent ") as tmp:
             result = run_desktop_agent(Path(tmp), "点击 10,20", execute=False)
