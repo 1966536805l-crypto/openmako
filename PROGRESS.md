@@ -463,6 +463,14 @@ Current public proof:
   2026-06-08. This is local supplied-record evidence only, not native
   SWE-agent export ingestion, remote CI status, external review, endorsement,
   stars, or reposts.
+- A supplied Claude transcript regression now covers the same mixed source+test
+  diff-shape boundary using `diff` and `patch` tool-use input fields. The local
+  focused tests, supplied transcript adapter matrix, `git diff --check`, and
+  `bash scripts/public_review_gate.sh` passed on 2026-06-08. This completes the
+  mixed source+test diff-shape regression set for the repository-defined
+  Codex, Claude, OpenHands, and SWE-agent supplied transcript formats. It is
+  local supplied-record evidence only, not native export ingestion, remote CI
+  status, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -472,5 +480,5 @@ public result.
 
 Next smallest hygiene task:
 
-- Add the same mixed source+test diff-shape regression for the Claude supplied
-  transcript adapter, then keep it scoped to supplied-record behavior only.
+- Add a small duplicate-diff regression proving supplied transcript adapters
+  deduplicate repeated diff hunks without dropping distinct source/test hunks.
