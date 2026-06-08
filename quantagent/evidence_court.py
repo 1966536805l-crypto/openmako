@@ -1744,9 +1744,11 @@ def _test_output_status(test_output: object, commands_run: object) -> tuple[str,
     if isinstance(test_output, str) and test_output.strip():
         text = test_output.strip()
         lowered = text.lower()
-        if re.search(r"\b[1-9]\d*\s+failed\b", lowered) or re.search(r"\bfailures?=\s*[1-9]\d*\b", lowered):
+        failed_count = re.search(r"\b[1-9]\d*\s+failed\b", lowered) or re.search(r"\bfailures?=\s*[1-9]\d*\b", lowered)
+        error_count = re.search(r"\b[1-9]\d*\s+errors?\b", lowered) or re.search(r"\berrors?=\s*[1-9]\d*\b", lowered)
+        if failed_count or error_count:
             return "failed", text
-        if re.search(r"\b\d+\s+passed\b", lowered) and not re.search(r"\b[1-9]\d*\s+failed\b", lowered):
+        if re.search(r"\b\d+\s+passed\b", lowered) and not failed_count and not error_count:
             return "passed", text
         return "unknown", text
     if exit_codes:
