@@ -576,6 +576,14 @@ Current public proof:
   local audit-boundary evidence only, not proof of validation quality, native
   export ingestion, remote CI status, external review, endorsement, stars, or
   reposts.
+- Supplied transcript adapter coverage now includes the same validation-command
+  identity boundary across Codex, Claude, OpenHands, and SWE-agent formats: a
+  non-validation command that emits `1 passed` is preserved in the record, but
+  the source repair success claim still audits as `missing_test_evidence`. The
+  local validation-command transcript focused test passed on 2026-06-09 before
+  this note was added. This is local supplied-record validation evidence only,
+  not native export ingestion, remote CI status, external review, endorsement,
+  stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -587,6 +595,5 @@ Next smallest hygiene task:
 
 - Re-check `docs/AGENT_TREND_RADAR.md` and pick the next code-backed target
   only if it can be reduced to a failing test and public-proof boundary.
-- Next concrete candidate: extend validation-command identity coverage to
-  supplied transcript fixtures if a real adapter-specific false-positive path
-  appears.
+- Next concrete candidate: re-check `docs/AGENT_TREND_RADAR.md` and choose the
+  next edge case only if it can produce a focused failing regression.
