@@ -597,6 +597,14 @@ Current public proof:
   after the change on 2026-06-09. This is local audit-boundary evidence only,
   not native export ingestion, remote CI status, external review, endorsement,
   stars, or reposts.
+- Supplied transcript adapter coverage now includes the same failed-exit-code
+  precedence boundary across Codex, Claude, OpenHands, and SWE-agent supplied
+  formats: a validation command with `exit_code=1` audits as
+  `post_edit_validation_failure` even when the supplied command output says
+  `1 passed`. The local focused transcript test passed on 2026-06-09 before
+  this note was added. This is local supplied-record audit evidence only, not
+  native export ingestion, remote CI status, external review, endorsement,
+  stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
