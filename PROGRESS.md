@@ -477,6 +477,14 @@ Current public proof:
   matrix, `git diff --check`, and `bash scripts/public_review_gate.sh` passed
   on 2026-06-08. This is local supplied-record evidence only, not native export
   ingestion, remote CI status, external review, endorsement, stars, or reposts.
+- A supplied OpenHands transcript duplicate-diff regression now proves the same
+  dedupe boundary for non-Codex supplied events: repeated source hunks from
+  `diff_hunks` and `diff` collapse to one entry while a distinct test hunk is
+  retained. The local focused tests, supplied transcript adapter matrix,
+  `git diff --check`, and `bash scripts/public_review_gate.sh` passed on
+  2026-06-08. This is local supplied-record evidence only, not native
+  OpenHands export ingestion, remote CI status, external review, endorsement,
+  stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -486,6 +494,5 @@ public result.
 
 Next smallest hygiene task:
 
-- Add the duplicate-diff regression to one non-Codex supplied transcript
-  adapter, or move to the next trend-radar target after confirming the current
-  public-proof boundary still matches README wording.
+- Confirm README/public-proof wording still matches the current supplied
+  transcript diff-content boundary, then move to the next trend-radar target.
