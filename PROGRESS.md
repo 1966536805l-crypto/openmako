@@ -23,6 +23,10 @@ Current public proof:
   authenticated GitHub API checks to reduce rate-limit failures; tokens are not
   printed. Passing this script is current focused-CI evidence only, not external
   review or traction.
+- GitHub workflow artifact upload steps now use `actions/upload-artifact@v7`
+  in the manual despair gate, Evidence Court demo workflow, and the documented
+  Evidence Court example. This is CI hygiene for Node 24 action compatibility,
+  not evidence of external review, endorsement, stars, or reposts.
 - Latest local send-ready check on 2026-06-05 passed:
   `./scripts/public_review_gate.sh` ended with `public-review-gate: PASS`;
   `bash scripts/wave1_send_ready.sh swe-agent` re-ran the gate and printed a

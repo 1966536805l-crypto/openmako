@@ -221,7 +221,7 @@ def test_despair_gate_is_repeatable_but_not_a_public_claim() -> None:
     assert "bash scripts/despair_gate.sh" in workflow
     assert "Upload CodingBench artifacts" in workflow
     assert "if: always()" in workflow
-    assert "actions/upload-artifact@v4" in workflow
+    assert "actions/upload-artifact@v7" in workflow
     assert "name: despair-gate-coding-bench" in workflow
     assert "path: |" in workflow
     assert ".quantagent/coding_bench" in workflow
@@ -402,7 +402,7 @@ def test_github_actions_evidence_court_doc_uses_supported_commands() -> None:
     assert "uses: ./.github/actions/evidence-court" in doc
     assert "record: run.json" in doc
     assert "report: evidence-court-report.json" in doc
-    assert "actions/upload-artifact@v4" in doc
+    assert "actions/upload-artifact@v7" in doc
     assert "openmako evidence-court record from-jsonl --output run.json path/to/events.jsonl" in doc
     assert "openmako evidence-court audit --ci --fail-on suspicious --json run.json" in doc
     assert "does not collect native Claude Code, Codex, Cursor, or SWE-bench logs" in doc
@@ -420,7 +420,7 @@ def test_evidence_court_demo_workflow_uses_supported_bad_run_commands() -> None:
     assert "record: run.json" in workflow
     assert "report: evidence-court-report.json" in workflow
     assert "expected-exit: \"1\"" in workflow
-    assert "actions/upload-artifact@v4" in workflow
+    assert "actions/upload-artifact@v7" in workflow
     assert "Claude Code" not in workflow
     assert "Codex" not in workflow
     assert "Cursor" not in workflow

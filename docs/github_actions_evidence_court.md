@@ -34,7 +34,7 @@ jobs:
         with:
           record: run.json
           report: evidence-court-report.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: evidence-court-report
