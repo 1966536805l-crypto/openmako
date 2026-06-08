@@ -591,6 +591,12 @@ Current public proof:
   on 2026-06-09 before this note was added. This is local supplied-record audit
   evidence only, not native export ingestion, remote CI status, external
   review, endorsement, stars, or reposts.
+- Evidence Court now gives nonzero validation command exit codes precedence
+  over supplied output text that looks passing. The focused regression failed
+  as `PASS` before the change and passed as `post_edit_validation_failure`
+  after the change on 2026-06-09. This is local audit-boundary evidence only,
+  not native export ingestion, remote CI status, external review, endorsement,
+  stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

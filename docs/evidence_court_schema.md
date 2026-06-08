@@ -72,6 +72,9 @@ only when the command itself looks like a test command, such as `pytest`,
 non-validation command does not prove a source repair claim, even if its output
 contains words that look like a passing test summary.
 
+For recognizable validation commands, a nonzero `exit_code` takes precedence
+over supplied output text that looks passing.
+
 ## Machine Output
 
 Use `--json` for CI or scripts.

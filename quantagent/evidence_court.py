@@ -1709,6 +1709,8 @@ def _test_output_status(test_output: object, commands_run: object) -> tuple[str,
                 and _looks_like_validation_command(str(item.get("command") or ""))
             ):
                 exit_codes.append(int(item["exit_code"]))
+    if any(code != 0 for code in exit_codes):
+        return "failed", "command exit_code evidence: " + ", ".join(str(code) for code in exit_codes)
     if isinstance(test_output, dict):
         status = str(test_output.get("status") or "").lower()
         text = str(test_output.get("output") or test_output.get("summary") or "").strip()
