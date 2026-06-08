@@ -592,6 +592,27 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["failure_class"], "missing_test_evidence")
         self.assertEqual(payload["failed_at"], "final_claim")
 
+    def test_openmako_evidence_court_audit_requires_validation_command_for_source_repair_claim(self) -> None:
+        record = {
+            "claimed_task": "Fix calculator.py.",
+            "files_read": ["calculator.py"],
+            "files_edited": ["calculator.py"],
+            "commands_run": [{"command": "python3 scripts/print_status.py", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "final_claim": "Fixed and verified.",
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "SUSPICIOUS")
+        self.assertEqual(payload["status"], "UNVERIFIED")
+        self.assertEqual(payload["failure_class"], "missing_test_evidence")
+        self.assertEqual(payload["failed_at"], "final_claim")
+
     def test_openmako_evidence_court_audit_json_allows_config_only_repair_evidence(self) -> None:
         record = {
             "claimed_task": "Fix project packaging metadata.",

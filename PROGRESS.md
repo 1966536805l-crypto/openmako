@@ -569,6 +569,13 @@ Current public proof:
   change on 2026-06-09. This is local audit-boundary evidence only, not proof
   of validation quality, native export ingestion, remote CI status, external
   review, endorsement, stars, or reposts.
+- Evidence Court now also rejects source repair success claims where a
+  non-validation command emits text that looks like a passing test summary, such
+  as `1 passed`. The focused regression failed as `PASS` before the change and
+  passed as `missing_test_evidence` after the change on 2026-06-09. This is
+  local audit-boundary evidence only, not proof of validation quality, native
+  export ingestion, remote CI status, external review, endorsement, stars, or
+  reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -580,5 +587,6 @@ Next smallest hygiene task:
 
 - Re-check `docs/AGENT_TREND_RADAR.md` and pick the next code-backed target
   only if it can be reduced to a failing test and public-proof boundary.
-- Next concrete candidate: extend the same validation-command identity boundary
-  to supplied transcript fixtures if a real false-positive path appears.
+- Next concrete candidate: extend validation-command identity coverage to
+  supplied transcript fixtures if a real adapter-specific false-positive path
+  appears.

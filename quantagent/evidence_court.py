@@ -242,6 +242,7 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
     run_metrics = _run_metrics(payload.get("run_metrics"))
     artifact_provenance = _artifact_provenance(payload.get("artifact_provenance"))
     test_status, test_summary = _test_output_status(payload.get("test_output"), payload.get("commands_run"))
+    has_validation_command = _has_validation_command(payload.get("commands_run"))
     verifier_tamper_risk = _verifier_tamper_risk(files_edited)
 
     evidence: list[AutopsyEvidence] = [
@@ -428,6 +429,27 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
             )
         )
     if (
+        test_status == "passed"
+        and files_edited
+        and _looks_like_success_claim(final_claim)
+        and _looks_like_patch_task(" ".join((claimed_task, final_claim)))
+        and not has_validation_command
+    ):
+        evidence_ids = tuple(
+            item.evidence_id
+            for item in evidence
+            if item.source in {"task", "final_claim"} or item.kind in {"command", "test"}
+        )
+        findings.append(
+            AutopsyFinding(
+                "missing_test_evidence",
+                "The run claims a successful source repair, but no recognizable validation command was supplied.",
+                evidence_ids=evidence_ids,
+                intercept="require a targeted validation command before accepting the final claim",
+                confidence="high",
+            )
+        )
+    if (
         test_status != "missing"
         and not files_edited
         and _looks_like_success_claim(final_claim)
@@ -553,6 +575,9 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
         status = "UNVERIFIED"
         failed_at = "test_output"
     elif test_status == "missing" and findings:
+        status = "UNVERIFIED"
+        failed_at = "final_claim"
+    elif any(item.finding_type == "missing_test_evidence" for item in findings):
         status = "UNVERIFIED"
         failed_at = "final_claim"
     elif any(item.finding_type == "missing_edited_file_evidence" for item in findings):
@@ -1734,6 +1759,17 @@ def _looks_like_validation_command(command: str) -> bool:
         r"\bgradlew\s+test\b",
     )
     return any(re.search(pattern, lowered) for pattern in patterns)
+
+
+def _has_validation_command(commands_run: object) -> bool:
+    if not isinstance(commands_run, list):
+        return False
+    for item in commands_run:
+        if isinstance(item, str) and _looks_like_validation_command(item):
+            return True
+        if isinstance(item, dict) and _looks_like_validation_command(str(item.get("command") or "")):
+            return True
+    return False
 
 
 def _looks_like_success_claim(text: str) -> bool:

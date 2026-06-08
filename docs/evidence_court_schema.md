@@ -69,7 +69,8 @@ The schema documents the supplied record shape; the CLI still audits only the ev
 Exit-code-only command evidence is treated as recognizable validation evidence
 only when the command itself looks like a test command, such as `pytest`,
 `unittest`, `npm test`, `go test`, or similar test runners. A successful
-non-validation command does not prove a source repair claim.
+non-validation command does not prove a source repair claim, even if its output
+contains words that look like a passing test summary.
 
 ## Machine Output
 
