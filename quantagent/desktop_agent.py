@@ -427,7 +427,8 @@ def _hotkey_keys(text: str) -> list[str]:
     match = HOTKEY_RE.search(text)
     if not match:
         return []
-    return [part for part in re.split(r"[+, ]+", match.group(1).strip()) if part]
+    value = _strip_inline_followup_commands(_strip_followup_commands(match.group(1)))
+    return [part for part in re.split(r"[+, ]+", value.strip()) if part]
 
 
 def _wants_screenshot(text: str) -> bool:

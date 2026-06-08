@@ -81,6 +81,10 @@ class DesktopAgentTest(unittest.TestCase):
         hotkey_then_type = build_desktop_agent_plan("按 enter 然后输入 hello")
         self.assertEqual([step.action for step in hotkey_then_type.steps[:2]], ["hotkey", "type"])
 
+        compact_hotkey_then_type = build_desktop_agent_plan("按 cmd+l,then 输入 hello")
+        self.assertEqual(compact_hotkey_then_type.steps[0].args["keys"], ["cmd", "l"])
+        self.assertIn(("type", {"text": "hello"}), [(step.action, step.args) for step in compact_hotkey_then_type.steps])
+
         search_then_type = build_desktop_agent_plan("搜索 OpenMako 然后输入 hello")
         search_type_args = [step.args.get("text", "") for step in search_then_type.steps if step.action == "type"]
 
