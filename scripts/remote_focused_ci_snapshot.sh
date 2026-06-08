@@ -48,6 +48,7 @@ if token:
 def print_boundary_snapshot(reason: str, response_headers=None) -> None:
     print(f"remote-focused-ci-snapshot: repo={repo}")
     print(f"remote-focused-ci-snapshot: remote-main-sha={remote_sha}")
+    print(f"remote-focused-ci-snapshot: checked-at-utc={datetime.now(timezone.utc).isoformat()}")
     print(f"remote-focused-ci-snapshot: manual-url={manual_url}")
     print(f"remote-focused-ci-snapshot: unavailable={reason}")
     if response_headers:
