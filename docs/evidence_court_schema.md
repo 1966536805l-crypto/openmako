@@ -84,6 +84,7 @@ counts are treated as failed validation evidence.
 rejected instead of being treated as `0` or `1`.
 Structured `test_output.exit_code` must be an integer when supplied; JSON
 booleans are rejected instead of being treated as `0` or `1`.
+Structured `test_output.status` must be a string when supplied.
 
 ## Machine Output
 

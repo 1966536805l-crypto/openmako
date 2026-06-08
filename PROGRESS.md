@@ -655,6 +655,12 @@ Current public proof:
   `post_edit_validation_failure` after the change on 2026-06-09. This is local
   supplied-record audit validation only, not native export ingestion, remote CI
   status, external review, endorsement, stars, or reposts.
+- Evidence Court now rejects malformed structured test-output status fields:
+  `test_output.status` must be a string when supplied. The focused regression
+  failed before the change and passed with a CLI schema error after the change
+  on 2026-06-09. This is local supplied-record audit validation only, not
+  native export ingestion, remote CI status, external review, endorsement,
+  stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

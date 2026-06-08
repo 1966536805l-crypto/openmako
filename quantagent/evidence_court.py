@@ -1718,6 +1718,8 @@ def _test_output_status(test_output: object, commands_run: object) -> tuple[str,
     if any(code != 0 for code in exit_codes):
         return "failed", "command exit_code evidence: " + ", ".join(str(code) for code in exit_codes)
     if isinstance(test_output, dict):
+        if "status" in test_output and not isinstance(test_output["status"], str):
+            raise ValueError("test_output status must be a string")
         status = str(test_output.get("status") or "").lower()
         text_parts = [
             str(test_output[field]).strip()
