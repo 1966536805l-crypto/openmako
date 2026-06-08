@@ -523,6 +523,15 @@ Current public proof:
   `git diff --check` passed on 2026-06-08 before this note was finalized. This
   is local supplied-record validation evidence only, not native export
   ingestion, remote CI status, external review, endorsement, stars, or reposts.
+- A supplied transcript adapter failed-test regression now covers Codex,
+  Claude, OpenHands, and SWE-agent supplied formats: even with source edit and
+  diff-content evidence present, a nonzero validation command with failing test
+  output audits as `post_edit_validation_failure` at `test_output`, not as a
+  successful repair. The local failed-test focused test, transcript-focused
+  tests, and public metadata tests passed on 2026-06-08 before this note was
+  added. This is local supplied-record validation evidence only, not native
+  export ingestion, remote CI status, external review, endorsement, stars, or
+  reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
