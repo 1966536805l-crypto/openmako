@@ -789,6 +789,7 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "public-review-gate: auditing supplied Evidence Court record" in guide
     assert "public-review-gate: auditing artifact provenance fixture" in guide
     assert "public-review-gate: auditing SWTBench patch artifact fixture" in guide
+    assert "public-review-gate: auditing config-only repair fixture" in guide
     assert "public-review-gate: running supplied transcript adapter matrix" in guide
     assert "adapter-matrix: PASS" in guide
     assert "PYTHONPATH" in guide
@@ -796,6 +797,10 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "tests/test_public_metadata.py" in guide
     assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in guide
     assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in guide
+    assert "Config-only false-positive boundary:" in guide
+    assert "examples/evidence_court/config_only_repair.json" in guide
+    assert "The config-only repair fixture keeps supplied project metadata/config repair" in guide
+    assert "evidence in `PASS/config_only`" in guide
     assert "./scripts/supplied_transcript_adapter_matrix.sh" in guide
     assert "repository-defined Codex, Claude, OpenHands,\nand SWE-agent style transcripts" in guide
     assert "checks that each adapter rejects a\nsuccess claim when command/test proof is missing or when validation exists but\nedited-file evidence is missing" in guide

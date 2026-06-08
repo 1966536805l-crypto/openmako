@@ -42,6 +42,7 @@ public-review-gate: recording Evidence Court bad-run fixture
 public-review-gate: auditing supplied Evidence Court record
 public-review-gate: auditing artifact provenance fixture
 public-review-gate: auditing SWTBench patch artifact fixture
+public-review-gate: auditing config-only repair fixture
 public-review-gate: running supplied transcript adapter matrix
 adapter-matrix: PASS
 public-review-gate: PASS
@@ -67,6 +68,9 @@ metadata section passes and the script reaches `public-review-gate: PASS`.
   scope violation.
 - The artifact-provenance fixture preserves supplied benchmark artifact
   identity fields without claiming native benchmark ingestion.
+- The config-only repair fixture keeps supplied project metadata/config repair
+  evidence in `PASS/config_only` instead of treating it like a README-only
+  repair claim.
 - Supplied transcript adapters preserve complete supplied proof fields and
   reject missing-test-proof and missing edited-file evidence success claims.
 
@@ -93,6 +97,13 @@ Evidence Court supplied-record demo:
 ./bin/openmako --no-trust-prompt evidence-court record from-jsonl \
   --output run.json examples/evidence_court/simple_events.jsonl
 ./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json
+```
+
+Config-only false-positive boundary:
+
+```bash
+./bin/openmako --no-trust-prompt evidence-court audit --ci --json \
+  examples/evidence_court/config_only_repair.json
 ```
 
 Supplied transcript adapter matrix:

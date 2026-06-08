@@ -214,6 +214,8 @@ Current public proof:
 - The README benchmark-thread path and technical review packet now point to the
   config-only repair fixture, so reviewers can find the boundary without reading
   the gate script.
+- `docs/REPRODUCE_V0_1.md` now includes the config-only repair fixture in its
+  expected public-gate signal, coverage list, and smaller-check command.
 - The `artifact-provenance` evidence extension is supported for supplied records:
   Evidence Court preserves supplied eval-rule identifiers, runner identifiers,
   artifact/input/output hashes, and missing-provenance markers as
