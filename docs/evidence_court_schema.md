@@ -78,8 +78,8 @@ Inside structured `test_output` objects, a nonzero `exit_code` also takes
 precedence over a passing `status`.
 Failure-looking structured `test_output.output` or `test_output.summary` text
 also takes precedence over a passing `status`.
-Text test summaries with nonzero `error` or `errors` counts are treated as
-failed validation evidence.
+Text test summaries with nonzero `failure`, `failures`, `error`, or `errors`
+counts are treated as failed validation evidence.
 `commands_run[].exit_code` must be an integer when supplied; JSON booleans are
 rejected instead of being treated as `0` or `1`.
 Structured `test_output.exit_code` must be an integer when supplied; JSON
