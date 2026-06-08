@@ -251,7 +251,15 @@ def _type_text(text: str) -> str:
     match = TYPE_RE.search(text)
     if not match:
         return ""
-    return match.group(1).strip()
+    typed = match.group(1).strip()
+    typed = re.split(
+        r"\s*(?:并|然后|再|and|then)\s*"
+        r"(?=(?:截图|截屏|screenshot|按|hotkey|快捷键|click|点击|点)(?:\s|[:：]|\d|$))",
+        typed,
+        maxsplit=1,
+        flags=re.IGNORECASE,
+    )[0]
+    return typed.strip(" ：:，,。.")
 
 
 def _hotkey_keys(text: str) -> list[str]:

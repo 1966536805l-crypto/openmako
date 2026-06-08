@@ -27,6 +27,23 @@ class DesktopAgentTest(unittest.TestCase):
         self.assertIn("OpenMako", json.dumps(plan.to_payload(), ensure_ascii=False))
         self.assertIn("Direct screen takeover", plan.safety_note)
 
+    def test_type_text_stops_before_followup_desktop_commands(self) -> None:
+        plan = build_desktop_agent_plan("输入 OpenMako 然后按 enter 并截图")
+        steps = [(step.action, step.args) for step in plan.steps]
+        step_payload = json.dumps([step.args for step in plan.steps], ensure_ascii=False)
+
+        self.assertIn(("type", {"text": "OpenMako"}), steps)
+        self.assertIn(("hotkey", {"keys": ["enter"]}), steps)
+        self.assertIn(("screenshot", {}), steps)
+        self.assertNotIn("然后按 enter", step_payload)
+        self.assertNotIn("并截图", step_payload)
+
+        click_plan = build_desktop_agent_plan("输入 hello 然后点击 10,20")
+        click_steps = [(step.action, step.args) for step in click_plan.steps]
+
+        self.assertIn(("type", {"text": "hello"}), click_steps)
+        self.assertIn(("click", {"x": 10, "y": 20}), click_steps)
+
     def test_preview_writes_query_events_without_side_effects(self) -> None:
         with tempfile.TemporaryDirectory(prefix="desktop agent ") as tmp:
             result = run_desktop_agent(Path(tmp), "点击 10,20", execute=False)
