@@ -571,7 +571,7 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "not-proof=external review; endorsement; stars; reposts" in progress
     assert "returns nonzero\n  if the latest focused run is stale, still running, failed, missing, or rate\n  limited" in progress
     assert "It supports `OPENMAKO_GITHUB_TOKEN` or `GITHUB_TOKEN` for\n  authenticated GitHub API checks to reduce rate-limit failures; tokens are not\n  printed." in progress
-    assert "When API data is unavailable, it still prints the remote main SHA and\n  manual Actions URL and the local UTC check time before exiting nonzero." in progress
+    assert "When API data is unavailable, it still prints the remote main SHA,\n  manual Actions URL, local UTC check time, and rate-limit reset countdown\n  when available before exiting nonzero." in progress
     assert "Passing this script is current\n  focused-CI evidence only, not external review or traction." in progress
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in progress
     assert "External technical boundary criticism is requested in issue #2" in progress
@@ -687,7 +687,9 @@ def test_remote_focused_ci_snapshot_script_is_fail_closed_and_token_aware() -> N
     assert "retry-after-seconds=" in text
     assert "rate-limit-reset-unix=" in text
     assert "rate-limit-reset-utc=" in text
+    assert "rate-limit-reset-seconds-until=" in text
     assert "datetime.fromtimestamp" in text
+    assert "total_seconds()" in text
     assert "GitHub API rate limit; re-check later" in text
     assert "or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN for authenticated API reads" in text
     for forbidden in FORBIDDEN_README_CLAIMS:

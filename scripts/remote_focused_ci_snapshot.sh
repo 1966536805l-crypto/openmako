@@ -46,9 +46,10 @@ if token:
 
 
 def print_boundary_snapshot(reason: str, response_headers=None) -> None:
+    checked_at = datetime.now(timezone.utc)
     print(f"remote-focused-ci-snapshot: repo={repo}")
     print(f"remote-focused-ci-snapshot: remote-main-sha={remote_sha}")
-    print(f"remote-focused-ci-snapshot: checked-at-utc={datetime.now(timezone.utc).isoformat()}")
+    print(f"remote-focused-ci-snapshot: checked-at-utc={checked_at.isoformat()}")
     print(f"remote-focused-ci-snapshot: manual-url={manual_url}")
     print(f"remote-focused-ci-snapshot: unavailable={reason}")
     if response_headers:
@@ -59,11 +60,19 @@ def print_boundary_snapshot(reason: str, response_headers=None) -> None:
         if reset_at:
             print(f"remote-focused-ci-snapshot: rate-limit-reset-unix={reset_at}")
             try:
-                reset_utc = datetime.fromtimestamp(int(reset_at), tz=timezone.utc).isoformat()
+                reset_dt = datetime.fromtimestamp(int(reset_at), tz=timezone.utc)
+                reset_utc = reset_dt.isoformat()
+                seconds_until_reset = max(0, int((reset_dt - checked_at).total_seconds()))
             except (OSError, OverflowError, ValueError):
                 reset_utc = ""
+                seconds_until_reset = None
             if reset_utc:
                 print(f"remote-focused-ci-snapshot: rate-limit-reset-utc={reset_utc}")
+            if seconds_until_reset is not None:
+                print(
+                    "remote-focused-ci-snapshot: "
+                    f"rate-limit-reset-seconds-until={seconds_until_reset}"
+                )
     print("remote-focused-ci-snapshot: not-proof=external review; endorsement; stars; reposts")
 
 
