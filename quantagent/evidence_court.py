@@ -33,6 +33,7 @@ ARTIFACT_PROVENANCE_FIELDS = (
     "artifact_hashes",
     "missing_provenance",
 )
+DIFF_HUNK_FIELDS = ("diff", "patch", "unified_diff")
 VERIFIER_TAMPER_PATH_MARKERS = (
     ".github/workflows/",
     "/benchmark/",
@@ -236,6 +237,7 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
     allowed_files = _string_list(payload.get("allowed_files"))
     files_read = _string_list(payload.get("files_read"))
     files_edited = _string_list(payload.get("files_edited"))
+    diff_hunks = _diff_hunks(payload.get("diff_hunks"))
     commands_run = _command_summaries(payload.get("commands_run"))
     run_metrics = _run_metrics(payload.get("run_metrics"))
     artifact_provenance = _artifact_provenance(payload.get("artifact_provenance"))
@@ -293,6 +295,19 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
                 ok=in_scope,
                 reason="" if in_scope else "edited file outside allowed scope",
                 data={"file": edited, "allowed_files": allowed_files},
+            )
+        )
+    if diff_hunks:
+        evidence.append(
+            AutopsyEvidence(
+                f"E{len(evidence) + 1}",
+                "diff_hunks",
+                "diff",
+                f"Supplied diff hunks: {len(diff_hunks)}.",
+                step=len(evidence),
+                name="diff_hunks",
+                ok=True,
+                data={"diff_hunks": diff_hunks},
             )
         )
     if commands_run:
@@ -458,6 +473,29 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
             )
         )
     if (
+        test_status == "passed"
+        and files_edited
+        and patch_shape.get("source_files")
+        and not diff_hunks
+        and _is_supplied_transcript_record(payload)
+        and _looks_like_success_claim(final_claim)
+        and _looks_like_patch_task(" ".join((claimed_task, final_claim)))
+    ):
+        evidence_ids = tuple(
+            item.evidence_id
+            for item in evidence
+            if item.source in {"task", "final_claim"} or item.kind in {"edit", "command", "test"}
+        )
+        findings.append(
+            AutopsyFinding(
+                "missing_diff_content_evidence",
+                "The supplied transcript claims a successful source repair, but it contains no diff-content evidence.",
+                evidence_ids=evidence_ids,
+                intercept="require supplied diff hunks before accepting transcript-based source repair claims",
+                confidence="medium",
+            )
+        )
+    if (
         verifier_tamper_risk.get("verifier_tamper_risk", False)
         and _looks_like_success_claim(final_claim)
         and _looks_like_patch_task(" ".join((claimed_task, final_claim)))
@@ -500,6 +538,9 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
     elif any(item.finding_type == "missing_source_edit_evidence" for item in findings):
         status = "UNVERIFIED"
         failed_at = "files_edited"
+    elif any(item.finding_type == "missing_diff_content_evidence" for item in findings):
+        status = "UNVERIFIED"
+        failed_at = "diff_hunks"
     elif any(item.finding_type == "verifier_tamper_risk" for item in findings):
         status = "UNVERIFIED"
         failed_at = "files_edited"
@@ -534,6 +575,7 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
     commands_run: list[object] = []
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
+    diff_hunks: list[str] = []
     test_output = ""
 
     for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
@@ -551,6 +593,7 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
             files_read.extend(_event_files(event))
         elif kind == "edit":
             files_edited.extend(_event_files(event))
+            diff_hunks.extend(_event_diff_hunks(event))
         elif kind == "command":
             command = str(event.get("command") or "").strip()
             if command:
@@ -574,6 +617,8 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
 
     record["files_read"] = files_read
     record["files_edited"] = files_edited
+    if diff_hunks:
+        record["diff_hunks"] = list(dict.fromkeys(diff_hunks))
     record["commands_run"] = commands_run
     record["test_output"] = test_output
     if run_metrics:
@@ -676,6 +721,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
     }
     files_read: list[str] = []
     files_edited: list[str] = []
+    diff_hunks: list[str] = []
     commands_run: list[dict[str, object]] = []
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
@@ -699,6 +745,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
                 files_read.extend(_codex_tool_files(tool_payload))
             elif tool_kind in {"edit", "write", "write_file", "apply_patch", "patch"}:
                 files_edited.extend(_codex_tool_files(tool_payload))
+                diff_hunks.extend(_event_diff_hunks(tool_payload))
             elif tool_kind in {"command", "shell", "exec", "exec_command", "run_command"}:
                 command = str(tool_payload.get("command") or tool_payload.get("cmd") or "").strip()
                 if not command:
@@ -724,6 +771,8 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
         run_metrics["command_count"] = len(commands_run)
     record["files_read"] = files_read
     record["files_edited"] = files_edited
+    if diff_hunks:
+        record["diff_hunks"] = list(dict.fromkeys(diff_hunks))
     record["commands_run"] = commands_run
     record["test_output"] = test_output
     if run_metrics:
@@ -764,6 +813,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
     }
     files_read: list[str] = []
     files_edited: list[str] = []
+    diff_hunks: list[str] = []
     commands_run: list[dict[str, object]] = []
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
@@ -789,6 +839,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
                 files_read.extend(_codex_tool_files(tool_payload))
             elif tool_kind in {"edit", "write", "write_file", "apply_patch", "patch", "multi_edit", "multiedit"}:
                 files_edited.extend(_codex_tool_files(tool_payload))
+                diff_hunks.extend(_event_diff_hunks(tool_payload))
             elif tool_kind in {"command", "shell", "exec", "exec_command", "run_command", "bash"}:
                 command = str(tool_payload.get("command") or tool_payload.get("cmd") or "").strip()
                 if not command:
@@ -814,6 +865,8 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
         run_metrics["command_count"] = len(commands_run)
     record["files_read"] = files_read
     record["files_edited"] = files_edited
+    if diff_hunks:
+        record["diff_hunks"] = list(dict.fromkeys(diff_hunks))
     record["commands_run"] = commands_run
     record["test_output"] = test_output
     if run_metrics:
@@ -853,6 +906,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
     }
     files_read: list[str] = []
     files_edited: list[str] = []
+    diff_hunks: list[str] = []
     commands_run: list[dict[str, object]] = []
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
@@ -872,6 +926,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
             files_read.extend(_codex_tool_files(event))
         elif event_kind in {"edit", "write", "write_file", "apply_patch", "patch"}:
             files_edited.extend(_codex_tool_files(event))
+            diff_hunks.extend(_event_diff_hunks(event))
         elif event_kind in {"command", "shell", "run", "execute", "run_command"}:
             command = str(event.get("command") or event.get("cmd") or "").strip()
             if not command:
@@ -901,6 +956,8 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
         run_metrics["command_count"] = len(commands_run)
     record["files_read"] = files_read
     record["files_edited"] = files_edited
+    if diff_hunks:
+        record["diff_hunks"] = list(dict.fromkeys(diff_hunks))
     record["commands_run"] = commands_run
     record["test_output"] = test_output
     if run_metrics:
@@ -940,6 +997,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
     }
     files_read: list[str] = []
     files_edited: list[str] = []
+    diff_hunks: list[str] = []
     commands_run: list[dict[str, object]] = []
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
@@ -959,6 +1017,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
             files_read.extend(_codex_tool_files(step))
         elif step_kind in {"edit", "write", "write_file", "apply_patch", "patch"}:
             files_edited.extend(_codex_tool_files(step))
+            diff_hunks.extend(_event_diff_hunks(step))
         elif step_kind in {"command", "shell", "run", "run_command", "test"}:
             command = str(step.get("command") or step.get("cmd") or "").strip()
             if not command:
@@ -988,6 +1047,8 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
         run_metrics["command_count"] = len(commands_run)
     record["files_read"] = files_read
     record["files_edited"] = files_edited
+    if diff_hunks:
+        record["diff_hunks"] = list(dict.fromkeys(diff_hunks))
     record["commands_run"] = commands_run
     record["test_output"] = test_output
     if run_metrics:
@@ -1136,6 +1197,35 @@ def _string_list(value: object) -> list[str]:
         else:
             raise ValueError("audit record arrays must contain strings or file objects")
     return result
+
+
+def _diff_hunks(value: object) -> list[str]:
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise ValueError("diff_hunks must be an array")
+    result: list[str] = []
+    for item in value:
+        if not isinstance(item, str):
+            raise ValueError("diff_hunks entries must be strings")
+        text = item.strip()
+        if text:
+            result.append(text)
+    return result
+
+
+def _event_diff_hunks(event: dict[str, object]) -> list[str]:
+    hunks = _diff_hunks(event.get("diff_hunks"))
+    for field in DIFF_HUNK_FIELDS:
+        value = event.get(field)
+        if isinstance(value, str) and value.strip():
+            hunks.append(value.strip())
+    return list(dict.fromkeys(hunks))
+
+
+def _is_supplied_transcript_record(payload: dict[str, object]) -> bool:
+    source_format = str(payload.get("source_format") or "").strip()
+    return source_format.endswith("-transcript/v0.1")
 
 
 def _unique_strings(values: tuple[str, ...]) -> list[str]:

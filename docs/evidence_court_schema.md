@@ -14,6 +14,9 @@ The schema documents the supplied record shape; the CLI still audits only the ev
   "allowed_files": ["calculator.py"],
   "files_read": ["calculator.py"],
   "files_edited": ["calculator.py", "tests/test_calculator.py"],
+  "diff_hunks": [
+    "--- a/calculator.py\n+++ b/calculator.py\n@@ -1,2 +1,2 @@\n-def add(a, b): return a - b\n+def add(a, b): return a + b"
+  ],
   "commands_run": [
     {"command": "python3 -m pytest tests/test_calculator.py -q", "exit_code": 0}
   ],
@@ -47,6 +50,7 @@ The schema documents the supplied record shape; the CLI still audits only the ev
 | `allowed_files` | string array | Optional edit allowlist. If present, any other edited file is a scope violation. |
 | `files_read` | string array | Files the agent inspected. |
 | `files_edited` | string array | Files the agent modified. |
+| `diff_hunks` | string array | Optional supplied diff-content evidence. It is required for supplied transcript successful source repair claims to avoid `SUSPICIOUS`, but it does not prove the patch was actually applied outside the supplied record. |
 | `commands_run` | string array or command objects | Commands the record says were run. Command objects may include `command` and `exit_code`. |
 | `test_output` | string or object | Validation evidence. Objects may include `status`, `output`, `summary`, or `exit_code`. |
 | `run_metrics` | object | Optional telemetry supplied by the record: duration, command count, token counts, cost, provider/model, and `missing_telemetry`. It is preserved in JSON output but is not treated as validation proof. |
@@ -58,6 +62,7 @@ The schema documents the supplied record shape; the CLI still audits only the ev
 - `FAIL`: out-of-scope edit or failed validation evidence.
 - `SUSPICIOUS`: success claim with missing or ambiguous test evidence, missing
   edited-file evidence, missing source-like edit evidence for a repair claim,
+  missing diff-content evidence for a supplied transcript source repair claim,
   or verifier/test-control tamper risk.
 - `PASS`: supplied record has no detected scope violation and recognizable passing validation evidence.
 
@@ -113,6 +118,13 @@ verifier/test-control tamper risk. This is a review queue signal:
 source/config-like classification is suffix based and does not prove the repair
 is invalid.
 
+A supplied transcript successful source repair claim with passing validation
+and source-like edited-file evidence but no `diff_hunks` is routed to
+`SUSPICIOUS` as `missing_diff_content_evidence`. Supported adapters collect
+diff content from `diff_hunks`, `diff`, `patch`, or `unified_diff` fields on
+edit/apply-patch events. This is still supplied evidence only: it does not
+prove the patch was actually applied in a live runtime.
+
 `verifier_tamper_risk` is derived from `files_edited` and is review metadata:
 
 - `verifier_tamper_risk`: true when a successful repair claim edits verifier,
@@ -151,6 +163,8 @@ openmako evidence-court audit --ci --json run.json
 ```
 
 Supported event kinds are `task`, `read`, `edit`, `command`, and `final_claim`.
+`edit` events may include `diff_hunks`, `diff`, `patch`, or `unified_diff`
+fields to supply diff-content evidence.
 `command` events may include `run_metrics` or direct telemetry fields such as
 `duration_seconds`, `input_tokens`, `output_tokens`, `total_tokens`,
 `estimated_cost_usd`, `provider`, `model`, and `missing_telemetry`.
@@ -200,7 +214,8 @@ openmako evidence-court audit --ci --json run.json
 The transcript must be a JSON object with `messages`. Supported tool calls are
 read, edit/apply-patch, and shell command calls. Unsupported tool calls are
 listed under `adapter_report.unsupported`, and missing command or test evidence
-is still judged by the normal Evidence Court audit.
+is still judged by the normal Evidence Court audit. Edit/apply-patch calls may
+include `diff_hunks`, `diff`, `patch`, or `unified_diff` fields.
 
 ## Supplied Claude-Style Transcript Builder
 
@@ -219,7 +234,8 @@ The transcript must be a JSON object with `messages`. Supported Claude-style
 content blocks are text and `tool_use` blocks for read, edit/apply-patch, and
 shell command calls. Unsupported tool calls are listed under
 `adapter_report.unsupported`, and missing command or test evidence is still
-judged by the normal Evidence Court audit.
+judged by the normal Evidence Court audit. Edit/apply-patch calls may include
+`diff_hunks`, `diff`, `patch`, or `unified_diff` fields.
 
 ## Supplied OpenHands-Style Transcript Builder
 
@@ -237,6 +253,8 @@ openmako evidence-court audit --ci --json run.json
 The transcript must be a JSON object with `events`. Supported event actions are
 task/instruction, read, edit/apply-patch, shell command, and final/finish
 messages. Unsupported events are listed under `adapter_report.unsupported`.
+Edit/apply-patch events may include `diff_hunks`, `diff`, `patch`, or
+`unified_diff` fields.
 
 ## Supplied SWE-Agent-Style Transcript Builder
 
@@ -254,4 +272,5 @@ openmako evidence-court audit --ci --json run.json
 The transcript must be a JSON object with `steps`. Supported step actions are
 task/instruction/issue, read, edit/apply-patch, shell command/test, and
 final/submit messages. Unsupported steps are listed under
-`adapter_report.unsupported`.
+`adapter_report.unsupported`. Edit/apply-patch steps may include `diff_hunks`,
+`diff`, `patch`, or `unified_diff` fields.

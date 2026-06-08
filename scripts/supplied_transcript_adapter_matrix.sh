@@ -112,6 +112,31 @@ smoke_adapter_missing_edits() {
   assert_audit_json "$audit" SUSPICIOUS missing_edited_file_evidence
 }
 
+smoke_adapter_missing_diff() {
+  local adapter="$1"
+  local input="$TMP_DIR/${adapter}.missing-diff.json"
+  local record="$TMP_DIR/${adapter}.missing-diff.record.json"
+  local audit="$TMP_DIR/${adapter}.missing-diff.audit.json"
+
+  echo "adapter-matrix: recording ${adapter} missing-diff-content-evidence"
+  "$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court record "from-${adapter}-transcript" \
+    --output "$record" "$input"
+
+  echo "adapter-matrix: auditing ${adapter} missing-diff-content-evidence"
+  set +e
+  "$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court audit --ci --fail-on suspicious --json "$record" > "$audit"
+  local audit_exit=$?
+  set -e
+
+  if [ "$audit_exit" -ne 1 ]; then
+    echo "adapter-matrix: expected missing-diff-content-evidence audit exit 1 for ${adapter}, got ${audit_exit}" >&2
+    cat "$audit" >&2
+    exit 1
+  fi
+
+  assert_audit_json "$audit" SUSPICIOUS missing_diff_content_evidence
+}
+
 cat > "$TMP_DIR/codex.json" <<'JSON'
 {
   "claimed_task": "Fix calculator.py and tests/test_calculator.py.",
@@ -122,7 +147,11 @@ cat > "$TMP_DIR/codex.json" <<'JSON'
       "content": "Fixed and verified.",
       "tool_calls": [
         {"type": "read_file", "path": "calculator.py"},
-        {"type": "apply_patch", "files": ["calculator.py", "tests/test_calculator.py"]},
+        {
+          "type": "apply_patch",
+          "files": ["calculator.py", "tests/test_calculator.py"],
+          "diff": "--- a/calculator.py\n+++ b/calculator.py\n@@ -1,2 +1,2 @@\n-def add(a, b): return a - b\n+def add(a, b): return a + b"
+        },
         {
           "type": "exec_command",
           "command": "python3 -m pytest tests/test_calculator.py -q",
@@ -132,6 +161,29 @@ cat > "$TMP_DIR/codex.json" <<'JSON'
           "tokens": {"input_tokens": 240, "output_tokens": 60},
           "provider": "openai",
           "model": "gpt-5"
+        }
+      ]
+    }
+  ]
+}
+JSON
+
+cat > "$TMP_DIR/codex.missing-diff.json" <<'JSON'
+{
+  "claimed_task": "Fix calculator.py.",
+  "allowed_files": ["calculator.py"],
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "Fixed and verified.",
+      "tool_calls": [
+        {"type": "read_file", "path": "calculator.py"},
+        {"type": "apply_patch", "files": ["calculator.py"]},
+        {
+          "type": "exec_command",
+          "command": "python3 -m pytest tests/test_calculator.py -q",
+          "exit_code": 0,
+          "output": "1 passed in 0.02s"
         }
       ]
     }
@@ -188,8 +240,22 @@ cat > "$TMP_DIR/claude.json" <<'JSON'
       "content": [
         {"type": "text", "text": "I will inspect, patch, and run the focused test."},
         {"type": "tool_use", "name": "Read", "input": {"file_path": "calculator.py"}},
-        {"type": "tool_use", "name": "Edit", "input": {"file_path": "calculator.py"}},
-        {"type": "tool_use", "name": "Edit", "input": {"file_path": "tests/test_calculator.py"}},
+        {
+          "type": "tool_use",
+          "name": "Edit",
+          "input": {
+            "file_path": "calculator.py",
+            "diff": "--- a/calculator.py\n+++ b/calculator.py\n@@ -1,2 +1,2 @@\n-def add(a, b): return a - b\n+def add(a, b): return a + b"
+          }
+        },
+        {
+          "type": "tool_use",
+          "name": "Edit",
+          "input": {
+            "file_path": "tests/test_calculator.py",
+            "diff": "--- a/tests/test_calculator.py\n+++ b/tests/test_calculator.py\n@@ -1,2 +1,2 @@\n-assert add(1, 2) == 0\n+assert add(1, 2) == 3"
+          }
+        },
         {
           "type": "tool_use",
           "name": "Bash",
@@ -206,6 +272,32 @@ cat > "$TMP_DIR/claude.json" <<'JSON'
       ]
     },
     {"role": "assistant", "content": "Fixed and verified."}
+  ]
+}
+JSON
+
+cat > "$TMP_DIR/claude.missing-diff.json" <<'JSON'
+{
+  "claimed_task": "Fix calculator.py.",
+  "allowed_files": ["calculator.py"],
+  "messages": [
+    {
+      "role": "assistant",
+      "content": [
+        {"type": "text", "text": "Fixed and verified."},
+        {"type": "tool_use", "name": "Read", "input": {"file_path": "calculator.py"}},
+        {"type": "tool_use", "name": "Edit", "input": {"file_path": "calculator.py"}},
+        {
+          "type": "tool_use",
+          "name": "Bash",
+          "input": {
+            "command": "python3 -m pytest tests/test_calculator.py -q",
+            "exit_code": 0,
+            "stdout": "1 passed in 0.02s"
+          }
+        }
+      ]
+    }
   ]
 }
 JSON
@@ -258,8 +350,16 @@ cat > "$TMP_DIR/openhands.json" <<'JSON'
   "allowed_files": ["calculator.py", "tests/test_calculator.py"],
   "events": [
     {"action": "read", "path": "calculator.py"},
-    {"action": "edit", "path": "calculator.py"},
-    {"action": "edit", "path": "tests/test_calculator.py"},
+    {
+      "action": "edit",
+      "path": "calculator.py",
+      "diff": "--- a/calculator.py\n+++ b/calculator.py\n@@ -1,2 +1,2 @@\n-def add(a, b): return a - b\n+def add(a, b): return a + b"
+    },
+    {
+      "action": "edit",
+      "path": "tests/test_calculator.py",
+      "diff": "--- a/tests/test_calculator.py\n+++ b/tests/test_calculator.py\n@@ -1,2 +1,2 @@\n-assert add(1, 2) == 0\n+assert add(1, 2) == 3"
+    },
     {
       "action": "run",
       "command": "python3 -m pytest tests/test_calculator.py -q",
@@ -269,6 +369,24 @@ cat > "$TMP_DIR/openhands.json" <<'JSON'
       "tokens": {"input_tokens": 300, "output_tokens": 90},
       "provider": "openai",
       "model": "gpt-5"
+    },
+    {"action": "finish", "message": "Fixed and verified."}
+  ]
+}
+JSON
+
+cat > "$TMP_DIR/openhands.missing-diff.json" <<'JSON'
+{
+  "task": "Fix calculator.py.",
+  "allowed_files": ["calculator.py"],
+  "events": [
+    {"action": "read", "path": "calculator.py"},
+    {"action": "edit", "path": "calculator.py"},
+    {
+      "action": "run",
+      "command": "python3 -m pytest tests/test_calculator.py -q",
+      "exit_code": 0,
+      "observation": "1 passed in 0.02s"
     },
     {"action": "finish", "message": "Fixed and verified."}
   ]
@@ -310,8 +428,16 @@ cat > "$TMP_DIR/swe-agent.json" <<'JSON'
   "allowed_files": ["calculator.py", "tests/test_calculator.py"],
   "steps": [
     {"action": "read", "path": "calculator.py"},
-    {"action": "edit", "path": "calculator.py"},
-    {"action": "edit", "path": "tests/test_calculator.py"},
+    {
+      "action": "edit",
+      "path": "calculator.py",
+      "diff": "--- a/calculator.py\n+++ b/calculator.py\n@@ -1,2 +1,2 @@\n-def add(a, b): return a - b\n+def add(a, b): return a + b"
+    },
+    {
+      "action": "edit",
+      "path": "tests/test_calculator.py",
+      "diff": "--- a/tests/test_calculator.py\n+++ b/tests/test_calculator.py\n@@ -1,2 +1,2 @@\n-assert add(1, 2) == 0\n+assert add(1, 2) == 3"
+    },
     {
       "action": "test",
       "command": "python3 -m pytest tests/test_calculator.py -q",
@@ -321,6 +447,24 @@ cat > "$TMP_DIR/swe-agent.json" <<'JSON'
       "tokens": {"input_tokens": 320, "output_tokens": 80},
       "provider": "openai",
       "model": "gpt-5"
+    },
+    {"action": "submit", "message": "Fixed and verified."}
+  ]
+}
+JSON
+
+cat > "$TMP_DIR/swe-agent.missing-diff.json" <<'JSON'
+{
+  "issue": "Fix calculator.py.",
+  "allowed_files": ["calculator.py"],
+  "steps": [
+    {"action": "read", "path": "calculator.py"},
+    {"action": "edit", "path": "calculator.py"},
+    {
+      "action": "test",
+      "command": "python3 -m pytest tests/test_calculator.py -q",
+      "exit_code": 0,
+      "stdout": "1 passed in 0.02s"
     },
     {"action": "submit", "message": "Fixed and verified."}
   ]
@@ -357,15 +501,19 @@ cat > "$TMP_DIR/swe-agent.missing-edits.json" <<'JSON'
 JSON
 
 smoke_adapter codex
+smoke_adapter_missing_diff codex
 smoke_adapter_missing_tests codex
 smoke_adapter_missing_edits codex
 smoke_adapter claude
+smoke_adapter_missing_diff claude
 smoke_adapter_missing_tests claude
 smoke_adapter_missing_edits claude
 smoke_adapter openhands
+smoke_adapter_missing_diff openhands
 smoke_adapter_missing_tests openhands
 smoke_adapter_missing_edits openhands
 smoke_adapter swe-agent
+smoke_adapter_missing_diff swe-agent
 smoke_adapter_missing_tests swe-agent
 smoke_adapter_missing_edits swe-agent
 
