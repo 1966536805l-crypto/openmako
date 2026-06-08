@@ -1714,6 +1714,8 @@ def _test_output_status(test_output: object, commands_run: object) -> tuple[str,
     if isinstance(test_output, dict):
         status = str(test_output.get("status") or "").lower()
         text = str(test_output.get("output") or test_output.get("summary") or "").strip()
+        if isinstance(test_output.get("exit_code"), int) and int(test_output["exit_code"]) != 0:
+            return "failed", text or f"test exit_code: {test_output['exit_code']}"
         if status in {"passed", "pass", "success"}:
             return "passed", text or "test output status: passed"
         if status in {"failed", "fail", "failure"}:

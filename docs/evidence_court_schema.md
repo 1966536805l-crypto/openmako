@@ -74,6 +74,8 @@ contains words that look like a passing test summary.
 
 For recognizable validation commands, a nonzero `exit_code` takes precedence
 over supplied output text that looks passing.
+Inside structured `test_output` objects, a nonzero `exit_code` also takes
+precedence over a passing `status`.
 
 ## Machine Output
 
