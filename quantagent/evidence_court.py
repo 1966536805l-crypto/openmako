@@ -1719,13 +1719,18 @@ def _test_output_status(test_output: object, commands_run: object) -> tuple[str,
         return "failed", "command exit_code evidence: " + ", ".join(str(code) for code in exit_codes)
     if isinstance(test_output, dict):
         status = str(test_output.get("status") or "").lower()
-        text = str(test_output.get("output") or test_output.get("summary") or "").strip()
+        text_parts = [
+            str(test_output[field]).strip()
+            for field in ("output", "summary")
+            if isinstance(test_output.get(field), str) and str(test_output[field]).strip()
+        ]
+        text = "\n".join(dict.fromkeys(text_parts))
         if "exit_code" in test_output and not _is_integer_exit_code(test_output["exit_code"]):
             raise ValueError("test_output exit_code must be an integer")
         if _is_integer_exit_code(test_output.get("exit_code")) and int(test_output["exit_code"]) != 0:
             return "failed", text or f"test exit_code: {test_output['exit_code']}"
-        if text:
-            text_status, text_summary = _test_output_status(text, commands_run)
+        for text_part in text_parts:
+            text_status, text_summary = _test_output_status(text_part, commands_run)
             if text_status == "failed":
                 return text_status, text_summary
         if status in {"passed", "pass", "success"}:
@@ -1735,7 +1740,7 @@ def _test_output_status(test_output: object, commands_run: object) -> tuple[str,
         if _is_integer_exit_code(test_output.get("exit_code")):
             return ("passed" if int(test_output["exit_code"]) == 0 else "failed", text or f"test exit_code: {test_output['exit_code']}")
         if text:
-            return text_status, text_summary
+            return _test_output_status(text, commands_run)
     if isinstance(test_output, str) and test_output.strip():
         text = test_output.strip()
         lowered = text.lower()
