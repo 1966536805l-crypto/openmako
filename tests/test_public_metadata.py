@@ -565,6 +565,8 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "Remote focused CI is live GitHub state, not a durable fact in this file." in progress
     assert "A 2026-06-07 GitHub API snapshot showed `.github/workflows/focused.yml`\n  run `27096660497` completed with `conclusion=success`" in progress
     assert "665a12912822218f81442598ece268175f30f1c3" in progress
+    assert "A 2026-06-08 reset-window re-check showed focused workflow run\n  `27116209971` completed with `conclusion=success`" in progress
+    assert "a32b5b29dd0fe231d2507a3e229c58c233d15db0" in progress
     assert "Re-check the latest `openmako/main` run before claiming current remote CI;\n  the snapshot is not external review, endorsement, stars, or reposts." in progress
     assert "bash scripts/remote_focused_ci_snapshot.sh" in progress
     assert "the fail-closed re-check tool\n  for the latest focused workflow on current `openmako/main`" in progress
