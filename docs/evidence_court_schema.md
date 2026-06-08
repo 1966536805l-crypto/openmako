@@ -77,6 +77,7 @@ over supplied output text that looks passing.
 Inside structured `test_output` objects, a nonzero `exit_code` also takes
 precedence over a passing `status`.
 `commands_run[].exit_code` must be an integer when supplied.
+Structured `test_output.exit_code` must be an integer when supplied.
 
 ## Machine Output
 

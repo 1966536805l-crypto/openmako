@@ -694,6 +694,24 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertIn("commands_run exit_code must be an integer", result.stderr)
 
+    def test_openmako_evidence_court_audit_rejects_non_integer_test_output_exit_code(self) -> None:
+        record = {
+            "claimed_task": "Fix calculator.py.",
+            "files_read": ["calculator.py"],
+            "files_edited": ["calculator.py"],
+            "commands_run": [{"command": "python3 -m pytest tests/test_calculator.py -q", "exit_code": 0}],
+            "test_output": {"status": "passed", "exit_code": "1", "output": "1 passed in 0.02s"},
+            "final_claim": "Fixed and verified.",
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("test_output exit_code must be an integer", result.stderr)
+
     def test_openmako_evidence_court_audit_json_allows_config_only_repair_evidence(self) -> None:
         record = {
             "claimed_task": "Fix project packaging metadata.",
