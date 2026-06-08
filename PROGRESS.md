@@ -449,6 +449,13 @@ Current public proof:
   `bash scripts/public_review_gate.sh`. This is local supplied-record evidence
   only, not native transcript ingestion, remote CI status, external review,
   endorsement, stars, or reposts.
+- A supplied OpenHands transcript regression now covers the same mixed
+  source+test diff-shape boundary using `diff` and `unified_diff` event
+  fields. The local focused tests, supplied transcript adapter matrix,
+  `git diff --check`, and `bash scripts/public_review_gate.sh` passed on
+  2026-06-08. This is local supplied-record evidence only, not native
+  OpenHands export ingestion, remote CI status, external review, endorsement,
+  stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -458,6 +465,6 @@ public result.
 
 Next smallest hygiene task:
 
-- Add the same mixed source+test diff-shape regression for one non-Codex
-  supplied transcript adapter, preferably OpenHands, then keep it scoped to
-  supplied-record behavior only.
+- Add the same mixed source+test diff-shape regression for the SWE-agent
+  supplied transcript adapter, then keep it scoped to supplied-record behavior
+  only.
