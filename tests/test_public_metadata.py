@@ -680,6 +680,10 @@ def test_remote_focused_ci_snapshot_script_is_fail_closed_and_token_aware() -> N
     assert "manual-url=" in text
     assert "github_api_rate_limit" in text
     assert "no_focused_workflow_runs" in text
+    assert "Retry-After" in text
+    assert "X-RateLimit-Reset" in text
+    assert "retry-after-seconds=" in text
+    assert "rate-limit-reset-unix=" in text
     assert "GitHub API rate limit; re-check later" in text
     assert "or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN for authenticated API reads" in text
     for forbidden in FORBIDDEN_README_CLAIMS:

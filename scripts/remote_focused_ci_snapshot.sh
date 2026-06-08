@@ -44,11 +44,18 @@ if token:
     headers["X-GitHub-Api-Version"] = "2022-11-28"
 
 
-def print_boundary_snapshot(reason: str) -> None:
+def print_boundary_snapshot(reason: str, response_headers=None) -> None:
     print(f"remote-focused-ci-snapshot: repo={repo}")
     print(f"remote-focused-ci-snapshot: remote-main-sha={remote_sha}")
     print(f"remote-focused-ci-snapshot: manual-url={manual_url}")
     print(f"remote-focused-ci-snapshot: unavailable={reason}")
+    if response_headers:
+        retry_after = response_headers.get("Retry-After")
+        reset_at = response_headers.get("X-RateLimit-Reset")
+        if retry_after:
+            print(f"remote-focused-ci-snapshot: retry-after-seconds={retry_after}")
+        if reset_at:
+            print(f"remote-focused-ci-snapshot: rate-limit-reset-unix={reset_at}")
     print("remote-focused-ci-snapshot: not-proof=external review; endorsement; stars; reposts")
 
 
@@ -66,7 +73,7 @@ try:
 except urllib.error.HTTPError as exc:
     body = exc.read().decode("utf-8", errors="replace")
     if exc.code == 403 and "rate limit" in body.lower():
-        print_boundary_snapshot("github_api_rate_limit")
+        print_boundary_snapshot("github_api_rate_limit", exc.headers)
         print(
             "remote-focused-ci-snapshot: GitHub API rate limit; re-check later "
             "or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN for authenticated API reads",
