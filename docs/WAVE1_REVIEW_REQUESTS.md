@@ -25,7 +25,7 @@ Expected final block:
 
 ```text
 openmako-public-proof-card: PASS
-scope: focused learning-effect gate; public metadata boundary; supplied Evidence Court audit; artifact provenance; SWTBench patch artifact; supplied transcript adapter matrix
+scope: focused learning-effect gate; public metadata boundary; supplied Evidence Court audit; artifact provenance; SWTBench patch artifact; config-only repair fixture; supplied transcript adapter matrix
 not-proof: broad unknown-repository SWE repair; external endorsement; star or repost traction
 review-request: https://github.com/1966536805l-crypto/openmako/issues/2
 record-external-review: https://github.com/1966536805l-crypto/openmako/issues/new?template=external-review-record.yml
@@ -37,8 +37,8 @@ record-external-review: https://github.com/1966536805l-crypto/openmako/issues/ne
 Can you point out where OpenMako v0.1 overclaims its evidence boundary?
 
 Current public proof covers one focused learning-effect gate, patch-scope
-checks, metadata checks, supplied-record/provenance audits, and a supplied
-transcript adapter matrix. It does not claim
+checks, metadata checks, supplied-record/provenance audits, a config-only
+false-positive fixture, and a supplied transcript adapter matrix. It does not claim
 SWE-bench-scale repair.
 
 I'm mainly looking for README lines or proof-command gaps that overclaim.
@@ -93,7 +93,7 @@ orchestration. Do not send it as a general launch note.
 ```text
 Could you sanity-check whether OpenMako's runtime-adjacent docs overread the current proof?
 
-It references skills, memory, ACP-style sessions, and desktop-control work as trends or future bets. The current public proof is narrower: evidence harness, patch-scope checks, test-proof checks, supplied-record/provenance audits, and a supplied transcript adapter matrix.
+It references skills, memory, ACP-style sessions, and desktop-control work as trends or future bets. The current public proof is narrower: evidence harness, patch-scope checks, test-proof checks, supplied-record/provenance audits, a config-only false-positive fixture, and a supplied transcript adapter matrix.
 
 I'm looking for any README/docs wording that makes it sound like those runtime features are already public v0.1 proof.
 

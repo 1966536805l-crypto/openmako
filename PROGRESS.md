@@ -390,6 +390,10 @@ Current public proof:
   artifact, config-only repair fixture, and supplied transcript adapter matrix.
   This is proof-card wording alignment, not new capability proof or outreach
   evidence.
+- `docs/WAVE1_REVIEW_REQUESTS.md` now mirrors the same proof-card scope and
+  includes the config-only false-positive fixture in its current-public-proof
+  wording. This keeps copyable review requests aligned with the gate output; it
+  is not evidence that outreach happened.
 - `docs/LARGE_REPOST_PACKET.md` defines the second-stage broader share packet
   for writer/community surfaces, and `bash scripts/large_repost_ready.sh
   REVIEW_RECORD_ISSUE_URL --confirm-external-review` refuses to print it unless
