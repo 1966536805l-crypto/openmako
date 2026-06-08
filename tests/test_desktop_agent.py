@@ -93,6 +93,15 @@ class DesktopAgentTest(unittest.TestCase):
         self.assertEqual(google_browser_search.steps[0].args["app"], "Google Chrome")
         self.assertEqual(microsoft_browser_url.steps[0].args["command"], ["open", "-a", "Microsoft Edge", "https://example.com"])
 
+    def test_desktop_agent_opens_quoted_app_names(self) -> None:
+        chrome_plan = build_desktop_agent_plan('打开 "Google Chrome"')
+        edge_plan = build_desktop_agent_plan('打开 "Microsoft Edge"')
+        vscode_plan = build_desktop_agent_plan('打开 "Visual Studio Code"')
+
+        self.assertEqual(chrome_plan.steps[0].args["command"], ["open", "-a", "Google Chrome"])
+        self.assertEqual(edge_plan.steps[0].args["command"], ["open", "-a", "Microsoft Edge"])
+        self.assertEqual(vscode_plan.steps[0].args["command"], ["open", "-a", "Visual Studio Code"])
+
     def test_desktop_agent_trims_url_followup_commands_and_punctuation(self) -> None:
         comma_plan = build_desktop_agent_plan("打开 https://example.com，然后截图")
         period_plan = build_desktop_agent_plan("打开 https://example.com/path?q=OpenMako。然后截图")

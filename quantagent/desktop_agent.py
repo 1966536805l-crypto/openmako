@@ -30,6 +30,7 @@ HOTKEY_RE = re.compile(r"(?:hotkey|快捷键|按)\s+([a-z0-9+,\- ]{1,80})", re.I
 TYPE_RE = re.compile(r"(?:type|输入)\s+(.+)", re.IGNORECASE)
 SEARCH_RE = re.compile(r"(?:search|搜索|搜)\s+(.+)", re.IGNORECASE)
 OPEN_APP_RE = re.compile(r"(?:open|打开|启动)\s+([A-Za-z][A-Za-z0-9 ._-]{1,60})", re.IGNORECASE)
+QUOTED_APP_RE = re.compile(r"""(?:open|打开|启动)\s+(?P<quote>["'])(?P<app>[A-Za-z][A-Za-z0-9 ._-]{1,60})(?P=quote)""", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -79,7 +80,7 @@ def build_desktop_agent_plan(instruction: str, *, browser: str = "Safari", max_a
     path_match = _path_match(text)
     search_match = SEARCH_RE.search(text)
     search_query = _search_query(text)
-    app_match = OPEN_APP_RE.search(text)
+    app_match = QUOTED_APP_RE.search(text) or OPEN_APP_RE.search(text)
     app = _open_app(text)
     coord = COORD_RE.search(text)
     type_match = TYPE_RE.search(text)
@@ -363,10 +364,10 @@ def _existing_relative_file_match(text: str) -> re.Match[str] | None:
 
 
 def _open_app(text: str) -> str:
-    match = OPEN_APP_RE.search(text)
+    match = QUOTED_APP_RE.search(text) or OPEN_APP_RE.search(text)
     if not match:
         return ""
-    app = match.group(1).strip(" ：:，,。.")
+    app = (match.groupdict().get("app") or match.group(1)).strip(" ：:，,。.")
     if app.lower().startswith(("http", "search", "搜索", "搜")):
         return ""
     return app
