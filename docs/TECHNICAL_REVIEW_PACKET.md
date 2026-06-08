@@ -48,7 +48,8 @@ python -m pip install -e . pytest
 
 That script runs the focused public gate, metadata boundary checks, the
 supplied Evidence Court bad-run audit, the artifact-provenance fixture, the
-SWTBench patch-artifact fixture, and the supplied transcript adapter matrix.
+SWTBench patch-artifact fixture, the config-only repair fixture, and the
+supplied transcript adapter matrix.
 To run only the focused learning-effect gate:
 
 For exact expected output and smaller checks, see `docs/REPRODUCE_V0_1.md`.
@@ -100,6 +101,17 @@ questions:
 That fixture combines supplied patch-shape metadata with artifact identity
 metadata. It does not validate a SWTBench score or ingest native benchmark
 exports.
+
+To inspect the config-only false-positive boundary:
+
+```bash
+./bin/openmako --no-trust-prompt evidence-court audit --ci --json \
+  examples/evidence_court/config_only_repair.json
+```
+
+That fixture keeps a supplied config-only repair record in `PASS/config_only`
+instead of treating it like a README-only repair claim. It does not prove broad
+repair ability or native benchmark ingestion.
 
 ## Optional Supplied-Transcript Adapter Checks
 

@@ -49,6 +49,7 @@ public-review-gate: recording Evidence Court bad-run fixture
 public-review-gate: auditing supplied Evidence Court record
 public-review-gate: auditing artifact provenance fixture
 public-review-gate: auditing SWTBench patch artifact fixture
+public-review-gate: auditing config-only repair fixture
 public-review-gate: running supplied transcript adapter matrix
 adapter-matrix: PASS
 public-review-gate: PASS
@@ -59,6 +60,8 @@ metadata stays inside the v0.1 boundary, Evidence Court fails closed on a
 supplied bad-run record, and supplied transcript adapters preserve complete
 supplied proof fields while rejecting missing-test-proof and
 missing edited-file evidence success claims. It
+also checks a supplied config-only repair fixture so that packaging/config
+metadata fixes do not get confused with README-only repair claims. It
 does not prove broad unknown-repository repair or external endorsement. This
 is a local script result, not external reviewer approval.
 
@@ -69,8 +72,10 @@ The useful review is not "do you like this project?" It is narrower:
 1. Run `./scripts/public_review_gate.sh`.
 2. For artifact-identity questions, inspect the supplied-record fixture:
    `./bin/openmako --no-trust-prompt evidence-court audit --ci --json examples/evidence_court/artifact_provenance.json`.
-3. Check whether the README claims more than those commands prove.
-4. If a boundary is unclear, leave the concrete mismatch on
+3. For config-only false-positive questions, inspect:
+   `./bin/openmako --no-trust-prompt evidence-court audit --ci --json examples/evidence_court/config_only_repair.json`.
+4. Check whether the README claims more than those commands prove.
+5. If a boundary is unclear, leave the concrete mismatch on
    [issue #2](https://github.com/1966536805l-crypto/openmako/issues/2).
 
 If something is unclear, please point to the file, command, workflow, or

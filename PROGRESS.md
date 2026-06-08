@@ -211,6 +211,9 @@ Current public proof:
   `examples/evidence_court/config_only_repair.json` and is checked by
   `scripts/public_review_gate.sh`, so reviewers can reproduce that false-positive
   boundary without reading unit tests.
+- The README benchmark-thread path and technical review packet now point to the
+  config-only repair fixture, so reviewers can find the boundary without reading
+  the gate script.
 - The `artifact-provenance` evidence extension is supported for supplied records:
   Evidence Court preserves supplied eval-rule identifiers, runner identifiers,
   artifact/input/output hashes, and missing-provenance markers as
