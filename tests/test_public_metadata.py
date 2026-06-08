@@ -166,7 +166,7 @@ def test_readme_links_public_proof_issue() -> None:
     assert "bash scripts/remote_focused_ci_snapshot.sh" in readme
     assert "a fail-closed check for the latest focused workflow on current `openmako/main`" in readme
     assert "supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`" in readme
-    assert "if the GitHub API is unavailable it prints the remote SHA, local UTC check time, manual Actions URL, and rate-limit reset countdown when available before exiting nonzero" in readme
+    assert "if the GitHub API is unavailable it prints the remote SHA, local UTC check time, manual Actions URL, rate-limit reset countdown, and a copyable rerun command when available before exiting nonzero" in readme
     assert "not external review or endorsement" in readme
     assert "Why It Is Worth Checking" in readme
 
@@ -568,16 +568,18 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "665a12912822218f81442598ece268175f30f1c3" in progress
     assert "A 2026-06-08 reset-window re-check showed focused workflow run\n  `27116209971` completed with `conclusion=success`" in progress
     assert "a32b5b29dd0fe231d2507a3e229c58c233d15db0" in progress
+    assert "A 2026-06-08 re-check showed focused workflow run `27116813508`\n  completed with `conclusion=success`" in progress
+    assert "a12389ba48867238218dcb704a42b80f5d7bf507" in progress
     assert "Re-check the latest `openmako/main` run before claiming current remote CI;\n  the snapshot is not external review, endorsement, stars, or reposts." in progress
     assert "bash scripts/remote_focused_ci_snapshot.sh" in progress
     assert "the fail-closed re-check tool\n  for the latest focused workflow on current `openmako/main`" in progress
     assert "not-proof=external review; endorsement; stars; reposts" in progress
     assert "returns nonzero\n  if the latest focused run is stale, still running, failed, missing, or rate\n  limited" in progress
     assert "It supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`\n  for authenticated GitHub API checks to reduce rate-limit failures; tokens are\n  not printed." in progress
-    assert "When API data is unavailable, it still prints the remote main SHA,\n  manual Actions URL, local UTC check time, and rate-limit reset countdown\n  when available before exiting nonzero." in progress
+    assert "When API data is unavailable, it still prints the remote main SHA,\n  manual Actions URL, local UTC check time, rate-limit reset countdown, and a\n  copyable rerun command when available before exiting nonzero." in progress
     assert "Passing this script is current\n  focused-CI evidence only, not external review or traction." in progress
     assert "The README evidence-link table now documents the snapshot token fallbacks and\n  rate-limit fallback" in progress
-    assert "include the remote SHA, local UTC check time, manual Actions URL, and\n  rate-limit reset countdown when available." in progress
+    assert "include the remote SHA, local UTC check time, manual Actions URL, rate-limit\n  reset countdown, and a copyable rerun command when available." in progress
     assert "https://github.com/1966536805l-crypto/openmako/issues/1" in progress
     assert "External technical boundary criticism is requested in issue #2" in progress
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in progress
@@ -694,6 +696,8 @@ def test_remote_focused_ci_snapshot_script_is_fail_closed_and_token_aware() -> N
     assert "rate-limit-reset-unix=" in text
     assert "rate-limit-reset-utc=" in text
     assert "rate-limit-reset-seconds-until=" in text
+    assert "rerun-after-command=" in text
+    assert "sleep {seconds_until_reset} && bash scripts/remote_focused_ci_snapshot.sh" in text
     assert "datetime.fromtimestamp" in text
     assert "total_seconds()" in text
     assert "GitHub API rate limit; re-check later" in text

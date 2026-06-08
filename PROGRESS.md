@@ -16,6 +16,9 @@ Current public proof:
   A 2026-06-08 reset-window re-check showed focused workflow run
   `27116209971` completed with `conclusion=success` on commit
   `a32b5b29dd0fe231d2507a3e229c58c233d15db0`.
+  A 2026-06-08 re-check showed focused workflow run `27116813508`
+  completed with `conclusion=success` on commit
+  `a12389ba48867238218dcb704a42b80f5d7bf507`.
   Re-check the latest `openmako/main` run before claiming current remote CI;
   the snapshot is not external review, endorsement, stars, or reposts.
 - `bash scripts/remote_focused_ci_snapshot.sh` is the fail-closed re-check tool
@@ -25,16 +28,16 @@ Current public proof:
   limited. It supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`
   for authenticated GitHub API checks to reduce rate-limit failures; tokens are
   not printed. When API data is unavailable, it still prints the remote main SHA,
-  manual Actions URL, local UTC check time, and rate-limit reset countdown
-  when available before exiting nonzero. If GitHub includes retry/rate-limit
-  reset headers, the script prints those too, including a UTC rendering of the
-  reset timestamp when it is parseable.
+  manual Actions URL, local UTC check time, rate-limit reset countdown, and a
+  copyable rerun command when available before exiting nonzero. If GitHub
+  includes retry/rate-limit reset headers, the script prints those too,
+  including a UTC rendering of the reset timestamp when it is parseable.
   Passing this script is current
   focused-CI evidence only, not external review or traction.
 - The README evidence-link table now documents the snapshot token fallbacks and
   rate-limit fallback, so users know a nonzero API-unavailable result can still
-  include the remote SHA, local UTC check time, manual Actions URL, and
-  rate-limit reset countdown when available.
+  include the remote SHA, local UTC check time, manual Actions URL, rate-limit
+  reset countdown, and a copyable rerun command when available.
 - GitHub workflow artifact upload steps now use `actions/upload-artifact@v7`
   in the manual despair gate, Evidence Court demo workflow, and the documented
   Evidence Court example. This is CI hygiene for Node 24 action compatibility,

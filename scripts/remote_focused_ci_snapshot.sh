@@ -77,6 +77,11 @@ def print_boundary_snapshot(reason: str, response_headers=None) -> None:
                     "remote-focused-ci-snapshot: "
                     f"rate-limit-reset-seconds-until={seconds_until_reset}"
                 )
+                print(
+                    "remote-focused-ci-snapshot: "
+                    "rerun-after-command="
+                    f"sleep {seconds_until_reset} && bash scripts/remote_focused_ci_snapshot.sh"
+                )
     print("remote-focused-ci-snapshot: not-proof=external review; endorsement; stars; reposts")
 
 
