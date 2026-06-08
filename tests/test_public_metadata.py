@@ -1023,7 +1023,8 @@ def test_public_proof_card_wraps_gate_without_overclaiming() -> None:
     assert "openmako-public-proof-card: PASS" in text
     assert (
         "focused learning-effect gate; public metadata boundary; supplied Evidence Court audit; "
-        "artifact provenance; SWTBench patch artifact; supplied transcript adapter matrix"
+        "artifact provenance; SWTBench patch artifact; config-only repair fixture; "
+        "supplied transcript adapter matrix"
     ) in text
     assert "not-proof: broad unknown-repository SWE repair; external endorsement; star or repost traction" in text
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in text
