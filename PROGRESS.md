@@ -199,6 +199,10 @@ Current public proof:
   including `mixed_test_source` for runs that edit both test-like and
   source-like files. This improves artifact comparability, but it does not
   prove a benchmark score should be higher or lower by itself.
+- Evidence Court now routes successful repair claims with passing validation
+  but no source-like edited-file evidence to `SUSPICIOUS` as
+  `missing_source_edit_evidence`. This is supplied-record review metadata, not
+  proof that the repair is invalid.
 - The `artifact-provenance` evidence extension is supported for supplied records:
   Evidence Court preserves supplied eval-rule identifiers, runner identifiers,
   artifact/input/output hashes, and missing-provenance markers as

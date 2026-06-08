@@ -543,6 +543,28 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["failure_class"], "missing_edited_file_evidence")
         self.assertEqual(payload["patch_shape"]["bucket"], "no_edits")
 
+    def test_openmako_evidence_court_audit_json_reports_missing_source_edit_evidence(self) -> None:
+        record = {
+            "claimed_task": "Fix calculator.py.",
+            "files_read": ["calculator.py", "README.md"],
+            "files_edited": ["README.md"],
+            "commands_run": [{"command": "python3 -m pytest tests/test_calculator.py -q", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "final_claim": "Fixed and verified.",
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "SUSPICIOUS")
+        self.assertEqual(payload["status"], "UNVERIFIED")
+        self.assertEqual(payload["failure_class"], "missing_source_edit_evidence")
+        self.assertEqual(payload["failed_at"], "files_edited")
+        self.assertEqual(payload["patch_shape"]["bucket"], "other_only")
+
     def test_openmako_evidence_court_audit_does_not_treat_fixture_as_fix_task(self) -> None:
         record = {
             "claimed_task": "Inspect fixture metadata.",

@@ -57,7 +57,8 @@ The schema documents the supplied record shape; the CLI still audits only the ev
 
 - `FAIL`: out-of-scope edit or failed validation evidence.
 - `SUSPICIOUS`: success claim with missing or ambiguous test evidence, missing
-  edited-file evidence, or verifier/test-control tamper risk.
+  edited-file evidence, missing source-like edit evidence for a repair claim,
+  or verifier/test-control tamper risk.
 - `PASS`: supplied record has no detected scope violation and recognizable passing validation evidence.
 
 ## Machine Output
@@ -102,6 +103,12 @@ Test-like files include paths under `test/`, `tests/`, or `testing/`, plus
 file extensions outside that test shape. This classification improves artifact
 comparability; it does not prove that a benchmark score should be higher or
 lower by itself.
+
+A successful repair claim with passing validation but no source-like edited
+file evidence is routed to `SUSPICIOUS` as
+`missing_source_edit_evidence`, unless it already triggered
+verifier/test-control tamper risk. This is a review queue signal: source-like
+classification is suffix based and does not prove the repair is invalid.
 
 `verifier_tamper_risk` is derived from `files_edited` and is review metadata:
 
