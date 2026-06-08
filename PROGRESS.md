@@ -23,7 +23,8 @@ Current public proof:
   authenticated GitHub API checks to reduce rate-limit failures; tokens are not
   printed. When API data is unavailable, it still prints the remote main SHA and
   manual Actions URL before exiting nonzero. If GitHub includes retry/rate-limit
-  reset headers, the script prints those too. Passing this script is current
+  reset headers, the script prints those too, including a UTC rendering of the
+  reset timestamp when it is parseable. Passing this script is current
   focused-CI evidence only, not external review or traction.
 - The README evidence-link table now documents that rate-limit fallback so users
   know a nonzero API-unavailable result can still include the remote SHA and

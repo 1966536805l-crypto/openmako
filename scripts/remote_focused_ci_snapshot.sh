@@ -25,6 +25,7 @@ import os
 import sys
 import urllib.error
 import urllib.request
+from datetime import datetime, timezone
 
 
 repo, workflow, remote_sha = sys.argv[1:4]
@@ -56,6 +57,12 @@ def print_boundary_snapshot(reason: str, response_headers=None) -> None:
             print(f"remote-focused-ci-snapshot: retry-after-seconds={retry_after}")
         if reset_at:
             print(f"remote-focused-ci-snapshot: rate-limit-reset-unix={reset_at}")
+            try:
+                reset_utc = datetime.fromtimestamp(int(reset_at), tz=timezone.utc).isoformat()
+            except (OSError, OverflowError, ValueError):
+                reset_utc = ""
+            if reset_utc:
+                print(f"remote-focused-ci-snapshot: rate-limit-reset-utc={reset_utc}")
     print("remote-focused-ci-snapshot: not-proof=external review; endorsement; stars; reposts")
 
 
