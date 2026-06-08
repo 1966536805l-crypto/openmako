@@ -485,6 +485,14 @@ Current public proof:
   2026-06-08. This is local supplied-record evidence only, not native
   OpenHands export ingestion, remote CI status, external review, endorsement,
   stars, or reposts.
+- The README and reproduction guide now align the public-proof wording with the
+  supplied transcript diff-content boundary: the adapter matrix is described as
+  rejecting missing-test-proof, missing edited-file evidence, and missing
+  diff-content evidence success claims, while still not proving native export
+  ingestion or that supplied patches were applied outside the supplied record.
+  The local public metadata test passed on 2026-06-08 before this note was
+  added; this is documentation/proof-surface alignment only, not new external
+  review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -494,5 +502,5 @@ public result.
 
 Next smallest hygiene task:
 
-- Confirm README/public-proof wording still matches the current supplied
-  transcript diff-content boundary, then move to the next trend-radar target.
+- Re-check `docs/AGENT_TREND_RADAR.md` and pick the next code-backed target
+  only if it can be reduced to a failing test and public-proof boundary.

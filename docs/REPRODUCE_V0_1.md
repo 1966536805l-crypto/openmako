@@ -72,7 +72,8 @@ metadata section passes and the script reaches `public-review-gate: PASS`.
   evidence in `PASS/config_only` instead of treating it like a README-only
   repair claim.
 - Supplied transcript adapters preserve complete supplied proof fields and
-  reject missing-test-proof and missing edited-file evidence success claims.
+  reject missing-test-proof, missing edited-file evidence, and missing
+  diff-content evidence success claims.
 
 ## Smaller Checks
 
@@ -116,8 +117,9 @@ This script generates temporary repository-defined Codex, Claude, OpenHands,
 and SWE-agent style transcripts, converts each one into an Evidence Court
 record, audits each generated record, and checks that each adapter rejects a
 success claim when command/test proof is missing or when validation exists but
-edited-file evidence is missing. It is still a supplied-format smoke test, not
-native product export parsing, diff-content proof, or live agent control.
+edited-file or diff-content evidence is missing. It is still a supplied-format
+smoke test, not native product export parsing, proof that supplied patches were
+applied outside the supplied record, or live agent control.
 
 ## What Passing Does Not Prove
 

@@ -59,7 +59,7 @@ What this checks is narrow: the focused learning-effect gate passes, public
 metadata stays inside the v0.1 boundary, Evidence Court fails closed on a
 supplied bad-run record, and supplied transcript adapters preserve complete
 supplied proof fields while rejecting missing-test-proof and
-missing edited-file evidence success claims. It
+missing edited-file or missing diff-content evidence success claims. It
 also checks a supplied config-only repair fixture so that packaging/config
 metadata fixes do not get confused with README-only repair claims. It
 does not prove broad unknown-repository repair or external endorsement. This

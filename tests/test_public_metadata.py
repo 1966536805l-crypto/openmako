@@ -301,7 +301,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "adapter-matrix: PASS" in proof_section
     assert "public-review-gate: PASS" in proof_section
     assert "What this checks is narrow" in proof_section
-    assert "supplied transcript adapters preserve complete\nsupplied proof fields while rejecting missing-test-proof and\nmissing edited-file evidence success claims" in proof_section
+    assert "supplied transcript adapters preserve complete\nsupplied proof fields while rejecting missing-test-proof and\nmissing edited-file or missing diff-content evidence success claims" in proof_section
     assert "It\ndoes not prove broad unknown-repository repair or external endorsement." in proof_section
     assert "This\nis a local script result, not external reviewer approval." in proof_section
     assert "## If You Came From A Benchmark Thread" in proof_section
@@ -834,8 +834,8 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "evidence in `PASS/config_only`" in guide
     assert "./scripts/supplied_transcript_adapter_matrix.sh" in guide
     assert "repository-defined Codex, Claude, OpenHands,\nand SWE-agent style transcripts" in guide
-    assert "checks that each adapter rejects a\nsuccess claim when command/test proof is missing or when validation exists but\nedited-file evidence is missing" in guide
-    assert "not\nnative product export parsing, diff-content proof, or live agent control" in guide
+    assert "checks that each adapter rejects a\nsuccess claim when command/test proof is missing or when validation exists but\nedited-file or diff-content evidence is missing" in guide
+    assert "not native product export parsing, proof that supplied patches were\napplied outside the supplied record, or live agent control" in guide
     assert "It does not prove broad unknown-repository SWE repair." in guide
     assert "It does not prove external endorsement." in guide
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
