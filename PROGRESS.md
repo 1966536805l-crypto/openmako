@@ -532,6 +532,16 @@ Current public proof:
   added. This is local supplied-record validation evidence only, not native
   export ingestion, remote CI status, external review, endorsement, stars, or
   reposts.
+- A supplied transcript adapter unsupported-edit regression now covers Codex,
+  Claude, OpenHands, and SWE-agent supplied formats: edit-like but unsupported
+  `replace` events that carry paths and diff hunks are recorded in
+  `adapter_report.unsupported` and do not count as edited-file or diff-content
+  evidence. The audit remains `missing_edited_file_evidence` for a successful
+  source repair claim. The local unsupported-edit focused test,
+  transcript-focused tests, public metadata tests, and `git diff --check`
+  passed on 2026-06-08 before this note was added. This is local supplied-record
+  validation evidence only, not native export ingestion, remote CI status,
+  external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
