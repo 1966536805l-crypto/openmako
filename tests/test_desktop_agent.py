@@ -56,6 +56,23 @@ class DesktopAgentTest(unittest.TestCase):
         self.assertIn(("type", {"text": "hello"}), [(step.action, step.args) for step in open_plan.steps])
         self.assertNotIn("然后打开 Safari", open_step_payload)
 
+    def test_compound_desktop_actions_follow_instruction_order(self) -> None:
+        type_then_click = build_desktop_agent_plan("输入 hello 然后点击 10,20")
+        self.assertEqual([step.action for step in type_then_click.steps[:2]], ["type", "click"])
+
+        click_then_type = build_desktop_agent_plan("点击 10,20 然后输入 hello")
+        self.assertEqual([step.action for step in click_then_type.steps[:2]], ["click", "type"])
+
+        hotkey_then_type = build_desktop_agent_plan("按 enter 然后输入 hello")
+        self.assertEqual([step.action for step in hotkey_then_type.steps[:2]], ["hotkey", "type"])
+
+        search_then_type = build_desktop_agent_plan("搜索 OpenMako 然后输入 hello")
+        search_type_args = [step.args.get("text", "") for step in search_then_type.steps if step.action == "type"]
+
+        self.assertEqual(search_type_args[0], "https://www.google.com/search?q=OpenMako")
+        self.assertEqual(search_type_args[-1], "hello")
+        self.assertFalse(any("然后输入" in item for item in search_type_args))
+
     def test_preview_writes_query_events_without_side_effects(self) -> None:
         with tempfile.TemporaryDirectory(prefix="desktop agent ") as tmp:
             result = run_desktop_agent(Path(tmp), "点击 10,20", execute=False)

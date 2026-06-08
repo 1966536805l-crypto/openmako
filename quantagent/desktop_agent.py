@@ -61,27 +61,68 @@ def build_desktop_agent_plan(instruction: str, *, browser: str = "Safari", max_a
     if not text:
         return DesktopPlan("desktop agent: empty instruction", ())
 
-    steps: list[DesktopStep] = []
+    operations: list[tuple[int, int, tuple[DesktopStep, ...]]] = []
+    sequence = 0
     url_match = URL_RE.search(text)
+    search_match = SEARCH_RE.search(text)
     search_query = _search_query(text)
+    app_match = OPEN_APP_RE.search(text)
     app = _open_app(text)
     coord = COORD_RE.search(text)
+    type_match = TYPE_RE.search(text)
     typed = _type_text(text)
+    hotkey_match = HOTKEY_RE.search(text)
     hotkey = _hotkey_keys(text)
 
     if url_match:
-        steps.extend(plan_open_target(Path("."), url_match.group(0), kind="url", browser=browser).steps)
-    elif search_query:
-        steps.extend(plan_web_search(search_query, browser=browser).steps)
-    elif app:
-        steps.extend(plan_open_target(Path("."), app, kind="app").steps)
+        operations.append(
+            (
+                url_match.start(),
+                sequence,
+                plan_open_target(Path("."), url_match.group(0), kind="url", browser=browser).steps,
+            )
+        )
+        sequence += 1
+    elif search_match and search_query:
+        operations.append((search_match.start(), sequence, plan_web_search(search_query, browser=browser).steps))
+        sequence += 1
+    elif app_match and app:
+        operations.append((app_match.start(), sequence, plan_open_target(Path("."), app, kind="app").steps))
+        sequence += 1
 
     if coord:
-        steps.append(DesktopStep("click", {"x": int(coord.group(1)), "y": int(coord.group(2))}, "direct coordinate click"))
-    if typed:
-        steps.append(DesktopStep("type", {"text": typed}, "type requested text"))
-    if hotkey:
-        steps.append(DesktopStep("hotkey", {"keys": hotkey}, "press requested hotkey"))
+        operations.append(
+            (
+                coord.start(),
+                sequence,
+                (
+                    DesktopStep(
+                        "click",
+                        {"x": int(coord.group(1)), "y": int(coord.group(2))},
+                        "direct coordinate click",
+                    ),
+                ),
+            )
+        )
+        sequence += 1
+    if type_match and typed:
+        operations.append((type_match.start(), sequence, (DesktopStep("type", {"text": typed}, "type requested text"),)))
+        sequence += 1
+    if hotkey_match and hotkey:
+        operations.append(
+            (
+                hotkey_match.start(),
+                sequence,
+                (DesktopStep("hotkey", {"keys": hotkey}, "press requested hotkey"),),
+            )
+        )
+        sequence += 1
+
+    steps = [
+        step
+        for _, _, planned_steps in sorted(operations, key=lambda item: (item[0], item[1]))
+        for step in planned_steps
+    ]
     if _wants_screenshot(text) or not steps:
         steps.append(DesktopStep("screenshot", {}, "capture current screen", requires_review=False))
 
@@ -233,8 +274,7 @@ def _search_query(text: str) -> str:
         return ""
     query = match.group(1).strip()
     query = URL_RE.sub("", query).strip(" ：:，,。.")
-    query = re.sub(r"\s*(?:并|然后|and)\s*(?:截图|截屏|screenshot).*$", "", query, flags=re.IGNORECASE).strip(" ：:，,。.")
-    return query
+    return _strip_followup_commands(query)
 
 
 def _open_app(text: str) -> str:
@@ -251,15 +291,19 @@ def _type_text(text: str) -> str:
     match = TYPE_RE.search(text)
     if not match:
         return ""
-    typed = match.group(1).strip()
-    typed = re.split(
+    return _strip_followup_commands(match.group(1))
+
+
+def _strip_followup_commands(text: str) -> str:
+    value = str(text or "").strip()
+    value = re.split(
         r"\s*(?:并|然后|再|and|then)\s*"
-        r"(?=(?:截图|截屏|screenshot|等待|wait|按|hotkey|快捷键|click|点击|点|search|搜索|搜|open|打开|启动)(?:\s|[:：]|\d|$))",
-        typed,
+        r"(?=(?:截图|截屏|screenshot|等待|wait|按|hotkey|快捷键|type|输入|click|点击|点|search|搜索|搜|open|打开|启动)(?:\s|[:：]|\d|$))",
+        value,
         maxsplit=1,
         flags=re.IGNORECASE,
     )[0]
-    return typed.strip(" ：:，,。.")
+    return value.strip(" ：:，,。.")
 
 
 def _hotkey_keys(text: str) -> list[str]:
