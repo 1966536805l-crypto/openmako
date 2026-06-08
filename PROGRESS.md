@@ -441,6 +441,14 @@ Current public proof:
   transcript adapter matrix. Metadata tests lock this wording against the gate
   output. This is documentation/proof-surface alignment, not new capability
   proof.
+- A supplied Codex transcript regression now covers mixed source+test
+  `diff_hunks`: the converted record preserves both hunks, audit JSON reports
+  `patch_shape.bucket=mixed_test_source`, and verifier tamper risk remains
+  false. A 2026-06-08 local re-check passed the focused transcript tests,
+  supplied transcript adapter matrix, `git diff --check`, and
+  `bash scripts/public_review_gate.sh`. This is local supplied-record evidence
+  only, not native transcript ingestion, remote CI status, external review,
+  endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -450,7 +458,6 @@ public result.
 
 Next smallest hygiene task:
 
-- Pick one relevant public benchmark/eval thread from
-  `docs/WAVE1_PUBLIC_TARGET_QUEUE.md`, re-check that the thread is still
-  on-topic, and prepare a short technical-boundary reply only after a 5-agent
-  AI-like/promotional-risk review.
+- Add the same mixed source+test diff-shape regression for one non-Codex
+  supplied transcript adapter, preferably OpenHands, then keep it scoped to
+  supplied-record behavior only.
