@@ -125,12 +125,16 @@ class DesktopAgentTest(unittest.TestCase):
         english_plan = build_desktop_agent_plan("打开 https://example.com, then screenshot")
         quoted_plan = build_desktop_agent_plan('打开 "https://example.com/path?q=OpenMako"，然后截图')
         single_quoted_plan = build_desktop_agent_plan("打开 'https://example.com/path?q=OpenMako'")
+        compact_then_plan = build_desktop_agent_plan("打开 https://example.com,then 输入 hello 并截图")
+        punctuation_click_plan = build_desktop_agent_plan("打开 https://example.com，点击 10,20 并截图")
 
         self.assertEqual(comma_plan.steps[0].args["label"], "https://example.com")
         self.assertEqual(period_plan.steps[0].args["label"], "https://example.com/path?q=OpenMako")
         self.assertEqual(english_plan.steps[0].args["label"], "https://example.com")
         self.assertEqual(quoted_plan.steps[0].args["label"], "https://example.com/path?q=OpenMako")
         self.assertEqual(single_quoted_plan.steps[0].args["label"], "https://example.com/path?q=OpenMako")
+        self.assertEqual(compact_then_plan.steps[0].args["label"], "https://example.com")
+        self.assertEqual(punctuation_click_plan.steps[0].args["label"], "https://example.com")
 
     def test_desktop_agent_opens_bare_domains_and_local_urls_as_urls(self) -> None:
         edge_domain = build_desktop_agent_plan("用 Edge 打开 example.com")

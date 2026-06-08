@@ -321,10 +321,22 @@ def _trim_terminal_screenshot(steps: tuple[DesktopStep, ...], *, has_followup: b
 
 
 def _url_target(text: str) -> str:
-    target = _strip_followup_commands(text).strip("\"'").rstrip("\"'.,，。")
+    target = _strip_url_boundary_commands(_strip_followup_commands(text)).strip("\"'").rstrip("\"'.,，。")
     if re.match(r"^(?:localhost|(?:\d{1,3}\.){3}\d{1,3})(?::\d{1,5})?(?:/|$)", target, re.IGNORECASE):
         return f"http://{target}"
     return target
+
+
+def _strip_url_boundary_commands(text: str) -> str:
+    value = str(text or "")
+    value = re.split(
+        r"\s*[,，。]\s*"
+        r"(?=(?:截图|截屏|screenshot|等待|wait|按|hotkey|快捷键|type|输入|click|点击|点|search|搜索|搜|open|打开|启动)(?:\s|[:：]|\d|$))",
+        value,
+        maxsplit=1,
+        flags=re.IGNORECASE,
+    )[0]
+    return re.sub(r"[,，。.]?\s*(?:并|然后|再|and|then)\s*$", "", value, flags=re.IGNORECASE)
 
 
 def _path_target(text: str) -> str:
