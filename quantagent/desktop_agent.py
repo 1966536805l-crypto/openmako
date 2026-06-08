@@ -29,8 +29,9 @@ COORD_RE = re.compile(r"(?:click|点击|点)\s*[:：]?\s*(\d{1,5})\s*[,， ]\s*(
 HOTKEY_RE = re.compile(r"(?:hotkey|快捷键|按)\s+([a-z0-9+,\- ]{1,80})", re.IGNORECASE)
 TYPE_RE = re.compile(r"(?:type|输入)\s+(.+)", re.IGNORECASE)
 SEARCH_RE = re.compile(r"(?:search|搜索|搜)\s+(.+)", re.IGNORECASE)
-OPEN_APP_RE = re.compile(r"(?:open|打开|启动)\s+([A-Za-z][A-Za-z0-9 ._-]{1,60})", re.IGNORECASE)
-QUOTED_APP_RE = re.compile(r"""(?:open|打开|启动)\s+(?P<quote>["'])(?P<app>[A-Za-z][A-Za-z0-9 ._-]{1,60})(?P=quote)""", re.IGNORECASE)
+APP_NAME_RE = r"[A-Za-z\u4e00-\u9fff][A-Za-z0-9 ._\-\u4e00-\u9fff]{1,60}"
+OPEN_APP_RE = re.compile(rf"(?:open|打开|启动)\s+({APP_NAME_RE})", re.IGNORECASE)
+QUOTED_APP_RE = re.compile(rf"""(?:open|打开|启动)\s+(?P<quote>["'])(?P<app>{APP_NAME_RE})(?P=quote)""", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -367,7 +368,7 @@ def _open_app(text: str) -> str:
     match = QUOTED_APP_RE.search(text) or OPEN_APP_RE.search(text)
     if not match:
         return ""
-    app = (match.groupdict().get("app") or match.group(1)).strip(" ：:，,。.")
+    app = _strip_followup_commands(match.groupdict().get("app") or match.group(1))
     if app.lower().startswith(("http", "search", "搜索", "搜")):
         return ""
     return app

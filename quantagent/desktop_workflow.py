@@ -1405,9 +1405,11 @@ def _app_alias(value: str) -> str:
     aliases = {
         "chrome": "Google Chrome",
         "google chrome": "Google Chrome",
+        "谷歌浏览器": "Google Chrome",
         "edge": "Microsoft Edge",
         "microsoft edge": "Microsoft Edge",
         "edge浏览器": "Microsoft Edge",
+        "微软浏览器": "Microsoft Edge",
         "safari": "Safari",
         "finder": "Finder",
         "terminal": "Terminal",

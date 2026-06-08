@@ -97,10 +97,14 @@ class DesktopAgentTest(unittest.TestCase):
         chrome_plan = build_desktop_agent_plan('打开 "Google Chrome"')
         edge_plan = build_desktop_agent_plan('打开 "Microsoft Edge"')
         vscode_plan = build_desktop_agent_plan('打开 "Visual Studio Code"')
+        chinese_chrome_plan = build_desktop_agent_plan("打开 谷歌浏览器 然后截图")
+        quoted_chinese_edge_plan = build_desktop_agent_plan('打开 "微软浏览器"')
 
         self.assertEqual(chrome_plan.steps[0].args["command"], ["open", "-a", "Google Chrome"])
         self.assertEqual(edge_plan.steps[0].args["command"], ["open", "-a", "Microsoft Edge"])
         self.assertEqual(vscode_plan.steps[0].args["command"], ["open", "-a", "Visual Studio Code"])
+        self.assertEqual(chinese_chrome_plan.steps[0].args["command"], ["open", "-a", "Google Chrome"])
+        self.assertEqual(quoted_chinese_edge_plan.steps[0].args["command"], ["open", "-a", "Microsoft Edge"])
 
     def test_desktop_agent_trims_url_followup_commands_and_punctuation(self) -> None:
         comma_plan = build_desktop_agent_plan("打开 https://example.com，然后截图")
