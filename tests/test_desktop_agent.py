@@ -73,6 +73,13 @@ class DesktopAgentTest(unittest.TestCase):
         self.assertEqual(search_type_args[-1], "hello")
         self.assertFalse(any("然后输入" in item for item in search_type_args))
 
+    def test_compound_open_and_search_do_not_duplicate_terminal_screenshot(self) -> None:
+        search_plan = build_desktop_agent_plan("搜索 OpenMako 然后截图")
+        open_plan = build_desktop_agent_plan("打开 Safari 然后截图")
+
+        self.assertEqual([step.action for step in search_plan.steps].count("screenshot"), 1)
+        self.assertEqual([step.action for step in open_plan.steps].count("screenshot"), 1)
+
     def test_preview_writes_query_events_without_side_effects(self) -> None:
         with tempfile.TemporaryDirectory(prefix="desktop agent ") as tmp:
             result = run_desktop_agent(Path(tmp), "点击 10,20", execute=False)

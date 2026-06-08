@@ -123,7 +123,7 @@ def build_desktop_agent_plan(instruction: str, *, browser: str = "Safari", max_a
         for _, _, planned_steps in sorted(operations, key=lambda item: (item[0], item[1]))
         for step in planned_steps
     ]
-    if _wants_screenshot(text) or not steps:
+    if not steps or (_wants_screenshot(text) and steps[-1].action != "screenshot"):
         steps.append(DesktopStep("screenshot", {}, "capture current screen", requires_review=False))
 
     limited = tuple(steps[: max(1, max_actions)])
