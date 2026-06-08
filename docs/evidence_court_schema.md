@@ -95,20 +95,23 @@ The JSON envelope includes:
 - `mixed_test_source`: both test-like files and source-like files were edited.
 - `test_only`: only test-like files were edited.
 - `source_only`: only source-like files were edited.
-- `other_only`, `test_and_other`, `source_and_other`, or `no_edits` for the
-  remaining shapes.
+- `config_only`: only config-like files were edited.
+- `other_only`, `test_and_config`, `test_and_other`, `source_and_config`,
+  `source_and_other`, or `no_edits` for the remaining shapes.
 
 Test-like files include paths under `test/`, `tests/`, or `testing/`, plus
 `test_*.py`, `*_test.py`, and `conftest.py`. Source-like files are common code
-file extensions outside that test shape. This classification improves artifact
-comparability; it does not prove that a benchmark score should be higher or
-lower by itself.
+file extensions outside that test shape. Config-like files include common
+project metadata, dependency, build, and YAML/TOML/INI configuration files.
+This classification improves artifact comparability; it does not prove that a
+benchmark score should be higher or lower by itself.
 
 A successful repair claim with passing validation but no source-like edited
-file evidence is routed to `SUSPICIOUS` as
-`missing_source_edit_evidence`, unless it already triggered
-verifier/test-control tamper risk. This is a review queue signal: source-like
-classification is suffix based and does not prove the repair is invalid.
+file evidence is routed to `SUSPICIOUS` as `missing_source_edit_evidence`,
+unless it has config-like edited-file evidence or already triggered
+verifier/test-control tamper risk. This is a review queue signal:
+source/config-like classification is suffix based and does not prove the repair
+is invalid.
 
 `verifier_tamper_risk` is derived from `files_edited` and is review metadata:
 

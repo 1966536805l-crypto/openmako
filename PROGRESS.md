@@ -203,6 +203,10 @@ Current public proof:
   but no source-like edited-file evidence to `SUSPICIOUS` as
   `missing_source_edit_evidence`. This is supplied-record review metadata, not
   proof that the repair is invalid.
+- Evidence Court now separates config-like edited-file evidence from generic
+  `other_only` patch shape, so supplied config-only repair records can avoid
+  `missing_source_edit_evidence` while README-only repair claims remain
+  suspicious.
 - The `artifact-provenance` evidence extension is supported for supplied records:
   Evidence Court preserves supplied eval-rule identifiers, runner identifiers,
   artifact/input/output hashes, and missing-provenance markers as

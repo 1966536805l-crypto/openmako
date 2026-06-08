@@ -75,6 +75,32 @@ SOURCE_FILE_SUFFIXES = (
     ".scala",
     ".sh",
 )
+CONFIG_FILE_NAMES = (
+    ".editorconfig",
+    ".pre-commit-config.yaml",
+    ".pre-commit-config.yml",
+    "Cargo.toml",
+    "Dockerfile",
+    "Makefile",
+    "go.mod",
+    "package-lock.json",
+    "package.json",
+    "pnpm-lock.yaml",
+    "pyproject.toml",
+    "requirements-dev.txt",
+    "requirements.txt",
+    "tsconfig.json",
+    "yarn.lock",
+)
+CONFIG_FILE_SUFFIXES = (
+    ".cfg",
+    ".conf",
+    ".ini",
+    ".lock",
+    ".toml",
+    ".yaml",
+    ".yml",
+)
 
 
 def build_bad_run_demo_report(project: str | Path) -> AgentAutopsyReport:
@@ -411,6 +437,7 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
         test_status == "passed"
         and files_edited
         and not patch_shape.get("source_files")
+        and not patch_shape.get("config_files")
         and not verifier_tamper_risk.get("verifier_tamper_risk", False)
         and _looks_like_success_claim(final_claim)
         and _looks_like_patch_task(" ".join((claimed_task, final_claim)))
@@ -1273,25 +1300,37 @@ def _report_patch_shape(report: AgentAutopsyReport) -> dict[str, object]:
 def _patch_shape(files_edited: list[str]) -> dict[str, object]:
     unique_files = list(dict.fromkeys(item for item in files_edited if item))
     test_files = [item for item in unique_files if _is_test_file(item)]
-    source_files = [item for item in unique_files if item not in test_files and _is_source_file(item)]
-    other_files = [item for item in unique_files if item not in test_files and item not in source_files]
+    config_files = [item for item in unique_files if item not in test_files and _is_config_file(item)]
+    source_files = [
+        item for item in unique_files if item not in test_files and item not in config_files and _is_source_file(item)
+    ]
+    other_files = [
+        item for item in unique_files if item not in test_files and item not in config_files and item not in source_files
+    ]
     bucket = "no_edits"
     if test_files and source_files:
         bucket = "mixed_test_source"
+    elif test_files and config_files:
+        bucket = "test_and_config"
     elif test_files and other_files:
         bucket = "test_and_other"
+    elif source_files and config_files:
+        bucket = "source_and_config"
     elif source_files and other_files:
         bucket = "source_and_other"
     elif test_files:
         bucket = "test_only"
     elif source_files:
         bucket = "source_only"
+    elif config_files:
+        bucket = "config_only"
     elif other_files:
         bucket = "other_only"
     return {
         "bucket": bucket,
         "edited_files": unique_files,
         "test_files": test_files,
+        "config_files": config_files,
         "source_files": source_files,
         "other_files": other_files,
     }
@@ -1312,6 +1351,13 @@ def _is_test_file(path: str) -> bool:
 def _is_source_file(path: str) -> bool:
     normalized = path.replace("\\", "/").lower()
     return normalized.endswith(SOURCE_FILE_SUFFIXES)
+
+
+def _is_config_file(path: str) -> bool:
+    normalized = path.replace("\\", "/")
+    name = normalized.rsplit("/", 1)[-1]
+    lowered = normalized.lower()
+    return name in CONFIG_FILE_NAMES or lowered.endswith(CONFIG_FILE_SUFFIXES)
 
 
 def _verifier_tamper_risk(files_edited: object) -> dict[str, object]:

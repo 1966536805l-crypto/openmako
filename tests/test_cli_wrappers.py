@@ -463,6 +463,7 @@ class CliWrapperTest(unittest.TestCase):
             payload["patch_shape"],
             {
                 "bucket": "mixed_test_source",
+                "config_files": [],
                 "edited_files": ["calculator.py", "tests/test_calculator.py"],
                 "other_files": [],
                 "source_files": ["calculator.py"],
@@ -490,6 +491,7 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["patch_shape"]["bucket"], "mixed_test_source")
         self.assertEqual(payload["patch_shape"]["test_files"], ["tests/test_api.py"])
         self.assertEqual(payload["patch_shape"]["source_files"], ["src/api.py"])
+        self.assertEqual(payload["patch_shape"]["config_files"], [])
         self.assertEqual(payload["patch_shape"]["other_files"], ["README.md"])
         self.assertFalse(payload["verifier_tamper_risk"]["verifier_tamper_risk"])
 
@@ -564,6 +566,28 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["failure_class"], "missing_source_edit_evidence")
         self.assertEqual(payload["failed_at"], "files_edited")
         self.assertEqual(payload["patch_shape"]["bucket"], "other_only")
+
+    def test_openmako_evidence_court_audit_json_allows_config_only_repair_evidence(self) -> None:
+        record = {
+            "claimed_task": "Fix project packaging metadata.",
+            "files_read": ["pyproject.toml"],
+            "files_edited": ["pyproject.toml"],
+            "commands_run": [{"command": "python3 -m pytest tests/test_metadata.py -q", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "final_claim": "Fixed and verified.",
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "PASS")
+        self.assertEqual(payload["status"], "PASSED")
+        self.assertEqual(payload["failure_class"], "")
+        self.assertEqual(payload["patch_shape"]["bucket"], "config_only")
+        self.assertEqual(payload["patch_shape"]["config_files"], ["pyproject.toml"])
 
     def test_openmako_evidence_court_audit_does_not_treat_fixture_as_fix_task(self) -> None:
         record = {
@@ -1390,8 +1414,11 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("artifact identity metadata supplied by the record", schema)
         self.assertIn("does not mean OpenMako ingests native benchmark", schema)
         self.assertIn("`mixed_test_source`: both test-like files and source-like files were edited.", schema)
-        self.assertIn("This classification improves artifact\ncomparability", schema)
-        self.assertIn("does not prove that a benchmark score should be higher or\nlower by itself", schema)
+        self.assertIn("`config_only`: only config-like files were edited.", schema)
+        self.assertIn("Config-like files include common\nproject metadata", schema)
+        self.assertIn("This classification improves artifact comparability", schema)
+        self.assertIn("unless it has config-like edited-file evidence", schema)
+        self.assertIn("does not prove that a\nbenchmark score should be higher or lower by itself", schema)
         self.assertIn("`evidence-court/v0.1`", schema)
         self.assertIn("Use `--ci` to return exit code 1 for `FAIL`.", schema)
         self.assertIn("Use `--fail-on suspicious` to also block `SUSPICIOUS`.", schema)
