@@ -165,7 +165,8 @@ def test_readme_links_public_proof_issue() -> None:
     assert "Remote focused CI snapshot" in readme
     assert "bash scripts/remote_focused_ci_snapshot.sh" in readme
     assert "a fail-closed check for the latest focused workflow on current `openmako/main`" in readme
-    assert "if the GitHub API is unavailable it prints the remote SHA and manual Actions URL before exiting nonzero" in readme
+    assert "supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`" in readme
+    assert "if the GitHub API is unavailable it prints the remote SHA, local UTC check time, manual Actions URL, and rate-limit reset countdown when available before exiting nonzero" in readme
     assert "not external review or endorsement" in readme
     assert "Why It Is Worth Checking" in readme
 
