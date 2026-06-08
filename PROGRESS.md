@@ -584,6 +584,13 @@ Current public proof:
   this note was added. This is local supplied-record validation evidence only,
   not native export ingestion, remote CI status, external review, endorsement,
   stars, or reposts.
+- Evidence Court direct-record coverage now includes orphan test output for
+  source repair claims: a record with `test_output: 1 passed` but no
+  `commands_run` validation command remains `missing_test_evidence` instead of
+  proving a successful repair. The local orphan-test-output focused test passed
+  on 2026-06-09 before this note was added. This is local supplied-record audit
+  evidence only, not native export ingestion, remote CI status, external
+  review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
