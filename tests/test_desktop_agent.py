@@ -80,6 +80,19 @@ class DesktopAgentTest(unittest.TestCase):
         self.assertEqual([step.action for step in search_plan.steps].count("screenshot"), 1)
         self.assertEqual([step.action for step in open_plan.steps].count("screenshot"), 1)
 
+    def test_compound_open_and_search_defer_screenshot_until_after_followup_actions(self) -> None:
+        open_type_plan = build_desktop_agent_plan("打开 谷歌浏览器 然后输入 OpenMako 然后按 enter 并截图")
+        search_type_plan = build_desktop_agent_plan("搜索 OpenMako 然后输入 hello 并截图")
+
+        open_actions = [step.action for step in open_type_plan.steps]
+        search_actions = [step.action for step in search_type_plan.steps]
+
+        self.assertLess(open_actions.index("type"), open_actions.index("screenshot"))
+        self.assertLess(open_actions.index("hotkey"), open_actions.index("screenshot"))
+        self.assertEqual(open_actions.count("screenshot"), 1)
+        self.assertLess(search_actions.index("type"), search_actions.index("screenshot"))
+        self.assertEqual(search_actions.count("screenshot"), 1)
+
     def test_desktop_agent_uses_requested_browser_for_search_and_urls(self) -> None:
         edge_search = build_desktop_agent_plan("打开 Edge 搜索 OpenMako 并截图")
         chrome_search = build_desktop_agent_plan("打开 Chrome 搜索 OpenMako")

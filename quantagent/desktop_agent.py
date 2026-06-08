@@ -154,10 +154,11 @@ def build_desktop_agent_plan(instruction: str, *, browser: str = "Safari", max_a
         )
         sequence += 1
 
+    sorted_operations = sorted(operations, key=lambda item: (item[0], item[1]))
     steps = [
         step
-        for _, _, planned_steps in sorted(operations, key=lambda item: (item[0], item[1]))
-        for step in planned_steps
+        for index, (_, _, planned_steps) in enumerate(sorted_operations)
+        for step in _trim_terminal_screenshot(planned_steps, has_followup=index < len(sorted_operations) - 1)
     ]
     if not steps or (_wants_screenshot(text) and steps[-1].action != "screenshot"):
         steps.append(DesktopStep("screenshot", {}, "capture current screen", requires_review=False))
@@ -311,6 +312,12 @@ def _search_query(text: str) -> str:
     query = match.group(1).strip()
     query = URL_RE.sub("", query).strip(" ：:，,。.")
     return _strip_followup_commands(query)
+
+
+def _trim_terminal_screenshot(steps: tuple[DesktopStep, ...], *, has_followup: bool) -> tuple[DesktopStep, ...]:
+    if has_followup and steps and steps[-1].action == "screenshot":
+        return steps[:-1]
+    return steps
 
 
 def _url_target(text: str) -> str:
