@@ -254,7 +254,7 @@ def _type_text(text: str) -> str:
     typed = match.group(1).strip()
     typed = re.split(
         r"\s*(?:并|然后|再|and|then)\s*"
-        r"(?=(?:截图|截屏|screenshot|按|hotkey|快捷键|click|点击|点)(?:\s|[:：]|\d|$))",
+        r"(?=(?:截图|截屏|screenshot|等待|wait|按|hotkey|快捷键|click|点击|点|search|搜索|搜|open|打开|启动)(?:\s|[:：]|\d|$))",
         typed,
         maxsplit=1,
         flags=re.IGNORECASE,

@@ -44,6 +44,18 @@ class DesktopAgentTest(unittest.TestCase):
         self.assertIn(("type", {"text": "hello"}), click_steps)
         self.assertIn(("click", {"x": 10, "y": 20}), click_steps)
 
+        search_plan = build_desktop_agent_plan("输入 hello 然后搜索 OpenMako")
+        search_step_payload = json.dumps([step.args for step in search_plan.steps], ensure_ascii=False)
+
+        self.assertIn(("type", {"text": "hello"}), [(step.action, step.args) for step in search_plan.steps])
+        self.assertNotIn("然后搜索 OpenMako", search_step_payload)
+
+        open_plan = build_desktop_agent_plan("输入 hello 然后打开 Safari")
+        open_step_payload = json.dumps([step.args for step in open_plan.steps], ensure_ascii=False)
+
+        self.assertIn(("type", {"text": "hello"}), [(step.action, step.args) for step in open_plan.steps])
+        self.assertNotIn("然后打开 Safari", open_step_payload)
+
     def test_preview_writes_query_events_without_side_effects(self) -> None:
         with tempfile.TemporaryDirectory(prefix="desktop agent ") as tmp:
             result = run_desktop_agent(Path(tmp), "点击 10,20", execute=False)
