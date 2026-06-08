@@ -561,6 +561,14 @@ Current public proof:
   this note was added. This is local supplied-record validation evidence only,
   not native export ingestion, remote CI status, external review, endorsement,
   stars, or reposts.
+- Evidence Court now rejects exit-code-only proof from non-validation commands
+  for successful source repair claims: a command such as a status-printing
+  script with `exit_code=0` no longer counts as passing test evidence unless
+  the command itself looks like a test runner. The focused regression failed as
+  `PASS` before the change and passed as `missing_test_evidence` after the
+  change on 2026-06-09. This is local audit-boundary evidence only, not proof
+  of validation quality, native export ingestion, remote CI status, external
+  review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -572,6 +580,5 @@ Next smallest hygiene task:
 
 - Re-check `docs/AGENT_TREND_RADAR.md` and pick the next code-backed target
   only if it can be reduced to a failing test and public-proof boundary.
-- Next concrete candidate: a stricter adapter validation-command identity edge
-  case that can be expressed as one transcript fixture before any public wording
-  changes.
+- Next concrete candidate: extend the same validation-command identity boundary
+  to supplied transcript fixtures if a real false-positive path appears.

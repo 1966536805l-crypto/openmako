@@ -66,6 +66,11 @@ The schema documents the supplied record shape; the CLI still audits only the ev
   or verifier/test-control tamper risk.
 - `PASS`: supplied record has no detected scope violation and recognizable passing validation evidence.
 
+Exit-code-only command evidence is treated as recognizable validation evidence
+only when the command itself looks like a test command, such as `pytest`,
+`unittest`, `npm test`, `go test`, or similar test runners. A successful
+non-validation command does not prove a source repair claim.
+
 ## Machine Output
 
 Use `--json` for CI or scripts.

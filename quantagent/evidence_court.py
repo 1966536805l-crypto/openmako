@@ -1678,7 +1678,11 @@ def _test_output_status(test_output: object, commands_run: object) -> tuple[str,
     exit_codes = []
     if isinstance(commands_run, list):
         for item in commands_run:
-            if isinstance(item, dict) and isinstance(item.get("exit_code"), int):
+            if (
+                isinstance(item, dict)
+                and isinstance(item.get("exit_code"), int)
+                and _looks_like_validation_command(str(item.get("command") or ""))
+            ):
                 exit_codes.append(int(item["exit_code"]))
     if isinstance(test_output, dict):
         status = str(test_output.get("status") or "").lower()
@@ -1702,6 +1706,34 @@ def _test_output_status(test_output: object, commands_run: object) -> tuple[str,
     if exit_codes:
         return ("passed" if all(code == 0 for code in exit_codes) else "failed", "command exit_code evidence: " + ", ".join(str(code) for code in exit_codes))
     return "missing", ""
+
+
+def _looks_like_validation_command(command: str) -> bool:
+    lowered = f" {command.lower()} "
+    patterns = (
+        r"\bpytest\b",
+        r"\bunittest\b",
+        r"\btox\b",
+        r"\bnox\b",
+        r"\bcoverage\b",
+        r"\bgo\s+test\b",
+        r"\bcargo\s+test\b",
+        r"\bswift\s+test\b",
+        r"\bzig\s+build\s+test\b",
+        r"\bctest\b",
+        r"\bbats\b",
+        r"\bjest\b",
+        r"\bvitest\b",
+        r"\bplaywright\s+test\b",
+        r"\bnpm\s+(?:run\s+)?test\b",
+        r"\bpnpm\s+(?:run\s+)?test\b",
+        r"\byarn\s+(?:run\s+)?test\b",
+        r"\bmake\s+test\b",
+        r"\bmvn\s+test\b",
+        r"\bgradle\s+test\b",
+        r"\bgradlew\s+test\b",
+    )
+    return any(re.search(pattern, lowered) for pattern in patterns)
 
 
 def _looks_like_success_claim(text: str) -> bool:
