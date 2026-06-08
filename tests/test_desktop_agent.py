@@ -80,6 +80,15 @@ class DesktopAgentTest(unittest.TestCase):
         self.assertEqual([step.action for step in search_plan.steps].count("screenshot"), 1)
         self.assertEqual([step.action for step in open_plan.steps].count("screenshot"), 1)
 
+    def test_desktop_agent_uses_requested_browser_for_search_and_urls(self) -> None:
+        edge_search = build_desktop_agent_plan("打开 Edge 搜索 OpenMako 并截图")
+        chrome_search = build_desktop_agent_plan("打开 Chrome 搜索 OpenMako")
+        edge_url = build_desktop_agent_plan("用 Edge 打开 https://example.com")
+
+        self.assertEqual(edge_search.steps[0].args["app"], "Microsoft Edge")
+        self.assertEqual(chrome_search.steps[0].args["app"], "Google Chrome")
+        self.assertEqual(edge_url.steps[0].args["command"], ["open", "-a", "Microsoft Edge", "https://example.com"])
+
     def test_preview_writes_query_events_without_side_effects(self) -> None:
         with tempfile.TemporaryDirectory(prefix="desktop agent ") as tmp:
             result = run_desktop_agent(Path(tmp), "点击 10,20", execute=False)

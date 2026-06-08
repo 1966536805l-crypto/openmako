@@ -61,6 +61,7 @@ def build_desktop_agent_plan(instruction: str, *, browser: str = "Safari", max_a
     if not text:
         return DesktopPlan("desktop agent: empty instruction", ())
 
+    target_browser = _browser_from_text(text, default=browser)
     operations: list[tuple[int, int, tuple[DesktopStep, ...]]] = []
     sequence = 0
     url_match = URL_RE.search(text)
@@ -79,12 +80,12 @@ def build_desktop_agent_plan(instruction: str, *, browser: str = "Safari", max_a
             (
                 url_match.start(),
                 sequence,
-                plan_open_target(Path("."), url_match.group(0), kind="url", browser=browser).steps,
+                plan_open_target(Path("."), url_match.group(0), kind="url", browser=target_browser).steps,
             )
         )
         sequence += 1
     elif search_match and search_query:
-        operations.append((search_match.start(), sequence, plan_web_search(search_query, browser=browser).steps))
+        operations.append((search_match.start(), sequence, plan_web_search(search_query, browser=target_browser).steps))
         sequence += 1
     elif app_match and app:
         operations.append((app_match.start(), sequence, plan_open_target(Path("."), app, kind="app").steps))
@@ -285,6 +286,17 @@ def _open_app(text: str) -> str:
     if app.lower().startswith(("http", "search", "搜索", "搜")):
         return ""
     return app
+
+
+def _browser_from_text(text: str, *, default: str) -> str:
+    lowered = text.lower()
+    if "chrome" in lowered:
+        return "Google Chrome"
+    if "edge" in lowered:
+        return "Microsoft Edge"
+    if "safari" in lowered:
+        return "Safari"
+    return default
 
 
 def _type_text(text: str) -> str:
