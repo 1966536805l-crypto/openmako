@@ -197,13 +197,17 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("latest focused run does not match remote main", result.stderr)
 
     def test_remote_focused_ci_snapshot_rejects_empty_run_list(self) -> None:
+        remote_sha = "d" * 40
         result = self.run_remote_focused_ci_snapshot(
             {"workflow_runs": []},
-            "d" * 40,
+            remote_sha,
         )
 
         self.assertEqual(result.returncode, 1)
-        self.assertEqual(result.stdout, "")
+        self.assertIn(f"remote-main-sha={remote_sha}", result.stdout)
+        self.assertIn("manual-url=https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml?query=branch%3Amain", result.stdout)
+        self.assertIn("unavailable=no_focused_workflow_runs", result.stdout)
+        self.assertIn("not-proof=external review; endorsement; stars; reposts", result.stdout)
         self.assertIn("no focused workflow runs found", result.stderr)
 
     def test_remote_focused_ci_snapshot_rejects_matching_in_progress_run(self) -> None:

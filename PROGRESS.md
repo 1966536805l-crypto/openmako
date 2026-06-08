@@ -21,8 +21,9 @@ Current public proof:
   if the latest focused run is stale, still running, failed, missing, or rate
   limited. It supports `OPENMAKO_GITHUB_TOKEN` or `GITHUB_TOKEN` for
   authenticated GitHub API checks to reduce rate-limit failures; tokens are not
-  printed. Passing this script is current focused-CI evidence only, not external
-  review or traction.
+  printed. When API data is unavailable, it still prints the remote main SHA and
+  manual Actions URL before exiting nonzero. Passing this script is current
+  focused-CI evidence only, not external review or traction.
 - GitHub workflow artifact upload steps now use `actions/upload-artifact@v7`
   in the manual despair gate, Evidence Court demo workflow, and the documented
   Evidence Court example. This is CI hygiene for Node 24 action compatibility,

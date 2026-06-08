@@ -33,6 +33,7 @@ api_url = (
     f"https://api.github.com/repos/{repo}/actions/workflows/"
     f"{workflow}/runs?branch=main&per_page=1"
 )
+manual_url = f"https://github.com/{repo}/actions/workflows/{workflow}?query=branch%3Amain"
 token = os.environ.get("OPENMAKO_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
 headers = {
     "Accept": "application/vnd.github+json",
@@ -41,6 +42,15 @@ headers = {
 if token:
     headers["Authorization"] = f"Bearer {token}"
     headers["X-GitHub-Api-Version"] = "2022-11-28"
+
+
+def print_boundary_snapshot(reason: str) -> None:
+    print(f"remote-focused-ci-snapshot: repo={repo}")
+    print(f"remote-focused-ci-snapshot: remote-main-sha={remote_sha}")
+    print(f"remote-focused-ci-snapshot: manual-url={manual_url}")
+    print(f"remote-focused-ci-snapshot: unavailable={reason}")
+    print("remote-focused-ci-snapshot: not-proof=external review; endorsement; stars; reposts")
+
 
 try:
     if fixture:
@@ -56,20 +66,24 @@ try:
 except urllib.error.HTTPError as exc:
     body = exc.read().decode("utf-8", errors="replace")
     if exc.code == 403 and "rate limit" in body.lower():
+        print_boundary_snapshot("github_api_rate_limit")
         print(
             "remote-focused-ci-snapshot: GitHub API rate limit; re-check later "
             "or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN for authenticated API reads",
             file=sys.stderr,
         )
         sys.exit(2)
+    print_boundary_snapshot(f"github_api_error_{exc.code}")
     print(f"remote-focused-ci-snapshot: GitHub API error {exc.code}: {body}", file=sys.stderr)
     sys.exit(2)
 except Exception as exc:
+    print_boundary_snapshot("workflow_runs_unreadable")
     print(f"remote-focused-ci-snapshot: could not read workflow runs: {exc}", file=sys.stderr)
     sys.exit(2)
 
 runs = data.get("workflow_runs") or []
 if not runs:
+    print_boundary_snapshot("no_focused_workflow_runs")
     print("remote-focused-ci-snapshot: no focused workflow runs found", file=sys.stderr)
     sys.exit(1)
 
