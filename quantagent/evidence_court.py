@@ -234,6 +234,7 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
         raise ValueError("audit record must be a JSON object")
 
     claimed_task = _event_text_field(payload, ("claimed_task",), "claimed_task")
+    source_format = _event_text_field(payload, ("source_format",), "source_format")
     final_claim = _event_text_field(payload, ("final_claim",), "final_claim")
     allowed_files = _string_list(payload.get("allowed_files"))
     files_read = _string_list(payload.get("files_read"))
@@ -500,7 +501,7 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
         and files_edited
         and patch_shape.get("source_files")
         and not diff_hunks
-        and _is_supplied_transcript_record(payload)
+        and _is_supplied_transcript_format(source_format)
         and _looks_like_success_claim(final_claim)
         and _looks_like_patch_task(" ".join((claimed_task, final_claim)))
     ):
@@ -523,7 +524,7 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
         and files_edited
         and patch_shape.get("source_files")
         and diff_hunks
-        and _is_supplied_transcript_record(payload)
+        and _is_supplied_transcript_format(source_format)
         and not final_claim
         and _looks_like_patch_task(claimed_task)
     ):
@@ -1288,8 +1289,7 @@ def _event_diff_hunks(event: dict[str, object]) -> list[str]:
     return list(dict.fromkeys(hunks))
 
 
-def _is_supplied_transcript_record(payload: dict[str, object]) -> bool:
-    source_format = str(payload.get("source_format") or "").strip()
+def _is_supplied_transcript_format(source_format: str) -> bool:
     return source_format.endswith("-transcript/v0.1")
 
 

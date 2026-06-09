@@ -10,6 +10,10 @@
       "type": "string",
       "description": "Task or claim being audited."
     },
+    "source_format": {
+      "type": "string",
+      "description": "Optional repository-defined supplied-record format label, such as codex-transcript/v0.1. This is not a native product export claim."
+    },
     "allowed_files": {
       "$ref": "#/$defs/fileList",
       "description": "Optional edit allowlist. Any other edited file is reported as a scope violation."

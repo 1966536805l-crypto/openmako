@@ -4384,6 +4384,26 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(result.stdout, "")
                 self.assertIn("source_agent source_agent must be a string", result.stderr)
 
+    def test_openmako_evidence_court_rejects_malformed_supplied_source_format(self) -> None:
+        record = {
+            "claimed_task": "Fix calculator.py.",
+            "source_format": {"format": "codex-transcript/v0.1"},
+            "files_edited": ["calculator.py"],
+            "commands_run": [{"command": "python3 -m pytest -q", "exit_code": 0}],
+            "test_output": "1 passed",
+            "final_claim": "Fixed and verified.",
+        }
+        for command in ("audit", "validate"):
+            with self.subTest(command=command):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(record, handle)
+                    handle.flush()
+                    result = self.run_openmako("--no-trust-prompt", "evidence-court", command, handle.name)
+
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertIn("source_format source_format must be a string", result.stderr)
+
     def test_evidence_court_record_schema_matches_supported_record_shape(self) -> None:
         schema = json.loads((ROOT / "docs" / "evidence_court_record.schema.json").read_text(encoding="utf-8"))
         example = json.loads((ROOT / "examples" / "evidence_court" / "out_of_scope.json").read_text(encoding="utf-8"))
@@ -4391,6 +4411,7 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(schema["title"], "Evidence Court Audit Record")
         self.assertIn("not a native Claude Code, Codex, Cursor, or SWE-bench transcript schema", schema["description"])
         self.assertEqual(schema["properties"]["claimed_task"]["type"], "string")
+        self.assertEqual(schema["properties"]["source_format"]["type"], "string")
         self.assertEqual(schema["properties"]["allowed_files"]["$ref"], "#/$defs/fileList")
         self.assertEqual(schema["properties"]["files_read"]["$ref"], "#/$defs/fileList")
         self.assertEqual(schema["properties"]["files_edited"]["$ref"], "#/$defs/fileList")
@@ -4457,6 +4478,7 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("openmako evidence-court audit <run.json>", schema)
         self.assertIn("It does not claim to read native Claude Code, Codex, Cursor, or SWE-bench logs.", schema)
         self.assertIn("This is an evidence audit of the supplied record only.", schema)
+        self.assertIn("`source_format`", schema)
         self.assertIn("`allowed_files`", schema)
         self.assertIn("`test_output`", schema)
         self.assertIn("Use `--json` for CI or scripts.", schema)

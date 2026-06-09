@@ -47,6 +47,7 @@ The schema documents the supplied record shape; the CLI still audits only the ev
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `claimed_task` | string | Task or claim being audited. |
+| `source_format` | string | Optional repository-defined supplied-record format label, such as `codex-transcript/v0.1`. It is not a native product export claim. |
 | `allowed_files` | string array | Optional edit allowlist. If present, any other edited file is a scope violation. |
 | `files_read` | string array | Files the agent inspected. |
 | `files_edited` | string array | Files the agent modified. |
