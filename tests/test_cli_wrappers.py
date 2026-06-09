@@ -2894,6 +2894,49 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(converted.stdout, "")
                 self.assertIn("command command must be a string", converted.stderr)
 
+    def test_openmako_evidence_court_transcript_adapters_reject_malformed_top_level_claim_text(self) -> None:
+        def transcript_for(adapter: str, field: str, bad_value: object) -> dict[str, object]:
+            if adapter == "codex":
+                transcript: dict[str, object] = {"messages": []}
+            elif adapter == "claude":
+                transcript = {"messages": []}
+            elif adapter == "openhands":
+                transcript = {"events": []}
+            elif adapter == "swe-agent":
+                transcript = {"steps": []}
+            else:
+                raise AssertionError(f"unexpected adapter: {adapter}")
+            transcript[field] = bad_value
+            return transcript
+
+        cases: tuple[tuple[str, str, object, str], ...] = (
+            ("codex", "claimed_task", {"message": "Fix calculator.py."}, "claimed_task claimed_task must be a string"),
+            ("codex", "final_claim", ["Fixed and verified."], "final_claim final_claim must be a string"),
+            ("claude", "task", {"message": "Fix calculator.py."}, "claimed_task task must be a string"),
+            ("claude", "final_claim", ["Fixed and verified."], "final_claim final_claim must be a string"),
+            ("openhands", "task", {"message": "Fix calculator.py."}, "claimed_task task must be a string"),
+            ("openhands", "final_claim", ["Fixed and verified."], "final_claim final_claim must be a string"),
+            ("swe-agent", "issue", {"message": "Fix calculator.py."}, "claimed_task issue must be a string"),
+            ("swe-agent", "final_claim", ["Fixed and verified."], "final_claim final_claim must be a string"),
+        )
+        for adapter, field, bad_value, expected_error in cases:
+            with self.subTest(adapter=adapter, field=field):
+                transcript = transcript_for(adapter, field, bad_value)
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn(expected_error, converted.stderr)
+
     def test_openmako_evidence_court_transcript_adapters_reject_mixed_session_evidence(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"
