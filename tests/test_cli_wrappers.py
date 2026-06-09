@@ -4276,6 +4276,43 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("audit record must be a JSON object", result.stderr)
 
+    def test_openmako_evidence_court_rejects_malformed_supplied_claim_text(self) -> None:
+        cases: tuple[tuple[str, dict[str, object], str], ...] = (
+            (
+                "claimed-task-object",
+                {
+                    "claimed_task": {"message": "Fix calculator.py."},
+                    "files_edited": ["calculator.py"],
+                    "commands_run": [{"command": "python3 -m pytest -q", "exit_code": 0}],
+                    "test_output": "1 passed",
+                    "final_claim": "Fixed and verified.",
+                },
+                "claimed_task claimed_task must be a string",
+            ),
+            (
+                "final-claim-list",
+                {
+                    "claimed_task": "Fix calculator.py.",
+                    "files_edited": ["calculator.py"],
+                    "commands_run": [{"command": "python3 -m pytest -q", "exit_code": 0}],
+                    "test_output": "1 passed",
+                    "final_claim": ["Fixed and verified."],
+                },
+                "final_claim final_claim must be a string",
+            ),
+        )
+        for command in ("audit", "validate"):
+            for case_name, record, expected_error in cases:
+                with self.subTest(command=command, case_name=case_name):
+                    with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                        json.dump(record, handle)
+                        handle.flush()
+                        result = self.run_openmako("--no-trust-prompt", "evidence-court", command, handle.name)
+
+                    self.assertEqual(result.returncode, 2)
+                    self.assertEqual(result.stdout, "")
+                    self.assertIn(expected_error, result.stderr)
+
     def test_evidence_court_record_schema_matches_supported_record_shape(self) -> None:
         schema = json.loads((ROOT / "docs" / "evidence_court_record.schema.json").read_text(encoding="utf-8"))
         example = json.loads((ROOT / "examples" / "evidence_court" / "out_of_scope.json").read_text(encoding="utf-8"))

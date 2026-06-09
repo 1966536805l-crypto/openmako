@@ -233,8 +233,8 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
     if not isinstance(payload, dict):
         raise ValueError("audit record must be a JSON object")
 
-    claimed_task = str(payload.get("claimed_task") or "").strip()
-    final_claim = str(payload.get("final_claim") or "").strip()
+    claimed_task = _event_text_field(payload, ("claimed_task",), "claimed_task")
+    final_claim = _event_text_field(payload, ("final_claim",), "final_claim")
     allowed_files = _string_list(payload.get("allowed_files"))
     files_read = _string_list(payload.get("files_read"))
     files_edited = _string_list(payload.get("files_edited"))
