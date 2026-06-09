@@ -796,7 +796,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
         for tool_path, tool_call in _codex_tool_calls(message, message_index):
             tool_payload = _codex_tool_payload(tool_call)
             _add_event_session_id(session_ids, tool_payload)
-            tool_kind = _codex_tool_kind(tool_call, tool_payload)
+            tool_kind = _codex_tool_kind(tool_call, tool_payload, tool_path)
             if tool_kind in {"read", "read_file", "open", "cat"}:
                 files_read.extend(_codex_tool_files(tool_payload))
             elif tool_kind in {"edit", "write", "write_file", "apply_patch", "patch"}:
@@ -893,7 +893,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
         for tool_path, tool_call in tool_calls:
             tool_payload = _codex_tool_payload(tool_call)
             _add_event_session_id(session_ids, tool_payload)
-            tool_kind = _codex_tool_kind(tool_call, tool_payload)
+            tool_kind = _codex_tool_kind(tool_call, tool_payload, tool_path)
             if tool_kind in {"read", "read_file", "open", "view", "cat"}:
                 files_read.extend(_codex_tool_files(tool_payload))
             elif tool_kind in {"edit", "write", "write_file", "apply_patch", "patch", "multi_edit", "multiedit"}:
@@ -978,8 +978,8 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
         if not isinstance(event, dict):
             raise ValueError(f"OpenHands transcript event {event_index} must be an object")
         _add_event_session_id(session_ids, event)
-        event_kind = _openhands_event_kind(event)
         event_path = f"events[{event_index}]"
+        event_kind = _openhands_event_kind(event, event_path)
         if event_kind in {"task", "instruction"}:
             text = _openhands_event_text(event, "claimed_task")
             if text and not record["claimed_task"]:
@@ -1072,8 +1072,8 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
         if not isinstance(step, dict):
             raise ValueError(f"SWE-agent transcript step {step_index} must be an object")
         _add_event_session_id(session_ids, step)
-        step_kind = _swe_agent_step_kind(step)
         step_path = f"steps[{step_index}]"
+        step_kind = _swe_agent_step_kind(step, step_path)
         if step_kind in {"task", "instruction", "issue"}:
             text = _openhands_event_text(step, "claimed_task")
             if text and not record["claimed_task"]:
@@ -1694,23 +1694,39 @@ def _codex_tool_payload(tool_call: dict[str, object]) -> dict[str, object]:
     return payload
 
 
-def _codex_tool_kind(tool_call: dict[str, object], tool_payload: dict[str, object]) -> str:
-    block_type = str(tool_payload.get("type") or tool_call.get("type") or "").strip().lower().replace("-", "_")
-    if block_type in {"tool_use", "server_tool_use"} and (
-        isinstance(tool_payload.get("name"), str) or isinstance(tool_call.get("name"), str)
-    ):
-        return str(tool_payload.get("name") or tool_call.get("name") or "").strip().lower().replace("-", "_")
-    value = (
-        tool_payload.get("kind")
-        or tool_payload.get("type")
-        or tool_payload.get("tool")
-        or tool_payload.get("name")
-        or tool_call.get("kind")
-        or tool_call.get("type")
-        or tool_call.get("name")
-        or ""
+def _codex_tool_kind(tool_call: dict[str, object], tool_payload: dict[str, object], label: str) -> str:
+    block_type = _first_kind_text(((tool_payload, "type"), (tool_call, "type")), label)
+    if block_type in {"tool_use", "server_tool_use"}:
+        name = _first_kind_text(((tool_payload, "name"), (tool_call, "name")), label)
+        if name:
+            return name
+    return _first_kind_text(
+        (
+            (tool_payload, "kind"),
+            (tool_payload, "type"),
+            (tool_payload, "tool"),
+            (tool_payload, "name"),
+            (tool_call, "kind"),
+            (tool_call, "type"),
+            (tool_call, "name"),
+        ),
+        label,
     )
-    return str(value).strip().lower().replace("-", "_")
+
+
+def _first_kind_text(sources: tuple[tuple[dict[str, object], str], ...], label: str) -> str:
+    for source, field in sources:
+        if field not in source:
+            continue
+        value = source[field]
+        if value is None:
+            continue
+        if not isinstance(value, str):
+            raise ValueError(f"{label}.{field} must be a string")
+        text = value.strip()
+        if text:
+            return text.lower().replace("-", "_")
+    return ""
 
 
 def _codex_tool_files(tool_payload: dict[str, object]) -> list[str]:
@@ -1787,18 +1803,22 @@ def _codex_command_output(tool_payload: dict[str, object]) -> str:
     return "\n".join(parts)
 
 
-def _openhands_event_kind(event: dict[str, object]) -> str:
-    value = event.get("kind") or event.get("type") or event.get("action") or event.get("operation") or ""
-    return str(value).strip().lower().replace("-", "_")
+def _openhands_event_kind(event: dict[str, object], label: str) -> str:
+    return _first_kind_text(
+        ((event, "kind"), (event, "type"), (event, "action"), (event, "operation")),
+        label,
+    )
 
 
 def _openhands_event_text(event: dict[str, object], label: str) -> str:
     return _event_text_field(event, ("message", "content", "text", "instruction", "final_claim"), label)
 
 
-def _swe_agent_step_kind(step: dict[str, object]) -> str:
-    value = step.get("kind") or step.get("type") or step.get("action") or step.get("operation") or step.get("role") or ""
-    return str(value).strip().lower().replace("-", "_")
+def _swe_agent_step_kind(step: dict[str, object], label: str) -> str:
+    return _first_kind_text(
+        ((step, "kind"), (step, "type"), (step, "action"), (step, "operation"), (step, "role")),
+        label,
+    )
 
 
 def _is_integer_exit_code(value: object) -> bool:
