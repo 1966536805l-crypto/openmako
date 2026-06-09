@@ -779,6 +779,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
     unsupported: list[str] = []
+    session_ids: set[str] = set()
     test_output = ""
 
     for message_index, message in enumerate(messages):
@@ -793,6 +794,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
 
         for tool_path, tool_call in _codex_tool_calls(message, message_index):
             tool_payload = _codex_tool_payload(tool_call)
+            _add_event_session_id(session_ids, tool_payload)
             tool_kind = _codex_tool_kind(tool_call, tool_payload)
             if tool_kind in {"read", "read_file", "open", "cat"}:
                 files_read.extend(_codex_tool_files(tool_payload))
@@ -872,6 +874,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
     unsupported: list[str] = []
+    session_ids: set[str] = set()
     test_output = ""
 
     for message_index, message in enumerate(messages):
@@ -888,6 +891,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
         tool_calls.extend(_claude_content_tool_uses(message, message_index))
         for tool_path, tool_call in tool_calls:
             tool_payload = _codex_tool_payload(tool_call)
+            _add_event_session_id(session_ids, tool_payload)
             tool_kind = _codex_tool_kind(tool_call, tool_payload)
             if tool_kind in {"read", "read_file", "open", "view", "cat"}:
                 files_read.extend(_codex_tool_files(tool_payload))
@@ -966,11 +970,13 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
     unsupported: list[str] = []
+    session_ids: set[str] = set()
     test_output = ""
 
     for event_index, event in enumerate(events):
         if not isinstance(event, dict):
             raise ValueError(f"OpenHands transcript event {event_index} must be an object")
+        _add_event_session_id(session_ids, event)
         event_kind = _openhands_event_kind(event)
         event_path = f"events[{event_index}]"
         if event_kind in {"task", "instruction"}:
@@ -1058,11 +1064,13 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
     unsupported: list[str] = []
+    session_ids: set[str] = set()
     test_output = ""
 
     for step_index, step in enumerate(steps):
         if not isinstance(step, dict):
             raise ValueError(f"SWE-agent transcript step {step_index} must be an object")
+        _add_event_session_id(session_ids, step)
         step_kind = _swe_agent_step_kind(step)
         step_path = f"steps[{step_index}]"
         if step_kind in {"task", "instruction", "issue"}:
@@ -1361,6 +1369,20 @@ def _event_run_metrics(event: dict[str, object]) -> dict[str, object]:
     if "cost_usd" in metrics and "estimated_cost_usd" not in metrics:
         metrics["estimated_cost_usd"] = metrics["cost_usd"]
     return _run_metrics(metrics) if metrics else {}
+
+
+def _add_event_session_id(session_ids: set[str], event: dict[str, object]) -> None:
+    if "session_id" not in event:
+        return
+    value = event["session_id"]
+    if not isinstance(value, str):
+        raise ValueError("session_id must be a string")
+    session_id = value.strip()
+    if not session_id:
+        return
+    session_ids.add(session_id)
+    if len(session_ids) > 1:
+        raise ValueError("transcript session_id values must not be mixed")
 
 
 def _artifact_provenance(value: object) -> dict[str, object]:

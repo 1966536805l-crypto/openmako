@@ -709,6 +709,14 @@ Current public proof:
   transcript adapter matrix, and public gate passed locally on 2026-06-09. This
   is local supplied-record parser evidence only, not native export ingestion,
   remote CI status, external review, endorsement, stars, or reposts.
+- Supplied transcript adapters now reject mixed `session_id` evidence before
+  record output instead of flattening edits from one session together with
+  validation output from another session. The focused regression failed before
+  the change and passed after the change on 2026-06-09; the full CLI wrapper
+  test file, supplied transcript adapter matrix, and public gate passed locally
+  on 2026-06-09. This is local supplied-record validation evidence only, not
+  ACP control, live harness orchestration, native export ingestion, remote CI
+  status, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

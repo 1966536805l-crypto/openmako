@@ -2418,6 +2418,133 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertIn("command output", converted.stderr)
                 self.assertIn("must be a string", converted.stderr)
 
+    def test_openmako_evidence_court_transcript_adapters_reject_mixed_session_evidence(self) -> None:
+        source_hunk = (
+            "--- a/calculator.py\n"
+            "+++ b/calculator.py\n"
+            "@@ -1,2 +1,2 @@\n"
+            "-def add(a, b): return a - b\n"
+            "+def add(a, b): return a + b"
+        )
+
+        def transcript_for(adapter: str) -> dict[str, object]:
+            if adapter == "codex":
+                return {
+                    "claimed_task": "Fix calculator.py.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "tool_calls": [
+                                {
+                                    "type": "apply_patch",
+                                    "session_id": "session-a",
+                                    "files": ["calculator.py"],
+                                    "diff_hunks": [source_hunk],
+                                },
+                                {
+                                    "type": "exec_command",
+                                    "session_id": "session-b",
+                                    "command": "python3 -m pytest tests/test_calculator.py -q",
+                                    "exit_code": 0,
+                                    "output": "1 passed in 0.02s",
+                                },
+                            ],
+                        },
+                        {"role": "assistant", "content": "Fixed and verified."},
+                    ],
+                }
+            if adapter == "claude":
+                return {
+                    "task": "Fix calculator.py.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "name": "Edit",
+                                    "input": {
+                                        "session_id": "session-a",
+                                        "file_path": "calculator.py",
+                                        "diff_hunks": [source_hunk],
+                                    },
+                                },
+                                {
+                                    "type": "tool_use",
+                                    "name": "Bash",
+                                    "input": {
+                                        "session_id": "session-b",
+                                        "command": "python3 -m pytest tests/test_calculator.py -q",
+                                        "exit_code": 0,
+                                        "stdout": "1 passed in 0.02s",
+                                    },
+                                },
+                            ],
+                        },
+                        {"role": "assistant", "content": "Fixed and verified."},
+                    ],
+                }
+            if adapter == "openhands":
+                return {
+                    "task": "Fix calculator.py.",
+                    "events": [
+                        {
+                            "action": "edit",
+                            "session_id": "session-a",
+                            "path": "calculator.py",
+                            "diff_hunks": [source_hunk],
+                        },
+                        {
+                            "action": "run",
+                            "session_id": "session-b",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "exit_code": 0,
+                            "observation": "1 passed in 0.02s",
+                        },
+                        {"action": "finish", "message": "Fixed and verified."},
+                    ],
+                }
+            if adapter == "swe-agent":
+                return {
+                    "issue": "Fix calculator.py.",
+                    "steps": [
+                        {
+                            "action": "edit",
+                            "session_id": "session-a",
+                            "path": "calculator.py",
+                            "diff_hunks": [source_hunk],
+                        },
+                        {
+                            "action": "test",
+                            "session_id": "session-b",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "exit_code": 0,
+                            "stdout": "1 passed in 0.02s",
+                        },
+                        {"action": "submit", "message": "Fixed and verified."},
+                    ],
+                }
+            raise AssertionError(f"unexpected adapter: {adapter}")
+
+        for adapter in ("codex", "claude", "openhands", "swe-agent"):
+            with self.subTest(adapter=adapter):
+                transcript = transcript_for(adapter)
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn("session_id", converted.stderr)
+                self.assertIn("must not be mixed", converted.stderr)
+
     def test_openmako_evidence_court_transcript_adapters_do_not_count_unsupported_edit_events(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"
