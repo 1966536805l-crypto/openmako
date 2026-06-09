@@ -647,7 +647,7 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
             files_edited.extend(_event_files(event))
             diff_hunks.extend(_event_diff_hunks(event))
         elif kind == "command":
-            command = str(event.get("command") or "").strip()
+            command = _event_command_text(event, ("command",))
             if command:
                 item: dict[str, object] = {"command": command}
                 exit_code = _event_exit_code(event)
@@ -802,7 +802,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
                 files_edited.extend(_codex_tool_files(tool_payload))
                 diff_hunks.extend(_event_diff_hunks(tool_payload))
             elif tool_kind in {"command", "shell", "exec", "exec_command", "run_command"}:
-                command = str(tool_payload.get("command") or tool_payload.get("cmd") or "").strip()
+                command = _event_command_text(tool_payload, ("command", "cmd"))
                 if not command:
                     unsupported.append(f"{tool_path}: missing command")
                     continue
@@ -899,7 +899,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
                 files_edited.extend(_codex_tool_files(tool_payload))
                 diff_hunks.extend(_event_diff_hunks(tool_payload))
             elif tool_kind in {"command", "shell", "exec", "exec_command", "run_command", "bash"}:
-                command = str(tool_payload.get("command") or tool_payload.get("cmd") or "").strip()
+                command = _event_command_text(tool_payload, ("command", "cmd"))
                 if not command:
                     unsupported.append(f"{tool_path}: missing command")
                     continue
@@ -989,7 +989,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
             files_edited.extend(_codex_tool_files(event))
             diff_hunks.extend(_event_diff_hunks(event))
         elif event_kind in {"command", "shell", "run", "execute", "run_command"}:
-            command = str(event.get("command") or event.get("cmd") or "").strip()
+            command = _event_command_text(event, ("command", "cmd"))
             if not command:
                 unsupported.append(f"{event_path}: missing command")
                 continue
@@ -1083,7 +1083,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
             files_edited.extend(_codex_tool_files(step))
             diff_hunks.extend(_event_diff_hunks(step))
         elif step_kind in {"command", "shell", "run", "run_command", "test"}:
-            command = str(step.get("command") or step.get("cmd") or "").strip()
+            command = _event_command_text(step, ("command", "cmd"))
             if not command:
                 unsupported.append(f"{step_path}: missing command")
                 continue
@@ -1725,6 +1725,19 @@ def _codex_content_text(value: object) -> str:
             elif isinstance(item, dict) and isinstance(item.get("text"), str):
                 parts.append(str(item["text"]))
         return "\n".join(part.strip() for part in parts if part.strip())
+    return ""
+
+
+def _event_command_text(event: dict[str, object], fields: tuple[str, ...]) -> str:
+    for field in fields:
+        if field not in event:
+            continue
+        value = event[field]
+        if not isinstance(value, str):
+            raise ValueError(f"command {field} must be a string")
+        text = value.strip()
+        if text:
+            return text
     return ""
 
 

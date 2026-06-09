@@ -1300,6 +1300,17 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(converted.stdout, "")
         self.assertIn("command output output must be a string", converted.stderr)
 
+    def test_openmako_evidence_court_record_from_jsonl_rejects_malformed_command_text(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
+            handle.write('{"kind":"task","claimed_task":"Fix calculator.py."}\n')
+            handle.write(json.dumps({"kind": "command", "command": ["pytest"], "exit_code": 0}) + "\n")
+            handle.flush()
+            converted = self.run_openmako("--no-trust-prompt", "evidence-court", "record", "from-jsonl", handle.name)
+
+        self.assertEqual(converted.returncode, 2)
+        self.assertEqual(converted.stdout, "")
+        self.assertIn("command command must be a string", converted.stderr)
+
     def test_openmako_evidence_court_record_from_jsonl_preserves_command_metrics(self) -> None:
         with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
             handle.write('{"kind":"task","claimed_task":"Fix calculator.py.","allowed_files":["calculator.py"]}\n')
@@ -2778,6 +2789,89 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(converted.stdout, "")
                 self.assertIn("command output", converted.stderr)
                 self.assertIn("must be a string", converted.stderr)
+
+    def test_openmako_evidence_court_transcript_adapters_reject_malformed_command_text(self) -> None:
+        def transcript_for(adapter: str) -> dict[str, object]:
+            if adapter == "codex":
+                return {
+                    "claimed_task": "Fix calculator.py.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "tool_calls": [
+                                {
+                                    "type": "exec_command",
+                                    "command": ["python3", "-m", "pytest"],
+                                    "exit_code": 0,
+                                    "output": "1 passed in 0.02s",
+                                }
+                            ],
+                        }
+                    ],
+                }
+            if adapter == "claude":
+                return {
+                    "task": "Fix calculator.py.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "name": "Bash",
+                                    "input": {
+                                        "command": {"argv": ["pytest"]},
+                                        "exit_code": 0,
+                                        "stdout": "1 passed in 0.02s",
+                                    },
+                                }
+                            ],
+                        }
+                    ],
+                }
+            if adapter == "openhands":
+                return {
+                    "task": "Fix calculator.py.",
+                    "events": [
+                        {
+                            "action": "run",
+                            "command": ["pytest"],
+                            "exit_code": 0,
+                            "observation": "1 passed in 0.02s",
+                        }
+                    ],
+                }
+            if adapter == "swe-agent":
+                return {
+                    "issue": "Fix calculator.py.",
+                    "steps": [
+                        {
+                            "action": "test",
+                            "command": {"argv": ["pytest"]},
+                            "exit_code": 0,
+                            "stdout": "1 passed in 0.02s",
+                        }
+                    ],
+                }
+            raise AssertionError(f"unexpected adapter: {adapter}")
+
+        for adapter in ("codex", "claude", "openhands", "swe-agent"):
+            with self.subTest(adapter=adapter):
+                transcript = transcript_for(adapter)
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn("command command must be a string", converted.stderr)
 
     def test_openmako_evidence_court_transcript_adapters_reject_mixed_session_evidence(self) -> None:
         source_hunk = (
