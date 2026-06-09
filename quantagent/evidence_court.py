@@ -981,7 +981,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
         event_kind = _openhands_event_kind(event)
         event_path = f"events[{event_index}]"
         if event_kind in {"task", "instruction"}:
-            text = _openhands_event_text(event)
+            text = _openhands_event_text(event, "claimed_task")
             if text and not record["claimed_task"]:
                 record["claimed_task"] = text
         elif event_kind in {"read", "read_file", "file_read"}:
@@ -1009,7 +1009,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
             if output:
                 test_output = output
         elif event_kind in {"finish", "final", "final_claim", "message"}:
-            text = _openhands_event_text(event)
+            text = _openhands_event_text(event, "final_claim")
             if text:
                 record["final_claim"] = text
         else:
@@ -1075,7 +1075,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
         step_kind = _swe_agent_step_kind(step)
         step_path = f"steps[{step_index}]"
         if step_kind in {"task", "instruction", "issue"}:
-            text = _openhands_event_text(step)
+            text = _openhands_event_text(step, "claimed_task")
             if text and not record["claimed_task"]:
                 record["claimed_task"] = text
         elif step_kind in {"read", "read_file", "open"}:
@@ -1103,7 +1103,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
             if output:
                 test_output = output
         elif step_kind in {"finish", "final", "final_claim", "submit"}:
-            text = _openhands_event_text(step)
+            text = _openhands_event_text(step, "final_claim")
             if text:
                 record["final_claim"] = text
         else:
@@ -1787,11 +1787,8 @@ def _openhands_event_kind(event: dict[str, object]) -> str:
     return str(value).strip().lower().replace("-", "_")
 
 
-def _openhands_event_text(event: dict[str, object]) -> str:
-    for field in ("message", "content", "text", "instruction", "final_claim"):
-        if isinstance(event.get(field), str) and str(event[field]).strip():
-            return str(event[field]).strip()
-    return ""
+def _openhands_event_text(event: dict[str, object], label: str) -> str:
+    return _event_text_field(event, ("message", "content", "text", "instruction", "final_claim"), label)
 
 
 def _swe_agent_step_kind(step: dict[str, object]) -> str:

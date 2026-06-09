@@ -3156,6 +3156,46 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(converted.stdout, "")
                 self.assertIn(expected_error, converted.stderr)
 
+    def test_openmako_evidence_court_transcript_adapters_reject_malformed_event_claim_text(self) -> None:
+        cases: tuple[tuple[str, dict[str, object], str], ...] = (
+            (
+                "openhands",
+                {"events": [{"action": "task", "message": {"text": "Fix calculator.py."}}]},
+                "claimed_task message must be a string",
+            ),
+            (
+                "openhands",
+                {"events": [{"action": "finish", "message": {"text": "Fixed and verified."}}]},
+                "final_claim message must be a string",
+            ),
+            (
+                "swe-agent",
+                {"steps": [{"action": "issue", "message": {"text": "Fix calculator.py."}}]},
+                "claimed_task message must be a string",
+            ),
+            (
+                "swe-agent",
+                {"steps": [{"action": "submit", "message": {"text": "Fixed and verified."}}]},
+                "final_claim message must be a string",
+            ),
+        )
+        for adapter, transcript, expected_error in cases:
+            with self.subTest(adapter=adapter, expected_error=expected_error):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn(expected_error, converted.stderr)
+
     def test_openmako_evidence_court_transcript_adapters_reject_mixed_session_evidence(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"
