@@ -649,8 +649,9 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
             command = str(event.get("command") or "").strip()
             if command:
                 item: dict[str, object] = {"command": command}
-                if isinstance(event.get("exit_code"), int):
-                    item["exit_code"] = event["exit_code"]
+                exit_code = _event_exit_code(event)
+                if exit_code is not None:
+                    item["exit_code"] = exit_code
                 commands_run.append(item)
             event_metrics = _event_run_metrics(event)
             if event_metrics:
@@ -803,8 +804,9 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
                     unsupported.append(f"{tool_path}: missing command")
                     continue
                 item: dict[str, object] = {"command": command}
-                if isinstance(tool_payload.get("exit_code"), int):
-                    item["exit_code"] = tool_payload["exit_code"]
+                exit_code = _event_exit_code(tool_payload)
+                if exit_code is not None:
+                    item["exit_code"] = exit_code
                 commands_run.append(item)
                 metrics = _event_run_metrics(tool_payload)
                 if metrics:
@@ -897,8 +899,9 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
                     unsupported.append(f"{tool_path}: missing command")
                     continue
                 item: dict[str, object] = {"command": command}
-                if isinstance(tool_payload.get("exit_code"), int):
-                    item["exit_code"] = tool_payload["exit_code"]
+                exit_code = _event_exit_code(tool_payload)
+                if exit_code is not None:
+                    item["exit_code"] = exit_code
                 commands_run.append(item)
                 metrics = _event_run_metrics(tool_payload)
                 if metrics:
@@ -984,8 +987,9 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
                 unsupported.append(f"{event_path}: missing command")
                 continue
             item: dict[str, object] = {"command": command}
-            if isinstance(event.get("exit_code"), int):
-                item["exit_code"] = event["exit_code"]
+            exit_code = _event_exit_code(event)
+            if exit_code is not None:
+                item["exit_code"] = exit_code
             commands_run.append(item)
             metrics = _event_run_metrics(event)
             if metrics:
@@ -1075,8 +1079,9 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
                 unsupported.append(f"{step_path}: missing command")
                 continue
             item: dict[str, object] = {"command": command}
-            if isinstance(step.get("exit_code"), int):
-                item["exit_code"] = step["exit_code"]
+            exit_code = _event_exit_code(step)
+            if exit_code is not None:
+                item["exit_code"] = exit_code
             commands_run.append(item)
             metrics = _event_run_metrics(step)
             if metrics:
@@ -1703,6 +1708,15 @@ def _swe_agent_step_kind(step: dict[str, object]) -> str:
 
 def _is_integer_exit_code(value: object) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _event_exit_code(event: dict[str, object]) -> int | None:
+    if "exit_code" not in event:
+        return None
+    value = event.get("exit_code")
+    if not _is_integer_exit_code(value):
+        raise ValueError("exit_code must be an integer")
+    return int(value)
 
 
 def _test_output_status(test_output: object, commands_run: object) -> tuple[str, str]:

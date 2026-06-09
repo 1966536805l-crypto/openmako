@@ -2105,6 +2105,94 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(payload["failure_class"], "post_edit_validation_failure")
                 self.assertEqual(payload["failed_at"], "test_output")
 
+    def test_openmako_evidence_court_transcript_adapters_reject_malformed_command_exit_codes(self) -> None:
+        def transcript_for(adapter: str, exit_code: object) -> dict[str, object]:
+            if adapter == "codex":
+                return {
+                    "claimed_task": "Fix calculator.py.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "tool_calls": [
+                                {
+                                    "type": "exec_command",
+                                    "command": "python3 -m pytest tests/test_calculator.py -q",
+                                    "exit_code": exit_code,
+                                    "output": "1 passed in 0.02s",
+                                }
+                            ],
+                        }
+                    ],
+                }
+            if adapter == "claude":
+                return {
+                    "task": "Fix calculator.py.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "name": "Bash",
+                                    "input": {
+                                        "command": "python3 -m pytest tests/test_calculator.py -q",
+                                        "exit_code": exit_code,
+                                        "stdout": "1 passed in 0.02s",
+                                    },
+                                }
+                            ],
+                        }
+                    ],
+                }
+            if adapter == "openhands":
+                return {
+                    "task": "Fix calculator.py.",
+                    "events": [
+                        {
+                            "action": "run",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "exit_code": exit_code,
+                            "observation": "1 passed in 0.02s",
+                        }
+                    ],
+                }
+            if adapter == "swe-agent":
+                return {
+                    "issue": "Fix calculator.py.",
+                    "steps": [
+                        {
+                            "action": "test",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "exit_code": exit_code,
+                            "stdout": "1 passed in 0.02s",
+                        }
+                    ],
+                }
+            raise AssertionError(f"unexpected adapter: {adapter}")
+
+        cases: tuple[tuple[str, object], ...] = (
+            ("boolean", False),
+            ("string", "0"),
+        )
+        for adapter in ("codex", "claude", "openhands", "swe-agent"):
+            for case_name, exit_code in cases:
+                with self.subTest(adapter=adapter, case_name=case_name):
+                    transcript = transcript_for(adapter, exit_code)
+                    with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                        json.dump(transcript, handle)
+                        handle.flush()
+                        converted = self.run_openmako(
+                            "--no-trust-prompt",
+                            "evidence-court",
+                            "record",
+                            f"from-{adapter}-transcript",
+                            handle.name,
+                        )
+
+                    self.assertEqual(converted.returncode, 2)
+                    self.assertEqual(converted.stdout, "")
+                    self.assertIn("exit_code must be an integer", converted.stderr)
+
     def test_openmako_evidence_court_transcript_adapters_do_not_count_unsupported_edit_events(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"

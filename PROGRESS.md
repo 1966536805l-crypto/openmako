@@ -679,6 +679,13 @@ Current public proof:
   not a side-only check. The updated public gate passed locally on 2026-06-09.
   This remains local parser/supplied-record evidence only, not native export
   ingestion, remote CI status, external review, endorsement, stars, or reposts.
+- Supplied transcript adapters now reject malformed command `exit_code` fields
+  before record output instead of emitting or silently dropping boolean/string
+  exit codes. The focused transcript-adapter regression, full CLI wrapper test
+  file, supplied transcript adapter matrix, and public gate passed locally on
+  2026-06-09. This is local supplied-record validation evidence only, not native
+  export ingestion, remote CI status, external review, endorsement, stars, or
+  reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
