@@ -1283,9 +1283,14 @@ def _diff_hunks(value: object) -> list[str]:
 def _event_diff_hunks(event: dict[str, object]) -> list[str]:
     hunks = _diff_hunks(event.get("diff_hunks"))
     for field in DIFF_HUNK_FIELDS:
+        if field not in event:
+            continue
         value = event.get(field)
-        if isinstance(value, str) and value.strip():
-            hunks.append(value.strip())
+        if not isinstance(value, str):
+            raise ValueError(f"{field} must be a string")
+        text = value.strip()
+        if text:
+            hunks.append(text)
     return list(dict.fromkeys(hunks))
 
 
