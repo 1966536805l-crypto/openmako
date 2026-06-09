@@ -816,6 +816,16 @@ Current public proof:
   was added. This is local supplied-record schema validation only, not native
   export ingestion, live harness orchestration, benchmark score validation,
   remote CI status, external review, endorsement, stars, or reposts.
+- Supplied raw Evidence Court records now reject malformed artifact hash map
+  values in `input_hashes`, `output_hashes`, and `artifact_hashes`, and the
+  record schema now documents those values as strings. The focused
+  audit/validate regression failed before the change and passed after the
+  change on 2026-06-10; the public metadata tests, full CLI wrapper test file,
+  supplied transcript adapter matrix, `git diff --check`, and public gate
+  passed locally before this note was added. This is local supplied-record
+  schema validation only, not native export ingestion, live harness
+  orchestration, benchmark score validation, remote CI status, external review,
+  endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

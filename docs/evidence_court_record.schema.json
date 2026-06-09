@@ -144,15 +144,21 @@
         },
         "input_hashes": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "output_hashes": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "artifact_hashes": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "missing_provenance": {
           "type": "array",

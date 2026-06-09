@@ -1403,6 +1403,8 @@ def _artifact_provenance(value: object) -> dict[str, object]:
         hashes = provenance.get(field)
         if hashes is not None and not isinstance(hashes, dict):
             raise ValueError(f"artifact_provenance.{field} must be an object")
+        if isinstance(hashes, dict) and not all(isinstance(item, str) for item in hashes.values()):
+            raise ValueError(f"artifact_provenance.{field} values must be strings")
     return provenance
 
 

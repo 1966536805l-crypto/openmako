@@ -1085,6 +1085,31 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(result.stdout, "")
                 self.assertIn("artifact_provenance.eval_rule_version must be a string", result.stderr)
 
+    def test_openmako_evidence_court_rejects_malformed_artifact_hash_values(self) -> None:
+        record = {
+            "claimed_task": "Compare benchmark artifact outputs.",
+            "files_read": ["bench/output.jsonl"],
+            "files_edited": ["bench/output.swtbench.jsonl"],
+            "commands_run": [{"command": "python3 scripts/compare_outputs.py", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "artifact_provenance": {
+                "eval_rule_version": "swtbench-strip-model-patch/v2",
+                "input_hashes": {"output.jsonl": {"sha256": "111"}},
+                "output_hashes": {"output.swtbench.jsonl": ["sha256:222"]},
+            },
+            "final_claim": "Artifact comparison was preserved.",
+        }
+        for command in ("audit", "validate"):
+            with self.subTest(command=command):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(record, handle)
+                    handle.flush()
+                    result = self.run_openmako("--no-trust-prompt", "evidence-court", command, handle.name)
+
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertIn("artifact_provenance.input_hashes values must be strings", result.stderr)
+
     def test_openmako_evidence_court_artifact_provenance_fixture_is_auditable(self) -> None:
         result = self.run_openmako(
             "--no-trust-prompt",
@@ -4375,6 +4400,10 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(schema["properties"]["run_metrics"]["type"], "object")
         self.assertEqual(schema["properties"]["run_metrics"]["properties"]["missing_telemetry"]["type"], "array")
         self.assertEqual(schema["properties"]["artifact_provenance"]["type"], "object")
+        self.assertEqual(
+            schema["properties"]["artifact_provenance"]["properties"]["input_hashes"]["additionalProperties"]["type"],
+            "string",
+        )
         self.assertEqual(
             schema["properties"]["artifact_provenance"]["properties"]["missing_provenance"]["type"],
             "array",
