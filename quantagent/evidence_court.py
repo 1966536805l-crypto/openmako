@@ -660,7 +660,7 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
             event_provenance = _event_artifact_provenance(event)
             if event_provenance:
                 _merge_artifact_provenance(artifact_provenance, event_provenance)
-            output = str(event.get("output") or event.get("summary") or "").strip()
+            output = _codex_command_output(event)
             if output:
                 test_output = output
         elif kind == "final_claim":
