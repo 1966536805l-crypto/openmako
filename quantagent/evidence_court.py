@@ -1694,8 +1694,13 @@ def _codex_content_text(value: object) -> str:
 def _codex_command_output(tool_payload: dict[str, object]) -> str:
     parts: list[str] = []
     for field in ("output", "stdout", "stderr", "summary", "observation"):
-        if isinstance(tool_payload.get(field), str) and str(tool_payload[field]).strip():
-            parts.append(str(tool_payload[field]).strip())
+        if field not in tool_payload:
+            continue
+        value = tool_payload[field]
+        if not isinstance(value, str):
+            raise ValueError(f"command output {field} must be a string")
+        if value.strip():
+            parts.append(value.strip())
     return "\n".join(parts)
 
 

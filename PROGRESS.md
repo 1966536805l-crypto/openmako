@@ -694,6 +694,13 @@ Current public proof:
   transcript adapter matrix, and public gate passed locally on 2026-06-09. This
   is local supplied-record validation evidence only, not native export
   ingestion, remote CI status, external review, endorsement, stars, or reposts.
+- Supplied transcript adapters now reject malformed command-output text fields
+  before record output instead of silently dropping list/object values from
+  `output`, `stdout`, `stderr`, `summary`, or `observation`. The focused
+  transcript-adapter regression, full CLI wrapper test file, supplied
+  transcript adapter matrix, and public gate passed locally on 2026-06-09. This
+  is local supplied-record validation evidence only, not native export
+  ingestion, remote CI status, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -705,5 +712,6 @@ Next smallest hygiene task:
 
 - Re-check `docs/AGENT_TREND_RADAR.md` and pick the next code-backed target
   only if it can be reduced to a failing test and public-proof boundary.
-- Next concrete candidate: re-check `docs/AGENT_TREND_RADAR.md` and choose the
-  next edge case only if it can produce a focused failing regression.
+- Next concrete candidate: another adapter evidence edge case only if it can
+  produce a focused failing regression, or a trend-radar follow-up that stays
+  behind the supplied-record proof boundary.
