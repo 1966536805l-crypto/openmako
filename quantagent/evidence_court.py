@@ -1719,8 +1719,13 @@ def _codex_tool_files(tool_payload: dict[str, object]) -> list[str]:
     if "paths" in tool_payload:
         return _string_list(tool_payload.get("paths"))
     for field in ("file", "path", "file_path"):
-        if isinstance(tool_payload.get(field), str):
-            return [str(tool_payload[field])]
+        if field not in tool_payload:
+            continue
+        value = tool_payload[field]
+        if not isinstance(value, str):
+            raise ValueError(f"{field} must be a string")
+        text = value.strip()
+        return [text] if text else []
     return []
 
 

@@ -2281,6 +2281,88 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(converted.stdout, "")
                 self.assertIn(f"{field} must be a string", converted.stderr)
 
+    def test_openmako_evidence_court_transcript_adapters_reject_malformed_path_fields(self) -> None:
+        def transcript_for(adapter: str, field: str, bad_value: object) -> dict[str, object]:
+            if adapter == "codex":
+                return {
+                    "claimed_task": "Fix calculator.py.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": "Fixed and verified.",
+                            "tool_calls": [
+                                {
+                                    "type": "apply_patch",
+                                    field: bad_value,
+                                }
+                            ],
+                        }
+                    ],
+                }
+            if adapter == "claude":
+                return {
+                    "task": "Fix calculator.py.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "name": "Edit",
+                                    "input": {
+                                        field: bad_value,
+                                    },
+                                }
+                            ],
+                        }
+                    ],
+                }
+            if adapter == "openhands":
+                return {
+                    "task": "Fix calculator.py.",
+                    "events": [
+                        {
+                            "action": "edit",
+                            field: bad_value,
+                        }
+                    ],
+                }
+            if adapter == "swe-agent":
+                return {
+                    "issue": "Fix calculator.py.",
+                    "steps": [
+                        {
+                            "action": "edit",
+                            field: bad_value,
+                        }
+                    ],
+                }
+            raise AssertionError(f"unexpected adapter: {adapter}")
+
+        cases: tuple[tuple[str, str], ...] = (
+            ("codex", "path"),
+            ("claude", "file_path"),
+            ("openhands", "path"),
+            ("swe-agent", "path"),
+        )
+        for adapter, field in cases:
+            with self.subTest(adapter=adapter, field=field):
+                transcript = transcript_for(adapter, field, {"file": "calculator.py"})
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn(f"{field} must be a string", converted.stderr)
+
     def test_openmako_evidence_court_transcript_adapters_ignore_empty_diff_strings(self) -> None:
         def transcript_for(adapter: str) -> dict[str, object]:
             if adapter == "codex":
