@@ -1391,6 +1391,9 @@ def _artifact_provenance(value: object) -> dict[str, object]:
     if not isinstance(value, dict):
         raise ValueError("artifact_provenance must be an object")
     provenance = dict(value)
+    for field in ("eval_rule_version", "eval_rule_commit", "runner_version", "runner_commit"):
+        if field in provenance and not isinstance(provenance[field], str):
+            raise ValueError(f"artifact_provenance.{field} must be a string")
     missing = provenance.get("missing_provenance")
     if missing is not None:
         if not isinstance(missing, list) or not all(isinstance(item, str) for item in missing):

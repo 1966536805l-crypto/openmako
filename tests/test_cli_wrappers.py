@@ -1060,6 +1060,31 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("## Artifact Provenance", text_result.stdout)
         self.assertIn("eval_rule_version=swtbench-strip-model-patch/v2", text_result.stdout)
 
+    def test_openmako_evidence_court_rejects_malformed_artifact_provenance_text_fields(self) -> None:
+        record = {
+            "claimed_task": "Compare benchmark artifact outputs.",
+            "files_read": ["bench/output.jsonl"],
+            "files_edited": ["bench/output.swtbench.jsonl"],
+            "commands_run": [{"command": "python3 scripts/compare_outputs.py", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "artifact_provenance": {
+                "eval_rule_version": {"version": "swtbench-strip-model-patch/v2"},
+                "runner_commit": ["def5678"],
+                "output_hashes": {"output.swtbench.jsonl": "sha256:222"},
+            },
+            "final_claim": "Artifact comparison was preserved.",
+        }
+        for command in ("audit", "validate"):
+            with self.subTest(command=command):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(record, handle)
+                    handle.flush()
+                    result = self.run_openmako("--no-trust-prompt", "evidence-court", command, handle.name)
+
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertIn("artifact_provenance.eval_rule_version must be a string", result.stderr)
+
     def test_openmako_evidence_court_artifact_provenance_fixture_is_auditable(self) -> None:
         result = self.run_openmako(
             "--no-trust-prompt",
