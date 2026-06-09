@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 from pathlib import Path
 
@@ -1330,6 +1331,15 @@ def _run_metrics(value: object) -> dict[str, object]:
     if not isinstance(value, dict):
         raise ValueError("run_metrics must be an object")
     metrics = dict(value)
+    for field in ("duration_seconds", "estimated_cost_usd", "actual_cost_usd", "cost_usd"):
+        if field in metrics:
+            metrics[field] = _non_negative_number(metrics[field], f"run_metrics.{field}")
+    for field in ("command_count", "input_tokens", "output_tokens", "total_tokens"):
+        if field in metrics:
+            metrics[field] = _non_negative_integer(metrics[field], f"run_metrics.{field}")
+    for field in ("provider", "model"):
+        if field in metrics and not isinstance(metrics[field], str):
+            raise ValueError(f"run_metrics.{field} must be a string")
     if "missing_telemetry" in metrics:
         missing = metrics["missing_telemetry"]
         if not isinstance(missing, list) or not all(isinstance(item, str) for item in missing):
@@ -1708,6 +1718,25 @@ def _swe_agent_step_kind(step: dict[str, object]) -> str:
 
 def _is_integer_exit_code(value: object) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _non_negative_integer(value: object, field_name: str) -> int:
+    if not _is_integer_exit_code(value):
+        raise ValueError(f"{field_name} must be an integer")
+    result = int(value)
+    if result < 0:
+        raise ValueError(f"{field_name} must be non-negative")
+    return result
+
+
+def _non_negative_number(value: object, field_name: str) -> float | int:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{field_name} must be a number")
+    if not math.isfinite(float(value)):
+        raise ValueError(f"{field_name} must be finite")
+    if float(value) < 0:
+        raise ValueError(f"{field_name} must be non-negative")
+    return value
 
 
 def _event_exit_code(event: dict[str, object]) -> int | None:

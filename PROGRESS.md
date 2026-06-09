@@ -686,6 +686,14 @@ Current public proof:
   2026-06-09. This is local supplied-record validation evidence only, not native
   export ingestion, remote CI status, external review, endorsement, stars, or
   reposts.
+- Evidence Court now rejects malformed `run_metrics` telemetry before audit or
+  transcript-adapter record output: numeric/counter/cost/provider fields must
+  match the supplied-record schema instead of preserving strings, booleans, or
+  negative counts as comparable telemetry. The focused direct-record and
+  transcript-adapter regressions, full CLI wrapper test file, supplied
+  transcript adapter matrix, and public gate passed locally on 2026-06-09. This
+  is local supplied-record validation evidence only, not native export
+  ingestion, remote CI status, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
