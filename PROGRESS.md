@@ -720,9 +720,11 @@ Current public proof:
 - Supplied transcript adapters now aggregate multi-command `run_metrics`
   telemetry for additive duration, token, cost, and command-count fields instead
   of letting later command events overwrite earlier ones. The focused regression
-  failed before the change and passed after the change on 2026-06-09; the full
-  CLI wrapper test file, supplied transcript adapter matrix, and public gate
-  passed locally on 2026-06-09 before this note was added. This is local
+  failed before the change and passed after the change on 2026-06-09; follow-up
+  local coverage now checks the same aggregation boundary for Claude,
+  OpenHands, and SWE-agent supplied transcript records. The full CLI wrapper
+  test file, supplied transcript adapter matrix, `git diff --check`, and public
+  gate passed locally on 2026-06-09 before this note was updated. This is local
   supplied-record telemetry comparability only, not native export ingestion,
   benchmark score validation, live harness orchestration, remote CI status,
   external review, endorsement, stars, or reposts.
