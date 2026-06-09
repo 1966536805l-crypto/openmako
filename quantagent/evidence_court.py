@@ -787,7 +787,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
         if not isinstance(message, dict):
             raise ValueError(f"Codex transcript message {message_index} must be an object")
         role = str(message.get("role") or "").strip().lower()
-        content = _codex_content_text(message.get("content"))
+        content = _codex_content_text(message.get("content"), f"messages[{message_index}].content")
         if role == "user" and content and not record["claimed_task"]:
             record["claimed_task"] = content
         if role == "assistant" and content:
@@ -882,7 +882,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
         if not isinstance(message, dict):
             raise ValueError(f"Claude transcript message {message_index} must be an object")
         role = str(message.get("role") or "").strip().lower()
-        content = _codex_content_text(message.get("content"))
+        content = _codex_content_text(message.get("content"), f"messages[{message_index}].content")
         if role == "user" and content and not record["claimed_task"]:
             record["claimed_task"] = content
         if role == "assistant" and content:
@@ -1729,16 +1729,21 @@ def _codex_tool_files(tool_payload: dict[str, object]) -> list[str]:
     return []
 
 
-def _codex_content_text(value: object) -> str:
+def _codex_content_text(value: object, label: str) -> str:
+    if value is None:
+        return ""
     if isinstance(value, str):
         return value.strip()
     if isinstance(value, list):
         parts: list[str] = []
-        for item in value:
+        for item_index, item in enumerate(value):
             if isinstance(item, str):
                 parts.append(item)
-            elif isinstance(item, dict) and isinstance(item.get("text"), str):
-                parts.append(str(item["text"]))
+            elif isinstance(item, dict) and "text" in item:
+                text_value = item["text"]
+                if not isinstance(text_value, str):
+                    raise ValueError(f"{label}[{item_index}].text must be a string")
+                parts.append(text_value)
         return "\n".join(part.strip() for part in parts if part.strip())
     return ""
 
