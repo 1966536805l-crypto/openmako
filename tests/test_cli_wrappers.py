@@ -3246,6 +3246,36 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(converted.stdout, "")
                 self.assertIn(expected_error, converted.stderr)
 
+    def test_openmako_evidence_court_transcript_adapters_reject_malformed_message_role_text(self) -> None:
+        cases: tuple[tuple[str, dict[str, object], str], ...] = (
+            (
+                "codex",
+                {"messages": [{"role": {"name": "user"}, "content": "Fix calculator.py."}]},
+                "messages[0].role must be a string",
+            ),
+            (
+                "claude",
+                {"messages": [{"role": ["assistant"], "content": "Fixed and verified."}]},
+                "messages[0].role must be a string",
+            ),
+        )
+        for adapter, transcript, expected_error in cases:
+            with self.subTest(adapter=adapter, expected_error=expected_error):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn(expected_error, converted.stderr)
+
     def test_openmako_evidence_court_transcript_adapters_reject_malformed_event_kind_text(self) -> None:
         cases: tuple[tuple[str, dict[str, object], str], ...] = (
             (

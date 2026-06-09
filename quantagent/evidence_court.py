@@ -789,7 +789,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
     for message_index, message in enumerate(messages):
         if not isinstance(message, dict):
             raise ValueError(f"Codex transcript message {message_index} must be an object")
-        role = str(message.get("role") or "").strip().lower()
+        role = _message_role(message, message_index)
         content = _codex_content_text(message.get("content"), f"messages[{message_index}].content")
         if role == "user" and content and not record["claimed_task"]:
             record["claimed_task"] = content
@@ -884,7 +884,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
     for message_index, message in enumerate(messages):
         if not isinstance(message, dict):
             raise ValueError(f"Claude transcript message {message_index} must be an object")
-        role = str(message.get("role") or "").strip().lower()
+        role = _message_role(message, message_index)
         content = _codex_content_text(message.get("content"), f"messages[{message_index}].content")
         if role == "user" and content and not record["claimed_task"]:
             record["claimed_task"] = content
@@ -1662,6 +1662,10 @@ def _codex_tool_calls(message: dict[str, object], message_index: int) -> list[tu
                 )
             calls.append((f"messages[{message_index}].{field}[{call_index}]", item))
     return calls
+
+
+def _message_role(message: dict[str, object], message_index: int) -> str:
+    return _first_kind_text(((message, "role"),), f"messages[{message_index}]")
 
 
 def _claude_content_tool_uses(message: dict[str, object], message_index: int) -> list[tuple[str, dict[str, object]]]:
