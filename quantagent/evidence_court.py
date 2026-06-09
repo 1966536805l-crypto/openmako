@@ -637,7 +637,10 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
         event = json.loads(line)
         if not isinstance(event, dict):
             raise ValueError(f"JSONL event at line {line_no} must be an object")
-        kind = str(event.get("kind") or event.get("type") or event.get("event") or "").strip()
+        kind = _first_kind_text(
+            ((event, "kind"), (event, "type"), (event, "event")),
+            f"JSONL event at line {line_no}",
+        )
         if kind == "task":
             record["claimed_task"] = _event_text_field(event, ("claimed_task", "task"), "claimed_task")
             if "allowed_files" in event:
@@ -1671,7 +1674,7 @@ def _claude_content_tool_uses(message: dict[str, object], message_index: int) ->
     for block_index, block in enumerate(content):
         if not isinstance(block, dict):
             continue
-        block_type = str(block.get("type") or "").strip().lower().replace("-", "_")
+        block_type = _first_kind_text(((block, "type"),), f"messages[{message_index}].content[{block_index}]")
         if block_type not in {"tool_use", "server_tool_use"}:
             continue
         calls.append((f"messages[{message_index}].content[{block_index}]", block))

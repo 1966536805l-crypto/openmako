@@ -1362,6 +1362,16 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(converted.stdout, "")
         self.assertIn("command command must be a string", converted.stderr)
 
+    def test_openmako_evidence_court_record_from_jsonl_rejects_malformed_event_kind_text(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
+            handle.write(json.dumps({"kind": {"event": "task"}, "claimed_task": "Fix calculator.py."}) + "\n")
+            handle.flush()
+            converted = self.run_openmako("--no-trust-prompt", "evidence-court", "record", "from-jsonl", handle.name)
+
+        self.assertEqual(converted.returncode, 2)
+        self.assertEqual(converted.stdout, "")
+        self.assertIn("JSONL event at line 1.kind must be a string", converted.stderr)
+
     def test_openmako_evidence_court_record_from_jsonl_rejects_malformed_task_text(self) -> None:
         with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
             handle.write(json.dumps({"kind": "task", "claimed_task": {"message": "Fix calculator.py."}}) + "\n")
@@ -3247,6 +3257,11 @@ class CliWrapperTest(unittest.TestCase):
                 "claude",
                 {"messages": [{"role": "assistant", "content": [{"type": "tool_use", "name": {"tool": "Edit"}}]}]},
                 "messages[0].content[0].name must be a string",
+            ),
+            (
+                "claude",
+                {"messages": [{"role": "assistant", "content": [{"type": {"kind": "tool_use"}, "name": "Edit"}]}]},
+                "messages[0].content[0].type must be a string",
             ),
             (
                 "openhands",
