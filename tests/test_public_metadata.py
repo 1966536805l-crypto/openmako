@@ -295,6 +295,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "./scripts/public_review_gate.sh" in proof_section
     assert "bash scripts/public_proof_card.sh" in proof_section
     assert "screenshot-friendly summary" in proof_section
+    assert "public-review-gate: running Evidence Court intensity matrix" in proof_section
     assert "public-review-gate: recording Evidence Court bad-run fixture" in proof_section
     assert "public-review-gate: auditing supplied Evidence Court record" in proof_section
     assert "public-review-gate: auditing artifact provenance fixture" in proof_section
@@ -304,9 +305,10 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "adapter-matrix: PASS" in proof_section
     assert "public-review-gate: PASS" in proof_section
     assert "What this checks is narrow" in proof_section
-    assert "supplied transcript adapters preserve complete\nsupplied proof fields while rejecting missing-test-proof and\nmissing edited-file or missing diff-content evidence success claims" in proof_section
-    assert "It\ndoes not prove broad unknown-repository repair or external endorsement." in proof_section
-    assert "This\nis a local script result, not external reviewer approval." in proof_section
+    assert "local Evidence Court intensity matrix covers\nsupplied test-output parser edge cases" in proof_section
+    assert "supplied transcript adapters\npreserve complete supplied proof fields while rejecting missing-test-proof\nand missing edited-file or missing diff-content evidence success claims" in proof_section
+    assert "It does\nnot prove broad unknown-repository repair or external endorsement." in proof_section
+    assert "This is a\nlocal script result, not external reviewer approval." in proof_section
     assert "## If You Came From A Benchmark Thread" in proof_section
     assert "Start with the public gate:" in proof_section
     assert 'The useful review is not "do you like this project?"' in proof_section
@@ -819,6 +821,8 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "metadata-test count is intentionally not fixed" in guide
     assert "25 passed" not in guide
     assert "public-review-gate: PASS" in guide
+    assert "public-review-gate: running Evidence Court intensity matrix" in guide
+    assert "210 passed" in guide
     assert "public-review-gate: recording Evidence Court bad-run fixture" in guide
     assert "public-review-gate: auditing supplied Evidence Court record" in guide
     assert "public-review-gate: auditing artifact provenance fixture" in guide
@@ -835,6 +839,7 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "examples/evidence_court/config_only_repair.json" in guide
     assert "The config-only repair fixture keeps supplied project metadata/config repair" in guide
     assert "evidence in `PASS/config_only`" in guide
+    assert "The local Evidence Court intensity matrix covers supplied test-output parser\n  edge cases." in guide
     assert "./scripts/supplied_transcript_adapter_matrix.sh" in guide
     assert "repository-defined Codex, Claude, OpenHands,\nand SWE-agent style transcripts" in guide
     assert "checks that each adapter rejects a\nsuccess claim when command/test proof is missing or when validation exists but\nedited-file or diff-content evidence is missing" in guide
@@ -992,6 +997,7 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
     assert "tests/test_agent_planner_contract.py::AgentPlannerContractTest" in text
     assert "tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest" in text
     assert "tests/test_public_metadata.py" in text
+    assert "tests/test_evidence_court_intensity_matrix.py" in text
     assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in text
     assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json" in text
     assert "expected Evidence Court audit exit 1" in text
@@ -1007,6 +1013,7 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
     assert "examples/evidence_court/config_only_repair.json" in text
     assert 'assert_json_field "$TMP_DIR/config_only_repair.json" patch_shape.bucket config_only' in text
     assert 'assert_json_field "$TMP_DIR/config_only_repair.json" failure_class ""' in text
+    assert "public-review-gate: running Evidence Court intensity matrix" in text
     assert "public-review-gate: running supplied transcript adapter matrix" in text
     assert "bash scripts/supplied_transcript_adapter_matrix.sh" in text
     assert "public-review-gate: PASS" in text

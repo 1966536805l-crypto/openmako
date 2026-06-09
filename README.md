@@ -45,6 +45,7 @@ Expected high-level signal:
 public-review-gate: running planner focused public test
 public-review-gate: running learning-effect focused public test
 public-review-gate: running public metadata boundary tests
+public-review-gate: running Evidence Court intensity matrix
 public-review-gate: recording Evidence Court bad-run fixture
 public-review-gate: auditing supplied Evidence Court record
 public-review-gate: auditing artifact provenance fixture
@@ -57,13 +58,14 @@ public-review-gate: PASS
 
 What this checks is narrow: the focused learning-effect gate passes, public
 metadata stays inside the v0.1 boundary, Evidence Court fails closed on a
-supplied bad-run record, and supplied transcript adapters preserve complete
-supplied proof fields while rejecting missing-test-proof and
-missing edited-file or missing diff-content evidence success claims. It
+supplied bad-run record, the local Evidence Court intensity matrix covers
+supplied test-output parser edge cases, and supplied transcript adapters
+preserve complete supplied proof fields while rejecting missing-test-proof
+and missing edited-file or missing diff-content evidence success claims. It
 also checks a supplied config-only repair fixture so that packaging/config
-metadata fixes do not get confused with README-only repair claims. It
-does not prove broad unknown-repository repair or external endorsement. This
-is a local script result, not external reviewer approval.
+metadata fixes do not get confused with README-only repair claims. It does
+not prove broad unknown-repository repair or external endorsement. This is a
+local script result, not external reviewer approval.
 
 ## If You Came From A Benchmark Thread
 

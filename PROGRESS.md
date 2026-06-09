@@ -674,6 +674,11 @@ Current public proof:
   `210 passed` locally on 2026-06-09. This is parser-level local evidence only,
   not native export ingestion, remote CI status, external review, endorsement,
   stars, or reposts.
+- `scripts/public_review_gate.sh` now runs that 210-case Evidence Court
+  intensity matrix as part of the local public proof command, so the matrix is
+  not a side-only check. The updated public gate passed locally on 2026-06-09.
+  This remains local parser/supplied-record evidence only, not native export
+  ingestion, remote CI status, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

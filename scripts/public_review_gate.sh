@@ -61,6 +61,11 @@ echo "public-review-gate: running public metadata boundary tests"
   tests/test_public_metadata.py \
   -q
 
+echo "public-review-gate: running Evidence Court intensity matrix"
+"$PYTHON_BIN" -m pytest -p no:cacheprovider \
+  tests/test_evidence_court_intensity_matrix.py \
+  -q
+
 echo "public-review-gate: recording Evidence Court bad-run fixture"
 # Public equivalent: ./bin/openmako --no-trust-prompt evidence-court record from-jsonl
 "$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court record from-jsonl \

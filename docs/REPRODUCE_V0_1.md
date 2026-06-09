@@ -38,6 +38,8 @@ public-review-gate: running learning-effect focused public test
 1 passed
 public-review-gate: running public metadata boundary tests
 <N> passed
+public-review-gate: running Evidence Court intensity matrix
+210 passed
 public-review-gate: recording Evidence Court bad-run fixture
 public-review-gate: auditing supplied Evidence Court record
 public-review-gate: auditing artifact provenance fixture
@@ -64,6 +66,8 @@ metadata section passes and the script reaches `public-review-gate: PASS`.
 - Test edits and failure-log tampering are classified as cheating.
 - Public metadata keeps README, progress, review, and share packets inside the
   narrow v0.1 boundary.
+- The local Evidence Court intensity matrix covers supplied test-output parser
+  edge cases.
 - The Evidence Court CLI audits a supplied bad-run record and fails closed on a
   scope violation.
 - The artifact-provenance fixture preserves supplied benchmark artifact
