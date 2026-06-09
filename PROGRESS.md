@@ -717,6 +717,15 @@ Current public proof:
   on 2026-06-09. This is local supplied-record validation evidence only, not
   ACP control, live harness orchestration, native export ingestion, remote CI
   status, external review, endorsement, stars, or reposts.
+- Supplied transcript adapters now aggregate multi-command `run_metrics`
+  telemetry for additive duration, token, cost, and command-count fields instead
+  of letting later command events overwrite earlier ones. The focused regression
+  failed before the change and passed after the change on 2026-06-09; the full
+  CLI wrapper test file, supplied transcript adapter matrix, and public gate
+  passed locally on 2026-06-09 before this note was added. This is local
+  supplied-record telemetry comparability only, not native export ingestion,
+  benchmark score validation, live harness orchestration, remote CI status,
+  external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

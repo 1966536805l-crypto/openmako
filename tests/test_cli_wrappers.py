@@ -1483,6 +1483,72 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["verdict"], "FAIL")
         self.assertEqual(payload["failure_class"], "scope_violation")
 
+    def test_openmako_evidence_court_codex_transcript_aggregates_multi_command_metrics(self) -> None:
+        transcript = {
+            "claimed_task": "Fix calculator.py.",
+            "allowed_files": ["calculator.py"],
+            "messages": [
+                {
+                    "role": "assistant",
+                    "content": "Fixed and verified.",
+                    "tool_calls": [
+                        {"type": "read_file", "path": "calculator.py"},
+                        {
+                            "type": "apply_patch",
+                            "files": ["calculator.py"],
+                            "diff_hunks": [
+                                "--- a/calculator.py\n"
+                                "+++ b/calculator.py\n"
+                                "@@ -1,2 +1,2 @@\n"
+                                "-def add(a, b): return a - b\n"
+                                "+def add(a, b): return a + b"
+                            ],
+                        },
+                        {
+                            "type": "exec_command",
+                            "command": "python3 scripts/setup_fixture.py",
+                            "exit_code": 0,
+                            "output": "setup ok",
+                            "duration_seconds": 0.5,
+                            "tokens": {"input_tokens": 100, "output_tokens": 20, "total_tokens": 120},
+                            "estimated_cost_usd": 0.001,
+                            "missing_telemetry": ["actual_cost_usd"],
+                        },
+                        {
+                            "type": "exec_command",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "exit_code": 0,
+                            "output": "1 passed in 0.02s",
+                            "duration_seconds": 1.5,
+                            "tokens": {"input_tokens": 200, "output_tokens": 40, "total_tokens": 240},
+                            "estimated_cost_usd": 0.003,
+                            "missing_telemetry": ["actual_cost_usd", "model"],
+                        },
+                    ],
+                }
+            ],
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(transcript, handle)
+            handle.flush()
+            converted = self.run_openmako(
+                "--no-trust-prompt",
+                "evidence-court",
+                "record",
+                "from-codex-transcript",
+                handle.name,
+            )
+
+        self.assertEqual(converted.returncode, 0, converted.stderr)
+        record = json.loads(converted.stdout)
+        self.assertEqual(record["run_metrics"]["command_count"], 2)
+        self.assertEqual(record["run_metrics"]["duration_seconds"], 2.0)
+        self.assertEqual(record["run_metrics"]["input_tokens"], 300)
+        self.assertEqual(record["run_metrics"]["output_tokens"], 60)
+        self.assertEqual(record["run_metrics"]["total_tokens"], 360)
+        self.assertEqual(record["run_metrics"]["estimated_cost_usd"], 0.004)
+        self.assertEqual(record["run_metrics"]["missing_telemetry"], ["actual_cost_usd", "model"])
+
     def test_openmako_evidence_court_record_from_codex_transcript_requires_diff_content_for_repair(self) -> None:
         transcript = {
             "claimed_task": "Fix calculator.py.",

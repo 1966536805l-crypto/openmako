@@ -1440,6 +1440,21 @@ def _merge_run_metrics(target: dict[str, object], source: dict[str, object]) -> 
             if isinstance(value, list):
                 values.extend(str(item) for item in value)
             target[key] = list(dict.fromkeys(item for item in values if item.strip()))
+        elif key in {
+            "duration_seconds",
+            "estimated_cost_usd",
+            "actual_cost_usd",
+            "cost_usd",
+            "command_count",
+            "input_tokens",
+            "output_tokens",
+            "total_tokens",
+        }:
+            existing = target.get(key)
+            if isinstance(existing, (int, float)) and not isinstance(existing, bool):
+                target[key] = existing + value
+            else:
+                target[key] = value
         else:
             target[key] = value
 
