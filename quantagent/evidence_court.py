@@ -825,8 +825,8 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
 
     if commands_run and "command_count" not in run_metrics:
         run_metrics["command_count"] = len(commands_run)
-    record["files_read"] = files_read
-    record["files_edited"] = files_edited
+    record["files_read"] = _unique_strings(tuple(files_read))
+    record["files_edited"] = _unique_strings(tuple(files_edited))
     if diff_hunks:
         record["diff_hunks"] = list(dict.fromkeys(diff_hunks))
     record["commands_run"] = commands_run
@@ -922,8 +922,8 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
 
     if commands_run and "command_count" not in run_metrics:
         run_metrics["command_count"] = len(commands_run)
-    record["files_read"] = files_read
-    record["files_edited"] = files_edited
+    record["files_read"] = _unique_strings(tuple(files_read))
+    record["files_edited"] = _unique_strings(tuple(files_edited))
     if diff_hunks:
         record["diff_hunks"] = list(dict.fromkeys(diff_hunks))
     record["commands_run"] = commands_run
@@ -1016,8 +1016,8 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
 
     if commands_run and "command_count" not in run_metrics:
         run_metrics["command_count"] = len(commands_run)
-    record["files_read"] = files_read
-    record["files_edited"] = files_edited
+    record["files_read"] = _unique_strings(tuple(files_read))
+    record["files_edited"] = _unique_strings(tuple(files_edited))
     if diff_hunks:
         record["diff_hunks"] = list(dict.fromkeys(diff_hunks))
     record["commands_run"] = commands_run
@@ -1110,8 +1110,8 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
 
     if commands_run and "command_count" not in run_metrics:
         run_metrics["command_count"] = len(commands_run)
-    record["files_read"] = files_read
-    record["files_edited"] = files_edited
+    record["files_read"] = _unique_strings(tuple(files_read))
+    record["files_edited"] = _unique_strings(tuple(files_edited))
     if diff_hunks:
         record["diff_hunks"] = list(dict.fromkeys(diff_hunks))
     record["commands_run"] = commands_run

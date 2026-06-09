@@ -728,6 +728,15 @@ Current public proof:
   supplied-record telemetry comparability only, not native export ingestion,
   benchmark score validation, live harness orchestration, remote CI status,
   external review, endorsement, stars, or reposts.
+- Supplied transcript adapters now deduplicate repeated `files_read` and
+  `files_edited` path evidence in output records while preserving first-seen
+  order, matching the existing duplicate diff-hunk boundary. The focused
+  cross-adapter regression failed before the change and passed after the change
+  on 2026-06-10; the full CLI wrapper test file, supplied transcript adapter
+  matrix, `git diff --check`, and public gate passed locally before this note
+  was added. This is local supplied-record normalization only, not native export
+  ingestion, live harness orchestration, benchmark score validation, remote CI
+  status, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

@@ -1680,6 +1680,121 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(record["run_metrics"]["estimated_cost_usd"], 0.004)
                 self.assertEqual(record["run_metrics"]["missing_telemetry"], ["actual_cost_usd", "model"])
 
+    def test_openmako_evidence_court_transcript_adapters_deduplicate_file_evidence(self) -> None:
+        source_hunk = (
+            "--- a/calculator.py\n"
+            "+++ b/calculator.py\n"
+            "@@ -1,2 +1,2 @@\n"
+            "-def add(a, b): return a - b\n"
+            "+def add(a, b): return a + b"
+        )
+        transcripts = {
+            "codex": {
+                "claimed_task": "Fix calculator.py.",
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "tool_calls": [
+                            {"type": "read_file", "path": "calculator.py"},
+                            {"type": "read_file", "path": "calculator.py"},
+                            {"type": "apply_patch", "files": ["calculator.py"], "diff_hunks": [source_hunk]},
+                            {"type": "apply_patch", "files": ["calculator.py"], "diff_hunks": [source_hunk]},
+                            {
+                                "type": "exec_command",
+                                "command": "python3 -m pytest tests/test_calculator.py -q",
+                                "exit_code": 0,
+                                "output": "1 passed in 0.02s",
+                            },
+                        ],
+                    },
+                    {"role": "assistant", "content": "Fixed and verified."},
+                ],
+            },
+            "claude": {
+                "task": "Fix calculator.py.",
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "content": [
+                            {"type": "tool_use", "name": "Read", "input": {"file_path": "calculator.py"}},
+                            {"type": "tool_use", "name": "Read", "input": {"file_path": "calculator.py"}},
+                            {
+                                "type": "tool_use",
+                                "name": "Edit",
+                                "input": {"file_path": "calculator.py", "diff": source_hunk},
+                            },
+                            {
+                                "type": "tool_use",
+                                "name": "Edit",
+                                "input": {"file_path": "calculator.py", "diff": source_hunk},
+                            },
+                            {
+                                "type": "tool_use",
+                                "name": "Bash",
+                                "input": {
+                                    "command": "python3 -m pytest tests/test_calculator.py -q",
+                                    "exit_code": 0,
+                                    "stdout": "1 passed in 0.02s",
+                                },
+                            },
+                        ],
+                    },
+                    {"role": "assistant", "content": "Fixed and verified."},
+                ],
+            },
+            "openhands": {
+                "task": "Fix calculator.py.",
+                "events": [
+                    {"action": "read", "path": "calculator.py"},
+                    {"action": "read", "path": "calculator.py"},
+                    {"action": "edit", "path": "calculator.py", "diff": source_hunk},
+                    {"action": "edit", "path": "calculator.py", "diff": source_hunk},
+                    {
+                        "action": "run",
+                        "command": "python3 -m pytest tests/test_calculator.py -q",
+                        "exit_code": 0,
+                        "observation": "1 passed in 0.02s",
+                    },
+                    {"action": "finish", "message": "Fixed and verified."},
+                ],
+            },
+            "swe-agent": {
+                "issue": "Fix calculator.py.",
+                "steps": [
+                    {"action": "read", "path": "calculator.py"},
+                    {"action": "read", "path": "calculator.py"},
+                    {"action": "edit", "path": "calculator.py", "patch": source_hunk},
+                    {"action": "edit", "path": "calculator.py", "patch": source_hunk},
+                    {
+                        "action": "test",
+                        "command": "python3 -m pytest tests/test_calculator.py -q",
+                        "exit_code": 0,
+                        "stdout": "1 passed in 0.02s",
+                    },
+                    {"action": "submit", "message": "Fixed and verified."},
+                ],
+            },
+        }
+
+        for adapter, transcript in transcripts.items():
+            with self.subTest(adapter=adapter):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 0, converted.stderr)
+                record = json.loads(converted.stdout)
+                self.assertEqual(record["files_read"], ["calculator.py"])
+                self.assertEqual(record["files_edited"], ["calculator.py"])
+                self.assertEqual(record["diff_hunks"], [source_hunk])
+
     def test_openmako_evidence_court_record_from_codex_transcript_requires_diff_content_for_repair(self) -> None:
         transcript = {
             "claimed_task": "Fix calculator.py.",
