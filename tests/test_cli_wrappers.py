@@ -1311,6 +1311,17 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(converted.stdout, "")
         self.assertIn("command command must be a string", converted.stderr)
 
+    def test_openmako_evidence_court_record_from_jsonl_rejects_malformed_final_claim_text(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
+            handle.write('{"kind":"task","claimed_task":"Fix calculator.py."}\n')
+            handle.write(json.dumps({"kind": "final_claim", "text": {"message": "Fixed and verified."}}) + "\n")
+            handle.flush()
+            converted = self.run_openmako("--no-trust-prompt", "evidence-court", "record", "from-jsonl", handle.name)
+
+        self.assertEqual(converted.returncode, 2)
+        self.assertEqual(converted.stdout, "")
+        self.assertIn("final_claim text must be a string", converted.stderr)
+
     def test_openmako_evidence_court_record_from_jsonl_preserves_command_metrics(self) -> None:
         with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
             handle.write('{"kind":"task","claimed_task":"Fix calculator.py.","allowed_files":["calculator.py"]}\n')

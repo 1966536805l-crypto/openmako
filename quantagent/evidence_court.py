@@ -664,7 +664,7 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
             if output:
                 test_output = output
         elif kind == "final_claim":
-            record["final_claim"] = str(event.get("final_claim") or event.get("claim") or event.get("text") or "").strip()
+            record["final_claim"] = _event_text_field(event, ("final_claim", "claim", "text"), "final_claim")
         else:
             raise ValueError(f"unsupported JSONL event kind at line {line_no}: {kind or 'missing'}")
 
@@ -1735,6 +1735,19 @@ def _event_command_text(event: dict[str, object], fields: tuple[str, ...]) -> st
         value = event[field]
         if not isinstance(value, str):
             raise ValueError(f"command {field} must be a string")
+        text = value.strip()
+        if text:
+            return text
+    return ""
+
+
+def _event_text_field(event: dict[str, object], fields: tuple[str, ...], label: str) -> str:
+    for field in fields:
+        if field not in event:
+            continue
+        value = event[field]
+        if not isinstance(value, str):
+            raise ValueError(f"{label} {field} must be a string")
         text = value.strip()
         if text:
             return text
