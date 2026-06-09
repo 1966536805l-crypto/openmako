@@ -668,8 +668,8 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
         else:
             raise ValueError(f"unsupported JSONL event kind at line {line_no}: {kind or 'missing'}")
 
-    record["files_read"] = files_read
-    record["files_edited"] = files_edited
+    record["files_read"] = _unique_strings(tuple(files_read))
+    record["files_edited"] = _unique_strings(tuple(files_edited))
     if diff_hunks:
         record["diff_hunks"] = list(dict.fromkeys(diff_hunks))
     record["commands_run"] = commands_run
