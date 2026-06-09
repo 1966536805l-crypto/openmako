@@ -1720,6 +1720,9 @@ def _test_output_status(test_output: object, commands_run: object) -> tuple[str,
     if isinstance(test_output, dict):
         if "status" in test_output and not isinstance(test_output["status"], str):
             raise ValueError("test_output status must be a string")
+        for field in ("output", "summary"):
+            if field in test_output and not isinstance(test_output[field], str):
+                raise ValueError(f"test_output {field} must be a string")
         status = str(test_output.get("status") or "").lower()
         text_parts = [
             str(test_output[field]).strip()

@@ -661,6 +661,19 @@ Current public proof:
   on 2026-06-09. This is local supplied-record audit validation only, not
   native export ingestion, remote CI status, external review, endorsement,
   stars, or reposts.
+- Evidence Court now rejects malformed structured test-output text fields:
+  `test_output.output` and `test_output.summary` must be strings when supplied.
+  The focused regression failed before the change and passed with CLI schema
+  errors after the change on 2026-06-09. This is local supplied-record audit
+  validation only, not native export ingestion, remote CI status, external
+  review, endorsement, stars, or reposts.
+- Evidence Court now has a local intensity matrix for supplied test-output
+  status parsing: 100 medium, 100 high, and 10 ultra cases covering pass/fail
+  counts, conflicting structured fields, malformed structured fields, command
+  exit-code precedence, and zero-failure pass summaries. The matrix passed
+  `210 passed` locally on 2026-06-09. This is parser-level local evidence only,
+  not native export ingestion, remote CI status, external review, endorsement,
+  stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

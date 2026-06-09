@@ -85,6 +85,8 @@ rejected instead of being treated as `0` or `1`.
 Structured `test_output.exit_code` must be an integer when supplied; JSON
 booleans are rejected instead of being treated as `0` or `1`.
 Structured `test_output.status` must be a string when supplied.
+Structured `test_output.output` and `test_output.summary` must be strings when
+supplied.
 
 ## Machine Output
 

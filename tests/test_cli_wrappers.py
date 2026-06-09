@@ -818,6 +818,30 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertIn("test_output status must be a string", result.stderr)
 
+    def test_openmako_evidence_court_audit_rejects_non_string_test_output_text_fields(self) -> None:
+        cases = (
+            ({"status": "passed", "output": ["1 failed in 0.02s"]}, "test_output output must be a string"),
+            ({"status": "passed", "summary": {"failed": 1}}, "test_output summary must be a string"),
+        )
+        for test_output, message in cases:
+            with self.subTest(message=message):
+                record = {
+                    "claimed_task": "Fix calculator.py.",
+                    "files_read": ["calculator.py"],
+                    "files_edited": ["calculator.py"],
+                    "commands_run": [{"command": "python3 -m pytest tests/test_calculator.py -q", "exit_code": 0}],
+                    "test_output": test_output,
+                    "final_claim": "Fixed and verified.",
+                }
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(record, handle)
+                    handle.flush()
+                    result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertIn(message, result.stderr)
+
     def test_openmako_evidence_court_audit_rejects_boolean_exit_codes(self) -> None:
         cases = (
             (
