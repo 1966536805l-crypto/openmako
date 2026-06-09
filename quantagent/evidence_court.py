@@ -638,7 +638,7 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
             raise ValueError(f"JSONL event at line {line_no} must be an object")
         kind = str(event.get("kind") or event.get("type") or event.get("event") or "").strip()
         if kind == "task":
-            record["claimed_task"] = str(event.get("claimed_task") or event.get("task") or "").strip()
+            record["claimed_task"] = _event_text_field(event, ("claimed_task", "task"), "claimed_task")
             if "allowed_files" in event:
                 record["allowed_files"] = _string_list(event.get("allowed_files"))
         elif kind == "read":
