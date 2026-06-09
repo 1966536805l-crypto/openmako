@@ -794,7 +794,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
             record["final_claim"] = content
 
         for tool_path, tool_call in _codex_tool_calls(message, message_index):
-            tool_payload = _codex_tool_payload(tool_call)
+            tool_payload = _codex_tool_payload(tool_call, tool_path)
             _add_event_session_id(session_ids, tool_payload)
             tool_kind = _codex_tool_kind(tool_call, tool_payload, tool_path)
             if tool_kind in {"read", "read_file", "open", "cat"}:
@@ -891,7 +891,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
         tool_calls = _codex_tool_calls(message, message_index)
         tool_calls.extend(_claude_content_tool_uses(message, message_index))
         for tool_path, tool_call in tool_calls:
-            tool_payload = _codex_tool_payload(tool_call)
+            tool_payload = _codex_tool_payload(tool_call, tool_path)
             _add_event_session_id(session_ids, tool_payload)
             tool_kind = _codex_tool_kind(tool_call, tool_payload, tool_path)
             if tool_kind in {"read", "read_file", "open", "view", "cat"}:
@@ -1678,19 +1678,31 @@ def _claude_content_tool_uses(message: dict[str, object], message_index: int) ->
     return calls
 
 
-def _codex_tool_payload(tool_call: dict[str, object]) -> dict[str, object]:
+def _codex_tool_payload(tool_call: dict[str, object], label: str) -> dict[str, object]:
     payload = dict(tool_call)
     for field in ("arguments", "input", "params"):
+        if field not in tool_call:
+            continue
         nested = tool_call.get(field)
+        if nested is None:
+            continue
         if isinstance(nested, dict):
             payload.update(nested)
-        elif isinstance(nested, str) and nested.strip().startswith("{"):
-            try:
-                decoded = json.loads(nested)
-            except json.JSONDecodeError:
+        elif isinstance(nested, str):
+            text = nested.strip()
+            if not text:
                 continue
-            if isinstance(decoded, dict):
-                payload.update(decoded)
+            if not text.startswith("{"):
+                raise ValueError(f"{label}.{field} must be an object or JSON object string")
+            try:
+                decoded = json.loads(text)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"{label}.{field} must be a JSON object string") from exc
+            if not isinstance(decoded, dict):
+                raise ValueError(f"{label}.{field} must decode to a JSON object")
+            payload.update(decoded)
+        else:
+            raise ValueError(f"{label}.{field} must be an object or JSON object string")
     return payload
 
 

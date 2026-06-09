@@ -892,6 +892,16 @@ Current public proof:
   only, not native export ingestion, live harness orchestration, benchmark
   score validation, remote CI status, external review, endorsement, stars, or
   reposts.
+- Supplied Codex and Claude transcript adapters now reject malformed nested
+  tool payload containers instead of silently ignoring list values, non-object
+  JSON strings, or non-JSON strings from `arguments`, `input`, or `params`.
+  The focused adapter regression failed before the change and passed after the
+  change on 2026-06-10; the public metadata tests, full CLI wrapper test file,
+  supplied transcript adapter matrix, `git diff --check`, and public gate
+  passed locally before this note was added. This is local supplied-record
+  schema validation only, not native export ingestion, live harness
+  orchestration, benchmark score validation, remote CI status, external review,
+  endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

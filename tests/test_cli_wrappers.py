@@ -3276,6 +3276,46 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(converted.stdout, "")
                 self.assertIn(expected_error, converted.stderr)
 
+    def test_openmako_evidence_court_transcript_adapters_reject_malformed_tool_payload_containers(self) -> None:
+        cases: tuple[tuple[str, dict[str, object], str], ...] = (
+            (
+                "codex",
+                {"messages": [{"role": "assistant", "tool_calls": [{"type": "apply_patch", "arguments": ["bad"]}]}]},
+                "messages[0].tool_calls[0].arguments must be an object or JSON object string",
+            ),
+            (
+                "codex",
+                {"messages": [{"role": "assistant", "tool_calls": [{"type": "apply_patch", "params": "[1]"}]}]},
+                "messages[0].tool_calls[0].params must be an object or JSON object string",
+            ),
+            (
+                "claude",
+                {"messages": [{"role": "assistant", "content": [{"type": "tool_use", "name": "Edit", "input": ["bad"]}]}]},
+                "messages[0].content[0].input must be an object or JSON object string",
+            ),
+            (
+                "claude",
+                {"messages": [{"role": "assistant", "content": [{"type": "tool_use", "name": "Edit", "input": "not json"}]}]},
+                "messages[0].content[0].input must be an object or JSON object string",
+            ),
+        )
+        for adapter, transcript, expected_error in cases:
+            with self.subTest(adapter=adapter, expected_error=expected_error):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn(expected_error, converted.stderr)
+
     def test_openmako_evidence_court_transcript_adapters_reject_mixed_session_evidence(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"
