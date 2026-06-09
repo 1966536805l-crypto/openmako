@@ -697,6 +697,30 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["failure_class"], "post_edit_validation_failure")
         self.assertEqual(payload["failed_at"], "test_output")
 
+    def test_openmako_evidence_court_audit_pytest_failed_line_overrides_passed_count(self) -> None:
+        record = {
+            "claimed_task": "Fix calculator.py.",
+            "files_read": ["calculator.py"],
+            "files_edited": ["calculator.py"],
+            "commands_run": [{"command": "python3 -m pytest tests/test_calculator.py -q", "exit_code": 0}],
+            "test_output": (
+                "FAILED tests/test_calculator.py::test_add - AssertionError: expected 2 got 1\n"
+                "1 passed in 0.02s"
+            ),
+            "final_claim": "Fixed and verified.",
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "FAIL")
+        self.assertEqual(payload["status"], "FAILED")
+        self.assertEqual(payload["failure_class"], "post_edit_validation_failure")
+        self.assertEqual(payload["failed_at"], "test_output")
+
     def test_openmako_evidence_court_audit_test_output_failure_summary_overrides_pass_output(self) -> None:
         record = {
             "claimed_task": "Fix calculator.py.",

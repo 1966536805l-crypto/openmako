@@ -701,6 +701,14 @@ Current public proof:
   transcript adapter matrix, and public gate passed locally on 2026-06-09. This
   is local supplied-record validation evidence only, not native export
   ingestion, remote CI status, external review, endorsement, stars, or reposts.
+- Evidence Court now treats pytest `FAILED path::test ...` output lines as
+  failed validation evidence even when the same supplied output also contains a
+  passing-count line. The focused regression failed as `PASS` before the change
+  and passed as `post_edit_validation_failure` after the change on 2026-06-09.
+  The Evidence Court intensity matrix, full CLI wrapper test file, supplied
+  transcript adapter matrix, and public gate passed locally on 2026-06-09. This
+  is local supplied-record parser evidence only, not native export ingestion,
+  remote CI status, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
