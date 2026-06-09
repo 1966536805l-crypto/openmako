@@ -4313,6 +4313,26 @@ class CliWrapperTest(unittest.TestCase):
                     self.assertEqual(result.stdout, "")
                     self.assertIn(expected_error, result.stderr)
 
+    def test_openmako_evidence_court_rejects_malformed_supplied_source_agent(self) -> None:
+        record = {
+            "claimed_task": "Fix calculator.py.",
+            "source_agent": {"name": "codex"},
+            "files_edited": ["calculator.py"],
+            "commands_run": [{"command": "python3 -m pytest -q", "exit_code": 0}],
+            "test_output": "1 passed",
+            "final_claim": "Fixed and verified.",
+        }
+        for command in ("audit", "validate"):
+            with self.subTest(command=command):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(record, handle)
+                    handle.flush()
+                    result = self.run_openmako("--no-trust-prompt", "evidence-court", command, handle.name)
+
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertIn("source_agent source_agent must be a string", result.stderr)
+
     def test_evidence_court_record_schema_matches_supported_record_shape(self) -> None:
         schema = json.loads((ROOT / "docs" / "evidence_court_record.schema.json").read_text(encoding="utf-8"))
         example = json.loads((ROOT / "examples" / "evidence_court" / "out_of_scope.json").read_text(encoding="utf-8"))

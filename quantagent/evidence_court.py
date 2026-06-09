@@ -599,7 +599,7 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
 
     return AgentAutopsyReport(
         title="agent-run audit record",
-        source_agent=str(payload.get("source_agent") or "unknown"),
+        source_agent=_event_text_field(payload, ("source_agent",), "source_agent") or "unknown",
         command=commands_run[0] if commands_run else "none supplied",
         status=status,
         failure_class=failure_class,

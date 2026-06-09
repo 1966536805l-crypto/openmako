@@ -797,6 +797,15 @@ Current public proof:
   schema validation only, not native export ingestion, live harness
   orchestration, benchmark score validation, remote CI status, external review,
   endorsement, stars, or reposts.
+- Supplied raw Evidence Court records now reject malformed `source_agent`
+  metadata in both `audit` and `validate` instead of stringifying list/object
+  values. The focused audit/validate regression failed before the change and
+  passed after the change on 2026-06-10; the full CLI wrapper test file,
+  supplied transcript adapter matrix, `git diff --check`, and public gate
+  passed locally before this note was added. This is local supplied-record
+  schema validation only, not native export ingestion, live harness
+  orchestration, benchmark score validation, remote CI status, external review,
+  endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
