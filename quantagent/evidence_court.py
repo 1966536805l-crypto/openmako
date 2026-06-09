@@ -1831,6 +1831,8 @@ def _test_output_status(test_output: object, commands_run: object) -> tuple[str,
                 and _looks_like_validation_command(str(item.get("command") or ""))
             ):
                 exit_codes.append(int(item["exit_code"]))
+    if test_output is not None and not isinstance(test_output, (str, dict)):
+        raise ValueError("test_output must be a string or object")
     if any(code != 0 for code in exit_codes):
         return "failed", "command exit_code evidence: " + ", ".join(str(code) for code in exit_codes)
     if isinstance(test_output, dict):

@@ -844,6 +844,7 @@ class CliWrapperTest(unittest.TestCase):
 
     def test_openmako_evidence_court_audit_rejects_non_string_test_output_text_fields(self) -> None:
         cases = (
+            (["1 failed in 0.02s"], "test_output must be a string or object"),
             ({"status": "passed", "output": ["1 failed in 0.02s"]}, "test_output output must be a string"),
             ({"status": "passed", "summary": {"failed": 1}}, "test_output summary must be a string"),
         )
