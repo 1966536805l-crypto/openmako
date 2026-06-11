@@ -1021,6 +1021,16 @@ Current public proof:
   before this note was added. This is local supplied-record claim validation
   only, not proof that the claimed work happened outside the supplied record,
   remote CI status, external review, endorsement, stars, or reposts.
+- JSONL and supplied transcript builders now preserve recognizable validation
+  command output ahead of later non-validation command output, so a follow-up
+  formatting or report command no longer overwrites the supplied pytest output
+  chosen for `test_output`. The focused JSONL and cross-adapter regressions
+  failed before the output-selection fix and passed after it; the full CLI
+  wrapper test file, public metadata tests, supplied transcript adapter matrix,
+  `git diff --check`, and public gate passed locally before this note was
+  added. This is local supplied-record output selection only, not proof that
+  commands ran outside the supplied record, remote CI status, external review,
+  endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

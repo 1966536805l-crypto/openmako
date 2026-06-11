@@ -1436,6 +1436,26 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(record["files_edited"], ["calculator.py"])
         self.assertEqual(record["diff_hunks"], [source_hunk])
 
+    def test_openmako_evidence_court_record_from_jsonl_keeps_validation_output_after_non_validation_command(
+        self,
+    ) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
+            handle.write('{"kind":"task","claimed_task":"Fix calculator.py."}\n')
+            handle.write(
+                '{"kind":"command","command":"python3 -m pytest tests/test_calculator.py -q",'
+                '"exit_code":0,"output":"1 passed in 0.02s"}\n'
+            )
+            handle.write(
+                '{"kind":"command","command":"python3 scripts/format_report.py",'
+                '"exit_code":0,"output":"formatted report.md"}\n'
+            )
+            handle.flush()
+            converted = self.run_openmako("--no-trust-prompt", "evidence-court", "record", "from-jsonl", handle.name)
+
+        self.assertEqual(converted.returncode, 0, converted.stderr)
+        record = json.loads(converted.stdout)
+        self.assertEqual(record["test_output"], "1 passed in 0.02s")
+
     def test_openmako_evidence_court_record_from_jsonl_preserves_ledger_identity(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"
@@ -3178,6 +3198,138 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(payload["verdict"], "FAIL")
                 self.assertEqual(payload["failure_class"], "post_edit_validation_failure")
                 self.assertEqual(payload["failed_at"], "test_output")
+
+    def test_openmako_evidence_court_transcript_adapters_keep_validation_output_after_non_validation_command(
+        self,
+    ) -> None:
+        source_hunk = (
+            "--- a/calculator.py\n"
+            "+++ b/calculator.py\n"
+            "@@ -1,2 +1,2 @@\n"
+            "-def add(a, b): return a - b\n"
+            "+def add(a, b): return a + b"
+        )
+
+        def transcript_for(adapter: str) -> dict[str, object]:
+            if adapter == "codex":
+                return {
+                    "claimed_task": "Fix calculator.py.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": "Fixed and verified.",
+                            "tool_calls": [
+                                {"type": "apply_patch", "files": ["calculator.py"], "diff_hunks": [source_hunk]},
+                                {
+                                    "type": "exec_command",
+                                    "command": "python3 -m pytest tests/test_calculator.py -q",
+                                    "exit_code": 0,
+                                    "output": "1 passed in 0.02s",
+                                },
+                                {
+                                    "type": "exec_command",
+                                    "command": "python3 scripts/format_report.py",
+                                    "exit_code": 0,
+                                    "output": "formatted report.md",
+                                },
+                            ],
+                        }
+                    ],
+                }
+            if adapter == "claude":
+                return {
+                    "task": "Fix calculator.py.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "name": "Edit",
+                                    "input": {"file_path": "calculator.py", "diff_hunks": [source_hunk]},
+                                },
+                                {
+                                    "type": "tool_use",
+                                    "name": "Bash",
+                                    "input": {
+                                        "command": "python3 -m pytest tests/test_calculator.py -q",
+                                        "exit_code": 0,
+                                        "stdout": "1 passed in 0.02s",
+                                    },
+                                },
+                                {
+                                    "type": "tool_use",
+                                    "name": "Bash",
+                                    "input": {
+                                        "command": "python3 scripts/format_report.py",
+                                        "exit_code": 0,
+                                        "stdout": "formatted report.md",
+                                    },
+                                },
+                            ],
+                        },
+                        {"role": "assistant", "content": "Fixed and verified."},
+                    ],
+                }
+            if adapter == "openhands":
+                return {
+                    "task": "Fix calculator.py.",
+                    "events": [
+                        {"action": "edit", "path": "calculator.py", "diff_hunks": [source_hunk]},
+                        {
+                            "action": "run",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "exit_code": 0,
+                            "observation": "1 passed in 0.02s",
+                        },
+                        {
+                            "action": "run",
+                            "command": "python3 scripts/format_report.py",
+                            "exit_code": 0,
+                            "observation": "formatted report.md",
+                        },
+                        {"action": "finish", "message": "Fixed and verified."},
+                    ],
+                }
+            if adapter == "swe-agent":
+                return {
+                    "issue": "Fix calculator.py.",
+                    "steps": [
+                        {"action": "edit", "path": "calculator.py", "diff_hunks": [source_hunk]},
+                        {
+                            "action": "test",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "exit_code": 0,
+                            "stdout": "1 passed in 0.02s",
+                        },
+                        {
+                            "action": "run",
+                            "command": "python3 scripts/format_report.py",
+                            "exit_code": 0,
+                            "stdout": "formatted report.md",
+                        },
+                        {"action": "submit", "message": "Fixed and verified."},
+                    ],
+                }
+            raise AssertionError(f"unexpected adapter: {adapter}")
+
+        for adapter in ("codex", "claude", "openhands", "swe-agent"):
+            with self.subTest(adapter=adapter):
+                transcript = transcript_for(adapter)
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 0, converted.stderr)
+                record = json.loads(converted.stdout)
+                self.assertEqual(record["test_output"], "1 passed in 0.02s")
 
     def test_openmako_evidence_court_transcript_adapters_reject_malformed_command_exit_codes(self) -> None:
         def transcript_for(adapter: str, exit_code: object) -> dict[str, object]:
@@ -5365,6 +5517,8 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(schema["properties"]["run_metrics"]["properties"]["missing_telemetry"]["type"], "array")
         self.assertEqual(schema["properties"]["artifact_provenance"]["type"], "object")
         schema_doc = (ROOT / "docs" / "evidence_court_schema.md").read_text(encoding="utf-8")
+        self.assertIn("output from recognizable validation", schema_doc)
+        self.assertIn("ahead of later non-validation command output", schema_doc)
         self.assertIn("Repeated `task` events must keep the same supplied", schema_doc)
         self.assertIn("conflicting task or scope metadata is rejected", schema_doc)
         self.assertIn("Repeated `final_claim` events must also keep the same supplied claim", schema_doc)

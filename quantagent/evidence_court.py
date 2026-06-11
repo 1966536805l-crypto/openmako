@@ -694,7 +694,7 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
                 _merge_artifact_provenance(artifact_provenance, event_provenance)
             output = _codex_command_output(event)
             if output:
-                test_output = output
+                test_output = _select_command_test_output(test_output, command, output)
         elif kind == "final_claim":
             final_claim = _event_text_field(event, ("final_claim", "claim", "text"), "final_claim")
             if record["final_claim"] and final_claim and record["final_claim"] != final_claim:
@@ -862,7 +862,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
                     _merge_artifact_provenance(artifact_provenance, provenance)
                 output = _codex_command_output(tool_payload)
                 if output:
-                    test_output = output
+                    test_output = _select_command_test_output(test_output, command, output)
             else:
                 unsupported.append(f"{tool_path}: {tool_kind or 'unsupported'}")
 
@@ -966,7 +966,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
                     _merge_artifact_provenance(artifact_provenance, provenance)
                 output = _codex_command_output(tool_payload)
                 if output:
-                    test_output = output
+                    test_output = _select_command_test_output(test_output, command, output)
             else:
                 unsupported.append(f"{tool_path}: {tool_kind or 'unsupported'}")
 
@@ -1063,7 +1063,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
                 _merge_artifact_provenance(artifact_provenance, provenance)
             output = _codex_command_output(event)
             if output:
-                test_output = output
+                test_output = _select_command_test_output(test_output, command, output)
         elif event_kind in {"finish", "final", "final_claim", "message"}:
             text = _openhands_event_text(event, "final_claim")
             if text:
@@ -1164,7 +1164,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
                 _merge_artifact_provenance(artifact_provenance, provenance)
             output = _codex_command_output(step)
             if output:
-                test_output = output
+                test_output = _select_command_test_output(test_output, command, output)
         elif step_kind in {"finish", "final", "final_claim", "submit"}:
             text = _openhands_event_text(step, "final_claim")
             if text:
@@ -2167,6 +2167,12 @@ def _has_validation_command(commands_run: object) -> bool:
         if isinstance(item, dict) and _looks_like_validation_command(str(item.get("command") or "")):
             return True
     return False
+
+
+def _select_command_test_output(current: str, command: str, output: str) -> str:
+    if _looks_like_validation_command(command):
+        return output
+    return current or output
 
 
 def _looks_like_success_claim(text: str) -> bool:

@@ -220,6 +220,8 @@ fields to supply diff-content evidence.
 `command` events may include `run_metrics` or direct telemetry fields such as
 `duration_seconds`, `input_tokens`, `output_tokens`, `total_tokens`,
 `estimated_cost_usd`, `provider`, `model`, and `missing_telemetry`.
+When command events include output, output from recognizable validation
+commands is kept ahead of later non-validation command output.
 Numeric run metrics are summed across commands and `missing_telemetry` is
 merged. Non-numeric run metric fields such as `provider` and `model` must repeat
 the same supplied value or they are rejected instead of overwritten.
@@ -239,6 +241,10 @@ strings.
 This is an evidence audit of the supplied record only. It does not prove that a
 command actually ran outside the record, that a native transcript was ingested,
 or that supplied patches were applied outside the supplied record.
+
+The supplied transcript builders use the same command-output selection rule:
+recognizable validation command output is preserved ahead of later
+non-validation command output.
 
 ## SWTBench Artifact Identity Builder
 
