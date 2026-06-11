@@ -1379,6 +1379,13 @@ Current public proof:
   supplied-transcript parser evidence only, not native export ingestion, live
   control, current remote CI proof, external review, endorsement, stars, or
   reposts.
+- The public review gate now includes an explicit verifier-attack fixture for
+  a passing supplied success claim that edits `evals/verifier.py`. The focused
+  verifier tamper/attack subset, full CLI wrapper test file, public metadata
+  tests, and `git diff --check` passed locally before this note was added. This
+  is supplied-record verifier-tamper evidence only: it does not prove native
+  benchmark ingestion, live patch application, external review, endorsement,
+  stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1390,6 +1397,6 @@ Next smallest hygiene task:
 
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
-- Next concrete candidate: another adapter evidence edge case or trend-radar
-  follow-up only if it can be reduced to a failing parser test behind the
-  supplied-record proof boundary.
+- Next concrete candidate: another adapter evidence edge case, verifier
+  evidence edge case, or trend-radar follow-up only if it can be reduced to a
+  failing parser/audit test behind the supplied-record proof boundary.
