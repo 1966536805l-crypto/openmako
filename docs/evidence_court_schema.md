@@ -224,6 +224,10 @@ Malformed direct agent-risk fields on supplied tool/event/step entries are
 reported with their transcript path, such as
 `messages[0].tool_calls[0].live_control`, `events[0].live_control`, or
 `steps[0].live_control`.
+Conflicting direct agent-risk fields are also reported with the incoming
+transcript path, such as
+`messages[0].tool_calls[0].live_control values must not be mixed` or
+`events[0].live_control values must not be mixed`.
 Malformed nested `agent_risk_ledger` objects on supplied tool/event/step entries
 are also reported with their transcript path, such as
 `messages[0].tool_calls[0].agent_risk_ledger.risk_review_id`.

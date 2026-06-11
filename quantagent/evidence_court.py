@@ -1660,6 +1660,7 @@ def _add_event_agent_risk_ledger(
     if nested:
         _merge_agent_risk_ledger(target, nested, label=ledger_label)
     direct: dict[str, object] = {}
+    direct_labels: dict[str, str] = {}
     for field in AGENT_RISK_BOOL_FIELDS:
         if field not in event:
             continue
@@ -1667,12 +1668,14 @@ def _add_event_agent_risk_ledger(
         if not isinstance(value, bool):
             raise ValueError(f"{_field_label(label, field)} must be a boolean")
         direct[field] = value
+        direct_labels[field] = _field_label(label, field)
     for field in AGENT_RISK_LIST_FIELDS:
         items = _string_array(event.get(field), _field_label(label, field))
         if items:
             direct[field] = items
+            direct_labels[field] = _field_label(label, field)
     if direct:
-        _merge_agent_risk_ledger(target, direct)
+        _merge_agent_risk_ledger(target, direct, field_labels=direct_labels)
 
 
 def _field_label(label: str, field: str) -> str:
@@ -1791,6 +1794,7 @@ def _merge_agent_risk_ledger(
     source: dict[str, object],
     *,
     label: str = "agent_risk_ledger",
+    field_labels: dict[str, str] | None = None,
 ) -> None:
     for key, value in source.items():
         if key in AGENT_RISK_LIST_FIELDS:
@@ -1804,7 +1808,8 @@ def _merge_agent_risk_ledger(
             continue
         existing = target.get(key)
         if key in target and existing != value:
-            raise ValueError(f"{label}.{key} values must not be mixed")
+            conflict_label = (field_labels or {}).get(key, _field_label(label, key))
+            raise ValueError(f"{conflict_label} values must not be mixed")
         target[key] = value
 
 
