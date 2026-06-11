@@ -110,6 +110,14 @@ assert_json_field "$TMP_DIR/config_only_repair.json" status PASSED
 assert_json_field "$TMP_DIR/config_only_repair.json" failure_class ""
 assert_json_field "$TMP_DIR/config_only_repair.json" patch_shape.bucket config_only
 
+echo "public-review-gate: auditing runtime shadowing fixture"
+"$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court audit --ci --json \
+  examples/evidence_court/runtime_shadowing_risk.json > "$TMP_DIR/runtime_shadowing_risk.json"
+
+assert_json_field "$TMP_DIR/runtime_shadowing_risk.json" verdict SUSPICIOUS
+assert_json_field "$TMP_DIR/runtime_shadowing_risk.json" failure_class verifier_tamper_risk
+assert_json_field "$TMP_DIR/runtime_shadowing_risk.json" verifier_tamper_risk.verifier_tamper_risk True
+
 echo "public-review-gate: auditing verifier tamper-risk fixture"
 "$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court audit --ci --json \
   examples/evidence_court/verifier_tamper_risk.json > "$TMP_DIR/verifier_tamper_risk.json"

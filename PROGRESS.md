@@ -1399,6 +1399,11 @@ Current public proof:
   supplied verifier/CI tamper review-risk checks, not native benchmark
   ingestion, native CI hardening, or external endorsement. Public metadata
   tests and `git diff --check` passed locally before this note was added.
+- The public review gate and README proof signal now include the existing
+  runtime-shadowing fixture, so Python startup-shadowing edits are checked next
+  to verifier/CI tamper fixtures. This is supplied-record review-risk evidence
+  only, not native runtime hardening, native benchmark ingestion, native CI
+  hardening, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

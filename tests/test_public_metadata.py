@@ -301,6 +301,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "public-review-gate: auditing artifact provenance fixture" in proof_section
     assert "public-review-gate: auditing SWTBench patch artifact fixture" in proof_section
     assert "public-review-gate: auditing config-only repair fixture" in proof_section
+    assert "public-review-gate: auditing runtime shadowing fixture" in proof_section
     assert "public-review-gate: auditing verifier tamper-risk fixture" in proof_section
     assert "public-review-gate: auditing verifier attack fixture" in proof_section
     assert "public-review-gate: auditing CI workflow tamper fixture" in proof_section
@@ -310,9 +311,9 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "What this checks is narrow" in proof_section
     assert "local Evidence Court intensity matrix covers\nsupplied test-output parser edge cases" in proof_section
     assert "supplied transcript adapters\npreserve complete supplied proof fields while rejecting missing-test-proof\nand missing edited-file or missing diff-content evidence success claims" in proof_section
-    assert "supplied verifier/CI tamper fixtures that classify passing success claims as\nreview-risk" in proof_section
-    assert "It\ndoes not prove broad unknown-repository repair, native benchmark ingestion,\nnative CI hardening, or external endorsement." in proof_section
-    assert "This is a local script result,\nnot external reviewer approval." in proof_section
+    assert "supplied runtime-shadowing and verifier/CI tamper fixtures that classify\npassing success claims as review-risk" in proof_section
+    assert "It does not prove broad\nunknown-repository repair, native runtime hardening, native benchmark\ningestion, native CI hardening, or external endorsement." in proof_section
+    assert "This is a local script\nresult, not external reviewer approval." in proof_section
     assert "## If You Came From A Benchmark Thread" in proof_section
     assert "Start with the public gate:" in proof_section
     assert 'The useful review is not "do you like this project?"' in proof_section
