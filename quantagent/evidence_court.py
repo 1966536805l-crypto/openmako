@@ -1034,7 +1034,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
             if text:
                 record["claimed_task"] = _merge_claimed_task(str(record["claimed_task"]), text)
             if "allowed_files" in event:
-                allowed_files = _string_list(event.get("allowed_files"))
+                allowed_files = _string_list(event.get("allowed_files"), label=f"{event_path}.allowed_files")
                 if allowed_files:
                     record["allowed_files"] = _merge_allowed_files(record["allowed_files"], allowed_files)
         elif event_kind in {"read", "read_file", "file_read"}:
@@ -1139,7 +1139,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
             if text:
                 record["claimed_task"] = _merge_claimed_task(str(record["claimed_task"]), text)
             if "allowed_files" in step:
-                allowed_files = _string_list(step.get("allowed_files"))
+                allowed_files = _string_list(step.get("allowed_files"), label=f"{step_path}.allowed_files")
                 if allowed_files:
                     record["allowed_files"] = _merge_allowed_files(record["allowed_files"], allowed_files)
         elif step_kind in {"read", "read_file", "open"}:
@@ -1321,11 +1321,13 @@ def _claim_text(item: AutopsyEvidence | None) -> str:
     return item.summary.replace("\n", " ")[:220]
 
 
-def _string_list(value: object) -> list[str]:
+def _string_list(value: object, *, label: str = "audit record list fields") -> list[str]:
     if value is None:
         return []
     if not isinstance(value, list):
-        raise ValueError("audit record list fields must be arrays")
+        if label == "audit record list fields":
+            raise ValueError("audit record list fields must be arrays")
+        raise ValueError(f"{label} must be an array")
     result: list[str] = []
     for item in value:
         if isinstance(item, str):
@@ -1333,7 +1335,9 @@ def _string_list(value: object) -> list[str]:
         elif isinstance(item, dict) and isinstance(item.get("file"), str):
             result.append(str(item["file"]))
         else:
-            raise ValueError("audit record arrays must contain strings or file objects")
+            if label == "audit record list fields":
+                raise ValueError("audit record arrays must contain strings or file objects")
+            raise ValueError(f"{label} must contain strings or file objects")
     return result
 
 

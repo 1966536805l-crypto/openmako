@@ -1053,6 +1053,16 @@ Current public proof:
   consistency validation only, not native transcript ingestion, live control,
   proof that the claimed task happened outside the supplied record, remote CI
   status, external review, endorsement, stars, or reposts.
+- OpenHands-style and SWE-agent-style event-level malformed `allowed_files`
+  values now report the concrete supplied transcript field path, such as
+  `events[0].allowed_files` or `steps[0].allowed_files`, instead of the generic
+  audit-record array error. The focused malformed event `allowed_files`
+  regression failed before the diagnostic fix and passed after it; the full CLI
+  wrapper test file, public metadata tests, and supplied transcript adapter
+  matrix passed locally before this note was added. This is local
+  supplied-record parser diagnostics only, not native transcript ingestion,
+  live control, remote CI status, external review, endorsement, stars, or
+  reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1065,5 +1075,5 @@ Next smallest hygiene task:
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
 - Next concrete candidate: another adapter evidence edge case such as
-  event-level malformed `allowed_files` diagnostics, or a trend-radar follow-up
-  that stays behind the supplied-record proof boundary.
+  event-level `allowed_files` item diagnostics, or a trend-radar follow-up that
+  stays behind the supplied-record proof boundary.

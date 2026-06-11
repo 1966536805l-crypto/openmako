@@ -3756,6 +3756,36 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(converted.stdout, "")
                 self.assertIn(expected_error, converted.stderr)
 
+    def test_openmako_evidence_court_transcript_adapters_reject_malformed_event_allowed_files(self) -> None:
+        cases: tuple[tuple[str, dict[str, object], str], ...] = (
+            (
+                "openhands",
+                {"events": [{"action": "task", "allowed_files": "calculator.py"}]},
+                "events[0].allowed_files must be an array",
+            ),
+            (
+                "swe-agent",
+                {"steps": [{"action": "issue", "allowed_files": "calculator.py"}]},
+                "steps[0].allowed_files must be an array",
+            ),
+        )
+        for adapter, transcript, expected_error in cases:
+            with self.subTest(adapter=adapter, expected_error=expected_error):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn(expected_error, converted.stderr)
+
     def test_openmako_evidence_court_transcript_adapters_reject_malformed_message_content_text(self) -> None:
         cases: tuple[tuple[str, dict[str, object], str], ...] = (
             (
@@ -5659,6 +5689,8 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("final-claim text is rejected instead of overwritten", schema_doc)
         self.assertIn("Root and event-level task/scope metadata must agree", schema_doc)
         self.assertIn("Root and step-level task/scope metadata must", schema_doc)
+        self.assertIn("events[index].allowed_files", schema_doc)
+        self.assertIn("steps[index].allowed_files", schema_doc)
         self.assertIn("Repeated final/finish messages must keep the same supplied final-claim text", schema_doc)
         self.assertIn("Repeated final/submit messages must keep the same", schema_doc)
         self.assertIn("Non-numeric run metric fields such as `provider` and `model`", schema_doc)

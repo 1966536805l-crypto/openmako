@@ -335,7 +335,8 @@ messages. Unsupported events are listed under `adapter_report.unsupported`.
 Root and event-level task/scope metadata must agree: repeated task/instruction
 messages may fill or repeat the same supplied `claimed_task` and `allowed_files`
 scope, but conflicting task or scope metadata is rejected instead of
-overwritten.
+overwritten. Event-level `allowed_files` must be an array; malformed values are
+rejected with an `events[index].allowed_files` diagnostic.
 Repeated final/finish messages must keep the same supplied final-claim text;
 conflicting final-claim text is rejected instead of overwritten.
 Edit/apply-patch events may include `diff_hunks`, `diff`, `patch`, or
@@ -364,7 +365,9 @@ final/submit messages. Unsupported steps are listed under
 `adapter_report.unsupported`. Root and step-level task/scope metadata must
 agree: repeated task/instruction/issue messages may fill or repeat the same
 supplied `claimed_task` and `allowed_files` scope, but conflicting task or
-scope metadata is rejected instead of overwritten.
+scope metadata is rejected instead of overwritten. Step-level `allowed_files`
+must be an array; malformed values are rejected with a
+`steps[index].allowed_files` diagnostic.
 Repeated final/submit messages must keep the same supplied final-claim text;
 conflicting final-claim text is rejected instead of overwritten.
 Edit/apply-patch steps may include `diff_hunks`, `diff`, `patch`, or
