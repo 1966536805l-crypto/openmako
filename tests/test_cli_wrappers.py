@@ -6783,6 +6783,7 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("`ledger_identity`", schema)
         self.assertIn("`verifier_tamper_risk`", schema)
         self.assertIn("successful repair claim edits verifier, oracle, harness, CI", schema)
+        self.assertIn("or Python startup-shadowing hooks.", schema)
         self.assertIn("test-only paths, or Python startup-shadowing hooks", schema)
         self.assertIn("`runtime_shadowing_path`", schema)
         self.assertIn("Python startup-shadowing hooks such as `sitecustomize.py`", schema)

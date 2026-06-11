@@ -175,7 +175,7 @@ completed source repair assertion.
 `verifier_tamper_risk` is derived from `files_edited` and is review metadata:
 
 - `verifier_tamper_risk`: true when a successful repair claim edits verifier,
-  oracle, harness, CI, or test-only paths.
+  oracle, harness, CI, test-only paths, or Python startup-shadowing hooks.
 - `modified_paths`: the paths that triggered the risk.
 - `reasons`: per-path reason codes such as `test_only_success_path`,
   `verifier_or_harness_path`, or `runtime_shadowing_path`.

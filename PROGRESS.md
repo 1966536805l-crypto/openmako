@@ -1274,6 +1274,15 @@ Current public proof:
   added. This is local supplied-record report wording only, not proof of
   malicious intent, native transcript ingestion, native live control, remote CI
   status for this new commit, external review, endorsement, stars, or reposts.
+- The `verifier_tamper_risk` schema field description now includes Python
+  startup-shadowing hooks alongside verifier/oracle/harness/CI/test-only paths.
+  The focused schema-lock regression failed before the doc update and passed
+  after it; the full CLI wrapper test file, public metadata tests, supplied
+  transcript adapter matrix, and `git diff --check` passed locally before this
+  note was added. This is local supplied-record documentation alignment only,
+  not proof of malicious intent, native transcript ingestion, native live
+  control, remote CI status for this new commit, external review, endorsement,
+  stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
