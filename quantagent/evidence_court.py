@@ -843,13 +843,14 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
     ledger_identity: dict[str, object] = {}
-    agent_risk_ledger = _agent_risk_ledger(payload.get("agent_risk_ledger"))
+    agent_risk_ledger: dict[str, object] = {}
     unsupported: list[str] = []
     session_ids: set[str] = set()
     test_output = ""
 
     _add_event_session_id(session_ids, payload)
     _add_event_ledger_identity(ledger_identity, payload)
+    _add_event_agent_risk_ledger(agent_risk_ledger, payload)
 
     for message_index, message in enumerate(messages):
         if not isinstance(message, dict):
@@ -949,13 +950,14 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
     ledger_identity: dict[str, object] = {}
-    agent_risk_ledger = _agent_risk_ledger(payload.get("agent_risk_ledger"))
+    agent_risk_ledger: dict[str, object] = {}
     unsupported: list[str] = []
     session_ids: set[str] = set()
     test_output = ""
 
     _add_event_session_id(session_ids, payload)
     _add_event_ledger_identity(ledger_identity, payload)
+    _add_event_agent_risk_ledger(agent_risk_ledger, payload)
 
     for message_index, message in enumerate(messages):
         if not isinstance(message, dict):
@@ -1056,13 +1058,14 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
     ledger_identity: dict[str, object] = {}
-    agent_risk_ledger = _agent_risk_ledger(payload.get("agent_risk_ledger"))
+    agent_risk_ledger: dict[str, object] = {}
     unsupported: list[str] = []
     session_ids: set[str] = set()
     test_output = ""
 
     _add_event_session_id(session_ids, payload)
     _add_event_ledger_identity(ledger_identity, payload)
+    _add_event_agent_risk_ledger(agent_risk_ledger, payload)
 
     for event_index, event in enumerate(events):
         if not isinstance(event, dict):
@@ -1165,13 +1168,14 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
     ledger_identity: dict[str, object] = {}
-    agent_risk_ledger = _agent_risk_ledger(payload.get("agent_risk_ledger"))
+    agent_risk_ledger: dict[str, object] = {}
     unsupported: list[str] = []
     session_ids: set[str] = set()
     test_output = ""
 
     _add_event_session_id(session_ids, payload)
     _add_event_ledger_identity(ledger_identity, payload)
+    _add_event_agent_risk_ledger(agent_risk_ledger, payload)
 
     for step_index, step in enumerate(steps):
         if not isinstance(step, dict):
@@ -1617,6 +1621,20 @@ def _add_event_agent_risk_ledger(target: dict[str, object], event: dict[str, obj
     nested = _agent_risk_ledger(event.get("agent_risk_ledger"))
     if nested:
         _merge_agent_risk_ledger(target, nested)
+    direct: dict[str, object] = {}
+    for field in AGENT_RISK_BOOL_FIELDS:
+        if field not in event:
+            continue
+        value = event[field]
+        if not isinstance(value, bool):
+            raise ValueError(f"{field} must be a boolean")
+        direct[field] = value
+    for field in AGENT_RISK_LIST_FIELDS:
+        items = _string_array(event.get(field), field)
+        if items:
+            direct[field] = items
+    if direct:
+        _merge_agent_risk_ledger(target, direct)
 
 
 def _event_identity_text(event: dict[str, object], field: str) -> str:

@@ -1109,6 +1109,18 @@ Current public proof:
   metadata propagation only, not native transcript ingestion, native live
   control, gateway safety proof, persistent memory proof, external review,
   endorsement, stars, or reposts.
+- Supplied Codex-, Claude-, OpenHands-, and SWE-agent-style transcript builders
+  now also accept direct known agent-risk shorthand fields (`live_control`,
+  `self_improved`, `permission_evidence`, `tool_call_evidence`, and
+  `skill_change_evidence`) at root and tool/event/step level, merging them into
+  `agent_risk_ledger` while rejecting conflicting or malformed direct values.
+  The focused direct-field agent-risk regressions failed before the shorthand
+  parser and passed after it; the full CLI wrapper test file, public metadata
+  tests, supplied transcript adapter matrix, and `git diff --check` passed
+  locally before this note was added. This is local supplied-record shorthand
+  parsing only, not native transcript ingestion, native live control, gateway
+  safety proof, persistent memory proof, external review, endorsement, stars,
+  or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1121,6 +1133,7 @@ Next smallest hygiene task:
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
 - Next concrete candidate: another adapter evidence edge case such as
-  event-level `allowed_files` item diagnostics, or direct-field shorthand for
-  transcript agent-risk evidence only if it can be reduced to a failing parser
-  test behind the supplied-record proof boundary.
+  event-level `allowed_files` item diagnostics for non-string items, or
+  path-labeled diagnostics for malformed direct agent-risk booleans/lists only
+  if it can be reduced to a failing parser test behind the supplied-record
+  proof boundary.
