@@ -1581,6 +1581,18 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(converted.stdout, "")
         self.assertIn("final_claim text must be a string", converted.stderr)
 
+    def test_openmako_evidence_court_record_from_jsonl_rejects_mixed_final_claims(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
+            handle.write('{"kind":"task","claimed_task":"Fix calculator.py."}\n')
+            handle.write('{"kind":"final_claim","text":"Fixed and verified."}\n')
+            handle.write('{"kind":"final_claim","text":"Skipped tests but looks done."}\n')
+            handle.flush()
+            converted = self.run_openmako("--no-trust-prompt", "evidence-court", "record", "from-jsonl", handle.name)
+
+        self.assertEqual(converted.returncode, 2)
+        self.assertEqual(converted.stdout, "")
+        self.assertIn("final_claim values must not be mixed", converted.stderr)
+
     def test_openmako_evidence_court_record_from_jsonl_preserves_command_metrics(self) -> None:
         with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
             handle.write('{"kind":"task","claimed_task":"Fix calculator.py.","allowed_files":["calculator.py"]}\n')
@@ -5355,6 +5367,8 @@ class CliWrapperTest(unittest.TestCase):
         schema_doc = (ROOT / "docs" / "evidence_court_schema.md").read_text(encoding="utf-8")
         self.assertIn("Repeated `task` events must keep the same supplied", schema_doc)
         self.assertIn("conflicting task or scope metadata is rejected", schema_doc)
+        self.assertIn("Repeated `final_claim` events must also keep the same supplied claim", schema_doc)
+        self.assertIn("final-claim text is rejected instead of overwritten", schema_doc)
         self.assertIn("Non-numeric run metric fields such as `provider` and `model`", schema_doc)
         self.assertIn("they are rejected instead of overwritten", schema_doc)
         self.assertIn("conflicting scalar values or conflicting hash values", schema_doc)

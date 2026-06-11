@@ -1012,6 +1012,15 @@ Current public proof:
   local supplied-record scope validation only, not native transcript ingestion,
   live control, remote CI status, external review, endorsement, stars, or
   reposts.
+- The simple JSONL record builder now rejects conflicting repeated
+  `final_claim` events instead of overwriting earlier supplied completion
+  claims. Repeated final-claim events may still repeat the same claim. The
+  focused JSONL final-claim regression failed before the merge fix and passed
+  after it; the full CLI wrapper test file, public metadata tests, supplied
+  transcript adapter matrix, `git diff --check`, and public gate passed locally
+  before this note was added. This is local supplied-record claim validation
+  only, not proof that the claimed work happened outside the supplied record,
+  remote CI status, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

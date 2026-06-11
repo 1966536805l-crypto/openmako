@@ -696,7 +696,11 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
             if output:
                 test_output = output
         elif kind == "final_claim":
-            record["final_claim"] = _event_text_field(event, ("final_claim", "claim", "text"), "final_claim")
+            final_claim = _event_text_field(event, ("final_claim", "claim", "text"), "final_claim")
+            if record["final_claim"] and final_claim and record["final_claim"] != final_claim:
+                raise ValueError("final_claim values must not be mixed")
+            if final_claim:
+                record["final_claim"] = final_claim
         else:
             raise ValueError(f"unsupported JSONL event kind at line {line_no}: {kind or 'missing'}")
 

@@ -213,6 +213,8 @@ Supported event kinds are `task`, `read`, `edit`, `command`, and `final_claim`.
 Repeated `task` events must keep the same supplied `claimed_task` and
 `allowed_files` scope; conflicting task or scope metadata is rejected instead
 of overwritten.
+Repeated `final_claim` events must also keep the same supplied claim; conflicting
+final-claim text is rejected instead of overwritten.
 `edit` events may include `diff_hunks`, `diff`, `patch`, or `unified_diff`
 fields to supply diff-content evidence.
 `command` events may include `run_metrics` or direct telemetry fields such as
