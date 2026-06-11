@@ -662,17 +662,12 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
         _add_event_ledger_identity(ledger_identity, event)
         if kind == "task":
             claimed_task = _event_text_field(event, ("claimed_task", "task"), "claimed_task")
-            if record["claimed_task"] and claimed_task and record["claimed_task"] != claimed_task:
-                raise ValueError("claimed_task values must not be mixed")
             if claimed_task:
-                record["claimed_task"] = claimed_task
+                record["claimed_task"] = _merge_claimed_task(str(record["claimed_task"]), claimed_task)
             if "allowed_files" in event:
                 allowed_files = _string_list(event.get("allowed_files"))
-                existing_allowed = record["allowed_files"]
-                if existing_allowed and set(existing_allowed) != set(allowed_files):
-                    raise ValueError("allowed_files values must not be mixed")
                 if allowed_files:
-                    record["allowed_files"] = allowed_files
+                    record["allowed_files"] = _merge_allowed_files(record["allowed_files"], allowed_files)
         elif kind == "read":
             files_read.extend(_event_files(event))
         elif kind == "edit":
@@ -1036,8 +1031,12 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
         event_kind = _openhands_event_kind(event, event_path)
         if event_kind in {"task", "instruction"}:
             text = _openhands_event_text(event, "claimed_task")
-            if text and not record["claimed_task"]:
-                record["claimed_task"] = text
+            if text:
+                record["claimed_task"] = _merge_claimed_task(str(record["claimed_task"]), text)
+            if "allowed_files" in event:
+                allowed_files = _string_list(event.get("allowed_files"))
+                if allowed_files:
+                    record["allowed_files"] = _merge_allowed_files(record["allowed_files"], allowed_files)
         elif event_kind in {"read", "read_file", "file_read"}:
             files_read.extend(_codex_tool_files(event))
         elif event_kind in {"edit", "write", "write_file", "apply_patch", "patch"}:
@@ -1137,8 +1136,12 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
         step_kind = _swe_agent_step_kind(step, step_path)
         if step_kind in {"task", "instruction", "issue"}:
             text = _openhands_event_text(step, "claimed_task")
-            if text and not record["claimed_task"]:
-                record["claimed_task"] = text
+            if text:
+                record["claimed_task"] = _merge_claimed_task(str(record["claimed_task"]), text)
+            if "allowed_files" in step:
+                allowed_files = _string_list(step.get("allowed_files"))
+                if allowed_files:
+                    record["allowed_files"] = _merge_allowed_files(record["allowed_files"], allowed_files)
         elif step_kind in {"read", "read_file", "open"}:
             files_read.extend(_codex_tool_files(step))
         elif step_kind in {"edit", "write", "write_file", "apply_patch", "patch"}:
@@ -2000,6 +2003,19 @@ def _event_text_field(event: dict[str, object], fields: tuple[str, ...], label: 
         if text:
             return text
     return ""
+
+
+def _merge_claimed_task(current: str, incoming: str) -> str:
+    if current and incoming and current != incoming:
+        raise ValueError("claimed_task values must not be mixed")
+    return current or incoming
+
+
+def _merge_allowed_files(current: object, incoming: list[str]) -> list[str]:
+    existing = _string_list(current)
+    if existing and incoming and set(existing) != set(incoming):
+        raise ValueError("allowed_files values must not be mixed")
+    return existing or incoming
 
 
 def _merge_final_claim(current: str, incoming: str) -> str:

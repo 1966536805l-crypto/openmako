@@ -1042,6 +1042,17 @@ Current public proof:
   ingestion, live control, proof that the claimed work happened outside the
   supplied record, remote CI status, external review, endorsement, stars, or
   reposts.
+- The OpenHands-style and SWE-agent-style supplied transcript builders now
+  reject conflicting root/event task or allowed-file scope metadata instead of
+  ignoring later supplied task/scope evidence. Repeated task/scope messages may
+  still fill an empty value or repeat the same supplied task and same
+  allowed-file set. The focused OpenHands/SWE-agent task/scope regressions
+  failed before the merge fix and passed after it; the full CLI wrapper test
+  file, public metadata tests, and supplied transcript adapter matrix passed
+  locally before this note was added. This is local supplied-record scope
+  consistency validation only, not native transcript ingestion, live control,
+  proof that the claimed task happened outside the supplied record, remote CI
+  status, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1053,6 +1064,6 @@ Next smallest hygiene task:
 
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
-- Next concrete candidate: another adapter evidence edge case such as repeated
-  task/scope consistency in OpenHands/SWE-agent records, or a trend-radar
-  follow-up that stays behind the supplied-record proof boundary.
+- Next concrete candidate: another adapter evidence edge case such as
+  event-level malformed `allowed_files` diagnostics, or a trend-radar follow-up
+  that stays behind the supplied-record proof boundary.

@@ -5091,6 +5091,49 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(converted.returncode, 2)
         self.assertIn("final_claim values must not be mixed", converted.stderr)
 
+    def test_openmako_evidence_court_openhands_transcript_rejects_mixed_task_scope(self) -> None:
+        cases = (
+            (
+                {
+                    "task": "Fix calculator.py only.",
+                    "allowed_files": ["calculator.py"],
+                    "events": [
+                        {"action": "task", "message": "Rewrite report.md."},
+                    ],
+                },
+                "claimed_task values must not be mixed",
+            ),
+            (
+                {
+                    "task": "Fix calculator.py only.",
+                    "allowed_files": ["calculator.py"],
+                    "events": [
+                        {
+                            "action": "task",
+                            "message": "Fix calculator.py only.",
+                            "allowed_files": ["calculator.py", "tests/test_calculator.py"],
+                        },
+                    ],
+                },
+                "allowed_files values must not be mixed",
+            ),
+        )
+        for transcript, expected_error in cases:
+            with self.subTest(expected_error=expected_error):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        "from-openhands-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertIn(expected_error, converted.stderr)
+
     def test_openmako_evidence_court_openhands_transcript_mixed_source_test_diffs_are_not_tamper(self) -> None:
         transcript = {
             "task": "Fix calculator.py and update its focused test.",
@@ -5304,6 +5347,49 @@ class CliWrapperTest(unittest.TestCase):
 
         self.assertEqual(converted.returncode, 2)
         self.assertIn("final_claim values must not be mixed", converted.stderr)
+
+    def test_openmako_evidence_court_swe_agent_transcript_rejects_mixed_task_scope(self) -> None:
+        cases = (
+            (
+                {
+                    "issue": "Fix calculator.py only.",
+                    "allowed_files": ["calculator.py"],
+                    "steps": [
+                        {"action": "issue", "message": "Rewrite report.md."},
+                    ],
+                },
+                "claimed_task values must not be mixed",
+            ),
+            (
+                {
+                    "issue": "Fix calculator.py only.",
+                    "allowed_files": ["calculator.py"],
+                    "steps": [
+                        {
+                            "action": "issue",
+                            "message": "Fix calculator.py only.",
+                            "allowed_files": ["calculator.py", "tests/test_calculator.py"],
+                        },
+                    ],
+                },
+                "allowed_files values must not be mixed",
+            ),
+        )
+        for transcript, expected_error in cases:
+            with self.subTest(expected_error=expected_error):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        "from-swe-agent-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertIn(expected_error, converted.stderr)
 
     def test_openmako_evidence_court_swe_agent_transcript_mixed_source_test_diffs_are_not_tamper(self) -> None:
         transcript = {
@@ -5571,6 +5657,8 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("conflicting task or scope metadata is rejected", schema_doc)
         self.assertIn("Repeated `final_claim` events must also keep the same supplied claim", schema_doc)
         self.assertIn("final-claim text is rejected instead of overwritten", schema_doc)
+        self.assertIn("Root and event-level task/scope metadata must agree", schema_doc)
+        self.assertIn("Root and step-level task/scope metadata must", schema_doc)
         self.assertIn("Repeated final/finish messages must keep the same supplied final-claim text", schema_doc)
         self.assertIn("Repeated final/submit messages must keep the same", schema_doc)
         self.assertIn("Non-numeric run metric fields such as `provider` and `model`", schema_doc)
