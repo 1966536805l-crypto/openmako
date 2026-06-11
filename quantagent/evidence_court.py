@@ -866,7 +866,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
             tool_payload = _codex_tool_payload(tool_call, tool_path)
             _add_event_session_id(session_ids, tool_payload)
             _add_event_ledger_identity(ledger_identity, tool_payload)
-            _add_event_agent_risk_ledger(agent_risk_ledger, tool_payload)
+            _add_event_agent_risk_ledger(agent_risk_ledger, tool_payload, tool_path)
             tool_kind = _codex_tool_kind(tool_call, tool_payload, tool_path)
             if tool_kind in {"read", "read_file", "open", "cat"}:
                 files_read.extend(_codex_tool_files(tool_payload))
@@ -975,7 +975,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
             tool_payload = _codex_tool_payload(tool_call, tool_path)
             _add_event_session_id(session_ids, tool_payload)
             _add_event_ledger_identity(ledger_identity, tool_payload)
-            _add_event_agent_risk_ledger(agent_risk_ledger, tool_payload)
+            _add_event_agent_risk_ledger(agent_risk_ledger, tool_payload, tool_path)
             tool_kind = _codex_tool_kind(tool_call, tool_payload, tool_path)
             if tool_kind in {"read", "read_file", "open", "view", "cat"}:
                 files_read.extend(_codex_tool_files(tool_payload))
@@ -1070,10 +1070,10 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
     for event_index, event in enumerate(events):
         if not isinstance(event, dict):
             raise ValueError(f"OpenHands transcript event {event_index} must be an object")
+        event_path = f"events[{event_index}]"
         _add_event_session_id(session_ids, event)
         _add_event_ledger_identity(ledger_identity, event)
-        _add_event_agent_risk_ledger(agent_risk_ledger, event)
-        event_path = f"events[{event_index}]"
+        _add_event_agent_risk_ledger(agent_risk_ledger, event, event_path)
         event_kind = _openhands_event_kind(event, event_path)
         if event_kind in {"task", "instruction"}:
             text = _openhands_event_text(event, "claimed_task")
@@ -1180,10 +1180,10 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
     for step_index, step in enumerate(steps):
         if not isinstance(step, dict):
             raise ValueError(f"SWE-agent transcript step {step_index} must be an object")
+        step_path = f"steps[{step_index}]"
         _add_event_session_id(session_ids, step)
         _add_event_ledger_identity(ledger_identity, step)
-        _add_event_agent_risk_ledger(agent_risk_ledger, step)
-        step_path = f"steps[{step_index}]"
+        _add_event_agent_risk_ledger(agent_risk_ledger, step, step_path)
         step_kind = _swe_agent_step_kind(step, step_path)
         if step_kind in {"task", "instruction", "issue"}:
             text = _openhands_event_text(step, "claimed_task")
@@ -1617,7 +1617,9 @@ def _add_event_ledger_identity(target: dict[str, object], event: dict[str, objec
         _merge_ledger_identity(target, identity)
 
 
-def _add_event_agent_risk_ledger(target: dict[str, object], event: dict[str, object]) -> None:
+def _add_event_agent_risk_ledger(
+    target: dict[str, object], event: dict[str, object], label: str = ""
+) -> None:
     nested = _agent_risk_ledger(event.get("agent_risk_ledger"))
     if nested:
         _merge_agent_risk_ledger(target, nested)
@@ -1627,14 +1629,18 @@ def _add_event_agent_risk_ledger(target: dict[str, object], event: dict[str, obj
             continue
         value = event[field]
         if not isinstance(value, bool):
-            raise ValueError(f"{field} must be a boolean")
+            raise ValueError(f"{_field_label(label, field)} must be a boolean")
         direct[field] = value
     for field in AGENT_RISK_LIST_FIELDS:
-        items = _string_array(event.get(field), field)
+        items = _string_array(event.get(field), _field_label(label, field))
         if items:
             direct[field] = items
     if direct:
         _merge_agent_risk_ledger(target, direct)
+
+
+def _field_label(label: str, field: str) -> str:
+    return f"{label}.{field}" if label else field
 
 
 def _event_identity_text(event: dict[str, object], field: str) -> str:

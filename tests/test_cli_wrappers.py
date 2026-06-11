@@ -2717,6 +2717,60 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(converted.stdout, "")
                 self.assertIn("permission_evidence must be an array of strings", converted.stderr)
 
+    def test_openmako_evidence_court_transcript_adapters_label_malformed_direct_agent_risk_fields(self) -> None:
+        transcripts = {
+            "codex": (
+                {
+                    "claimed_task": "Audit live-control claim.",
+                    "messages": [{"role": "assistant", "tool_calls": [{"type": "exec_command", "live_control": "yes"}]}],
+                },
+                "messages[0].tool_calls[0].live_control must be a boolean",
+            ),
+            "claude": (
+                {
+                    "task": "Audit live-control claim.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": [{"type": "tool_use", "name": "Bash", "input": {"live_control": "yes"}}],
+                        }
+                    ],
+                },
+                "messages[0].content[0].live_control must be a boolean",
+            ),
+            "openhands": (
+                {
+                    "task": "Audit live-control claim.",
+                    "events": [{"action": "run", "live_control": "yes"}],
+                },
+                "events[0].live_control must be a boolean",
+            ),
+            "swe-agent": (
+                {
+                    "issue": "Audit live-control claim.",
+                    "steps": [{"action": "test", "live_control": "yes"}],
+                },
+                "steps[0].live_control must be a boolean",
+            ),
+        }
+
+        for adapter, (transcript, expected_error) in transcripts.items():
+            with self.subTest(adapter=adapter):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn(expected_error, converted.stderr)
+
     def test_openmako_evidence_court_other_transcripts_aggregate_multi_command_metrics(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"
@@ -6312,6 +6366,8 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("`agent_risk_ledger` preserves supplied agent-risk metadata", schema_doc)
         self.assertIn("Extra supplied agent-risk fields", schema_doc)
         self.assertIn("direct known agent-risk fields such as `live_control`", schema_doc)
+        self.assertIn("reported with their transcript path", schema_doc)
+        self.assertIn("messages[0].tool_calls[0].live_control", schema_doc)
         self.assertIn("The root object and tool calls may also include supplied `agent_risk_ledger`", schema_doc)
         self.assertIn("The root object and events may also include supplied `agent_risk_ledger`", schema_doc)
         self.assertIn("The root object and steps may also include supplied `agent_risk_ledger`", schema_doc)

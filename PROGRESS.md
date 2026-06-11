@@ -1121,6 +1121,17 @@ Current public proof:
   parsing only, not native transcript ingestion, native live control, gateway
   safety proof, persistent memory proof, external review, endorsement, stars,
   or reposts.
+- Malformed direct known agent-risk fields on supplied transcript tool/event/step
+  entries now include their supplied transcript path in diagnostics, such as
+  `messages[0].tool_calls[0].live_control`, `events[0].live_control`, or
+  `steps[0].live_control`, while preserving the older root-level direct-field
+  diagnostic boundary. The focused path-labeled malformed direct agent-risk
+  regression failed before the diagnostic label fix and passed after it; the
+  full CLI wrapper test file, public metadata tests, supplied transcript adapter
+  matrix, and `git diff --check` passed locally before this note was added.
+  This is local supplied-record parser diagnostics only, not native transcript
+  ingestion, native live control, gateway safety proof, persistent memory proof,
+  external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1134,6 +1145,6 @@ Next smallest hygiene task:
   and public-proof boundary.
 - Next concrete candidate: another adapter evidence edge case such as
   event-level `allowed_files` item diagnostics for non-string items, or
-  path-labeled diagnostics for malformed direct agent-risk booleans/lists only
-  if it can be reduced to a failing parser test behind the supplied-record
-  proof boundary.
+  path-labeled diagnostics for nested event/tool-level `agent_risk_ledger`
+  objects only if it can be reduced to a failing parser test behind the
+  supplied-record proof boundary.

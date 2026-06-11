@@ -216,6 +216,10 @@ or skill learning happened outside the supplied record.
 Supplied transcript adapters may also merge direct known agent-risk fields such
 as `live_control`, `self_improved`, `permission_evidence`,
 `tool_call_evidence`, and `skill_change_evidence` into `agent_risk_ledger`.
+Malformed direct agent-risk fields on supplied tool/event/step entries are
+reported with their transcript path, such as
+`messages[0].tool_calls[0].live_control`, `events[0].live_control`, or
+`steps[0].live_control`.
 
 `--ci` returns `0` for `PASS` and `SUSPICIOUS`, and `1` for `FAIL`.
 Use `SUSPICIOUS` as a review queue unless your workflow chooses to block on it.
