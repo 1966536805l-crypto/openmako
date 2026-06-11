@@ -1568,9 +1568,14 @@ def _merge_artifact_provenance(target: dict[str, object], source: dict[str, obje
         elif key in {"input_hashes", "output_hashes", "artifact_hashes"} and isinstance(value, dict):
             existing = target.get(key)
             merged = dict(existing) if isinstance(existing, dict) else {}
-            merged.update(value)
+            for item_key, item_value in value.items():
+                if item_key in merged and merged[item_key] != item_value:
+                    raise ValueError(f"artifact_provenance.{key}.{item_key} values must not be mixed")
+                merged[item_key] = item_value
             target[key] = merged
         else:
+            if key in target and target[key] != value:
+                raise ValueError(f"artifact_provenance.{key} values must not be mixed")
             target[key] = value
 
 

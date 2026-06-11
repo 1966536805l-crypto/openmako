@@ -982,6 +982,16 @@ Current public proof:
   native transcript ingestion, live agent control, proof that supplied patches
   were applied outside the supplied record, remote CI status, external review,
   endorsement, stars, or reposts.
+- Evidence Court now rejects conflicting supplied artifact provenance across
+  merged JSONL events instead of overwriting earlier scalar fields or same-key
+  artifact hashes. Repeated provenance may still add missing fields or repeat
+  the same value. The focused artifact provenance regressions failed before the
+  merge fix and passed after it; the full CLI wrapper test file, public metadata
+  tests, supplied transcript adapter matrix, `git diff --check`, and public gate
+  passed locally before this note was added. This is local supplied-record
+  provenance validation only, not native benchmark artifact ingestion,
+  independent artifact consistency proof, remote CI status, external review,
+  endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

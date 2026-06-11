@@ -218,6 +218,9 @@ fields to supply diff-content evidence.
 They may also include `artifact_provenance` or direct provenance fields such as
 `eval_rule_version`, `eval_rule_commit`, `runner_version`, `runner_commit`,
 `input_hashes`, `output_hashes`, `artifact_hashes`, and `missing_provenance`.
+Repeated artifact provenance fields must either repeat the same value or add
+new missing metadata; conflicting scalar values or conflicting hash values for
+the same artifact key are rejected instead of overwritten.
 Any event kind may include supplied ledger identity metadata either in a nested
 `ledger_identity` object or as direct `session_id`, `task_id`, `parent_id`,
 single invocation fields such as `tool_invocation_id`, `tool_call_id`, or

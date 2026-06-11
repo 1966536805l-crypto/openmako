@@ -1614,6 +1614,42 @@ class CliWrapperTest(unittest.TestCase):
             },
         )
 
+    def test_openmako_evidence_court_record_from_jsonl_rejects_mixed_artifact_hash_values(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
+            handle.write('{"kind":"task","claimed_task":"Compare benchmark artifacts."}\n')
+            handle.write(
+                '{"kind":"command","command":"python3 scripts/hash_input.py","exit_code":0,'
+                '"input_hashes":{"output.jsonl":"sha256:111"}}\n'
+            )
+            handle.write(
+                '{"kind":"command","command":"python3 scripts/hash_input_again.py","exit_code":0,'
+                '"artifact_provenance":{"input_hashes":{"output.jsonl":"sha256:222"}}}\n'
+            )
+            handle.flush()
+            converted = self.run_openmako("--no-trust-prompt", "evidence-court", "record", "from-jsonl", handle.name)
+
+        self.assertEqual(converted.returncode, 2)
+        self.assertEqual(converted.stdout, "")
+        self.assertIn("artifact_provenance.input_hashes.output.jsonl values must not be mixed", converted.stderr)
+
+    def test_openmako_evidence_court_record_from_jsonl_rejects_mixed_artifact_scalar_values(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
+            handle.write('{"kind":"task","claimed_task":"Compare benchmark artifacts."}\n')
+            handle.write(
+                '{"kind":"command","command":"python3 scripts/compare_outputs.py","exit_code":0,'
+                '"eval_rule_version":"swtbench-strip-model-patch/v1"}\n'
+            )
+            handle.write(
+                '{"kind":"command","command":"python3 scripts/compare_outputs_again.py","exit_code":0,'
+                '"artifact_provenance":{"eval_rule_version":"swtbench-strip-model-patch/v2"}}\n'
+            )
+            handle.flush()
+            converted = self.run_openmako("--no-trust-prompt", "evidence-court", "record", "from-jsonl", handle.name)
+
+        self.assertEqual(converted.returncode, 2)
+        self.assertEqual(converted.stdout, "")
+        self.assertIn("artifact_provenance.eval_rule_version values must not be mixed", converted.stderr)
+
     def test_openmako_evidence_court_record_from_swtbench_artifacts_is_auditable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
@@ -5256,6 +5292,8 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(schema["properties"]["run_metrics"]["properties"]["missing_telemetry"]["type"], "array")
         self.assertEqual(schema["properties"]["artifact_provenance"]["type"], "object")
         schema_doc = (ROOT / "docs" / "evidence_court_schema.md").read_text(encoding="utf-8")
+        self.assertIn("conflicting scalar values or conflicting hash values", schema_doc)
+        self.assertIn("same artifact key are rejected instead of overwritten", schema_doc)
         self.assertIn("direct list fields such as `tool_invocation_ids` and", schema_doc)
         self.assertIn("Direct ledger identity list fields must be arrays of", schema_doc)
         self.assertIn("that a native transcript was ingested", schema_doc)
