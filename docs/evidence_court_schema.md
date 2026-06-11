@@ -267,6 +267,12 @@ They may also include `artifact_provenance` or direct provenance fields such as
 Repeated artifact provenance fields must either repeat the same value or add
 new missing metadata; conflicting scalar values or conflicting hash values for
 the same artifact key are rejected instead of overwritten.
+Supplied transcript builders label conflicting command artifact provenance with
+the incoming path, such as
+`messages[index].tool_calls[index].artifact_provenance.eval_rule_version`,
+`messages[index].content[index].artifact_provenance.eval_rule_version`,
+`events[index].artifact_provenance.eval_rule_version`, or
+`steps[index].artifact_provenance.eval_rule_version`.
 Any event kind may include supplied ledger identity metadata either in a nested
 `ledger_identity` object or as direct `session_id`, `task_id`, `parent_id`,
 single invocation fields such as `tool_invocation_id`, `tool_call_id`, or

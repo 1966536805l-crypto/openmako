@@ -3053,6 +3053,131 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(converted.stdout, "")
                 self.assertIn(expected_error, converted.stderr)
 
+    def test_openmako_evidence_court_transcript_adapters_label_mixed_artifact_provenance(self) -> None:
+        cases = {
+            "codex": (
+                {
+                    "claimed_task": "Compare benchmark artifacts.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "tool_calls": [
+                                {
+                                    "type": "exec_command",
+                                    "command": "python3 scripts/compare_outputs.py",
+                                    "exit_code": 0,
+                                    "eval_rule_version": "swtbench-strip-model-patch/v1",
+                                },
+                                {
+                                    "type": "exec_command",
+                                    "command": "python3 scripts/compare_outputs_again.py",
+                                    "exit_code": 0,
+                                    "artifact_provenance": {
+                                        "eval_rule_version": "swtbench-strip-model-patch/v2",
+                                    },
+                                },
+                            ],
+                        }
+                    ],
+                },
+                "messages[0].tool_calls[1].artifact_provenance.eval_rule_version values must not be mixed",
+            ),
+            "claude": (
+                {
+                    "task": "Compare benchmark artifacts.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "name": "Bash",
+                                    "input": {
+                                        "command": "python3 scripts/compare_outputs.py",
+                                        "exit_code": 0,
+                                        "eval_rule_version": "swtbench-strip-model-patch/v1",
+                                    },
+                                },
+                                {
+                                    "type": "tool_use",
+                                    "name": "Bash",
+                                    "input": {
+                                        "command": "python3 scripts/compare_outputs_again.py",
+                                        "exit_code": 0,
+                                        "artifact_provenance": {
+                                            "eval_rule_version": "swtbench-strip-model-patch/v2",
+                                        },
+                                    },
+                                },
+                            ],
+                        }
+                    ],
+                },
+                "messages[0].content[1].artifact_provenance.eval_rule_version values must not be mixed",
+            ),
+            "openhands": (
+                {
+                    "task": "Compare benchmark artifacts.",
+                    "events": [
+                        {
+                            "action": "run",
+                            "command": "python3 scripts/compare_outputs.py",
+                            "exit_code": 0,
+                            "eval_rule_version": "swtbench-strip-model-patch/v1",
+                        },
+                        {
+                            "action": "run",
+                            "command": "python3 scripts/compare_outputs_again.py",
+                            "exit_code": 0,
+                            "artifact_provenance": {
+                                "eval_rule_version": "swtbench-strip-model-patch/v2",
+                            },
+                        },
+                    ],
+                },
+                "events[1].artifact_provenance.eval_rule_version values must not be mixed",
+            ),
+            "swe-agent": (
+                {
+                    "issue": "Compare benchmark artifacts.",
+                    "steps": [
+                        {
+                            "action": "run",
+                            "command": "python3 scripts/compare_outputs.py",
+                            "exit_code": 0,
+                            "eval_rule_version": "swtbench-strip-model-patch/v1",
+                        },
+                        {
+                            "action": "test",
+                            "command": "python3 scripts/compare_outputs_again.py",
+                            "exit_code": 0,
+                            "artifact_provenance": {
+                                "eval_rule_version": "swtbench-strip-model-patch/v2",
+                            },
+                        },
+                    ],
+                },
+                "steps[1].artifact_provenance.eval_rule_version values must not be mixed",
+            ),
+        }
+
+        for adapter, (transcript, expected_error) in cases.items():
+            with self.subTest(adapter=adapter):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn(expected_error, converted.stderr)
+
     def test_openmako_evidence_court_transcript_adapters_deduplicate_file_evidence(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"
@@ -6533,6 +6658,10 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("steps[index].run_metrics.provider", schema_doc)
         self.assertIn("conflicting scalar values or conflicting hash values", schema_doc)
         self.assertIn("same artifact key are rejected instead of overwritten", schema_doc)
+        self.assertIn("messages[index].tool_calls[index].artifact_provenance.eval_rule_version", schema_doc)
+        self.assertIn("messages[index].content[index].artifact_provenance.eval_rule_version", schema_doc)
+        self.assertIn("events[index].artifact_provenance.eval_rule_version", schema_doc)
+        self.assertIn("steps[index].artifact_provenance.eval_rule_version", schema_doc)
         self.assertIn("direct list fields such as `tool_invocation_ids` and", schema_doc)
         self.assertIn("Direct ledger identity list fields must be arrays of", schema_doc)
         self.assertIn("that a native transcript was ingested", schema_doc)

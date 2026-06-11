@@ -888,7 +888,9 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
                     _merge_run_metrics(run_metrics, metrics, label=f"{tool_path}.run_metrics")
                 provenance = _event_artifact_provenance(tool_payload)
                 if provenance:
-                    _merge_artifact_provenance(artifact_provenance, provenance)
+                    _merge_artifact_provenance(
+                        artifact_provenance, provenance, label=f"{tool_path}.artifact_provenance"
+                    )
                 output = _codex_command_output(tool_payload)
                 if output:
                     test_output = _select_command_test_output(test_output, command, output)
@@ -997,7 +999,9 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
                     _merge_run_metrics(run_metrics, metrics, label=f"{tool_path}.run_metrics")
                 provenance = _event_artifact_provenance(tool_payload)
                 if provenance:
-                    _merge_artifact_provenance(artifact_provenance, provenance)
+                    _merge_artifact_provenance(
+                        artifact_provenance, provenance, label=f"{tool_path}.artifact_provenance"
+                    )
                 output = _codex_command_output(tool_payload)
                 if output:
                     test_output = _select_command_test_output(test_output, command, output)
@@ -1107,7 +1111,9 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
                 _merge_run_metrics(run_metrics, metrics, label=f"{event_path}.run_metrics")
             provenance = _event_artifact_provenance(event)
             if provenance:
-                _merge_artifact_provenance(artifact_provenance, provenance)
+                _merge_artifact_provenance(
+                    artifact_provenance, provenance, label=f"{event_path}.artifact_provenance"
+                )
             output = _codex_command_output(event)
             if output:
                 test_output = _select_command_test_output(test_output, command, output)
@@ -1223,7 +1229,9 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
                 _merge_run_metrics(run_metrics, metrics, label=f"{step_path}.run_metrics")
             provenance = _event_artifact_provenance(step)
             if provenance:
-                _merge_artifact_provenance(artifact_provenance, provenance)
+                _merge_artifact_provenance(
+                    artifact_provenance, provenance, label=f"{step_path}.artifact_provenance"
+                )
             output = _codex_command_output(step)
             if output:
                 test_output = _select_command_test_output(test_output, command, output)
@@ -1711,7 +1719,9 @@ def _event_artifact_provenance(event: dict[str, object]) -> dict[str, object]:
     return _artifact_provenance(provenance) if provenance else {}
 
 
-def _merge_artifact_provenance(target: dict[str, object], source: dict[str, object]) -> None:
+def _merge_artifact_provenance(
+    target: dict[str, object], source: dict[str, object], *, label: str = "artifact_provenance"
+) -> None:
     for key, value in source.items():
         if key == "missing_provenance":
             existing = target.get(key)
@@ -1726,12 +1736,12 @@ def _merge_artifact_provenance(target: dict[str, object], source: dict[str, obje
             merged = dict(existing) if isinstance(existing, dict) else {}
             for item_key, item_value in value.items():
                 if item_key in merged and merged[item_key] != item_value:
-                    raise ValueError(f"artifact_provenance.{key}.{item_key} values must not be mixed")
+                    raise ValueError(f"{label}.{key}.{item_key} values must not be mixed")
                 merged[item_key] = item_value
             target[key] = merged
         else:
             if key in target and target[key] != value:
-                raise ValueError(f"artifact_provenance.{key} values must not be mixed")
+                raise ValueError(f"{label}.{key} values must not be mixed")
             target[key] = value
 
 
