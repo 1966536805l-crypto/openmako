@@ -1779,7 +1779,7 @@ class CliWrapperTest(unittest.TestCase):
 
         self.assertEqual(converted.returncode, 2)
         self.assertEqual(converted.stdout, "")
-        self.assertIn("run_metrics.provider values must not be mixed", converted.stderr)
+        self.assertIn("JSONL event at line 3.run_metrics.provider values must not be mixed", converted.stderr)
 
     def test_openmako_evidence_court_record_from_jsonl_rejects_mixed_run_metric_model_values(self) -> None:
         with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
@@ -1797,7 +1797,7 @@ class CliWrapperTest(unittest.TestCase):
 
         self.assertEqual(converted.returncode, 2)
         self.assertEqual(converted.stdout, "")
-        self.assertIn("run_metrics.model values must not be mixed", converted.stderr)
+        self.assertIn("JSONL event at line 3.run_metrics.model values must not be mixed", converted.stderr)
 
     def test_openmako_evidence_court_record_from_jsonl_preserves_artifact_provenance(self) -> None:
         with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
@@ -1844,7 +1844,10 @@ class CliWrapperTest(unittest.TestCase):
 
         self.assertEqual(converted.returncode, 2)
         self.assertEqual(converted.stdout, "")
-        self.assertIn("artifact_provenance.input_hashes.output.jsonl values must not be mixed", converted.stderr)
+        self.assertIn(
+            "JSONL event at line 3.artifact_provenance.input_hashes.output.jsonl values must not be mixed",
+            converted.stderr,
+        )
 
     def test_openmako_evidence_court_record_from_jsonl_rejects_mixed_artifact_scalar_values(self) -> None:
         with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
@@ -1862,7 +1865,10 @@ class CliWrapperTest(unittest.TestCase):
 
         self.assertEqual(converted.returncode, 2)
         self.assertEqual(converted.stdout, "")
-        self.assertIn("artifact_provenance.eval_rule_version values must not be mixed", converted.stderr)
+        self.assertIn(
+            "JSONL event at line 3.artifact_provenance.eval_rule_version values must not be mixed",
+            converted.stderr,
+        )
 
     def test_openmako_evidence_court_record_from_swtbench_artifacts_is_auditable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -7031,12 +7037,14 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("steps[index].final_claim values must not be mixed", schema_doc)
         self.assertIn("Non-numeric run metric fields such as `provider` and `model`", schema_doc)
         self.assertIn("they are rejected instead of overwritten", schema_doc)
+        self.assertIn("JSONL event at line 3.run_metrics.provider", schema_doc)
         self.assertIn("messages[index].tool_calls[index].run_metrics.provider", schema_doc)
         self.assertIn("messages[index].content[index].run_metrics.provider", schema_doc)
         self.assertIn("events[index].run_metrics.provider", schema_doc)
         self.assertIn("steps[index].run_metrics.provider", schema_doc)
         self.assertIn("conflicting scalar values or conflicting hash values", schema_doc)
         self.assertIn("same artifact key are rejected instead of overwritten", schema_doc)
+        self.assertIn("JSONL event at line 3.artifact_provenance.eval_rule_version", schema_doc)
         self.assertIn("messages[index].tool_calls[index].artifact_provenance.eval_rule_version", schema_doc)
         self.assertIn("messages[index].content[index].artifact_provenance.eval_rule_version", schema_doc)
         self.assertIn("events[index].artifact_provenance.eval_rule_version", schema_doc)

@@ -1349,6 +1349,19 @@ Current public proof:
   before this note was added. This is local supplied-record parser diagnostics
   only, not native transcript ingestion, native live control, remote CI status
   for this new commit, external review, endorsement, stars, or reposts.
+- Simple JSONL record builder command events now label conflicting run-metric
+  and artifact-provenance diagnostics with the source line, such as
+  `JSONL event at line 3.run_metrics.provider` and
+  `JSONL event at line 3.artifact_provenance.eval_rule_version`, instead of
+  only generic `run_metrics.*` or `artifact_provenance.*` fields. The focused
+  JSONL command telemetry/provenance conflict regressions failed before the
+  line-label fix and passed after it; the focused schema-lock regression failed
+  before the doc update and passed after it; the full CLI wrapper test file,
+  public metadata tests, supplied transcript adapter matrix, and
+  `git diff --check` passed locally before this note was added. This is local
+  supplied-record parser diagnostics only, not native transcript ingestion,
+  native live control, remote CI status for this new commit, external review,
+  endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

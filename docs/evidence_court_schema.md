@@ -267,6 +267,8 @@ commands is kept ahead of later non-validation command output.
 Numeric run metrics are summed across commands and `missing_telemetry` is
 merged. Non-numeric run metric fields such as `provider` and `model` must repeat
 the same supplied value or they are rejected instead of overwritten.
+JSONL command events label conflicting command telemetry with the source line,
+such as `JSONL event at line 3.run_metrics.provider`.
 Supplied transcript builders label conflicting command telemetry with the
 incoming path, such as
 `messages[index].tool_calls[index].run_metrics.provider`,
@@ -279,6 +281,9 @@ They may also include `artifact_provenance` or direct provenance fields such as
 Repeated artifact provenance fields must either repeat the same value or add
 new missing metadata; conflicting scalar values or conflicting hash values for
 the same artifact key are rejected instead of overwritten.
+JSONL command events label conflicting command artifact provenance with the
+source line, such as
+`JSONL event at line 3.artifact_provenance.eval_rule_version`.
 Supplied transcript builders label conflicting command artifact provenance with
 the incoming path, such as
 `messages[index].tool_calls[index].artifact_provenance.eval_rule_version`,

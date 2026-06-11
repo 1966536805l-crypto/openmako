@@ -727,10 +727,14 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
                 commands_run.append(item)
             event_metrics = _event_run_metrics(event)
             if event_metrics:
-                _merge_run_metrics(run_metrics, event_metrics)
+                _merge_run_metrics(run_metrics, event_metrics, label=f"{event_path}.run_metrics")
             event_provenance = _event_artifact_provenance(event)
             if event_provenance:
-                _merge_artifact_provenance(artifact_provenance, event_provenance)
+                _merge_artifact_provenance(
+                    artifact_provenance,
+                    event_provenance,
+                    label=f"{event_path}.artifact_provenance",
+                )
             output = _codex_command_output(event)
             if output:
                 test_output = _select_command_test_output(test_output, command, output)
