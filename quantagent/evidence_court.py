@@ -1112,7 +1112,9 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
         elif event_kind in {"finish", "final", "final_claim", "message"}:
             text = _openhands_event_text(event, "final_claim")
             if text:
-                record["final_claim"] = _merge_final_claim(str(record["final_claim"]), text)
+                record["final_claim"] = _merge_final_claim(
+                    str(record["final_claim"]), text, label=f"{event_path}.final_claim"
+                )
         else:
             unsupported.append(f"{event_path}: {event_kind or 'unsupported'}")
 
@@ -1224,7 +1226,9 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
         elif step_kind in {"finish", "final", "final_claim", "submit"}:
             text = _openhands_event_text(step, "final_claim")
             if text:
-                record["final_claim"] = _merge_final_claim(str(record["final_claim"]), text)
+                record["final_claim"] = _merge_final_claim(
+                    str(record["final_claim"]), text, label=f"{step_path}.final_claim"
+                )
         else:
             unsupported.append(f"{step_path}: {step_kind or 'unsupported'}")
 
@@ -2194,9 +2198,9 @@ def _merge_allowed_files(current: object, incoming: list[str], *, label: str = "
     return existing or incoming
 
 
-def _merge_final_claim(current: str, incoming: str) -> str:
+def _merge_final_claim(current: str, incoming: str, *, label: str = "final_claim") -> str:
     if current and incoming and current != incoming:
-        raise ValueError("final_claim values must not be mixed")
+        raise ValueError(f"{label} values must not be mixed")
     return current or incoming
 
 

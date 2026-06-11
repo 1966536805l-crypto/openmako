@@ -5805,7 +5805,7 @@ class CliWrapperTest(unittest.TestCase):
             )
 
         self.assertEqual(converted.returncode, 2)
-        self.assertIn("final_claim values must not be mixed", converted.stderr)
+        self.assertIn("events[2].final_claim values must not be mixed", converted.stderr)
 
     def test_openmako_evidence_court_openhands_transcript_rejects_mixed_task_scope(self) -> None:
         cases = (
@@ -6062,7 +6062,7 @@ class CliWrapperTest(unittest.TestCase):
             )
 
         self.assertEqual(converted.returncode, 2)
-        self.assertIn("final_claim values must not be mixed", converted.stderr)
+        self.assertIn("steps[2].final_claim values must not be mixed", converted.stderr)
 
     def test_openmako_evidence_court_swe_agent_transcript_rejects_mixed_task_scope(self) -> None:
         cases = (
@@ -6383,7 +6383,9 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("steps[index].allowed_files[item]", schema_doc)
         self.assertIn("steps[index].allowed_files values must not be mixed", schema_doc)
         self.assertIn("Repeated final/finish messages must keep the same supplied final-claim text", schema_doc)
+        self.assertIn("events[index].final_claim values must not be mixed", schema_doc)
         self.assertIn("Repeated final/submit messages must keep the same", schema_doc)
+        self.assertIn("steps[index].final_claim values must not be mixed", schema_doc)
         self.assertIn("Non-numeric run metric fields such as `provider` and `model`", schema_doc)
         self.assertIn("they are rejected instead of overwritten", schema_doc)
         self.assertIn("conflicting scalar values or conflicting hash values", schema_doc)

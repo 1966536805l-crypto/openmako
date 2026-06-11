@@ -1167,6 +1167,22 @@ Current public proof:
   locally before this note was added. This is local supplied-record parser
   diagnostics only, not native transcript ingestion, native live control,
   remote CI status, external review, endorsement, stars, or reposts.
+- Remote focused CI snapshot later verified commit `333c9e6` with GitHub
+  Actions run `27342803434` completing successfully. This verifies the remote
+  focused workflow for that commit only; it is not external review, endorsement,
+  stars, reposts, or proof of native transcript ingestion/live control.
+- Conflicting event/step-level final-claim text now includes the incoming
+  supplied message path in diagnostics, such as
+  `events[2].final_claim values must not be mixed` or
+  `steps[2].final_claim values must not be mixed`, while preserving the
+  existing generic merge diagnostic for non-adapter callers. The focused
+  OpenHands/SWE-agent mixed final-message regressions failed before the
+  path-label fix and passed after it; the full CLI wrapper test file, public
+  metadata tests, supplied transcript adapter matrix, and `git diff --check`
+  passed locally before this note was added. This is local supplied-record
+  parser diagnostics only, not native transcript ingestion, native live control,
+  remote CI status for this new commit, external review, endorsement, stars, or
+  reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

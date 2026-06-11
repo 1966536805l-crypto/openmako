@@ -381,6 +381,8 @@ Conflicting event-level `allowed_files` values are rejected with an
 `events[index].allowed_files values must not be mixed` diagnostic.
 Repeated final/finish messages must keep the same supplied final-claim text;
 conflicting final-claim text is rejected instead of overwritten.
+Conflicting event-level final-claim text is rejected with an
+`events[index].final_claim values must not be mixed` diagnostic.
 Edit/apply-patch events may include `diff_hunks`, `diff`, `patch`, or
 `unified_diff` fields.
 The root object and events may include supplied `session_id`, `task_id`,
@@ -420,6 +422,8 @@ Conflicting step-level `allowed_files` values are rejected with a
 `steps[index].allowed_files values must not be mixed` diagnostic.
 Repeated final/submit messages must keep the same supplied final-claim text;
 conflicting final-claim text is rejected instead of overwritten.
+Conflicting step-level final-claim text is rejected with a
+`steps[index].final_claim values must not be mixed` diagnostic.
 Edit/apply-patch steps may include `diff_hunks`, `diff`, `patch`, or
 `unified_diff` fields.
 The root object and steps may include supplied `session_id`, `task_id`,
