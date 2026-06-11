@@ -190,6 +190,9 @@ including `session_id`, `task_id`, `parent_id`, `tool_invocation_ids`,
 IDs. This helps compare supplied records that carry run or tool call identity
 fields, but it does not prove native transcript ingestion, live agent control,
 or that supplied patches were applied outside the supplied record.
+If a supplied transcript repeats the same ledger identity field with a
+different value, the adapter rejects it instead of silently overwriting earlier
+identity evidence.
 
 `--ci` returns `0` for `PASS` and `SUSPICIOUS`, and `1` for `FAIL`.
 Use `SUSPICIOUS` as a review queue unless your workflow chooses to block on it.

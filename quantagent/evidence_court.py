@@ -1574,6 +1574,9 @@ def _merge_ledger_identity(target: dict[str, object], source: dict[str, object])
                 values.extend(str(item) for item in value)
             target[key] = _unique_strings(tuple(values))
         else:
+            existing = target.get(key)
+            if key in target and existing != value:
+                raise ValueError(f"ledger_identity.{key} values must not be mixed")
             target[key] = value
 
 

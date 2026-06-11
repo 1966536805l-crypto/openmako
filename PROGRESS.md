@@ -951,6 +951,16 @@ Current public proof:
   supplied-record identity preservation only, not native export ingestion, live
   agent control, proof that supplied patches were applied outside the supplied
   record, remote CI status, external review, endorsement, stars, or reposts.
+- Supplied transcript adapters now reject mixed extra ledger identity fields
+  such as conflicting `run_id` values instead of silently overwriting earlier
+  supplied identity evidence. The focused mixed-identity regression failed
+  before the merge fix and passed after it; the full CLI wrapper test file,
+  public metadata tests, supplied transcript adapter matrix, `git diff
+  --check`, and public gate passed locally before this note was added. This is
+  local supplied-record identity validation only, not native export ingestion,
+  live agent control, proof that supplied patches were applied outside the
+  supplied record, remote CI status, external review, endorsement, stars, or
+  reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
