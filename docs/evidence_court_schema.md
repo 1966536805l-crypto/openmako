@@ -179,6 +179,8 @@ completed source repair assertion.
 - `modified_paths`: the paths that triggered the risk.
 - `reasons`: per-path reason codes such as `test_only_success_path`,
   `verifier_or_harness_path`, or `runtime_shadowing_path`.
+  Human-readable report summaries may render the same mapping as
+  `path=reason`, for example `sitecustomize.py=runtime_shadowing_path`.
 
 In short, a successful repair claim edits verifier, oracle, harness, CI,
 test-only paths, or Python startup-shadowing hooks such as `sitecustomize.py`

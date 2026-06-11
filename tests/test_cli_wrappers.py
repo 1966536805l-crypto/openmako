@@ -6785,6 +6785,7 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("test-only paths, or Python startup-shadowing hooks", schema)
         self.assertIn("`runtime_shadowing_path`", schema)
         self.assertIn("Python startup-shadowing hooks such as `sitecustomize.py`", schema)
+        self.assertIn("`sitecustomize.py=runtime_shadowing_path`", schema)
         self.assertIn("artifact identity metadata supplied by the record", schema)
         self.assertIn("ledger identity metadata supplied by the record", schema)
         self.assertIn("does not mean OpenMako ingests native benchmark", schema)

@@ -1254,6 +1254,16 @@ Current public proof:
   report wording only, not proof of malicious intent, native transcript
   ingestion, native live control, remote CI status for this new commit,
   external review, endorsement, stars, or reposts.
+- The Evidence Court schema docs now state that human-readable
+  `verifier_tamper_risk` report summaries may render per-path reason mappings
+  as `path=reason`, including `sitecustomize.py=runtime_shadowing_path`. The
+  focused schema-lock regression failed before the doc update and passed after
+  it; the full CLI wrapper test file, public metadata tests, supplied
+  transcript adapter matrix, and `git diff --check` passed locally before this
+  note was added. This is local supplied-record documentation alignment only,
+  not proof of malicious intent, native transcript ingestion, native live
+  control, remote CI status for this new commit, external review, endorsement,
+  stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
