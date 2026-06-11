@@ -1002,6 +1002,16 @@ Current public proof:
   this note was added. This is local supplied-record telemetry validation only,
   not proof that model calls or command telemetry happened outside the supplied
   record, remote CI status, external review, endorsement, stars, or reposts.
+- The simple JSONL record builder now rejects conflicting repeated `task`
+  metadata instead of overwriting the earlier supplied `claimed_task` or
+  `allowed_files` scope. Repeated task events may still repeat the same task
+  and same allowed-file set. The focused JSONL task/scope regressions failed
+  before the merge fix and passed after it; the full CLI wrapper test file,
+  public metadata tests, supplied transcript adapter matrix, `git diff
+  --check`, and public gate passed locally before this note was added. This is
+  local supplied-record scope validation only, not native transcript ingestion,
+  live control, remote CI status, external review, endorsement, stars, or
+  reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

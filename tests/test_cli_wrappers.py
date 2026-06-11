@@ -1383,6 +1383,31 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["verdict"], "FAIL")
         self.assertEqual(payload["failure_class"], "scope_violation")
 
+    def test_openmako_evidence_court_record_from_jsonl_rejects_mixed_task_claims(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
+            handle.write('{"kind":"task","claimed_task":"Fix calculator.py."}\n')
+            handle.write('{"kind":"task","claimed_task":"Rewrite report.md."}\n')
+            handle.flush()
+            converted = self.run_openmako("--no-trust-prompt", "evidence-court", "record", "from-jsonl", handle.name)
+
+        self.assertEqual(converted.returncode, 2)
+        self.assertEqual(converted.stdout, "")
+        self.assertIn("claimed_task values must not be mixed", converted.stderr)
+
+    def test_openmako_evidence_court_record_from_jsonl_rejects_mixed_allowed_files(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
+            handle.write('{"kind":"task","claimed_task":"Fix calculator.py.","allowed_files":["calculator.py"]}\n')
+            handle.write(
+                '{"kind":"task","claimed_task":"Fix calculator.py.",'
+                '"allowed_files":["calculator.py","tests/test_calculator.py"]}\n'
+            )
+            handle.flush()
+            converted = self.run_openmako("--no-trust-prompt", "evidence-court", "record", "from-jsonl", handle.name)
+
+        self.assertEqual(converted.returncode, 2)
+        self.assertEqual(converted.stdout, "")
+        self.assertIn("allowed_files values must not be mixed", converted.stderr)
+
     def test_openmako_evidence_court_record_from_jsonl_deduplicates_file_evidence(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"
@@ -5328,6 +5353,8 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(schema["properties"]["run_metrics"]["properties"]["missing_telemetry"]["type"], "array")
         self.assertEqual(schema["properties"]["artifact_provenance"]["type"], "object")
         schema_doc = (ROOT / "docs" / "evidence_court_schema.md").read_text(encoding="utf-8")
+        self.assertIn("Repeated `task` events must keep the same supplied", schema_doc)
+        self.assertIn("conflicting task or scope metadata is rejected", schema_doc)
         self.assertIn("Non-numeric run metric fields such as `provider` and `model`", schema_doc)
         self.assertIn("they are rejected instead of overwritten", schema_doc)
         self.assertIn("conflicting scalar values or conflicting hash values", schema_doc)

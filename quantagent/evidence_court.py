@@ -661,9 +661,18 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
         )
         _add_event_ledger_identity(ledger_identity, event)
         if kind == "task":
-            record["claimed_task"] = _event_text_field(event, ("claimed_task", "task"), "claimed_task")
+            claimed_task = _event_text_field(event, ("claimed_task", "task"), "claimed_task")
+            if record["claimed_task"] and claimed_task and record["claimed_task"] != claimed_task:
+                raise ValueError("claimed_task values must not be mixed")
+            if claimed_task:
+                record["claimed_task"] = claimed_task
             if "allowed_files" in event:
-                record["allowed_files"] = _string_list(event.get("allowed_files"))
+                allowed_files = _string_list(event.get("allowed_files"))
+                existing_allowed = record["allowed_files"]
+                if existing_allowed and set(existing_allowed) != set(allowed_files):
+                    raise ValueError("allowed_files values must not be mixed")
+                if allowed_files:
+                    record["allowed_files"] = allowed_files
         elif kind == "read":
             files_read.extend(_event_files(event))
         elif kind == "edit":
