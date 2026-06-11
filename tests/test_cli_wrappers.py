@@ -3329,6 +3329,150 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(converted.stdout, "")
                 self.assertIn(expected_error, converted.stderr)
 
+    def test_openmako_evidence_court_transcript_adapters_label_first_combined_command_conflict(
+        self,
+    ) -> None:
+        cases = {
+            "codex": (
+                {
+                    "claimed_task": "Compare benchmark artifacts.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "tool_calls": [
+                                {
+                                    "type": "exec_command",
+                                    "command": "python3 scripts/prepare.py",
+                                    "exit_code": 0,
+                                    "provider": "openai",
+                                    "artifact_provenance": {
+                                        "eval_rule_version": "swtbench-strip-model-patch/v1",
+                                    },
+                                },
+                                {
+                                    "type": "exec_command",
+                                    "command": "python3 scripts/check.py",
+                                    "exit_code": 0,
+                                    "run_metrics": {"provider": "anthropic"},
+                                    "artifact_provenance": {
+                                        "eval_rule_version": "swtbench-strip-model-patch/v2",
+                                    },
+                                },
+                            ],
+                        }
+                    ],
+                },
+                "messages[0].tool_calls[1].run_metrics.provider values must not be mixed",
+            ),
+            "claude": (
+                {
+                    "task": "Compare benchmark artifacts.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "name": "Bash",
+                                    "input": {
+                                        "command": "python3 scripts/prepare.py",
+                                        "exit_code": 0,
+                                        "provider": "anthropic",
+                                        "artifact_provenance": {
+                                            "eval_rule_version": "swtbench-strip-model-patch/v1",
+                                        },
+                                    },
+                                },
+                                {
+                                    "type": "tool_use",
+                                    "name": "Bash",
+                                    "input": {
+                                        "command": "python3 scripts/check.py",
+                                        "exit_code": 0,
+                                        "run_metrics": {"provider": "openai"},
+                                        "artifact_provenance": {
+                                            "eval_rule_version": "swtbench-strip-model-patch/v2",
+                                        },
+                                    },
+                                },
+                            ],
+                        }
+                    ],
+                },
+                "messages[0].content[1].run_metrics.provider values must not be mixed",
+            ),
+            "openhands": (
+                {
+                    "task": "Compare benchmark artifacts.",
+                    "events": [
+                        {
+                            "action": "run",
+                            "command": "python3 scripts/prepare.py",
+                            "exit_code": 0,
+                            "provider": "openai",
+                            "artifact_provenance": {
+                                "eval_rule_version": "swtbench-strip-model-patch/v1",
+                            },
+                        },
+                        {
+                            "action": "run",
+                            "command": "python3 scripts/check.py",
+                            "exit_code": 0,
+                            "run_metrics": {"provider": "anthropic"},
+                            "artifact_provenance": {
+                                "eval_rule_version": "swtbench-strip-model-patch/v2",
+                            },
+                        },
+                    ],
+                },
+                "events[1].run_metrics.provider values must not be mixed",
+            ),
+            "swe-agent": (
+                {
+                    "issue": "Compare benchmark artifacts.",
+                    "steps": [
+                        {
+                            "action": "run",
+                            "command": "python3 scripts/prepare.py",
+                            "exit_code": 0,
+                            "provider": "openai",
+                            "artifact_provenance": {
+                                "eval_rule_version": "swtbench-strip-model-patch/v1",
+                            },
+                        },
+                        {
+                            "action": "test",
+                            "command": "python3 scripts/check.py",
+                            "exit_code": 0,
+                            "run_metrics": {"provider": "anthropic"},
+                            "artifact_provenance": {
+                                "eval_rule_version": "swtbench-strip-model-patch/v2",
+                            },
+                        },
+                    ],
+                },
+                "steps[1].run_metrics.provider values must not be mixed",
+            ),
+        }
+
+        for adapter, (transcript, expected_error) in cases.items():
+            with self.subTest(adapter=adapter):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn(expected_error, converted.stderr)
+                self.assertNotIn("run_metrics.provider values must not be mixed", converted.stderr.splitlines())
+
     def test_openmako_evidence_court_transcript_adapters_deduplicate_file_evidence(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"

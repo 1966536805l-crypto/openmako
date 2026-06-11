@@ -1370,6 +1370,15 @@ Current public proof:
   snapshot attempt for `a1007cfdec979d9909f3fcdf6e569d505994365a` was still
   blocked by GitHub API rate limiting, so this is local test evidence only,
   not current remote CI proof, external review, endorsement, stars, or reposts.
+- Supplied Codex, Claude, OpenHands, and SWE-agent transcript adapters now have
+  a focused CLI golden regression for combined command telemetry/provenance
+  conflicts. The regression locks the first user-visible conflict to the
+  adapter path, such as `messages[0].tool_calls[1].run_metrics.provider`,
+  instead of accepting a generic `run_metrics.provider` line. The focused
+  adapter golden test passed locally before this note was added. This is local
+  supplied-transcript parser evidence only, not native export ingestion, live
+  control, current remote CI proof, external review, endorsement, stars, or
+  reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
