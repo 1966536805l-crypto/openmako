@@ -1393,6 +1393,12 @@ Current public proof:
   added. This is supplied-record CI/verifier-tamper evidence only: it does not
   prove native CI hardening, native benchmark ingestion, live patch application,
   external review, endorsement, stars, or reposts.
+- The README 60-second proof signal now lists the verifier tamper-risk,
+  verifier attack, and CI workflow tamper fixture lines that the public review
+  gate actually prints. The README boundary text also names those fixtures as
+  supplied verifier/CI tamper review-risk checks, not native benchmark
+  ingestion, native CI hardening, or external endorsement. Public metadata
+  tests and `git diff --check` passed locally before this note was added.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

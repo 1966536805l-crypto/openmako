@@ -51,6 +51,9 @@ public-review-gate: auditing supplied Evidence Court record
 public-review-gate: auditing artifact provenance fixture
 public-review-gate: auditing SWTBench patch artifact fixture
 public-review-gate: auditing config-only repair fixture
+public-review-gate: auditing verifier tamper-risk fixture
+public-review-gate: auditing verifier attack fixture
+public-review-gate: auditing CI workflow tamper fixture
 public-review-gate: running supplied transcript adapter matrix
 adapter-matrix: PASS
 public-review-gate: PASS
@@ -63,9 +66,12 @@ supplied test-output parser edge cases, and supplied transcript adapters
 preserve complete supplied proof fields while rejecting missing-test-proof
 and missing edited-file or missing diff-content evidence success claims. It
 also checks a supplied config-only repair fixture so that packaging/config
-metadata fixes do not get confused with README-only repair claims. It does
-not prove broad unknown-repository repair or external endorsement. This is a
-local script result, not external reviewer approval.
+metadata fixes do not get confused with README-only repair claims, plus
+supplied verifier/CI tamper fixtures that classify passing success claims as
+review-risk when they edit verifier, benchmark, eval, harness, or CI files. It
+does not prove broad unknown-repository repair, native benchmark ingestion,
+native CI hardening, or external endorsement. This is a local script result,
+not external reviewer approval.
 
 ## If You Came From A Benchmark Thread
 
