@@ -640,6 +640,12 @@ class CliWrapperTest(unittest.TestCase):
             {"sitecustomize.py": "runtime_shadowing_path"},
         )
         self.assertIn("verifier_tamper_risk", payload["finding_types"])
+        tamper_evidence = next(
+            item for item in payload["report"]["evidence"] if item["name"] == "verifier_tamper_risk"
+        )
+        self.assertIn("Python startup-shadowing hooks", tamper_evidence["reason"])
+        self.assertIn("startup-shadowing path(s)", payload["report"]["findings"][0]["summary"])
+        self.assertIn("Python startup-shadowing files", payload["report"]["findings"][0]["intercept"])
 
     def test_openmako_evidence_court_audit_json_reports_missing_edited_file_evidence(self) -> None:
         record = {

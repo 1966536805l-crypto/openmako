@@ -1235,6 +1235,16 @@ Current public proof:
   metadata only, not proof of malicious intent, native transcript ingestion,
   native live control, remote CI status for this new commit, external review,
   endorsement, stars, or reposts.
+- Runtime-shadowing review reports now align their human-readable
+  `verifier_tamper_risk` evidence reason, finding summary, and intercept text
+  with the `runtime_shadowing_path` reason code instead of describing those
+  paths only as verifier/test-control edits. The focused report-text
+  regression failed before the wording fix and passed after it; the full CLI
+  wrapper test file, public metadata tests, and `git diff --check` passed
+  locally before this note was added. This is local supplied-record report
+  wording only, not proof of malicious intent, native transcript ingestion,
+  native live control, remote CI status for this new commit, external review,
+  endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
