@@ -942,6 +942,15 @@ Current public proof:
   supplied-record evidence preservation only, not native export ingestion, live
   agent control, proof that supplied patches were applied outside the supplied
   record, remote CI status, external review, endorsement, stars, or reposts.
+- Evidence Court now preserves extra supplied `ledger_identity` fields, such
+  as run IDs and trace IDs, instead of narrowing the preserved object to only
+  the built-in identity fields. The focused regressions failed before the
+  parser fix and passed after it; the full CLI wrapper test file, public
+  metadata tests, supplied transcript adapter matrix, `git diff --check`, and
+  public gate passed locally before this note was added. This is local
+  supplied-record identity preservation only, not native export ingestion, live
+  agent control, proof that supplied patches were applied outside the supplied
+  record, remote CI status, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

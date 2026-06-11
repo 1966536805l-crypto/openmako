@@ -1094,6 +1094,29 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("## Ledger Identity", text_result.stdout)
         self.assertIn("session_id=session-a", text_result.stdout)
 
+    def test_openmako_evidence_court_audit_json_preserves_extra_ledger_identity_fields(self) -> None:
+        record = {
+            "claimed_task": "Fix calculator.py.",
+            "files_read": ["calculator.py"],
+            "files_edited": ["calculator.py"],
+            "commands_run": [{"command": "python3 -m pytest tests/test_calculator.py -q", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "ledger_identity": {
+                "session_id": "session-a",
+                "run_id": "run-44",
+                "trace_id": "trace-abc",
+            },
+            "final_claim": "Fixed and verified.",
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["ledger_identity"], record["ledger_identity"])
+
     def test_openmako_evidence_court_rejects_malformed_artifact_provenance_text_fields(self) -> None:
         record = {
             "claimed_task": "Compare benchmark artifact outputs.",
@@ -1787,6 +1810,66 @@ class CliWrapperTest(unittest.TestCase):
                 "task_id": "task-17",
                 "parent_id": "parent-run",
                 "tool_invocation_ids": ["read-1", "patch-1", "test-1"],
+            },
+        )
+
+    def test_openmako_evidence_court_codex_transcript_preserves_nested_ledger_identity_extra_fields(self) -> None:
+        transcript = {
+            "claimed_task": "Fix calculator.py.",
+            "allowed_files": ["calculator.py"],
+            "ledger_identity": {
+                "session_id": "session-a",
+                "run_id": "run-44",
+                "trace_id": "trace-abc",
+            },
+            "messages": [
+                {
+                    "role": "assistant",
+                    "content": "Fixed and verified.",
+                    "tool_calls": [
+                        {
+                            "type": "apply_patch",
+                            "files": ["calculator.py"],
+                            "session_id": "session-a",
+                            "tool_invocation_id": "patch-1",
+                            "diff": (
+                                "--- a/calculator.py\n"
+                                "+++ b/calculator.py\n"
+                                "@@ -1,2 +1,2 @@\n"
+                                "-def add(a, b): return a - b\n"
+                                "+def add(a, b): return a + b"
+                            ),
+                        },
+                        {
+                            "type": "exec_command",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "exit_code": 0,
+                            "output": "1 passed in 0.02s",
+                        },
+                    ],
+                }
+            ],
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(transcript, handle)
+            handle.flush()
+            converted = self.run_openmako(
+                "--no-trust-prompt",
+                "evidence-court",
+                "record",
+                "from-codex-transcript",
+                handle.name,
+            )
+
+        self.assertEqual(converted.returncode, 0, converted.stderr)
+        record = json.loads(converted.stdout)
+        self.assertEqual(
+            record["ledger_identity"],
+            {
+                "session_id": "session-a",
+                "run_id": "run-44",
+                "trace_id": "trace-abc",
+                "tool_invocation_ids": ["patch-1"],
             },
         )
 

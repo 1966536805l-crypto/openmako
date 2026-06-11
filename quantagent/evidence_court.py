@@ -1439,7 +1439,8 @@ def _ledger_identity(value: object) -> dict[str, object]:
         return {}
     if not isinstance(value, dict):
         raise ValueError("ledger_identity must be an object")
-    identity: dict[str, object] = {}
+    known_fields = {*LEDGER_IDENTITY_TEXT_FIELDS, *LEDGER_IDENTITY_LIST_FIELDS}
+    identity: dict[str, object] = {key: item for key, item in value.items() if key not in known_fields}
     for field in LEDGER_IDENTITY_TEXT_FIELDS:
         if field not in value:
             continue
