@@ -375,6 +375,8 @@ messages may fill or repeat the same supplied `claimed_task` and `allowed_files`
 scope, but conflicting task or scope metadata is rejected instead of
 overwritten. Event-level `allowed_files` must be an array; malformed values are
 rejected with an `events[index].allowed_files` diagnostic.
+Malformed event-level `allowed_files` items are rejected with an
+`events[index].allowed_files[item]` diagnostic.
 Repeated final/finish messages must keep the same supplied final-claim text;
 conflicting final-claim text is rejected instead of overwritten.
 Edit/apply-patch events may include `diff_hunks`, `diff`, `patch`, or
@@ -410,6 +412,8 @@ supplied `claimed_task` and `allowed_files` scope, but conflicting task or
 scope metadata is rejected instead of overwritten. Step-level `allowed_files`
 must be an array; malformed values are rejected with a
 `steps[index].allowed_files` diagnostic.
+Malformed step-level `allowed_files` items are rejected with a
+`steps[index].allowed_files[item]` diagnostic.
 Repeated final/submit messages must keep the same supplied final-claim text;
 conflicting final-claim text is rejected instead of overwritten.
 Edit/apply-patch steps may include `diff_hunks`, `diff`, `patch`, or

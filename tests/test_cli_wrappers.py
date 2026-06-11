@@ -4440,9 +4440,19 @@ class CliWrapperTest(unittest.TestCase):
                 "events[0].allowed_files must be an array",
             ),
             (
+                "openhands",
+                {"events": [{"action": "task", "allowed_files": ["calculator.py", 7]}]},
+                "events[0].allowed_files[1] must be a string or file object",
+            ),
+            (
                 "swe-agent",
                 {"steps": [{"action": "issue", "allowed_files": "calculator.py"}]},
                 "steps[0].allowed_files must be an array",
+            ),
+            (
+                "swe-agent",
+                {"steps": [{"action": "issue", "allowed_files": ["calculator.py", 7]}]},
+                "steps[0].allowed_files[1] must be a string or file object",
             ),
         )
         for adapter, transcript, expected_error in cases:
@@ -6367,7 +6377,9 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("Root and event-level task/scope metadata must agree", schema_doc)
         self.assertIn("Root and step-level task/scope metadata must", schema_doc)
         self.assertIn("events[index].allowed_files", schema_doc)
+        self.assertIn("events[index].allowed_files[item]", schema_doc)
         self.assertIn("steps[index].allowed_files", schema_doc)
+        self.assertIn("steps[index].allowed_files[item]", schema_doc)
         self.assertIn("Repeated final/finish messages must keep the same supplied final-claim text", schema_doc)
         self.assertIn("Repeated final/submit messages must keep the same", schema_doc)
         self.assertIn("Non-numeric run metric fields such as `provider` and `model`", schema_doc)

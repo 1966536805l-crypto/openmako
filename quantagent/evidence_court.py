@@ -1388,7 +1388,7 @@ def _string_list(value: object, *, label: str = "audit record list fields") -> l
             raise ValueError("audit record list fields must be arrays")
         raise ValueError(f"{label} must be an array")
     result: list[str] = []
-    for item in value:
+    for item_index, item in enumerate(value):
         if isinstance(item, str):
             result.append(item)
         elif isinstance(item, dict) and isinstance(item.get("file"), str):
@@ -1396,7 +1396,7 @@ def _string_list(value: object, *, label: str = "audit record list fields") -> l
         else:
             if label == "audit record list fields":
                 raise ValueError("audit record arrays must contain strings or file objects")
-            raise ValueError(f"{label} must contain strings or file objects")
+            raise ValueError(f"{label}[{item_index}] must be a string or file object")
     return result
 
 
