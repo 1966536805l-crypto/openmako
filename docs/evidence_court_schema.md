@@ -332,6 +332,8 @@ openmako evidence-court audit --ci --json run.json
 The transcript must be a JSON object with `events`. Supported event actions are
 task/instruction, read, edit/apply-patch, shell command, and final/finish
 messages. Unsupported events are listed under `adapter_report.unsupported`.
+Repeated final/finish messages must keep the same supplied final-claim text;
+conflicting final-claim text is rejected instead of overwritten.
 Edit/apply-patch events may include `diff_hunks`, `diff`, `patch`, or
 `unified_diff` fields.
 The root object and events may include supplied `session_id`, `task_id`,
@@ -355,8 +357,10 @@ openmako evidence-court audit --ci --json run.json
 The transcript must be a JSON object with `steps`. Supported step actions are
 task/instruction/issue, read, edit/apply-patch, shell command/test, and
 final/submit messages. Unsupported steps are listed under
-`adapter_report.unsupported`. Edit/apply-patch steps may include `diff_hunks`,
-`diff`, `patch`, or `unified_diff` fields.
+`adapter_report.unsupported`. Repeated final/submit messages must keep the same
+supplied final-claim text; conflicting final-claim text is rejected instead of
+overwritten. Edit/apply-patch steps may include `diff_hunks`, `diff`, `patch`,
+or `unified_diff` fields.
 The root object and steps may include supplied `session_id`, `task_id`,
 `parent_id`, `tool_invocation_id`, `tool_call_id`, or `invocation_id` fields;
 the adapter preserves them as `ledger_identity` metadata without treating them

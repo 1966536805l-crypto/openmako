@@ -5067,6 +5067,30 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["verdict"], "FAIL")
         self.assertEqual(payload["failure_class"], "scope_violation")
 
+    def test_openmako_evidence_court_openhands_transcript_rejects_mixed_final_messages(self) -> None:
+        transcript = {
+            "task": "Fix calculator.py only.",
+            "allowed_files": ["calculator.py"],
+            "events": [
+                {"action": "edit", "path": "calculator.py"},
+                {"action": "finish", "message": "Fixed and verified."},
+                {"action": "final", "message": "Skipped validation."},
+            ],
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(transcript, handle)
+            handle.flush()
+            converted = self.run_openmako(
+                "--no-trust-prompt",
+                "evidence-court",
+                "record",
+                "from-openhands-transcript",
+                handle.name,
+            )
+
+        self.assertEqual(converted.returncode, 2)
+        self.assertIn("final_claim values must not be mixed", converted.stderr)
+
     def test_openmako_evidence_court_openhands_transcript_mixed_source_test_diffs_are_not_tamper(self) -> None:
         transcript = {
             "task": "Fix calculator.py and update its focused test.",
@@ -5256,6 +5280,30 @@ class CliWrapperTest(unittest.TestCase):
         payload = json.loads(audited.stdout)
         self.assertEqual(payload["verdict"], "FAIL")
         self.assertEqual(payload["failure_class"], "scope_violation")
+
+    def test_openmako_evidence_court_swe_agent_transcript_rejects_mixed_final_messages(self) -> None:
+        transcript = {
+            "issue": "Fix calculator.py only.",
+            "allowed_files": ["calculator.py"],
+            "steps": [
+                {"action": "edit", "path": "calculator.py"},
+                {"action": "submit", "message": "Fixed and verified."},
+                {"action": "final", "message": "Skipped validation."},
+            ],
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(transcript, handle)
+            handle.flush()
+            converted = self.run_openmako(
+                "--no-trust-prompt",
+                "evidence-court",
+                "record",
+                "from-swe-agent-transcript",
+                handle.name,
+            )
+
+        self.assertEqual(converted.returncode, 2)
+        self.assertIn("final_claim values must not be mixed", converted.stderr)
 
     def test_openmako_evidence_court_swe_agent_transcript_mixed_source_test_diffs_are_not_tamper(self) -> None:
         transcript = {
@@ -5523,6 +5571,8 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("conflicting task or scope metadata is rejected", schema_doc)
         self.assertIn("Repeated `final_claim` events must also keep the same supplied claim", schema_doc)
         self.assertIn("final-claim text is rejected instead of overwritten", schema_doc)
+        self.assertIn("Repeated final/finish messages must keep the same supplied final-claim text", schema_doc)
+        self.assertIn("Repeated final/submit messages must keep the same", schema_doc)
         self.assertIn("Non-numeric run metric fields such as `provider` and `model`", schema_doc)
         self.assertIn("they are rejected instead of overwritten", schema_doc)
         self.assertIn("conflicting scalar values or conflicting hash values", schema_doc)

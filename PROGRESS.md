@@ -1031,6 +1031,17 @@ Current public proof:
   added. This is local supplied-record output selection only, not proof that
   commands ran outside the supplied record, remote CI status, external review,
   endorsement, stars, or reposts.
+- The OpenHands-style and SWE-agent-style supplied transcript builders now
+  reject conflicting repeated final/finish/submit messages instead of silently
+  overwriting earlier supplied final-claim text. Repeated final messages may
+  still repeat the same claim. The focused OpenHands/SWE-agent final-message
+  regressions failed before the merge fix and passed after it; the full CLI
+  wrapper test file, public metadata tests, and supplied transcript adapter
+  matrix passed locally before this note was added. This is local
+  supplied-record claim consistency validation only, not native transcript
+  ingestion, live control, proof that the claimed work happened outside the
+  supplied record, remote CI status, external review, endorsement, stars, or
+  reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1042,5 +1053,6 @@ Next smallest hygiene task:
 
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
-- Next concrete candidate: another adapter evidence edge case, or a
-  trend-radar follow-up that stays behind the supplied-record proof boundary.
+- Next concrete candidate: another adapter evidence edge case such as repeated
+  task/scope consistency in OpenHands/SWE-agent records, or a trend-radar
+  follow-up that stays behind the supplied-record proof boundary.

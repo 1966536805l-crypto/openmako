@@ -697,10 +697,8 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
                 test_output = _select_command_test_output(test_output, command, output)
         elif kind == "final_claim":
             final_claim = _event_text_field(event, ("final_claim", "claim", "text"), "final_claim")
-            if record["final_claim"] and final_claim and record["final_claim"] != final_claim:
-                raise ValueError("final_claim values must not be mixed")
             if final_claim:
-                record["final_claim"] = final_claim
+                record["final_claim"] = _merge_final_claim(str(record["final_claim"]), final_claim)
         else:
             raise ValueError(f"unsupported JSONL event kind at line {line_no}: {kind or 'missing'}")
 
@@ -1067,7 +1065,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
         elif event_kind in {"finish", "final", "final_claim", "message"}:
             text = _openhands_event_text(event, "final_claim")
             if text:
-                record["final_claim"] = text
+                record["final_claim"] = _merge_final_claim(str(record["final_claim"]), text)
         else:
             unsupported.append(f"{event_path}: {event_kind or 'unsupported'}")
 
@@ -1168,7 +1166,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
         elif step_kind in {"finish", "final", "final_claim", "submit"}:
             text = _openhands_event_text(step, "final_claim")
             if text:
-                record["final_claim"] = text
+                record["final_claim"] = _merge_final_claim(str(record["final_claim"]), text)
         else:
             unsupported.append(f"{step_path}: {step_kind or 'unsupported'}")
 
@@ -2002,6 +2000,12 @@ def _event_text_field(event: dict[str, object], fields: tuple[str, ...], label: 
         if text:
             return text
     return ""
+
+
+def _merge_final_claim(current: str, incoming: str) -> str:
+    if current and incoming and current != incoming:
+        raise ValueError("final_claim values must not be mixed")
+    return current or incoming
 
 
 def _codex_command_output(tool_payload: dict[str, object]) -> str:
