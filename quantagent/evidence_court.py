@@ -1627,6 +1627,8 @@ def _merge_run_metrics(target: dict[str, object], source: dict[str, object]) -> 
             else:
                 target[key] = value
         else:
+            if key in target and target[key] != value:
+                raise ValueError(f"run_metrics.{key} values must not be mixed")
             target[key] = value
 
 

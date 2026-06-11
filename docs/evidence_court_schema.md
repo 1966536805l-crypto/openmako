@@ -215,6 +215,9 @@ fields to supply diff-content evidence.
 `command` events may include `run_metrics` or direct telemetry fields such as
 `duration_seconds`, `input_tokens`, `output_tokens`, `total_tokens`,
 `estimated_cost_usd`, `provider`, `model`, and `missing_telemetry`.
+Numeric run metrics are summed across commands and `missing_telemetry` is
+merged. Non-numeric run metric fields such as `provider` and `model` must repeat
+the same supplied value or they are rejected instead of overwritten.
 They may also include `artifact_provenance` or direct provenance fields such as
 `eval_rule_version`, `eval_rule_commit`, `runner_version`, `runner_commit`,
 `input_hashes`, `output_hashes`, `artifact_hashes`, and `missing_provenance`.

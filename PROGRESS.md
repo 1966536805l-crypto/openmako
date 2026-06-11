@@ -992,6 +992,16 @@ Current public proof:
   provenance validation only, not native benchmark artifact ingestion,
   independent artifact consistency proof, remote CI status, external review,
   endorsement, stars, or reposts.
+- Evidence Court now rejects conflicting non-numeric supplied `run_metrics`
+  fields such as mixed `provider` or `model` values across merged JSONL events
+  instead of overwriting earlier telemetry identity. Numeric metrics still
+  aggregate across commands, and `missing_telemetry` still merges. The focused
+  run-metrics regressions failed before the merge fix and passed after it; the
+  full CLI wrapper test file, public metadata tests, supplied transcript
+  adapter matrix, `git diff --check`, and public gate passed locally before
+  this note was added. This is local supplied-record telemetry validation only,
+  not proof that model calls or command telemetry happened outside the supplied
+  record, remote CI status, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

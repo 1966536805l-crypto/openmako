@@ -1585,6 +1585,42 @@ class CliWrapperTest(unittest.TestCase):
             },
         )
 
+    def test_openmako_evidence_court_record_from_jsonl_rejects_mixed_run_metric_provider_values(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
+            handle.write('{"kind":"task","claimed_task":"Fix calculator.py."}\n')
+            handle.write(
+                '{"kind":"command","command":"python3 scripts/setup_fixture.py",'
+                '"exit_code":0,"provider":"openai","model":"gpt-5"}\n'
+            )
+            handle.write(
+                '{"kind":"command","command":"python3 -m pytest tests/test_calculator.py -q",'
+                '"exit_code":0,"run_metrics":{"provider":"anthropic","model":"gpt-5"}}\n'
+            )
+            handle.flush()
+            converted = self.run_openmako("--no-trust-prompt", "evidence-court", "record", "from-jsonl", handle.name)
+
+        self.assertEqual(converted.returncode, 2)
+        self.assertEqual(converted.stdout, "")
+        self.assertIn("run_metrics.provider values must not be mixed", converted.stderr)
+
+    def test_openmako_evidence_court_record_from_jsonl_rejects_mixed_run_metric_model_values(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
+            handle.write('{"kind":"task","claimed_task":"Fix calculator.py."}\n')
+            handle.write(
+                '{"kind":"command","command":"python3 scripts/setup_fixture.py",'
+                '"exit_code":0,"provider":"openai","model":"gpt-5"}\n'
+            )
+            handle.write(
+                '{"kind":"command","command":"python3 -m pytest tests/test_calculator.py -q",'
+                '"exit_code":0,"run_metrics":{"provider":"openai","model":"gpt-5-mini"}}\n'
+            )
+            handle.flush()
+            converted = self.run_openmako("--no-trust-prompt", "evidence-court", "record", "from-jsonl", handle.name)
+
+        self.assertEqual(converted.returncode, 2)
+        self.assertEqual(converted.stdout, "")
+        self.assertIn("run_metrics.model values must not be mixed", converted.stderr)
+
     def test_openmako_evidence_court_record_from_jsonl_preserves_artifact_provenance(self) -> None:
         with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
             handle.write('{"kind":"task","claimed_task":"Compare benchmark artifacts."}\n')
@@ -5292,6 +5328,8 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(schema["properties"]["run_metrics"]["properties"]["missing_telemetry"]["type"], "array")
         self.assertEqual(schema["properties"]["artifact_provenance"]["type"], "object")
         schema_doc = (ROOT / "docs" / "evidence_court_schema.md").read_text(encoding="utf-8")
+        self.assertIn("Non-numeric run metric fields such as `provider` and `model`", schema_doc)
+        self.assertIn("they are rejected instead of overwritten", schema_doc)
         self.assertIn("conflicting scalar values or conflicting hash values", schema_doc)
         self.assertIn("same artifact key are rejected instead of overwritten", schema_doc)
         self.assertIn("direct list fields such as `tool_invocation_ids` and", schema_doc)
