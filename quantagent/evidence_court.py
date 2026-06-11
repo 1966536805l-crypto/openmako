@@ -1542,18 +1542,18 @@ def _event_run_metrics(event: dict[str, object]) -> dict[str, object]:
     return _run_metrics(metrics) if metrics else {}
 
 
-def _ledger_identity(value: object) -> dict[str, object]:
+def _ledger_identity(value: object, label: str = "ledger_identity") -> dict[str, object]:
     if value is None:
         return {}
     if not isinstance(value, dict):
-        raise ValueError("ledger_identity must be an object")
+        raise ValueError(f"{label} must be an object")
     known_fields = {*LEDGER_IDENTITY_TEXT_FIELDS, *LEDGER_IDENTITY_LIST_FIELDS}
     identity: dict[str, object] = {}
     for key, item in value.items():
         if key in known_fields:
             continue
         if not isinstance(item, str):
-            raise ValueError(f"ledger_identity.{key} must be a string")
+            raise ValueError(f"{label}.{key} must be a string")
         text = item.strip()
         if text:
             identity[key] = text
@@ -1562,12 +1562,12 @@ def _ledger_identity(value: object) -> dict[str, object]:
             continue
         field_value = value[field]
         if not isinstance(field_value, str):
-            raise ValueError(f"ledger_identity.{field} must be a string")
+            raise ValueError(f"{label}.{field} must be a string")
         text = field_value.strip()
         if text:
             identity[field] = text
     for field in LEDGER_IDENTITY_LIST_FIELDS:
-        items = _string_array(value.get(field), f"ledger_identity.{field}")
+        items = _string_array(value.get(field), f"{label}.{field}")
         if items:
             identity[field] = items
     return identity
@@ -1621,9 +1621,10 @@ def _string_array(value: object, label: str) -> list[str]:
 
 
 def _add_event_ledger_identity(target: dict[str, object], event: dict[str, object], label: str = "") -> None:
-    nested = _ledger_identity(event.get("ledger_identity"))
+    nested_label = _field_label(label, "ledger_identity")
+    nested = _ledger_identity(event.get("ledger_identity"), nested_label)
     if nested:
-        _merge_ledger_identity(target, nested, label=_field_label(label, "ledger_identity"))
+        _merge_ledger_identity(target, nested, label=nested_label)
     identity: dict[str, object] = {}
     for field in LEDGER_IDENTITY_TEXT_FIELDS:
         text = _event_identity_text(event, field)
