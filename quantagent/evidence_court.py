@@ -34,6 +34,9 @@ ARTIFACT_PROVENANCE_FIELDS = (
     "artifact_hashes",
     "missing_provenance",
 )
+LEDGER_IDENTITY_TEXT_FIELDS = ("session_id", "task_id", "parent_id")
+LEDGER_IDENTITY_LIST_FIELDS = ("tool_invocation_ids", "missing_identity")
+TOOL_INVOCATION_ID_FIELDS = ("tool_invocation_id", "tool_call_id", "invocation_id")
 DIFF_HUNK_FIELDS = ("diff", "patch", "unified_diff")
 VERIFIER_TAMPER_PATH_MARKERS = (
     ".github/workflows/",
@@ -243,6 +246,7 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
     commands_run = _command_summaries(payload.get("commands_run"))
     run_metrics = _run_metrics(payload.get("run_metrics"))
     artifact_provenance = _artifact_provenance(payload.get("artifact_provenance"))
+    ledger_identity = _ledger_identity(payload.get("ledger_identity"))
     test_status, test_summary = _test_output_status(payload.get("test_output"), payload.get("commands_run"))
     has_validation_command = _has_validation_command(payload.get("commands_run"))
     verifier_tamper_risk = _verifier_tamper_risk(files_edited)
@@ -350,6 +354,19 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
                 name="artifact_provenance",
                 ok=True,
                 data={"artifact_provenance": artifact_provenance},
+            )
+        )
+    if ledger_identity:
+        evidence.append(
+            AutopsyEvidence(
+                f"E{len(evidence) + 1}",
+                "ledger_identity",
+                "metadata",
+                "Ledger identity: " + _ledger_identity_summary(ledger_identity),
+                step=len(evidence),
+                name="ledger_identity",
+                ok=True,
+                data={"ledger_identity": ledger_identity},
             )
         )
     evidence.append(
@@ -628,6 +645,7 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
     commands_run: list[object] = []
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
+    ledger_identity: dict[str, object] = {}
     diff_hunks: list[str] = []
     test_output = ""
 
@@ -641,6 +659,7 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
             ((event, "kind"), (event, "type"), (event, "event")),
             f"JSONL event at line {line_no}",
         )
+        _add_event_ledger_identity(ledger_identity, event)
         if kind == "task":
             record["claimed_task"] = _event_text_field(event, ("claimed_task", "task"), "claimed_task")
             if "allowed_files" in event:
@@ -684,6 +703,8 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
         record["run_metrics"] = run_metrics
     if artifact_provenance:
         record["artifact_provenance"] = artifact_provenance
+    if ledger_identity:
+        record["ledger_identity"] = ledger_identity
     return record
 
 
@@ -782,9 +803,13 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
     commands_run: list[dict[str, object]] = []
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
+    ledger_identity: dict[str, object] = {}
     unsupported: list[str] = []
     session_ids: set[str] = set()
     test_output = ""
+
+    _add_event_session_id(session_ids, payload)
+    _add_event_ledger_identity(ledger_identity, payload)
 
     for message_index, message in enumerate(messages):
         if not isinstance(message, dict):
@@ -799,6 +824,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
         for tool_path, tool_call in _codex_tool_calls(message, message_index):
             tool_payload = _codex_tool_payload(tool_call, tool_path)
             _add_event_session_id(session_ids, tool_payload)
+            _add_event_ledger_identity(ledger_identity, tool_payload)
             tool_kind = _codex_tool_kind(tool_call, tool_payload, tool_path)
             if tool_kind in {"read", "read_file", "open", "cat"}:
                 files_read.extend(_codex_tool_files(tool_payload))
@@ -841,6 +867,8 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
         record.pop("run_metrics")
     if artifact_provenance:
         record["artifact_provenance"] = artifact_provenance
+    if ledger_identity:
+        record["ledger_identity"] = ledger_identity
     adapter_report = {"unsupported": unsupported}
     record["adapter_report"] = adapter_report
     return record
@@ -877,9 +905,13 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
     commands_run: list[dict[str, object]] = []
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
+    ledger_identity: dict[str, object] = {}
     unsupported: list[str] = []
     session_ids: set[str] = set()
     test_output = ""
+
+    _add_event_session_id(session_ids, payload)
+    _add_event_ledger_identity(ledger_identity, payload)
 
     for message_index, message in enumerate(messages):
         if not isinstance(message, dict):
@@ -896,6 +928,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
         for tool_path, tool_call in tool_calls:
             tool_payload = _codex_tool_payload(tool_call, tool_path)
             _add_event_session_id(session_ids, tool_payload)
+            _add_event_ledger_identity(ledger_identity, tool_payload)
             tool_kind = _codex_tool_kind(tool_call, tool_payload, tool_path)
             if tool_kind in {"read", "read_file", "open", "view", "cat"}:
                 files_read.extend(_codex_tool_files(tool_payload))
@@ -938,6 +971,8 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
         record.pop("run_metrics")
     if artifact_provenance:
         record["artifact_provenance"] = artifact_provenance
+    if ledger_identity:
+        record["ledger_identity"] = ledger_identity
     record["adapter_report"] = {"unsupported": unsupported}
     return record
 
@@ -973,14 +1008,19 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
     commands_run: list[dict[str, object]] = []
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
+    ledger_identity: dict[str, object] = {}
     unsupported: list[str] = []
     session_ids: set[str] = set()
     test_output = ""
+
+    _add_event_session_id(session_ids, payload)
+    _add_event_ledger_identity(ledger_identity, payload)
 
     for event_index, event in enumerate(events):
         if not isinstance(event, dict):
             raise ValueError(f"OpenHands transcript event {event_index} must be an object")
         _add_event_session_id(session_ids, event)
+        _add_event_ledger_identity(ledger_identity, event)
         event_path = f"events[{event_index}]"
         event_kind = _openhands_event_kind(event, event_path)
         if event_kind in {"task", "instruction"}:
@@ -1032,6 +1072,8 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
         record.pop("run_metrics")
     if artifact_provenance:
         record["artifact_provenance"] = artifact_provenance
+    if ledger_identity:
+        record["ledger_identity"] = ledger_identity
     record["adapter_report"] = {"unsupported": unsupported}
     return record
 
@@ -1067,14 +1109,19 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
     commands_run: list[dict[str, object]] = []
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
+    ledger_identity: dict[str, object] = {}
     unsupported: list[str] = []
     session_ids: set[str] = set()
     test_output = ""
+
+    _add_event_session_id(session_ids, payload)
+    _add_event_ledger_identity(ledger_identity, payload)
 
     for step_index, step in enumerate(steps):
         if not isinstance(step, dict):
             raise ValueError(f"SWE-agent transcript step {step_index} must be an object")
         _add_event_session_id(session_ids, step)
+        _add_event_ledger_identity(ledger_identity, step)
         step_path = f"steps[{step_index}]"
         step_kind = _swe_agent_step_kind(step, step_path)
         if step_kind in {"task", "instruction", "issue"}:
@@ -1126,6 +1173,8 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
         record.pop("run_metrics")
     if artifact_provenance:
         record["artifact_provenance"] = artifact_provenance
+    if ledger_identity:
+        record["ledger_identity"] = ledger_identity
     record["adapter_report"] = {"unsupported": unsupported}
     return record
 
@@ -1142,6 +1191,7 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
     test_failure = next((item for item in report.evidence if item.source == "failure" or item.kind == "test"), None)
     patch_shape = _report_patch_shape(report)
     artifact_provenance = _report_artifact_provenance(report)
+    ledger_identity = _report_ledger_identity(report)
     verifier_tamper_risk = _report_verifier_tamper_risk(report)
 
     lines = [
@@ -1176,6 +1226,10 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
         "",
         f"- summary: {_artifact_provenance_summary(artifact_provenance)}",
         "",
+        "## Ledger Identity",
+        "",
+        f"- summary: {_ledger_identity_summary(ledger_identity)}",
+        "",
         "## Test Verification",
         "",
         f"- status: {report.status}",
@@ -1208,6 +1262,7 @@ def dumps_evidence_court_json(report: AgentAutopsyReport) -> str:
         "finding_types": [item.finding_type for item in report.findings],
         "patch_shape": _report_patch_shape(report),
         "artifact_provenance": _report_artifact_provenance(report),
+        "ledger_identity": _report_ledger_identity(report),
         "verifier_tamper_risk": _report_verifier_tamper_risk(report),
         "run_metrics": _report_run_metrics(report),
         "report": report.to_dict(),
@@ -1379,6 +1434,65 @@ def _event_run_metrics(event: dict[str, object]) -> dict[str, object]:
     return _run_metrics(metrics) if metrics else {}
 
 
+def _ledger_identity(value: object) -> dict[str, object]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError("ledger_identity must be an object")
+    identity: dict[str, object] = {}
+    for field in LEDGER_IDENTITY_TEXT_FIELDS:
+        if field not in value:
+            continue
+        field_value = value[field]
+        if not isinstance(field_value, str):
+            raise ValueError(f"ledger_identity.{field} must be a string")
+        text = field_value.strip()
+        if text:
+            identity[field] = text
+    for field in LEDGER_IDENTITY_LIST_FIELDS:
+        items = _string_array(value.get(field), f"ledger_identity.{field}")
+        if items:
+            identity[field] = items
+    return identity
+
+
+def _string_array(value: object, label: str) -> list[str]:
+    if value is None:
+        return []
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise ValueError(f"{label} must be an array of strings")
+    return _unique_strings(tuple(value))
+
+
+def _add_event_ledger_identity(target: dict[str, object], event: dict[str, object]) -> None:
+    nested = _ledger_identity(event.get("ledger_identity"))
+    if nested:
+        _merge_ledger_identity(target, nested)
+    identity: dict[str, object] = {}
+    for field in LEDGER_IDENTITY_TEXT_FIELDS:
+        text = _event_identity_text(event, field)
+        if text:
+            identity[field] = text
+    invocation_ids: list[str] = []
+    for field in TOOL_INVOCATION_ID_FIELDS:
+        text = _event_identity_text(event, field)
+        if text:
+            invocation_ids.append(text)
+    if invocation_ids:
+        identity["tool_invocation_ids"] = _unique_strings(tuple(invocation_ids))
+    if identity:
+        _merge_ledger_identity(target, identity)
+
+
+def _event_identity_text(event: dict[str, object], field: str) -> str:
+    if field not in event:
+        return ""
+    value = event[field]
+    if not isinstance(value, str):
+        raise ValueError(f"{field} must be a string")
+    return value.strip()
+
+
 def _add_event_session_id(session_ids: set[str], event: dict[str, object]) -> None:
     if "session_id" not in event:
         return
@@ -1443,6 +1557,25 @@ def _merge_artifact_provenance(target: dict[str, object], source: dict[str, obje
             target[key] = value
 
 
+def _merge_ledger_identity(target: dict[str, object], source: dict[str, object]) -> None:
+    for key, value in source.items():
+        if key in LEDGER_IDENTITY_TEXT_FIELDS:
+            existing = target.get(key)
+            if existing and existing != value:
+                raise ValueError(f"ledger_identity.{key} values must not be mixed")
+            target[key] = value
+        elif key in LEDGER_IDENTITY_LIST_FIELDS:
+            existing = target.get(key)
+            values: list[str] = []
+            if isinstance(existing, list):
+                values.extend(str(item) for item in existing)
+            if isinstance(value, list):
+                values.extend(str(item) for item in value)
+            target[key] = _unique_strings(tuple(values))
+        else:
+            target[key] = value
+
+
 def _merge_run_metrics(target: dict[str, object], source: dict[str, object]) -> None:
     for key, value in source.items():
         if key == "missing_telemetry":
@@ -1486,6 +1619,14 @@ def _report_artifact_provenance(report: AgentAutopsyReport) -> dict[str, object]
         return {}
     provenance = item.data.get("artifact_provenance")
     return dict(provenance) if isinstance(provenance, dict) else {}
+
+
+def _report_ledger_identity(report: AgentAutopsyReport) -> dict[str, object]:
+    item = next((evidence for evidence in report.evidence if evidence.name == "ledger_identity"), None)
+    if item is None:
+        return {}
+    identity = item.data.get("ledger_identity")
+    return dict(identity) if isinstance(identity, dict) else {}
 
 
 def _report_verifier_tamper_risk(report: AgentAutopsyReport) -> dict[str, object]:
@@ -1636,6 +1777,20 @@ def _artifact_provenance_summary(provenance: dict[str, object]) -> str:
         parts.append(f"{field}={value}")
     extra_fields = sorted(key for key in provenance if key not in ARTIFACT_PROVENANCE_FIELDS)
     parts.extend(f"{key}={provenance[key]}" for key in extra_fields)
+    return ", ".join(parts) if parts else "none supplied"
+
+
+def _ledger_identity_summary(identity: dict[str, object]) -> str:
+    parts: list[str] = []
+    for field in (*LEDGER_IDENTITY_TEXT_FIELDS, *LEDGER_IDENTITY_LIST_FIELDS):
+        if field not in identity:
+            continue
+        value = identity[field]
+        if isinstance(value, list):
+            value = ",".join(str(item) for item in value) or "none"
+        parts.append(f"{field}={value}")
+    extra_fields = sorted(key for key in identity if key not in {*LEDGER_IDENTITY_TEXT_FIELDS, *LEDGER_IDENTITY_LIST_FIELDS})
+    parts.extend(f"{key}={identity[key]}" for key in extra_fields)
     return ", ".join(parts) if parts else "none supplied"
 
 

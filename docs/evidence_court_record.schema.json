@@ -172,6 +172,34 @@
         }
       }
     },
+    "ledger_identity": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Optional supplied ledger identity metadata. Evidence Court preserves it in machine JSON but does not treat it as proof of native transcript ingestion, live control, or patch application outside the supplied record.",
+      "properties": {
+        "session_id": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "parent_id": {
+          "type": "string"
+        },
+        "tool_invocation_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "missing_identity": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "final_claim": {
       "type": "string",
       "description": "Agent's final success or completion claim."

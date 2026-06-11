@@ -931,6 +931,17 @@ Current public proof:
   not proof of native export ingestion, live harness control, ACP control,
   broad SWE-bench repair, remote CI status, external review, endorsement,
   stars, or reposts.
+- Evidence Court now preserves supplied ledger identity metadata in raw audit
+  records and supplied transcript adapter output. `ledger_identity` can carry
+  `session_id`, `task_id`, `parent_id`, `tool_invocation_ids`, and
+  `missing_identity`; audit JSON and the Markdown report expose it as
+  preserved metadata, not verdict proof. The focused ledger regressions failed
+  before the change and passed after it; the full CLI wrapper test file, public
+  metadata tests, supplied transcript adapter matrix, `git diff --check`, and
+  public gate passed locally before this note was added. This is local
+  supplied-record evidence preservation only, not native export ingestion, live
+  agent control, proof that supplied patches were applied outside the supplied
+  record, remote CI status, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -940,8 +951,7 @@ public result.
 
 Next smallest hygiene task:
 
-- Re-check `docs/AGENT_TREND_RADAR.md` and pick the next code-backed target
-  only if it can be reduced to a failing test and public-proof boundary.
-- Next concrete candidate: another adapter evidence edge case only if it can
-  produce a focused failing regression, or a trend-radar follow-up that stays
-  behind the supplied-record proof boundary.
+- Pick the next code-backed target only if it can be reduced to a failing test
+  and public-proof boundary.
+- Next concrete candidate: another adapter evidence edge case, or a
+  trend-radar follow-up that stays behind the supplied-record proof boundary.

@@ -38,6 +38,13 @@ The schema documents the supplied record shape; the CLI still audits only the ev
     "output_hashes": {"output.swtbench.jsonl": "sha256:222"},
     "missing_provenance": ["container_digest"]
   },
+  "ledger_identity": {
+    "session_id": "session-a",
+    "task_id": "task-17",
+    "parent_id": "parent-run",
+    "tool_invocation_ids": ["read-1", "patch-1", "test-1"],
+    "missing_identity": ["external_run_id"]
+  },
   "final_claim": "Fixed and verified."
 }
 ```
@@ -56,6 +63,7 @@ The schema documents the supplied record shape; the CLI still audits only the ev
 | `test_output` | string or object | Validation evidence. Objects may include `status`, `output`, `summary`, or `exit_code`. |
 | `run_metrics` | object | Optional telemetry supplied by the record: duration, command count, token counts, cost, provider/model, and `missing_telemetry`. It is preserved in JSON output but is not treated as validation proof. |
 | `artifact_provenance` | object | Optional artifact identity metadata supplied by the record: eval rule version/commit, runner version/commit, input/output hashes, artifact hashes, and `missing_provenance`. It is preserved in JSON output but is not treated as validation proof. |
+| `ledger_identity` | object | Optional ledger identity metadata supplied by the record: session, task, parent, tool invocation IDs, and `missing_identity`. It is preserved in JSON output but is not treated as native transcript ingestion, live control, or proof that supplied patches were applied outside the supplied record. |
 | `final_claim` | string | Agent's final success or completion claim. |
 
 ## Verdict Boundary
@@ -115,6 +123,7 @@ The JSON envelope includes:
 - `patch_shape`
 - `run_metrics`
 - `artifact_provenance`
+- `ledger_identity`
 - `verifier_tamper_risk`
 - `report`
 
@@ -174,6 +183,13 @@ hashes, artifact hashes, and missing provenance markers. This adds
 comparability metadata, but it does not mean OpenMako ingests native benchmark
 artifacts or independently proves that two benchmark outputs used the same
 rules.
+
+`ledger_identity` preserves ledger identity metadata supplied by the record,
+including `session_id`, `task_id`, `parent_id`, `tool_invocation_ids`, and
+`missing_identity`. This helps compare supplied records that carry run or tool
+call identity fields, but it does not prove native transcript ingestion, live
+agent control, or that supplied patches were applied outside the supplied
+record.
 
 `--ci` returns `0` for `PASS` and `SUSPICIOUS`, and `1` for `FAIL`.
 Use `SUSPICIOUS` as a review queue unless your workflow chooses to block on it.
@@ -244,6 +260,10 @@ read, edit/apply-patch, and shell command calls. Unsupported tool calls are
 listed under `adapter_report.unsupported`, and missing command or test evidence
 is still judged by the normal Evidence Court audit. Edit/apply-patch calls may
 include `diff_hunks`, `diff`, `patch`, or `unified_diff` fields.
+The root object and tool calls may include supplied `session_id`, `task_id`,
+`parent_id`, `tool_invocation_id`, `tool_call_id`, or `invocation_id` fields;
+the adapter preserves them as `ledger_identity` metadata without treating them
+as live-run proof.
 
 ## Supplied Claude-Style Transcript Builder
 
@@ -264,6 +284,10 @@ shell command calls. Unsupported tool calls are listed under
 `adapter_report.unsupported`, and missing command or test evidence is still
 judged by the normal Evidence Court audit. Edit/apply-patch calls may include
 `diff_hunks`, `diff`, `patch`, or `unified_diff` fields.
+The root object and tool calls may include supplied `session_id`, `task_id`,
+`parent_id`, `tool_invocation_id`, `tool_call_id`, or `invocation_id` fields;
+the adapter preserves them as `ledger_identity` metadata without treating them
+as live-run proof.
 
 ## Supplied OpenHands-Style Transcript Builder
 
@@ -283,6 +307,10 @@ task/instruction, read, edit/apply-patch, shell command, and final/finish
 messages. Unsupported events are listed under `adapter_report.unsupported`.
 Edit/apply-patch events may include `diff_hunks`, `diff`, `patch`, or
 `unified_diff` fields.
+The root object and events may include supplied `session_id`, `task_id`,
+`parent_id`, `tool_invocation_id`, `tool_call_id`, or `invocation_id` fields;
+the adapter preserves them as `ledger_identity` metadata without treating them
+as live-run proof.
 
 ## Supplied SWE-Agent-Style Transcript Builder
 
@@ -302,3 +330,7 @@ task/instruction/issue, read, edit/apply-patch, shell command/test, and
 final/submit messages. Unsupported steps are listed under
 `adapter_report.unsupported`. Edit/apply-patch steps may include `diff_hunks`,
 `diff`, `patch`, or `unified_diff` fields.
+The root object and steps may include supplied `session_id`, `task_id`,
+`parent_id`, `tool_invocation_id`, `tool_call_id`, or `invocation_id` fields;
+the adapter preserves them as `ledger_identity` metadata without treating them
+as live-run proof.

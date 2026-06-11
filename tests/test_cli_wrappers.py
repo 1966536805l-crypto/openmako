@@ -1061,6 +1061,39 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("## Artifact Provenance", text_result.stdout)
         self.assertIn("eval_rule_version=swtbench-strip-model-patch/v2", text_result.stdout)
 
+    def test_openmako_evidence_court_audit_json_preserves_ledger_identity(self) -> None:
+        record = {
+            "claimed_task": "Fix calculator.py.",
+            "files_read": ["calculator.py"],
+            "files_edited": ["calculator.py"],
+            "commands_run": [{"command": "python3 -m pytest tests/test_calculator.py -q", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "ledger_identity": {
+                "session_id": "session-a",
+                "task_id": "task-17",
+                "parent_id": "parent-run",
+                "tool_invocation_ids": ["read-1", "patch-1", "test-1"],
+                "missing_identity": ["external_run_id"],
+            },
+            "final_claim": "Fixed and verified.",
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+            text_result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", handle.name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "PASS")
+        self.assertEqual(payload["ledger_identity"], record["ledger_identity"])
+        identity_items = [item for item in payload["report"]["evidence"] if item["name"] == "ledger_identity"]
+        self.assertEqual(len(identity_items), 1)
+        self.assertEqual(identity_items[0]["data"]["ledger_identity"], record["ledger_identity"])
+        self.assertEqual(text_result.returncode, 0, text_result.stderr)
+        self.assertIn("## Ledger Identity", text_result.stdout)
+        self.assertIn("session_id=session-a", text_result.stdout)
+
     def test_openmako_evidence_court_rejects_malformed_artifact_provenance_text_fields(self) -> None:
         record = {
             "claimed_task": "Compare benchmark artifact outputs.",
@@ -1690,6 +1723,72 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(record["run_metrics"]["total_tokens"], 360)
         self.assertEqual(record["run_metrics"]["estimated_cost_usd"], 0.004)
         self.assertEqual(record["run_metrics"]["missing_telemetry"], ["actual_cost_usd", "model"])
+
+    def test_openmako_evidence_court_codex_transcript_preserves_ledger_identity(self) -> None:
+        transcript = {
+            "claimed_task": "Fix calculator.py.",
+            "allowed_files": ["calculator.py"],
+            "session_id": "session-a",
+            "task_id": "task-17",
+            "parent_id": "parent-run",
+            "messages": [
+                {
+                    "role": "assistant",
+                    "content": "Fixed and verified.",
+                    "tool_calls": [
+                        {
+                            "type": "read_file",
+                            "path": "calculator.py",
+                            "session_id": "session-a",
+                            "tool_invocation_id": "read-1",
+                        },
+                        {
+                            "type": "apply_patch",
+                            "files": ["calculator.py"],
+                            "session_id": "session-a",
+                            "tool_call_id": "patch-1",
+                            "diff_hunks": [
+                                "--- a/calculator.py\n"
+                                "+++ b/calculator.py\n"
+                                "@@ -1,2 +1,2 @@\n"
+                                "-def add(a, b): return a - b\n"
+                                "+def add(a, b): return a + b"
+                            ],
+                        },
+                        {
+                            "type": "exec_command",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "exit_code": 0,
+                            "output": "1 passed in 0.02s",
+                            "session_id": "session-a",
+                            "invocation_id": "test-1",
+                        },
+                    ],
+                }
+            ],
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(transcript, handle)
+            handle.flush()
+            converted = self.run_openmako(
+                "--no-trust-prompt",
+                "evidence-court",
+                "record",
+                "from-codex-transcript",
+                handle.name,
+            )
+
+        self.assertEqual(converted.returncode, 0, converted.stderr)
+        record = json.loads(converted.stdout)
+        self.assertEqual(
+            record["ledger_identity"],
+            {
+                "session_id": "session-a",
+                "task_id": "task-17",
+                "parent_id": "parent-run",
+                "tool_invocation_ids": ["read-1", "patch-1", "test-1"],
+            },
+        )
 
     def test_openmako_evidence_court_other_transcripts_aggregate_multi_command_metrics(self) -> None:
         source_hunk = (
@@ -4803,6 +4902,12 @@ class CliWrapperTest(unittest.TestCase):
             schema["properties"]["artifact_provenance"]["properties"]["missing_provenance"]["type"],
             "array",
         )
+        self.assertEqual(schema["properties"]["ledger_identity"]["type"], "object")
+        self.assertEqual(schema["properties"]["ledger_identity"]["properties"]["session_id"]["type"], "string")
+        self.assertEqual(
+            schema["properties"]["ledger_identity"]["properties"]["tool_invocation_ids"]["items"]["type"],
+            "string",
+        )
         self.assertIs(schema["additionalProperties"], True)
 
         for field in ("allowed_files", "files_read", "files_edited", "commands_run"):
@@ -4858,9 +4963,11 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("`schema_version`", schema)
         self.assertIn("`patch_shape`", schema)
         self.assertIn("`artifact_provenance`", schema)
+        self.assertIn("`ledger_identity`", schema)
         self.assertIn("`verifier_tamper_risk`", schema)
         self.assertIn("successful repair claim edits verifier, oracle, harness, CI, or test-only paths", schema)
         self.assertIn("artifact identity metadata supplied by the record", schema)
+        self.assertIn("ledger identity metadata supplied by the record", schema)
         self.assertIn("does not mean OpenMako ingests native benchmark", schema)
         self.assertIn("`mixed_test_source`: both test-like files and source-like files were edited.", schema)
         self.assertIn("`config_only`: only config-like files were edited.", schema)
