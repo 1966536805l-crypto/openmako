@@ -1183,6 +1183,18 @@ Current public proof:
   parser diagnostics only, not native transcript ingestion, native live control,
   remote CI status for this new commit, external review, endorsement, stars, or
   reposts.
+- Conflicting event/step-level task text now includes the incoming supplied
+  task path in diagnostics, such as
+  `events[0].claimed_task values must not be mixed` or
+  `steps[0].claimed_task values must not be mixed`, while preserving the
+  existing generic merge diagnostic for non-adapter callers. The focused
+  OpenHands/SWE-agent mixed task/scope regressions failed before the path-label
+  fix and passed after it; the full CLI wrapper test file, public metadata
+  tests, supplied transcript adapter matrix, and `git diff --check` passed
+  locally before this note was added. This is local supplied-record parser
+  diagnostics only, not native transcript ingestion, native live control,
+  remote CI status for this new commit, external review, endorsement, stars, or
+  reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

@@ -5817,7 +5817,7 @@ class CliWrapperTest(unittest.TestCase):
                         {"action": "task", "message": "Rewrite report.md."},
                     ],
                 },
-                "claimed_task values must not be mixed",
+                "events[0].claimed_task values must not be mixed",
             ),
             (
                 {
@@ -6074,7 +6074,7 @@ class CliWrapperTest(unittest.TestCase):
                         {"action": "issue", "message": "Rewrite report.md."},
                     ],
                 },
-                "claimed_task values must not be mixed",
+                "steps[0].claimed_task values must not be mixed",
             ),
             (
                 {
@@ -6376,9 +6376,11 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("final-claim text is rejected instead of overwritten", schema_doc)
         self.assertIn("Root and event-level task/scope metadata must agree", schema_doc)
         self.assertIn("Root and step-level task/scope metadata must", schema_doc)
+        self.assertIn("events[index].claimed_task values must not be mixed", schema_doc)
         self.assertIn("events[index].allowed_files", schema_doc)
         self.assertIn("events[index].allowed_files[item]", schema_doc)
         self.assertIn("events[index].allowed_files values must not be mixed", schema_doc)
+        self.assertIn("steps[index].claimed_task values must not be mixed", schema_doc)
         self.assertIn("steps[index].allowed_files", schema_doc)
         self.assertIn("steps[index].allowed_files[item]", schema_doc)
         self.assertIn("steps[index].allowed_files values must not be mixed", schema_doc)

@@ -375,6 +375,8 @@ messages may fill or repeat the same supplied `claimed_task` and `allowed_files`
 scope, but conflicting task or scope metadata is rejected instead of
 overwritten. Event-level `allowed_files` must be an array; malformed values are
 rejected with an `events[index].allowed_files` diagnostic.
+Conflicting event-level task text is rejected with an
+`events[index].claimed_task values must not be mixed` diagnostic.
 Malformed event-level `allowed_files` items are rejected with an
 `events[index].allowed_files[item]` diagnostic.
 Conflicting event-level `allowed_files` values are rejected with an
@@ -416,6 +418,8 @@ supplied `claimed_task` and `allowed_files` scope, but conflicting task or
 scope metadata is rejected instead of overwritten. Step-level `allowed_files`
 must be an array; malformed values are rejected with a
 `steps[index].allowed_files` diagnostic.
+Conflicting step-level task text is rejected with a
+`steps[index].claimed_task values must not be mixed` diagnostic.
 Malformed step-level `allowed_files` items are rejected with a
 `steps[index].allowed_files[item]` diagnostic.
 Conflicting step-level `allowed_files` values are rejected with a

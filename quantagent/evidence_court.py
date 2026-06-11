@@ -1078,7 +1078,9 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
         if event_kind in {"task", "instruction"}:
             text = _openhands_event_text(event, "claimed_task")
             if text:
-                record["claimed_task"] = _merge_claimed_task(str(record["claimed_task"]), text)
+                record["claimed_task"] = _merge_claimed_task(
+                    str(record["claimed_task"]), text, label=f"{event_path}.claimed_task"
+                )
             if "allowed_files" in event:
                 allowed_files = _string_list(event.get("allowed_files"), label=f"{event_path}.allowed_files")
                 if allowed_files:
@@ -1192,7 +1194,9 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
         if step_kind in {"task", "instruction", "issue"}:
             text = _openhands_event_text(step, "claimed_task")
             if text:
-                record["claimed_task"] = _merge_claimed_task(str(record["claimed_task"]), text)
+                record["claimed_task"] = _merge_claimed_task(
+                    str(record["claimed_task"]), text, label=f"{step_path}.claimed_task"
+                )
             if "allowed_files" in step:
                 allowed_files = _string_list(step.get("allowed_files"), label=f"{step_path}.allowed_files")
                 if allowed_files:
@@ -2185,9 +2189,9 @@ def _event_text_field(event: dict[str, object], fields: tuple[str, ...], label: 
     return ""
 
 
-def _merge_claimed_task(current: str, incoming: str) -> str:
+def _merge_claimed_task(current: str, incoming: str, *, label: str = "claimed_task") -> str:
     if current and incoming and current != incoming:
-        raise ValueError("claimed_task values must not be mixed")
+        raise ValueError(f"{label} values must not be mixed")
     return current or incoming
 
 
