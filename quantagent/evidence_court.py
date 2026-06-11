@@ -1542,27 +1542,27 @@ def _ledger_identity(value: object) -> dict[str, object]:
     return identity
 
 
-def _agent_risk_ledger(value: object) -> dict[str, object]:
+def _agent_risk_ledger(value: object, label: str = "agent_risk_ledger") -> dict[str, object]:
     if value is None:
         return {}
     if not isinstance(value, dict):
-        raise ValueError("agent_risk_ledger must be an object")
+        raise ValueError(f"{label} must be an object")
     ledger: dict[str, object] = {}
     for field in AGENT_RISK_BOOL_FIELDS:
         if field not in value:
             continue
         if not isinstance(value[field], bool):
-            raise ValueError(f"agent_risk_ledger.{field} must be a boolean")
+            raise ValueError(f"{label}.{field} must be a boolean")
         ledger[field] = value[field]
     for field in AGENT_RISK_LIST_FIELDS:
-        items = _string_array(value.get(field), f"agent_risk_ledger.{field}")
+        items = _string_array(value.get(field), f"{label}.{field}")
         if items:
             ledger[field] = items
     for key, item in value.items():
         if key in {*AGENT_RISK_BOOL_FIELDS, *AGENT_RISK_LIST_FIELDS}:
             continue
         if not isinstance(item, str):
-            raise ValueError(f"agent_risk_ledger.{key} must be a string")
+            raise ValueError(f"{label}.{key} must be a string")
         text = item.strip()
         if text:
             ledger[key] = text
@@ -1620,7 +1620,9 @@ def _add_event_ledger_identity(target: dict[str, object], event: dict[str, objec
 def _add_event_agent_risk_ledger(
     target: dict[str, object], event: dict[str, object], label: str = ""
 ) -> None:
-    nested = _agent_risk_ledger(event.get("agent_risk_ledger"))
+    nested = _agent_risk_ledger(
+        event.get("agent_risk_ledger"), _field_label(label, "agent_risk_ledger")
+    )
     if nested:
         _merge_agent_risk_ledger(target, nested)
     direct: dict[str, object] = {}

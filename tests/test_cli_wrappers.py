@@ -2486,32 +2486,46 @@ class CliWrapperTest(unittest.TestCase):
             "risk_review_id": {"id": "risk-44"},
         }
         transcripts = {
-            "codex": {
-                "claimed_task": "Audit live-control claim.",
-                "messages": [{"role": "assistant", "tool_calls": [{"type": "exec_command", "agent_risk_ledger": malformed}]}],
-            },
-            "claude": {
-                "task": "Audit live-control claim.",
-                "messages": [
-                    {
-                        "role": "assistant",
-                        "content": [
-                            {"type": "tool_use", "name": "Bash", "input": {"agent_risk_ledger": malformed}}
-                        ],
-                    }
-                ],
-            },
-            "openhands": {
-                "task": "Audit live-control claim.",
-                "events": [{"action": "run", "agent_risk_ledger": malformed}],
-            },
-            "swe-agent": {
-                "issue": "Audit live-control claim.",
-                "steps": [{"action": "test", "agent_risk_ledger": malformed}],
-            },
+            "codex": (
+                {
+                    "claimed_task": "Audit live-control claim.",
+                    "messages": [
+                        {"role": "assistant", "tool_calls": [{"type": "exec_command", "agent_risk_ledger": malformed}]}
+                    ],
+                },
+                "messages[0].tool_calls[0].agent_risk_ledger.risk_review_id must be a string",
+            ),
+            "claude": (
+                {
+                    "task": "Audit live-control claim.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": [
+                                {"type": "tool_use", "name": "Bash", "input": {"agent_risk_ledger": malformed}}
+                            ],
+                        }
+                    ],
+                },
+                "messages[0].content[0].agent_risk_ledger.risk_review_id must be a string",
+            ),
+            "openhands": (
+                {
+                    "task": "Audit live-control claim.",
+                    "events": [{"action": "run", "agent_risk_ledger": malformed}],
+                },
+                "events[0].agent_risk_ledger.risk_review_id must be a string",
+            ),
+            "swe-agent": (
+                {
+                    "issue": "Audit live-control claim.",
+                    "steps": [{"action": "test", "agent_risk_ledger": malformed}],
+                },
+                "steps[0].agent_risk_ledger.risk_review_id must be a string",
+            ),
         }
 
-        for adapter, transcript in transcripts.items():
+        for adapter, (transcript, expected_error) in transcripts.items():
             with self.subTest(adapter=adapter):
                 with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
                     json.dump(transcript, handle)
@@ -2526,7 +2540,7 @@ class CliWrapperTest(unittest.TestCase):
 
                 self.assertEqual(converted.returncode, 2)
                 self.assertEqual(converted.stdout, "")
-                self.assertIn("agent_risk_ledger.risk_review_id must be a string", converted.stderr)
+                self.assertIn(expected_error, converted.stderr)
 
     def test_openmako_evidence_court_transcript_adapters_preserve_direct_agent_risk_fields(self) -> None:
         expected = {
@@ -6368,6 +6382,7 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("direct known agent-risk fields such as `live_control`", schema_doc)
         self.assertIn("reported with their transcript path", schema_doc)
         self.assertIn("messages[0].tool_calls[0].live_control", schema_doc)
+        self.assertIn("messages[0].tool_calls[0].agent_risk_ledger.risk_review_id", schema_doc)
         self.assertIn("The root object and tool calls may also include supplied `agent_risk_ledger`", schema_doc)
         self.assertIn("The root object and events may also include supplied `agent_risk_ledger`", schema_doc)
         self.assertIn("The root object and steps may also include supplied `agent_risk_ledger`", schema_doc)

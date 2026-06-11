@@ -1132,6 +1132,20 @@ Current public proof:
   This is local supplied-record parser diagnostics only, not native transcript
   ingestion, native live control, gateway safety proof, persistent memory proof,
   external review, endorsement, stars, or reposts.
+- Malformed nested `agent_risk_ledger` objects on supplied transcript
+  tool/event/step entries now also include their supplied transcript path in
+  diagnostics, such as
+  `messages[0].tool_calls[0].agent_risk_ledger.risk_review_id`,
+  `events[0].agent_risk_ledger.risk_review_id`, or
+  `steps[0].agent_risk_ledger.risk_review_id`, while preserving the older
+  root-level nested ledger diagnostic boundary. The focused path-labeled
+  malformed nested agent-risk regression failed before the diagnostic label fix
+  and passed after it; the full CLI wrapper test file, public metadata tests,
+  supplied transcript adapter matrix, and `git diff --check` passed locally
+  before this note was added. This is local supplied-record parser diagnostics
+  only, not native transcript ingestion, native live control, gateway safety
+  proof, persistent memory proof, external review, endorsement, stars, or
+  reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1144,7 +1158,6 @@ Next smallest hygiene task:
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
 - Next concrete candidate: another adapter evidence edge case such as
-  event-level `allowed_files` item diagnostics for non-string items, or
-  path-labeled diagnostics for nested event/tool-level `agent_risk_ledger`
-  objects only if it can be reduced to a failing parser test behind the
-  supplied-record proof boundary.
+  event-level `allowed_files` item diagnostics for non-string items only if it
+  can be reduced to a failing parser test behind the supplied-record proof
+  boundary.
