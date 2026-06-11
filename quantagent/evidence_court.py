@@ -856,10 +856,10 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
     ledger_identity: dict[str, object] = {}
     agent_risk_ledger: dict[str, object] = {}
     unsupported: list[str] = []
-    session_ids: set[str] = set()
+    session_identity: dict[str, str] = {}
     test_output = ""
 
-    _add_event_session_id(session_ids, payload)
+    _add_event_session_id(session_identity, payload)
     _add_event_ledger_identity(ledger_identity, payload)
     _add_event_agent_risk_ledger(agent_risk_ledger, payload)
 
@@ -875,7 +875,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
 
         for tool_path, tool_call in _codex_tool_calls(message, message_index):
             tool_payload = _codex_tool_payload(tool_call, tool_path)
-            _add_event_session_id(session_ids, tool_payload)
+            _add_event_session_id(session_identity, tool_payload, tool_path)
             _add_event_ledger_identity(ledger_identity, tool_payload, tool_path)
             _add_event_agent_risk_ledger(agent_risk_ledger, tool_payload, tool_path)
             tool_kind = _codex_tool_kind(tool_call, tool_payload, tool_path)
@@ -965,10 +965,10 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
     ledger_identity: dict[str, object] = {}
     agent_risk_ledger: dict[str, object] = {}
     unsupported: list[str] = []
-    session_ids: set[str] = set()
+    session_identity: dict[str, str] = {}
     test_output = ""
 
-    _add_event_session_id(session_ids, payload)
+    _add_event_session_id(session_identity, payload)
     _add_event_ledger_identity(ledger_identity, payload)
     _add_event_agent_risk_ledger(agent_risk_ledger, payload)
 
@@ -986,7 +986,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
         tool_calls.extend(_claude_content_tool_uses(message, message_index))
         for tool_path, tool_call in tool_calls:
             tool_payload = _codex_tool_payload(tool_call, tool_path)
-            _add_event_session_id(session_ids, tool_payload)
+            _add_event_session_id(session_identity, tool_payload, tool_path)
             _add_event_ledger_identity(ledger_identity, tool_payload, tool_path)
             _add_event_agent_risk_ledger(agent_risk_ledger, tool_payload, tool_path)
             tool_kind = _codex_tool_kind(tool_call, tool_payload, tool_path)
@@ -1075,10 +1075,10 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
     ledger_identity: dict[str, object] = {}
     agent_risk_ledger: dict[str, object] = {}
     unsupported: list[str] = []
-    session_ids: set[str] = set()
+    session_identity: dict[str, str] = {}
     test_output = ""
 
-    _add_event_session_id(session_ids, payload)
+    _add_event_session_id(session_identity, payload)
     _add_event_ledger_identity(ledger_identity, payload)
     _add_event_agent_risk_ledger(agent_risk_ledger, payload)
 
@@ -1086,7 +1086,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
         if not isinstance(event, dict):
             raise ValueError(f"OpenHands transcript event {event_index} must be an object")
         event_path = f"events[{event_index}]"
-        _add_event_session_id(session_ids, event)
+        _add_event_session_id(session_identity, event, event_path)
         _add_event_ledger_identity(ledger_identity, event, event_path)
         _add_event_agent_risk_ledger(agent_risk_ledger, event, event_path)
         event_kind = _openhands_event_kind(event, event_path)
@@ -1193,10 +1193,10 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
     ledger_identity: dict[str, object] = {}
     agent_risk_ledger: dict[str, object] = {}
     unsupported: list[str] = []
-    session_ids: set[str] = set()
+    session_identity: dict[str, str] = {}
     test_output = ""
 
-    _add_event_session_id(session_ids, payload)
+    _add_event_session_id(session_identity, payload)
     _add_event_ledger_identity(ledger_identity, payload)
     _add_event_agent_risk_ledger(agent_risk_ledger, payload)
 
@@ -1204,7 +1204,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
         if not isinstance(step, dict):
             raise ValueError(f"SWE-agent transcript step {step_index} must be an object")
         step_path = f"steps[{step_index}]"
-        _add_event_session_id(session_ids, step)
+        _add_event_session_id(session_identity, step, step_path)
         _add_event_ledger_identity(ledger_identity, step, step_path)
         _add_event_agent_risk_ledger(agent_risk_ledger, step, step_path)
         step_kind = _swe_agent_step_kind(step, step_path)
@@ -1687,18 +1687,20 @@ def _event_identity_text(event: dict[str, object], field: str, label: str = "") 
     return value.strip()
 
 
-def _add_event_session_id(session_ids: set[str], event: dict[str, object]) -> None:
+def _add_event_session_id(session_identity: dict[str, str], event: dict[str, object], label: str = "") -> None:
     if "session_id" not in event:
         return
+    session_label = _field_label(_field_label(label, "ledger_identity"), "session_id")
     value = event["session_id"]
     if not isinstance(value, str):
-        raise ValueError("session_id must be a string")
+        raise ValueError(f"{session_label} must be a string")
     session_id = value.strip()
     if not session_id:
         return
-    session_ids.add(session_id)
-    if len(session_ids) > 1:
-        raise ValueError("transcript session_id values must not be mixed")
+    existing = session_identity.get("session_id")
+    if existing and existing != session_id:
+        raise ValueError(f"{session_label} values must not be mixed")
+    session_identity["session_id"] = session_id
 
 
 def _artifact_provenance(value: object) -> dict[str, object]:

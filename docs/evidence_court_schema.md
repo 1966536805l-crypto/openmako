@@ -289,6 +289,8 @@ such as
 `messages[index].content[index].ledger_identity.session_id`,
 `events[index].ledger_identity.session_id`, or
 `steps[index].ledger_identity.session_id`.
+Direct `session_id` conflicts are reported in the same ledger-identity
+namespace instead of a generic transcript-level diagnostic.
 Malformed nested `ledger_identity` objects on supplied tool/event/step entries
 are also reported with their transcript path, such as
 `messages[0].tool_calls[0].ledger_identity.run_id` or
