@@ -394,7 +394,8 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
             f"E{len(evidence) + 1}",
             "verifier_tamper_risk",
             "tamper_risk",
-            "Verifier tamper risk: " + _verifier_tamper_risk_summary(verifier_tamper_risk),
+            "Verifier/test-control/runtime-shadowing risk: "
+            + _verifier_tamper_risk_summary(verifier_tamper_risk),
             step=len(evidence),
             name="verifier_tamper_risk",
             ok=not verifier_tamper_risk.get("verifier_tamper_risk", False),

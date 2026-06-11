@@ -643,6 +643,7 @@ class CliWrapperTest(unittest.TestCase):
         tamper_evidence = next(
             item for item in payload["report"]["evidence"] if item["name"] == "verifier_tamper_risk"
         )
+        self.assertIn("Verifier/test-control/runtime-shadowing risk:", tamper_evidence["summary"])
         self.assertIn("sitecustomize.py=runtime_shadowing_path", tamper_evidence["summary"])
         self.assertIn("Python startup-shadowing hooks", tamper_evidence["reason"])
         self.assertIn("startup-shadowing path(s)", payload["report"]["findings"][0]["summary"])

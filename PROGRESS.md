@@ -1264,6 +1264,16 @@ Current public proof:
   not proof of malicious intent, native transcript ingestion, native live
   control, remote CI status for this new commit, external review, endorsement,
   stars, or reposts.
+- Runtime-shadowing review evidence summaries now use the broader
+  `Verifier/test-control/runtime-shadowing risk` label instead of the older
+  `Verifier tamper risk` prefix, while keeping the machine-readable
+  `verifier_tamper_risk` field and failure class unchanged. The focused
+  report-prefix regression failed before the label fix and passed after it;
+  the full CLI wrapper test file, public metadata tests, supplied transcript
+  adapter matrix, and `git diff --check` passed locally before this note was
+  added. This is local supplied-record report wording only, not proof of
+  malicious intent, native transcript ingestion, native live control, remote CI
+  status for this new commit, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
