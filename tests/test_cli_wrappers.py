@@ -1870,6 +1870,27 @@ class CliWrapperTest(unittest.TestCase):
             converted.stderr,
         )
 
+    def test_openmako_evidence_court_record_from_jsonl_labels_first_mixed_command_conflict(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
+            handle.write('{"kind":"task","claimed_task":"Compare benchmark artifacts."}\n')
+            handle.write(
+                '{"kind":"command","command":"python3 scripts/prepare.py","exit_code":0,'
+                '"provider":"openai","model":"gpt-5",'
+                '"artifact_provenance":{"eval_rule_version":"swtbench-strip-model-patch/v1"}}\n'
+            )
+            handle.write(
+                '{"kind":"command","command":"python3 scripts/check.py","exit_code":0,'
+                '"run_metrics":{"provider":"anthropic","model":"gpt-5-mini"},'
+                '"artifact_provenance":{"eval_rule_version":"swtbench-strip-model-patch/v2"}}\n'
+            )
+            handle.flush()
+            converted = self.run_openmako("--no-trust-prompt", "evidence-court", "record", "from-jsonl", handle.name)
+
+        self.assertEqual(converted.returncode, 2)
+        self.assertEqual(converted.stdout, "")
+        self.assertIn("JSONL event at line 3.run_metrics.provider values must not be mixed", converted.stderr)
+        self.assertNotIn("run_metrics.provider values must not be mixed", converted.stderr.splitlines())
+
     def test_openmako_evidence_court_record_from_swtbench_artifacts_is_auditable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

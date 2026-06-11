@@ -1362,6 +1362,14 @@ Current public proof:
   supplied-record parser diagnostics only, not native transcript ingestion,
   native live control, remote CI status for this new commit, external review,
   endorsement, stars, or reposts.
+- The Simple JSONL command conflict diagnostics now have a focused CLI golden
+  regression that combines run-metric and artifact-provenance conflicts and
+  locks the user-visible stderr to the first line-labeled conflict,
+  `JSONL event at line 3.run_metrics.provider`. The focused JSONL conflict
+  subset passed locally before this note was added. A remote focused CI
+  snapshot attempt for `a1007cfdec979d9909f3fcdf6e569d505994365a` was still
+  blocked by GitHub API rate limiting, so this is local test evidence only,
+  not current remote CI proof, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
