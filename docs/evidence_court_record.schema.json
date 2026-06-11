@@ -174,7 +174,9 @@
     },
     "ledger_identity": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": {
+        "type": "string"
+      },
       "description": "Optional supplied ledger identity metadata, including recognized fields and extra supplied run or trace identity fields. Evidence Court preserves it in machine JSON but does not treat it as proof of native transcript ingestion, live control, or patch application outside the supplied record.",
       "properties": {
         "session_id": {

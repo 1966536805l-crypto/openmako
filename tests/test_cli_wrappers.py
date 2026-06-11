@@ -1117,6 +1117,31 @@ class CliWrapperTest(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertEqual(payload["ledger_identity"], record["ledger_identity"])
 
+    def test_openmako_evidence_court_rejects_malformed_extra_ledger_identity_fields(self) -> None:
+        record = {
+            "claimed_task": "Fix calculator.py.",
+            "files_read": ["calculator.py"],
+            "files_edited": ["calculator.py"],
+            "commands_run": [{"command": "python3 -m pytest tests/test_calculator.py -q", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "ledger_identity": {
+                "session_id": "session-a",
+                "run_id": {"id": "run-44"},
+                "trace_id": ["trace-abc"],
+            },
+            "final_claim": "Fixed and verified.",
+        }
+        for command in ("audit", "validate"):
+            with self.subTest(command=command):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(record, handle)
+                    handle.flush()
+                    result = self.run_openmako("--no-trust-prompt", "evidence-court", command, handle.name)
+
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertIn("ledger_identity.run_id must be a string", result.stderr)
+
     def test_openmako_evidence_court_rejects_malformed_artifact_provenance_text_fields(self) -> None:
         record = {
             "claimed_task": "Compare benchmark artifact outputs.",
@@ -3766,6 +3791,81 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertIn("ledger_identity.run_id", converted.stderr)
                 self.assertIn("must not be mixed", converted.stderr)
 
+    def test_openmako_evidence_court_transcript_adapters_reject_malformed_extra_ledger_identity_fields(self) -> None:
+        source_hunk = (
+            "--- a/calculator.py\n"
+            "+++ b/calculator.py\n"
+            "@@ -1,2 +1,2 @@\n"
+            "-def add(a, b): return a - b\n"
+            "+def add(a, b): return a + b"
+        )
+
+        def transcript_for(adapter: str) -> dict[str, object]:
+            root = {
+                "ledger_identity": {"run_id": {"id": "run-a"}},
+            }
+            if adapter == "codex":
+                return {
+                    "claimed_task": "Fix calculator.py.",
+                    **root,
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "tool_calls": [
+                                {"type": "apply_patch", "files": ["calculator.py"], "diff_hunks": [source_hunk]}
+                            ],
+                        },
+                    ],
+                }
+            if adapter == "claude":
+                return {
+                    "task": "Fix calculator.py.",
+                    **root,
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "name": "Edit",
+                                    "input": {"file_path": "calculator.py", "diff_hunks": [source_hunk]},
+                                }
+                            ],
+                        }
+                    ],
+                }
+            if adapter == "openhands":
+                return {
+                    "task": "Fix calculator.py.",
+                    **root,
+                    "events": [{"action": "edit", "path": "calculator.py", "diff_hunks": [source_hunk]}],
+                }
+            if adapter == "swe-agent":
+                return {
+                    "issue": "Fix calculator.py.",
+                    **root,
+                    "steps": [{"action": "edit", "path": "calculator.py", "diff_hunks": [source_hunk]}],
+                }
+            raise AssertionError(f"unexpected adapter: {adapter}")
+
+        for adapter in ("codex", "claude", "openhands", "swe-agent"):
+            with self.subTest(adapter=adapter):
+                transcript = transcript_for(adapter)
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn("ledger_identity.run_id must be a string", converted.stderr)
+
     def test_openmako_evidence_court_transcript_adapters_do_not_count_unsupported_edit_events(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"
@@ -5087,6 +5187,7 @@ class CliWrapperTest(unittest.TestCase):
             schema["properties"]["ledger_identity"]["properties"]["tool_invocation_ids"]["items"]["type"],
             "string",
         )
+        self.assertEqual(schema["properties"]["ledger_identity"]["additionalProperties"]["type"], "string")
         self.assertIs(schema["additionalProperties"], True)
 
         for field in ("allowed_files", "files_read", "files_edited", "commands_run"):

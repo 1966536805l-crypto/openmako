@@ -961,6 +961,17 @@ Current public proof:
   live agent control, proof that supplied patches were applied outside the
   supplied record, remote CI status, external review, endorsement, stars, or
   reposts.
+- Evidence Court now rejects malformed extra `ledger_identity` values before
+  raw audit/validate and supplied transcript conversion: extra identity fields
+  such as run IDs and trace IDs must be strings, while built-in list fields
+  remain explicit arrays of strings. The focused malformed-extra-identity
+  regressions failed before the parser/schema fix and passed after it; the full
+  CLI wrapper test file, public metadata tests, supplied transcript adapter
+  matrix, `git diff --check`, and public gate passed locally before this note
+  was added. This is local supplied-record identity validation only, not native
+  export ingestion, live agent control, proof that supplied patches were
+  applied outside the supplied record, remote CI status, external review,
+  endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

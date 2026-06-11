@@ -63,7 +63,7 @@ The schema documents the supplied record shape; the CLI still audits only the ev
 | `test_output` | string or object | Validation evidence. Objects may include `status`, `output`, `summary`, or `exit_code`. |
 | `run_metrics` | object | Optional telemetry supplied by the record: duration, command count, token counts, cost, provider/model, and `missing_telemetry`. It is preserved in JSON output but is not treated as validation proof. |
 | `artifact_provenance` | object | Optional artifact identity metadata supplied by the record: eval rule version/commit, runner version/commit, input/output hashes, artifact hashes, and `missing_provenance`. It is preserved in JSON output but is not treated as validation proof. |
-| `ledger_identity` | object | Optional ledger identity metadata supplied by the record: session, task, parent, tool invocation IDs, `missing_identity`, and extra supplied identity fields such as run or trace IDs. It is preserved in JSON output but is not treated as native transcript ingestion, live control, or proof that supplied patches were applied outside the supplied record. |
+| `ledger_identity` | object | Optional ledger identity metadata supplied by the record: session, task, parent, tool invocation IDs, `missing_identity`, and extra supplied string identity fields such as run or trace IDs. It is preserved in JSON output but is not treated as native transcript ingestion, live control, or proof that supplied patches were applied outside the supplied record. |
 | `final_claim` | string | Agent's final success or completion claim. |
 
 ## Verdict Boundary
@@ -186,7 +186,7 @@ rules.
 
 `ledger_identity` preserves ledger identity metadata supplied by the record,
 including `session_id`, `task_id`, `parent_id`, `tool_invocation_ids`,
-`missing_identity`, and extra supplied identity fields such as run or trace
+`missing_identity`, and extra supplied string identity fields such as run or trace
 IDs. This helps compare supplied records that carry run or tool call identity
 fields, but it does not prove native transcript ingestion, live agent control,
 or that supplied patches were applied outside the supplied record.
