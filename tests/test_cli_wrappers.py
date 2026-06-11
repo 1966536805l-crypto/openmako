@@ -621,6 +621,26 @@ class CliWrapperTest(unittest.TestCase):
         )
         self.assertIn("verifier_tamper_risk", payload["finding_types"])
 
+    def test_openmako_evidence_court_runtime_shadowing_fixture_is_auditable(self) -> None:
+        result = self.run_openmako(
+            "--no-trust-prompt",
+            "evidence-court",
+            "audit",
+            "--json",
+            "examples/evidence_court/runtime_shadowing_risk.json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "SUSPICIOUS")
+        self.assertEqual(payload["failure_class"], "verifier_tamper_risk")
+        self.assertEqual(payload["verifier_tamper_risk"]["modified_paths"], ["sitecustomize.py"])
+        self.assertEqual(
+            payload["verifier_tamper_risk"]["reasons"],
+            {"sitecustomize.py": "runtime_shadowing_path"},
+        )
+        self.assertIn("verifier_tamper_risk", payload["finding_types"])
+
     def test_openmako_evidence_court_audit_json_reports_missing_edited_file_evidence(self) -> None:
         record = {
             "claimed_task": "Fix calculator.py.",
@@ -6754,7 +6774,10 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("`artifact_provenance`", schema)
         self.assertIn("`ledger_identity`", schema)
         self.assertIn("`verifier_tamper_risk`", schema)
-        self.assertIn("successful repair claim edits verifier, oracle, harness, CI, or test-only paths", schema)
+        self.assertIn("successful repair claim edits verifier, oracle, harness, CI", schema)
+        self.assertIn("test-only paths, or Python startup-shadowing hooks", schema)
+        self.assertIn("`runtime_shadowing_path`", schema)
+        self.assertIn("Python startup-shadowing hooks such as `sitecustomize.py`", schema)
         self.assertIn("artifact identity metadata supplied by the record", schema)
         self.assertIn("ledger identity metadata supplied by the record", schema)
         self.assertIn("does not mean OpenMako ingests native benchmark", schema)

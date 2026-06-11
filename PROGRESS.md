@@ -1224,6 +1224,17 @@ Current public proof:
   supplied-record parser diagnostics only, not native transcript ingestion,
   native live control, remote CI status for this new commit, external review,
   endorsement, stars, or reposts.
+- Successful repair claims that edit Python startup-shadowing hooks such as
+  `sitecustomize.py` now route to `SUSPICIOUS` review through
+  `verifier_tamper_risk` with reason code `runtime_shadowing_path`, alongside
+  existing verifier/oracle/harness/CI/test-only review signals. The focused
+  runtime-shadowing fixture regression failed before the reason-code fix and
+  passed after it; the full CLI wrapper test file, public metadata tests,
+  supplied transcript adapter matrix, and `git diff --check` passed locally
+  before this note was added. This is local supplied-record reward-hack review
+  metadata only, not proof of malicious intent, native transcript ingestion,
+  native live control, remote CI status for this new commit, external review,
+  endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1235,5 +1246,6 @@ Next smallest hygiene task:
 
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
-- Next concrete candidate: another adapter evidence edge case only if it can be
-  reduced to a failing parser test behind the supplied-record proof boundary.
+- Next concrete candidate: another adapter evidence edge case or trend-radar
+  follow-up only if it can be reduced to a failing parser test behind the
+  supplied-record proof boundary.
