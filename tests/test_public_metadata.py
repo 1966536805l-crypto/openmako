@@ -766,7 +766,10 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "docs/REPRODUCE_V0_1.md" in packet
     assert "docs/PUBLIC_SHARE_PACKET.md" in packet
     assert "./scripts/public_review_gate.sh" in packet
-    assert "the\nsupplied Evidence Court bad-run audit, the artifact-provenance fixture, the\nSWTBench patch-artifact fixture, the config-only repair fixture, and the\nsupplied transcript adapter matrix" in packet
+    assert "the\nsupplied Evidence Court bad-run audit, the artifact-provenance fixture, the" in packet
+    assert "SWTBench patch-artifact fixture, the config-only repair fixture, runtime" in packet
+    assert "shadowing and verifier/CI tamper fixtures, and the supplied transcript adapter" in packet
+    assert "matrix" in packet
     assert "tests/test_agent_planner_contract.py::AgentPlannerContractTest" in packet
     assert "tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest" in packet
     assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in packet
@@ -1070,7 +1073,7 @@ def test_public_proof_card_wraps_gate_without_overclaiming() -> None:
     assert (
         "focused learning-effect gate; public metadata boundary; supplied Evidence Court audit; "
         "artifact provenance; SWTBench patch artifact; config-only repair fixture; "
-        "supplied transcript adapter matrix"
+        "runtime-shadowing and verifier/CI tamper fixtures; supplied transcript adapter matrix"
     ) in text
     assert "not-proof: broad unknown-repository SWE repair; external endorsement; star or repost traction" in text
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in text
@@ -1700,15 +1703,15 @@ def test_wave1_review_requests_are_copyable_without_promotion() -> None:
     assert (
         "scope: focused learning-effect gate; public metadata boundary; supplied Evidence Court audit; "
         "artifact provenance; SWTBench patch artifact; config-only repair fixture; "
-        "supplied transcript adapter matrix"
+        "runtime-shadowing and verifier/CI tamper fixtures; supplied transcript adapter matrix"
     ) in requests
     assert "not-proof: broad unknown-repository SWE repair; external endorsement; star or repost traction" in requests
     assert "SWE-Bench / SWE-Agent Review Request" in requests
     assert "short notes for asking technical reviewers to check the v0.1 boundary" in requests
     assert "Can you point out where OpenMako v0.1 overclaims its evidence boundary?" in requests
     assert "Current public proof covers one focused learning-effect gate" in requests
-    assert "supplied-record/provenance audits, a config-only\nfalse-positive fixture, and a supplied transcript adapter matrix" in requests
-    assert "It does not claim\nSWE-bench-scale repair." in requests
+    assert "supplied-record/provenance audits, a config-only\nfalse-positive fixture, runtime-shadowing and verifier/CI tamper review-risk\nfixtures, and a supplied transcript adapter matrix" in requests
+    assert "It does not claim\nSWE-bench-scale repair or native runtime/CI hardening." in requests
     assert "I'm mainly looking for README lines or proof-command gaps that overclaim." in requests
     assert "Terminal-Bench / Agent-Eval Review Request" in requests
     assert "Can you check OpenMako v0.1's evidence boundary?" in requests
@@ -1725,7 +1728,7 @@ def test_wave1_review_requests_are_copyable_without_promotion() -> None:
     assert "skills, memory, ACP-style sessions, desktop control" in requests
     assert "Could you sanity-check whether OpenMako's runtime-adjacent docs overread the current proof?" in requests
     assert "trends or future bets" in requests
-    assert "test-proof checks, supplied-record/provenance audits, a config-only false-positive fixture, and a supplied transcript adapter matrix" in requests
+    assert "test-proof checks, supplied-record/provenance audits, a config-only false-positive fixture, runtime-shadowing and verifier/CI tamper review-risk fixtures, and a supplied transcript adapter matrix" in requests
     assert "test-proof checks, and supplied-record audit" not in requests
     assert "already public v0.1 proof" in requests
     assert "Do not send the boundary-clear follow-up before a named reviewer posts public\n  feedback." in requests

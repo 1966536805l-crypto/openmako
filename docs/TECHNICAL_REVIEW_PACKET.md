@@ -48,8 +48,9 @@ python -m pip install -e . pytest
 
 That script runs the focused public gate, metadata boundary checks, the
 supplied Evidence Court bad-run audit, the artifact-provenance fixture, the
-SWTBench patch-artifact fixture, the config-only repair fixture, and the
-supplied transcript adapter matrix.
+SWTBench patch-artifact fixture, the config-only repair fixture, runtime
+shadowing and verifier/CI tamper fixtures, and the supplied transcript adapter
+matrix.
 To run only the focused learning-effect gate:
 
 For exact expected output and smaller checks, see `docs/REPRODUCE_V0_1.md`.

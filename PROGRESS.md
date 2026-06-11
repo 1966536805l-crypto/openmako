@@ -1404,6 +1404,11 @@ Current public proof:
   to verifier/CI tamper fixtures. This is supplied-record review-risk evidence
   only, not native runtime hardening, native benchmark ingestion, native CI
   hardening, external review, endorsement, stars, or reposts.
+- The public proof card, Wave 1 review requests, and technical review packet
+  now use the same scope summary for runtime-shadowing and verifier/CI tamper
+  fixtures as the public gate and README. Public metadata tests and
+  `git diff --check` passed locally before this note was added. This is wording
+  alignment only, not outreach evidence or external review.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
