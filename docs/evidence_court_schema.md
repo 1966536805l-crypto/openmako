@@ -255,6 +255,12 @@ commands is kept ahead of later non-validation command output.
 Numeric run metrics are summed across commands and `missing_telemetry` is
 merged. Non-numeric run metric fields such as `provider` and `model` must repeat
 the same supplied value or they are rejected instead of overwritten.
+Supplied transcript builders label conflicting command telemetry with the
+incoming path, such as
+`messages[index].tool_calls[index].run_metrics.provider`,
+`messages[index].content[index].run_metrics.provider`,
+`events[index].run_metrics.provider`, or
+`steps[index].run_metrics.provider`.
 They may also include `artifact_provenance` or direct provenance fields such as
 `eval_rule_version`, `eval_rule_commit`, `runner_version`, `runner_commit`,
 `input_hashes`, `output_hashes`, `artifact_hashes`, and `missing_provenance`.

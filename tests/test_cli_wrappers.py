@@ -2916,6 +2916,143 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(record["run_metrics"]["estimated_cost_usd"], 0.004)
                 self.assertEqual(record["run_metrics"]["missing_telemetry"], ["actual_cost_usd", "model"])
 
+    def test_openmako_evidence_court_transcript_adapters_label_mixed_run_metric_provider(self) -> None:
+        source_hunk = (
+            "--- a/calculator.py\n"
+            "+++ b/calculator.py\n"
+            "@@ -1,2 +1,2 @@\n"
+            "-def add(a, b): return a - b\n"
+            "+def add(a, b): return a + b"
+        )
+
+        cases = {
+            "codex": (
+                {
+                    "claimed_task": "Fix calculator.py.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "tool_calls": [
+                                {"type": "apply_patch", "files": ["calculator.py"], "diff": source_hunk},
+                                {
+                                    "type": "exec_command",
+                                    "command": "python3 scripts/setup_fixture.py",
+                                    "exit_code": 0,
+                                    "provider": "openai",
+                                },
+                                {
+                                    "type": "exec_command",
+                                    "command": "python3 -m pytest tests/test_calculator.py -q",
+                                    "exit_code": 0,
+                                    "output": "1 passed in 0.02s",
+                                    "run_metrics": {"provider": "anthropic"},
+                                },
+                            ],
+                        }
+                    ],
+                },
+                "messages[0].tool_calls[2].run_metrics.provider values must not be mixed",
+            ),
+            "claude": (
+                {
+                    "task": "Fix calculator.py.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "name": "Edit",
+                                    "input": {"file_path": "calculator.py", "diff": source_hunk},
+                                },
+                                {
+                                    "type": "tool_use",
+                                    "name": "Bash",
+                                    "input": {
+                                        "command": "python3 scripts/setup_fixture.py",
+                                        "exit_code": 0,
+                                        "provider": "anthropic",
+                                    },
+                                },
+                                {
+                                    "type": "tool_use",
+                                    "name": "Bash",
+                                    "input": {
+                                        "command": "python3 -m pytest tests/test_calculator.py -q",
+                                        "exit_code": 0,
+                                        "stdout": "1 passed in 0.02s",
+                                        "run_metrics": {"provider": "openai"},
+                                    },
+                                },
+                            ],
+                        }
+                    ],
+                },
+                "messages[0].content[2].run_metrics.provider values must not be mixed",
+            ),
+            "openhands": (
+                {
+                    "task": "Fix calculator.py.",
+                    "events": [
+                        {"action": "edit", "path": "calculator.py", "diff": source_hunk},
+                        {
+                            "action": "run",
+                            "command": "python3 scripts/setup_fixture.py",
+                            "exit_code": 0,
+                            "provider": "openai",
+                        },
+                        {
+                            "action": "run",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "exit_code": 0,
+                            "observation": "1 passed in 0.02s",
+                            "run_metrics": {"provider": "anthropic"},
+                        },
+                    ],
+                },
+                "events[2].run_metrics.provider values must not be mixed",
+            ),
+            "swe-agent": (
+                {
+                    "issue": "Fix calculator.py.",
+                    "steps": [
+                        {"action": "edit", "path": "calculator.py", "patch": source_hunk},
+                        {
+                            "action": "run",
+                            "command": "python3 scripts/setup_fixture.py",
+                            "exit_code": 0,
+                            "provider": "openai",
+                        },
+                        {
+                            "action": "test",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "exit_code": 0,
+                            "stdout": "1 passed in 0.02s",
+                            "run_metrics": {"provider": "anthropic"},
+                        },
+                    ],
+                },
+                "steps[2].run_metrics.provider values must not be mixed",
+            ),
+        }
+
+        for adapter, (transcript, expected_error) in cases.items():
+            with self.subTest(adapter=adapter):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn(expected_error, converted.stderr)
+
     def test_openmako_evidence_court_transcript_adapters_deduplicate_file_evidence(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"
@@ -6390,6 +6527,10 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("steps[index].final_claim values must not be mixed", schema_doc)
         self.assertIn("Non-numeric run metric fields such as `provider` and `model`", schema_doc)
         self.assertIn("they are rejected instead of overwritten", schema_doc)
+        self.assertIn("messages[index].tool_calls[index].run_metrics.provider", schema_doc)
+        self.assertIn("messages[index].content[index].run_metrics.provider", schema_doc)
+        self.assertIn("events[index].run_metrics.provider", schema_doc)
+        self.assertIn("steps[index].run_metrics.provider", schema_doc)
         self.assertIn("conflicting scalar values or conflicting hash values", schema_doc)
         self.assertIn("same artifact key are rejected instead of overwritten", schema_doc)
         self.assertIn("direct list fields such as `tool_invocation_ids` and", schema_doc)

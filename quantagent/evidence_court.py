@@ -885,7 +885,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
                 commands_run.append(item)
                 metrics = _event_run_metrics(tool_payload)
                 if metrics:
-                    _merge_run_metrics(run_metrics, metrics)
+                    _merge_run_metrics(run_metrics, metrics, label=f"{tool_path}.run_metrics")
                 provenance = _event_artifact_provenance(tool_payload)
                 if provenance:
                     _merge_artifact_provenance(artifact_provenance, provenance)
@@ -994,7 +994,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
                 commands_run.append(item)
                 metrics = _event_run_metrics(tool_payload)
                 if metrics:
-                    _merge_run_metrics(run_metrics, metrics)
+                    _merge_run_metrics(run_metrics, metrics, label=f"{tool_path}.run_metrics")
                 provenance = _event_artifact_provenance(tool_payload)
                 if provenance:
                     _merge_artifact_provenance(artifact_provenance, provenance)
@@ -1104,7 +1104,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
             commands_run.append(item)
             metrics = _event_run_metrics(event)
             if metrics:
-                _merge_run_metrics(run_metrics, metrics)
+                _merge_run_metrics(run_metrics, metrics, label=f"{event_path}.run_metrics")
             provenance = _event_artifact_provenance(event)
             if provenance:
                 _merge_artifact_provenance(artifact_provenance, provenance)
@@ -1220,7 +1220,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
             commands_run.append(item)
             metrics = _event_run_metrics(step)
             if metrics:
-                _merge_run_metrics(run_metrics, metrics)
+                _merge_run_metrics(run_metrics, metrics, label=f"{step_path}.run_metrics")
             provenance = _event_artifact_provenance(step)
             if provenance:
                 _merge_artifact_provenance(artifact_provenance, provenance)
@@ -1774,7 +1774,7 @@ def _merge_agent_risk_ledger(target: dict[str, object], source: dict[str, object
         target[key] = value
 
 
-def _merge_run_metrics(target: dict[str, object], source: dict[str, object]) -> None:
+def _merge_run_metrics(target: dict[str, object], source: dict[str, object], *, label: str = "run_metrics") -> None:
     for key, value in source.items():
         if key == "missing_telemetry":
             existing = target.get(key)
@@ -1801,7 +1801,7 @@ def _merge_run_metrics(target: dict[str, object], source: dict[str, object]) -> 
                 target[key] = value
         else:
             if key in target and target[key] != value:
-                raise ValueError(f"run_metrics.{key} values must not be mixed")
+                raise ValueError(f"{label}.{key} values must not be mixed")
             target[key] = value
 
 

@@ -1195,6 +1195,20 @@ Current public proof:
   diagnostics only, not native transcript ingestion, native live control,
   remote CI status for this new commit, external review, endorsement, stars, or
   reposts.
+- Conflicting command telemetry on supplied transcript adapters now includes
+  the incoming command path in diagnostics, such as
+  `messages[0].tool_calls[2].run_metrics.provider values must not be mixed`,
+  `messages[0].content[2].run_metrics.provider values must not be mixed`,
+  `events[2].run_metrics.provider values must not be mixed`, or
+  `steps[2].run_metrics.provider values must not be mixed`, while preserving
+  the existing generic JSONL `run_metrics.provider` merge diagnostic. The
+  focused cross-adapter mixed provider regression failed before the path-label
+  fix and passed after it; the full CLI wrapper test file, public metadata
+  tests, supplied transcript adapter matrix, and `git diff --check` passed
+  locally before this note was added. This is local supplied-record parser
+  diagnostics only, not native transcript ingestion, native live control,
+  remote CI status for this new commit, external review, endorsement, stars, or
+  reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
