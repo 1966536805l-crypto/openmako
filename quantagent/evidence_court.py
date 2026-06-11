@@ -702,7 +702,8 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
             ((event, "kind"), (event, "type"), (event, "event")),
             f"JSONL event at line {line_no}",
         )
-        _add_event_ledger_identity(ledger_identity, event)
+        event_path = f"JSONL event at line {line_no}"
+        _add_event_ledger_identity(ledger_identity, event, event_path)
         if kind == "task":
             claimed_task = _event_text_field(event, ("claimed_task", "task"), "claimed_task")
             if claimed_task:
@@ -875,7 +876,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
         for tool_path, tool_call in _codex_tool_calls(message, message_index):
             tool_payload = _codex_tool_payload(tool_call, tool_path)
             _add_event_session_id(session_ids, tool_payload)
-            _add_event_ledger_identity(ledger_identity, tool_payload)
+            _add_event_ledger_identity(ledger_identity, tool_payload, tool_path)
             _add_event_agent_risk_ledger(agent_risk_ledger, tool_payload, tool_path)
             tool_kind = _codex_tool_kind(tool_call, tool_payload, tool_path)
             if tool_kind in {"read", "read_file", "open", "cat"}:
@@ -986,7 +987,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
         for tool_path, tool_call in tool_calls:
             tool_payload = _codex_tool_payload(tool_call, tool_path)
             _add_event_session_id(session_ids, tool_payload)
-            _add_event_ledger_identity(ledger_identity, tool_payload)
+            _add_event_ledger_identity(ledger_identity, tool_payload, tool_path)
             _add_event_agent_risk_ledger(agent_risk_ledger, tool_payload, tool_path)
             tool_kind = _codex_tool_kind(tool_call, tool_payload, tool_path)
             if tool_kind in {"read", "read_file", "open", "view", "cat"}:
@@ -1086,7 +1087,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
             raise ValueError(f"OpenHands transcript event {event_index} must be an object")
         event_path = f"events[{event_index}]"
         _add_event_session_id(session_ids, event)
-        _add_event_ledger_identity(ledger_identity, event)
+        _add_event_ledger_identity(ledger_identity, event, event_path)
         _add_event_agent_risk_ledger(agent_risk_ledger, event, event_path)
         event_kind = _openhands_event_kind(event, event_path)
         if event_kind in {"task", "instruction"}:
@@ -1204,7 +1205,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
             raise ValueError(f"SWE-agent transcript step {step_index} must be an object")
         step_path = f"steps[{step_index}]"
         _add_event_session_id(session_ids, step)
-        _add_event_ledger_identity(ledger_identity, step)
+        _add_event_ledger_identity(ledger_identity, step, step_path)
         _add_event_agent_risk_ledger(agent_risk_ledger, step, step_path)
         step_kind = _swe_agent_step_kind(step, step_path)
         if step_kind in {"task", "instruction", "issue"}:
@@ -1619,10 +1620,10 @@ def _string_array(value: object, label: str) -> list[str]:
     return _unique_strings(tuple(value))
 
 
-def _add_event_ledger_identity(target: dict[str, object], event: dict[str, object]) -> None:
+def _add_event_ledger_identity(target: dict[str, object], event: dict[str, object], label: str = "") -> None:
     nested = _ledger_identity(event.get("ledger_identity"))
     if nested:
-        _merge_ledger_identity(target, nested)
+        _merge_ledger_identity(target, nested, label=_field_label(label, "ledger_identity"))
     identity: dict[str, object] = {}
     for field in LEDGER_IDENTITY_TEXT_FIELDS:
         text = _event_identity_text(event, field)
@@ -1644,7 +1645,7 @@ def _add_event_ledger_identity(target: dict[str, object], event: dict[str, objec
             items = _unique_strings(tuple([*existing_items, *items]))
         identity[field] = items
     if identity:
-        _merge_ledger_identity(target, identity)
+        _merge_ledger_identity(target, identity, label=_field_label(label, "ledger_identity"))
 
 
 def _add_event_agent_risk_ledger(
@@ -1755,12 +1756,15 @@ def _merge_artifact_provenance(
             target[key] = value
 
 
-def _merge_ledger_identity(target: dict[str, object], source: dict[str, object]) -> None:
+def _merge_ledger_identity(
+    target: dict[str, object], source: dict[str, object], *, label: str = "ledger_identity"
+) -> None:
+    identity_label = label or "ledger_identity"
     for key, value in source.items():
         if key in LEDGER_IDENTITY_TEXT_FIELDS:
             existing = target.get(key)
             if existing and existing != value:
-                raise ValueError(f"ledger_identity.{key} values must not be mixed")
+                raise ValueError(f"{identity_label}.{key} values must not be mixed")
             target[key] = value
         elif key in LEDGER_IDENTITY_LIST_FIELDS:
             existing = target.get(key)
@@ -1773,7 +1777,7 @@ def _merge_ledger_identity(target: dict[str, object], source: dict[str, object])
         else:
             existing = target.get(key)
             if key in target and existing != value:
-                raise ValueError(f"ledger_identity.{key} values must not be mixed")
+                raise ValueError(f"{identity_label}.{key} values must not be mixed")
             target[key] = value
 
 

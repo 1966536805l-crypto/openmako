@@ -283,6 +283,12 @@ single invocation fields such as `tool_invocation_id`, `tool_call_id`, or
 `invocation_id`, and direct list fields such as `tool_invocation_ids` and
 `missing_identity`. Direct ledger identity list fields must be arrays of
 strings.
+Supplied transcript builders label conflicting ledger identity with the incoming path,
+such as
+`messages[index].tool_calls[index].ledger_identity.session_id`,
+`messages[index].content[index].ledger_identity.session_id`,
+`events[index].ledger_identity.session_id`, or
+`steps[index].ledger_identity.session_id`.
 
 This is an evidence audit of the supplied record only. It does not prove that a
 command actually ran outside the record, that a native transcript was ingested,

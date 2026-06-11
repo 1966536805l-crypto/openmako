@@ -2230,6 +2230,90 @@ class CliWrapperTest(unittest.TestCase):
             },
         )
 
+    def test_openmako_evidence_court_transcript_adapters_label_conflicting_ledger_identity_paths(self) -> None:
+        transcripts = {
+            "codex": {
+                "claimed_task": "Fix calculator.py.",
+                "ledger_identity": {"session_id": "session-a"},
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "tool_calls": [
+                            {
+                                "type": "apply_patch",
+                                "files": ["calculator.py"],
+                                "ledger_identity": {"session_id": "session-b"},
+                            }
+                        ],
+                    }
+                ],
+            },
+            "claude": {
+                "task": "Fix calculator.py.",
+                "ledger_identity": {"session_id": "session-a"},
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "content": [
+                            {
+                                "type": "tool_use",
+                                "name": "Edit",
+                                "input": {
+                                    "file_path": "calculator.py",
+                                    "ledger_identity": {"session_id": "session-b"},
+                                },
+                            }
+                        ],
+                    }
+                ],
+            },
+            "openhands": {
+                "task": "Fix calculator.py.",
+                "ledger_identity": {"session_id": "session-a"},
+                "events": [
+                    {
+                        "action": "edit",
+                        "path": "calculator.py",
+                        "ledger_identity": {"session_id": "session-b"},
+                    }
+                ],
+            },
+            "swe-agent": {
+                "issue": "Fix calculator.py.",
+                "ledger_identity": {"session_id": "session-a"},
+                "steps": [
+                    {
+                        "action": "edit",
+                        "path": "calculator.py",
+                        "ledger_identity": {"session_id": "session-b"},
+                    }
+                ],
+            },
+        }
+        expected_diagnostics = {
+            "codex": "messages[0].tool_calls[0].ledger_identity.session_id values must not be mixed",
+            "claude": "messages[0].content[0].ledger_identity.session_id values must not be mixed",
+            "openhands": "events[0].ledger_identity.session_id values must not be mixed",
+            "swe-agent": "steps[0].ledger_identity.session_id values must not be mixed",
+        }
+
+        for adapter, transcript in transcripts.items():
+            with self.subTest(adapter=adapter):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn(expected_diagnostics[adapter], converted.stderr)
+
     def test_openmako_evidence_court_transcript_adapters_preserve_root_agent_risk_ledger(self) -> None:
         expected = {
             "live_control": True,
@@ -6692,6 +6776,11 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("steps[index].artifact_provenance.eval_rule_version", schema_doc)
         self.assertIn("direct list fields such as `tool_invocation_ids` and", schema_doc)
         self.assertIn("Direct ledger identity list fields must be arrays of", schema_doc)
+        self.assertIn("label conflicting ledger identity with the incoming path", schema_doc)
+        self.assertIn("messages[index].tool_calls[index].ledger_identity.session_id", schema_doc)
+        self.assertIn("messages[index].content[index].ledger_identity.session_id", schema_doc)
+        self.assertIn("events[index].ledger_identity.session_id", schema_doc)
+        self.assertIn("steps[index].ledger_identity.session_id", schema_doc)
         self.assertIn("that a native transcript was ingested", schema_doc)
         self.assertIn("`agent_risk_ledger` preserves supplied agent-risk metadata", schema_doc)
         self.assertIn("Extra supplied agent-risk fields", schema_doc)
