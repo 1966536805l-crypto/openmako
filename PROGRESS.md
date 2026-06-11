@@ -972,6 +972,16 @@ Current public proof:
   export ingestion, live agent control, proof that supplied patches were
   applied outside the supplied record, remote CI status, external review,
   endorsement, stars, or reposts.
+- The simple JSONL record builder now preserves direct supplied ledger identity
+  list fields such as `tool_invocation_ids` and `missing_identity`, and rejects
+  malformed direct identity lists instead of silently ignoring them. The focused
+  JSONL regressions failed before the merge fix and passed after it; the full
+  CLI wrapper test file, public metadata tests, supplied transcript adapter
+  matrix, `git diff --check`, and public gate passed locally before this note
+  was added. This is local supplied-record identity preservation only, not
+  native transcript ingestion, live agent control, proof that supplied patches
+  were applied outside the supplied record, remote CI status, external review,
+  endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

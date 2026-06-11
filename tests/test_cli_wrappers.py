@@ -1411,6 +1411,67 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(record["files_edited"], ["calculator.py"])
         self.assertEqual(record["diff_hunks"], [source_hunk])
 
+    def test_openmako_evidence_court_record_from_jsonl_preserves_ledger_identity(self) -> None:
+        source_hunk = (
+            "--- a/calculator.py\n"
+            "+++ b/calculator.py\n"
+            "@@ -1,2 +1,2 @@\n"
+            "-def add(a, b): return a - b\n"
+            "+def add(a, b): return a + b"
+        )
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
+            handle.write(
+                json.dumps(
+                    {
+                        "kind": "task",
+                        "claimed_task": "Fix calculator.py.",
+                        "session_id": "session-a",
+                        "task_id": "task-17",
+                        "ledger_identity": {"run_id": "run-44"},
+                    }
+                )
+                + "\n"
+            )
+            handle.write(
+                json.dumps(
+                    {
+                        "kind": "edit",
+                        "file": "calculator.py",
+                        "diff_hunks": [source_hunk],
+                        "tool_invocation_ids": ["patch-1"],
+                        "missing_identity": ["external_run_id"],
+                    }
+                )
+                + "\n"
+            )
+            handle.write(
+                json.dumps(
+                    {
+                        "kind": "command",
+                        "command": "python3 -m pytest tests/test_calculator.py -q",
+                        "exit_code": 0,
+                        "output": "1 passed in 0.02s",
+                        "invocation_id": "test-1",
+                    }
+                )
+                + "\n"
+            )
+            handle.flush()
+            converted = self.run_openmako("--no-trust-prompt", "evidence-court", "record", "from-jsonl", handle.name)
+
+        self.assertEqual(converted.returncode, 0, converted.stderr)
+        record = json.loads(converted.stdout)
+        self.assertEqual(
+            record["ledger_identity"],
+            {
+                "run_id": "run-44",
+                "session_id": "session-a",
+                "task_id": "task-17",
+                "tool_invocation_ids": ["patch-1", "test-1"],
+                "missing_identity": ["external_run_id"],
+            },
+        )
+
     def test_openmako_evidence_court_record_from_jsonl_rejects_malformed_command_output(self) -> None:
         with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
             handle.write('{"kind":"task","claimed_task":"Fix calculator.py."}\n')
@@ -1442,6 +1503,27 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(converted.returncode, 2)
         self.assertEqual(converted.stdout, "")
         self.assertIn("command command must be a string", converted.stderr)
+
+    def test_openmako_evidence_court_record_from_jsonl_rejects_malformed_direct_ledger_identity_list(
+        self,
+    ) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
+            handle.write(
+                json.dumps(
+                    {
+                        "kind": "task",
+                        "claimed_task": "Fix calculator.py.",
+                        "tool_invocation_ids": [{"id": "patch-1"}],
+                    }
+                )
+                + "\n"
+            )
+            handle.flush()
+            converted = self.run_openmako("--no-trust-prompt", "evidence-court", "record", "from-jsonl", handle.name)
+
+        self.assertEqual(converted.returncode, 2)
+        self.assertEqual(converted.stdout, "")
+        self.assertIn("tool_invocation_ids must be an array of strings", converted.stderr)
 
     def test_openmako_evidence_court_record_from_jsonl_rejects_malformed_event_kind_text(self) -> None:
         with tempfile.NamedTemporaryFile("w", suffix=".jsonl", encoding="utf-8") as handle:
@@ -5173,6 +5255,10 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(schema["properties"]["run_metrics"]["type"], "object")
         self.assertEqual(schema["properties"]["run_metrics"]["properties"]["missing_telemetry"]["type"], "array")
         self.assertEqual(schema["properties"]["artifact_provenance"]["type"], "object")
+        schema_doc = (ROOT / "docs" / "evidence_court_schema.md").read_text(encoding="utf-8")
+        self.assertIn("direct list fields such as `tool_invocation_ids` and", schema_doc)
+        self.assertIn("Direct ledger identity list fields must be arrays of", schema_doc)
+        self.assertIn("that a native transcript was ingested", schema_doc)
         self.assertEqual(
             schema["properties"]["artifact_provenance"]["properties"]["input_hashes"]["additionalProperties"]["type"],
             "string",

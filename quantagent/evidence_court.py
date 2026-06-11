@@ -1489,6 +1489,14 @@ def _add_event_ledger_identity(target: dict[str, object], event: dict[str, objec
             invocation_ids.append(text)
     if invocation_ids:
         identity["tool_invocation_ids"] = _unique_strings(tuple(invocation_ids))
+    for field in LEDGER_IDENTITY_LIST_FIELDS:
+        items = _string_array(event.get(field), field)
+        if not items:
+            continue
+        existing_items = identity.get(field)
+        if isinstance(existing_items, list):
+            items = _unique_strings(tuple([*existing_items, *items]))
+        identity[field] = items
     if identity:
         _merge_ledger_identity(target, identity)
 

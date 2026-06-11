@@ -218,9 +218,16 @@ fields to supply diff-content evidence.
 They may also include `artifact_provenance` or direct provenance fields such as
 `eval_rule_version`, `eval_rule_commit`, `runner_version`, `runner_commit`,
 `input_hashes`, `output_hashes`, `artifact_hashes`, and `missing_provenance`.
+Any event kind may include supplied ledger identity metadata either in a nested
+`ledger_identity` object or as direct `session_id`, `task_id`, `parent_id`,
+single invocation fields such as `tool_invocation_id`, `tool_call_id`, or
+`invocation_id`, and direct list fields such as `tool_invocation_ids` and
+`missing_identity`. Direct ledger identity list fields must be arrays of
+strings.
 
 This is an evidence audit of the supplied record only. It does not prove that a
-command actually ran outside the record.
+command actually ran outside the record, that a native transcript was ingested,
+or that supplied patches were applied outside the supplied record.
 
 ## SWTBench Artifact Identity Builder
 
