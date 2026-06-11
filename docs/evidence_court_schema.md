@@ -293,6 +293,10 @@ Malformed nested `ledger_identity` objects on supplied tool/event/step entries
 are also reported with their transcript path, such as
 `messages[0].tool_calls[0].ledger_identity.run_id` or
 `events[0].ledger_identity.run_id`.
+Malformed direct ledger identity list fields are reported in the same
+ledger-identity namespace, such as
+`messages[0].tool_calls[0].ledger_identity.tool_invocation_ids` or
+`events[0].ledger_identity.tool_invocation_ids`.
 
 This is an evidence audit of the supplied record only. It does not prove that a
 command actually ran outside the record, that a native transcript was ingested,

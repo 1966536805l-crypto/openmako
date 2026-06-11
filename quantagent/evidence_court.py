@@ -1626,19 +1626,20 @@ def _add_event_ledger_identity(target: dict[str, object], event: dict[str, objec
     if nested:
         _merge_ledger_identity(target, nested, label=nested_label)
     identity: dict[str, object] = {}
+    identity_label = _field_label(label, "ledger_identity")
     for field in LEDGER_IDENTITY_TEXT_FIELDS:
-        text = _event_identity_text(event, field)
+        text = _event_identity_text(event, field, identity_label)
         if text:
             identity[field] = text
     invocation_ids: list[str] = []
     for field in TOOL_INVOCATION_ID_FIELDS:
-        text = _event_identity_text(event, field)
+        text = _event_identity_text(event, field, identity_label)
         if text:
             invocation_ids.append(text)
     if invocation_ids:
         identity["tool_invocation_ids"] = _unique_strings(tuple(invocation_ids))
     for field in LEDGER_IDENTITY_LIST_FIELDS:
-        items = _string_array(event.get(field), field)
+        items = _string_array(event.get(field), _field_label(identity_label, field))
         if not items:
             continue
         existing_items = identity.get(field)
@@ -1646,7 +1647,7 @@ def _add_event_ledger_identity(target: dict[str, object], event: dict[str, objec
             items = _unique_strings(tuple([*existing_items, *items]))
         identity[field] = items
     if identity:
-        _merge_ledger_identity(target, identity, label=_field_label(label, "ledger_identity"))
+        _merge_ledger_identity(target, identity, label=identity_label)
 
 
 def _add_event_agent_risk_ledger(
@@ -1677,12 +1678,12 @@ def _field_label(label: str, field: str) -> str:
     return f"{label}.{field}" if label else field
 
 
-def _event_identity_text(event: dict[str, object], field: str) -> str:
+def _event_identity_text(event: dict[str, object], field: str, label: str = "") -> str:
     if field not in event:
         return ""
     value = event[field]
     if not isinstance(value, str):
-        raise ValueError(f"{field} must be a string")
+        raise ValueError(f"{_field_label(label, field)} must be a string")
     return value.strip()
 
 

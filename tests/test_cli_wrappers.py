@@ -5379,6 +5379,86 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(converted.stdout, "")
                 self.assertIn(expected_diagnostics[adapter], converted.stderr)
 
+    def test_openmako_evidence_court_transcript_adapters_label_malformed_direct_ledger_identity_paths(self) -> None:
+        transcripts = {
+            "codex": {
+                "claimed_task": "Fix calculator.py.",
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "tool_calls": [
+                            {
+                                "type": "apply_patch",
+                                "files": ["calculator.py"],
+                                "tool_invocation_ids": ["patch-1", {"id": "patch-2"}],
+                            }
+                        ],
+                    }
+                ],
+            },
+            "claude": {
+                "task": "Fix calculator.py.",
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "content": [
+                            {
+                                "type": "tool_use",
+                                "name": "Edit",
+                                "input": {
+                                    "file_path": "calculator.py",
+                                    "tool_invocation_ids": ["patch-1", {"id": "patch-2"}],
+                                },
+                            }
+                        ],
+                    }
+                ],
+            },
+            "openhands": {
+                "task": "Fix calculator.py.",
+                "events": [
+                    {
+                        "action": "edit",
+                        "path": "calculator.py",
+                        "tool_invocation_ids": ["patch-1", {"id": "patch-2"}],
+                    }
+                ],
+            },
+            "swe-agent": {
+                "issue": "Fix calculator.py.",
+                "steps": [
+                    {
+                        "action": "edit",
+                        "path": "calculator.py",
+                        "tool_invocation_ids": ["patch-1", {"id": "patch-2"}],
+                    }
+                ],
+            },
+        }
+        expected_diagnostics = {
+            "codex": "messages[0].tool_calls[0].ledger_identity.tool_invocation_ids must be an array of strings",
+            "claude": "messages[0].content[0].ledger_identity.tool_invocation_ids must be an array of strings",
+            "openhands": "events[0].ledger_identity.tool_invocation_ids must be an array of strings",
+            "swe-agent": "steps[0].ledger_identity.tool_invocation_ids must be an array of strings",
+        }
+
+        for adapter, transcript in transcripts.items():
+            with self.subTest(adapter=adapter):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn(expected_diagnostics[adapter], converted.stderr)
+
     def test_openmako_evidence_court_transcript_adapters_do_not_count_unsupported_edit_events(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"
@@ -6864,6 +6944,9 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("Malformed nested `ledger_identity` objects", schema_doc)
         self.assertIn("messages[0].tool_calls[0].ledger_identity.run_id", schema_doc)
         self.assertIn("events[0].ledger_identity.run_id", schema_doc)
+        self.assertIn("Malformed direct ledger identity list fields", schema_doc)
+        self.assertIn("messages[0].tool_calls[0].ledger_identity.tool_invocation_ids", schema_doc)
+        self.assertIn("events[0].ledger_identity.tool_invocation_ids", schema_doc)
         self.assertIn("that a native transcript was ingested", schema_doc)
         self.assertIn("`agent_risk_ledger` preserves supplied agent-risk metadata", schema_doc)
         self.assertIn("Extra supplied agent-risk fields", schema_doc)

@@ -1303,6 +1303,18 @@ Current public proof:
   This is local supplied-record parser diagnostics only, not native transcript
   ingestion, native live control, remote CI status for this new commit,
   external review, endorsement, stars, or reposts.
+- Supplied transcript adapters now label malformed direct ledger identity list
+  diagnostics with the incoming transcript path, such as
+  `messages[0].tool_calls[0].ledger_identity.tool_invocation_ids`, instead of
+  only the generic `tool_invocation_ids`. The focused cross-adapter malformed
+  direct ledger identity list regression failed before the path-label fix and
+  passed after it; the focused schema-lock regression failed before the doc
+  update and passed after it; the full CLI wrapper test file, public metadata
+  tests, supplied transcript adapter matrix, and `git diff --check` passed
+  locally before this note was added. This is local supplied-record parser
+  diagnostics only, not native transcript ingestion, native live control,
+  remote CI status for this new commit, external review, endorsement, stars, or
+  reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
