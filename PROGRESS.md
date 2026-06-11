@@ -1085,6 +1085,17 @@ Current public proof:
   before this note was added. This is local supplied-record metadata validation
   only, not native live control, gateway safety proof, persistent memory proof,
   external review, endorsement, stars, or reposts.
+- Supplied Codex-, Claude-, OpenHands-, and SWE-agent-style transcript builders
+  now preserve root-level `agent_risk_ledger` metadata in the generated audit
+  record and reject malformed root agent-risk metadata with the same concrete
+  `agent_risk_ledger.<field>` diagnostics as direct audit records. The focused
+  cross-adapter root agent-risk regressions failed before the adapter
+  propagation fix and passed after it; the full CLI wrapper test file, public
+  metadata tests, supplied transcript adapter matrix, and `git diff --check`
+  passed locally before this note was added. This is local supplied-record
+  adapter metadata propagation only, not native transcript ingestion, native
+  live control, gateway safety proof, persistent memory proof, external review,
+  endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1097,6 +1108,6 @@ Next smallest hygiene task:
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
 - Next concrete candidate: another adapter evidence edge case such as
-  event-level `allowed_files` item diagnostics, or supplied transcript adapter
-  propagation for `agent_risk_ledger` metadata if it can be reduced to a
-  failing parser test behind the supplied-record proof boundary.
+  event-level `allowed_files` item diagnostics, or event/tool-level
+  `agent_risk_ledger` propagation only if it can be reduced to a failing parser
+  test behind the supplied-record proof boundary.

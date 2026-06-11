@@ -311,6 +311,9 @@ The root object and tool calls may include supplied `session_id`, `task_id`,
 `parent_id`, `tool_invocation_id`, `tool_call_id`, or `invocation_id` fields;
 the adapter preserves them as `ledger_identity` metadata without treating them
 as live-run proof.
+The root object may also include supplied `agent_risk_ledger` metadata; the
+adapter preserves it without treating it as proof of live control or learning
+outside the supplied record.
 
 ## Supplied Claude-Style Transcript Builder
 
@@ -335,6 +338,9 @@ The root object and tool calls may include supplied `session_id`, `task_id`,
 `parent_id`, `tool_invocation_id`, `tool_call_id`, or `invocation_id` fields;
 the adapter preserves them as `ledger_identity` metadata without treating them
 as live-run proof.
+The root object may also include supplied `agent_risk_ledger` metadata; the
+adapter preserves it without treating it as proof of live control or learning
+outside the supplied record.
 
 ## Supplied OpenHands-Style Transcript Builder
 
@@ -365,6 +371,9 @@ The root object and events may include supplied `session_id`, `task_id`,
 `parent_id`, `tool_invocation_id`, `tool_call_id`, or `invocation_id` fields;
 the adapter preserves them as `ledger_identity` metadata without treating them
 as live-run proof.
+The root object may also include supplied `agent_risk_ledger` metadata; the
+adapter preserves it without treating it as proof of live control or learning
+outside the supplied record.
 
 ## Supplied SWE-Agent-Style Transcript Builder
 
@@ -396,3 +405,6 @@ The root object and steps may include supplied `session_id`, `task_id`,
 `parent_id`, `tool_invocation_id`, `tool_call_id`, or `invocation_id` fields;
 the adapter preserves them as `ledger_identity` metadata without treating them
 as live-run proof.
+The root object may also include supplied `agent_risk_ledger` metadata; the
+adapter preserves it without treating it as proof of live control or learning
+outside the supplied record.

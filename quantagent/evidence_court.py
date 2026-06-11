@@ -843,6 +843,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
     ledger_identity: dict[str, object] = {}
+    agent_risk_ledger = _agent_risk_ledger(payload.get("agent_risk_ledger"))
     unsupported: list[str] = []
     session_ids: set[str] = set()
     test_output = ""
@@ -908,6 +909,8 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
         record["artifact_provenance"] = artifact_provenance
     if ledger_identity:
         record["ledger_identity"] = ledger_identity
+    if agent_risk_ledger:
+        record["agent_risk_ledger"] = agent_risk_ledger
     adapter_report = {"unsupported": unsupported}
     record["adapter_report"] = adapter_report
     return record
@@ -945,6 +948,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
     ledger_identity: dict[str, object] = {}
+    agent_risk_ledger = _agent_risk_ledger(payload.get("agent_risk_ledger"))
     unsupported: list[str] = []
     session_ids: set[str] = set()
     test_output = ""
@@ -1012,6 +1016,8 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
         record["artifact_provenance"] = artifact_provenance
     if ledger_identity:
         record["ledger_identity"] = ledger_identity
+    if agent_risk_ledger:
+        record["agent_risk_ledger"] = agent_risk_ledger
     record["adapter_report"] = {"unsupported": unsupported}
     return record
 
@@ -1048,6 +1054,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
     ledger_identity: dict[str, object] = {}
+    agent_risk_ledger = _agent_risk_ledger(payload.get("agent_risk_ledger"))
     unsupported: list[str] = []
     session_ids: set[str] = set()
     test_output = ""
@@ -1117,6 +1124,8 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
         record["artifact_provenance"] = artifact_provenance
     if ledger_identity:
         record["ledger_identity"] = ledger_identity
+    if agent_risk_ledger:
+        record["agent_risk_ledger"] = agent_risk_ledger
     record["adapter_report"] = {"unsupported": unsupported}
     return record
 
@@ -1153,6 +1162,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
     run_metrics: dict[str, object] = {}
     artifact_provenance: dict[str, object] = {}
     ledger_identity: dict[str, object] = {}
+    agent_risk_ledger = _agent_risk_ledger(payload.get("agent_risk_ledger"))
     unsupported: list[str] = []
     session_ids: set[str] = set()
     test_output = ""
@@ -1222,6 +1232,8 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
         record["artifact_provenance"] = artifact_provenance
     if ledger_identity:
         record["ledger_identity"] = ledger_identity
+    if agent_risk_ledger:
+        record["agent_risk_ledger"] = agent_risk_ledger
     record["adapter_report"] = {"unsupported": unsupported}
     return record
 
