@@ -1415,6 +1415,27 @@ class CliWrapperTest(unittest.TestCase):
         )
         self.assertIn("verifier_tamper_risk", payload["finding_types"])
 
+    def test_openmako_evidence_court_ci_workflow_tamper_success_fixture_is_auditable(self) -> None:
+        result = self.run_openmako(
+            "--no-trust-prompt",
+            "evidence-court",
+            "audit",
+            "--ci",
+            "--json",
+            "examples/evidence_court/ci_workflow_tamper_success.json",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "SUSPICIOUS")
+        self.assertEqual(payload["failure_class"], "verifier_tamper_risk")
+        self.assertEqual(payload["verifier_tamper_risk"]["modified_paths"], [".github/workflows/focused.yml"])
+        self.assertEqual(
+            payload["verifier_tamper_risk"]["reasons"],
+            {".github/workflows/focused.yml": "verifier_or_harness_path"},
+        )
+        self.assertIn("verifier_tamper_risk", payload["finding_types"])
+
     def test_openmako_evidence_court_audit_ci_returns_nonzero_for_fail(self) -> None:
         result = self.run_openmako(
             "--no-trust-prompt",

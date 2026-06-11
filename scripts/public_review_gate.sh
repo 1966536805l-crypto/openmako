@@ -126,6 +126,14 @@ assert_json_field "$TMP_DIR/verifier_attack_success.json" verdict SUSPICIOUS
 assert_json_field "$TMP_DIR/verifier_attack_success.json" failure_class verifier_tamper_risk
 assert_json_field "$TMP_DIR/verifier_attack_success.json" verifier_tamper_risk.verifier_tamper_risk True
 
+echo "public-review-gate: auditing CI workflow tamper fixture"
+"$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court audit --ci --json \
+  examples/evidence_court/ci_workflow_tamper_success.json > "$TMP_DIR/ci_workflow_tamper_success.json"
+
+assert_json_field "$TMP_DIR/ci_workflow_tamper_success.json" verdict SUSPICIOUS
+assert_json_field "$TMP_DIR/ci_workflow_tamper_success.json" failure_class verifier_tamper_risk
+assert_json_field "$TMP_DIR/ci_workflow_tamper_success.json" verifier_tamper_risk.verifier_tamper_risk True
+
 echo "public-review-gate: running supplied transcript adapter matrix"
 bash scripts/supplied_transcript_adapter_matrix.sh
 

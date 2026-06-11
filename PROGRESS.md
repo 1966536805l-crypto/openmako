@@ -1386,6 +1386,13 @@ Current public proof:
   is supplied-record verifier-tamper evidence only: it does not prove native
   benchmark ingestion, live patch application, external review, endorsement,
   stars, or reposts.
+- The public review gate now includes an explicit CI workflow tamper fixture
+  for a passing supplied success claim that edits `.github/workflows/focused.yml`.
+  The focused verifier/CI tamper subset, full CLI wrapper test file, public
+  metadata tests, and `git diff --check` passed locally before this note was
+  added. This is supplied-record CI/verifier-tamper evidence only: it does not
+  prove native CI hardening, native benchmark ingestion, live patch application,
+  external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

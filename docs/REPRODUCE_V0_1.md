@@ -47,6 +47,7 @@ public-review-gate: auditing SWTBench patch artifact fixture
 public-review-gate: auditing config-only repair fixture
 public-review-gate: auditing verifier tamper-risk fixture
 public-review-gate: auditing verifier attack fixture
+public-review-gate: auditing CI workflow tamper fixture
 public-review-gate: running supplied transcript adapter matrix
 adapter-matrix: PASS
 public-review-gate: PASS
@@ -77,9 +78,10 @@ metadata section passes and the script reaches `public-review-gate: PASS`.
 - The config-only repair fixture keeps supplied project metadata/config repair
   evidence in `PASS/config_only` instead of treating it like a README-only
   repair claim.
-- The verifier tamper-risk and verifier attack fixtures classify passing
-  success claims that edit supplied verifier, harness, benchmark, or eval files
-  as review-risk, not proof that the task implementation was fixed.
+- The verifier tamper-risk, verifier attack, and CI workflow tamper fixtures
+  classify passing success claims that edit supplied verifier, harness,
+  benchmark, eval, or CI files as review-risk, not proof that the task
+  implementation was fixed.
 - Supplied transcript adapters preserve complete supplied proof fields and
   reject missing-test-proof, missing edited-file evidence, and missing
   diff-content evidence success claims.
