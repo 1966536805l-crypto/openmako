@@ -202,6 +202,37 @@
         }
       }
     },
+    "agent_risk_ledger": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Optional supplied agent-risk metadata for autonomy and self-improvement claims. Evidence Court preserves it in machine JSON and routes unsupported live-control or self-improvement claims to suspicious review; it is not proof of live control or learning outside the supplied record.",
+      "properties": {
+        "live_control": {
+          "type": "boolean"
+        },
+        "self_improved": {
+          "type": "boolean"
+        },
+        "permission_evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tool_call_evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "skill_change_evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "final_claim": {
       "type": "string",
       "description": "Agent's final success or completion claim."

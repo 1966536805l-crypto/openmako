@@ -1063,6 +1063,17 @@ Current public proof:
   supplied-record parser diagnostics only, not native transcript ingestion,
   live control, remote CI status, external review, endorsement, stars, or
   reposts.
+- Evidence Court supplied records now preserve optional `agent_risk_ledger`
+  metadata for autonomy or self-improvement claims. If `live_control=true`
+  lacks `permission_evidence` or `tool_call_evidence`, or
+  `self_improved=true` lacks `skill_change_evidence`, audit routes the record
+  to `SUSPICIOUS` as `missing_agent_risk_evidence`. The focused agent-risk
+  regressions failed before the ledger gate and passed after it; the full CLI
+  wrapper test file, public metadata tests, and supplied transcript adapter
+  matrix passed locally before this note was added. This is local
+  supplied-record agent-risk metadata validation only, not native live control,
+  gateway safety proof, persistent memory proof, external review, endorsement,
+  stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1075,5 +1086,6 @@ Next smallest hygiene task:
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
 - Next concrete candidate: another adapter evidence edge case such as
-  event-level `allowed_files` item diagnostics, or a trend-radar follow-up that
-  stays behind the supplied-record proof boundary.
+  event-level `allowed_files` item diagnostics, or `agent_risk_ledger`
+  malformed-field diagnostics that stay behind the supplied-record proof
+  boundary.

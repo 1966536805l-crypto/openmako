@@ -499,6 +499,57 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["patch_shape"]["other_files"], ["README.md"])
         self.assertFalse(payload["verifier_tamper_risk"]["verifier_tamper_risk"])
 
+    def test_openmako_evidence_court_audit_json_flags_missing_agent_risk_evidence(self) -> None:
+        record = {
+            "claimed_task": "Audit an autonomous local agent risk claim.",
+            "commands_run": [{"command": "python3 -m pytest tests/test_agent_risk.py -q", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "final_claim": "Live control and self-improvement are verified.",
+            "agent_risk_ledger": {
+                "live_control": True,
+                "self_improved": True,
+            },
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "SUSPICIOUS")
+        self.assertEqual(payload["status"], "UNVERIFIED")
+        self.assertEqual(payload["failure_class"], "missing_agent_risk_evidence")
+        self.assertEqual(payload["failed_at"], "agent_risk_ledger")
+        self.assertIn("missing_agent_risk_evidence", payload["finding_types"])
+        self.assertEqual(payload["agent_risk_ledger"]["live_control"], True)
+        self.assertEqual(payload["agent_risk_ledger"]["self_improved"], True)
+
+    def test_openmako_evidence_court_audit_json_accepts_supported_agent_risk_ledger(self) -> None:
+        record = {
+            "claimed_task": "Audit an autonomous local agent risk claim.",
+            "commands_run": [{"command": "python3 -m pytest tests/test_agent_risk.py -q", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "final_claim": "Live control and self-improvement are verified.",
+            "agent_risk_ledger": {
+                "live_control": True,
+                "self_improved": True,
+                "permission_evidence": ["operator-approved local gateway token scope"],
+                "tool_call_evidence": ["tool invocation ledger captured shell and browser calls"],
+                "skill_change_evidence": ["skills/agent-risk-review.md created from a reviewed run"],
+            },
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "PASS")
+        self.assertEqual(payload["failure_class"], "")
+        self.assertEqual(payload["agent_risk_ledger"]["permission_evidence"], ["operator-approved local gateway token scope"])
+
     def test_openmako_evidence_court_audit_json_flags_test_only_success_claim(self) -> None:
         record = {
             "claimed_task": "Fix the API bug.",
@@ -5680,6 +5731,7 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(schema["properties"]["run_metrics"]["type"], "object")
         self.assertEqual(schema["properties"]["run_metrics"]["properties"]["missing_telemetry"]["type"], "array")
         self.assertEqual(schema["properties"]["artifact_provenance"]["type"], "object")
+        self.assertEqual(schema["properties"]["agent_risk_ledger"]["type"], "object")
         schema_doc = (ROOT / "docs" / "evidence_court_schema.md").read_text(encoding="utf-8")
         self.assertIn("output from recognizable validation", schema_doc)
         self.assertIn("ahead of later non-validation command output", schema_doc)
@@ -5700,6 +5752,9 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("direct list fields such as `tool_invocation_ids` and", schema_doc)
         self.assertIn("Direct ledger identity list fields must be arrays of", schema_doc)
         self.assertIn("that a native transcript was ingested", schema_doc)
+        self.assertIn("`agent_risk_ledger` preserves supplied agent-risk metadata", schema_doc)
+        self.assertIn("routes the record to `SUSPICIOUS` as", schema_doc)
+        self.assertIn("does not prove live control", schema_doc)
         self.assertEqual(
             schema["properties"]["artifact_provenance"]["properties"]["input_hashes"]["additionalProperties"]["type"],
             "string",
@@ -5715,6 +5770,11 @@ class CliWrapperTest(unittest.TestCase):
             "string",
         )
         self.assertEqual(schema["properties"]["ledger_identity"]["additionalProperties"]["type"], "string")
+        self.assertEqual(schema["properties"]["agent_risk_ledger"]["properties"]["live_control"]["type"], "boolean")
+        self.assertEqual(
+            schema["properties"]["agent_risk_ledger"]["properties"]["permission_evidence"]["items"]["type"],
+            "string",
+        )
         self.assertIs(schema["additionalProperties"], True)
 
         for field in ("allowed_files", "files_read", "files_edited", "commands_run"):

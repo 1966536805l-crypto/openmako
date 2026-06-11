@@ -37,6 +37,8 @@ ARTIFACT_PROVENANCE_FIELDS = (
 LEDGER_IDENTITY_TEXT_FIELDS = ("session_id", "task_id", "parent_id")
 LEDGER_IDENTITY_LIST_FIELDS = ("tool_invocation_ids", "missing_identity")
 TOOL_INVOCATION_ID_FIELDS = ("tool_invocation_id", "tool_call_id", "invocation_id")
+AGENT_RISK_BOOL_FIELDS = ("live_control", "self_improved")
+AGENT_RISK_LIST_FIELDS = ("permission_evidence", "tool_call_evidence", "skill_change_evidence")
 DIFF_HUNK_FIELDS = ("diff", "patch", "unified_diff")
 VERIFIER_TAMPER_PATH_MARKERS = (
     ".github/workflows/",
@@ -247,6 +249,7 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
     run_metrics = _run_metrics(payload.get("run_metrics"))
     artifact_provenance = _artifact_provenance(payload.get("artifact_provenance"))
     ledger_identity = _ledger_identity(payload.get("ledger_identity"))
+    agent_risk_ledger = _agent_risk_ledger(payload.get("agent_risk_ledger"))
     test_status, test_summary = _test_output_status(payload.get("test_output"), payload.get("commands_run"))
     has_validation_command = _has_validation_command(payload.get("commands_run"))
     verifier_tamper_risk = _verifier_tamper_risk(files_edited)
@@ -367,6 +370,19 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
                 name="ledger_identity",
                 ok=True,
                 data={"ledger_identity": ledger_identity},
+            )
+        )
+    if agent_risk_ledger:
+        evidence.append(
+            AutopsyEvidence(
+                f"E{len(evidence) + 1}",
+                "agent_risk_ledger",
+                "metadata",
+                "Agent risk ledger: " + _agent_risk_ledger_summary(agent_risk_ledger),
+                step=len(evidence),
+                name="agent_risk_ledger",
+                ok=True,
+                data={"agent_risk_ledger": agent_risk_ledger},
             )
         )
     evidence.append(
@@ -580,6 +596,20 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
                 confidence="medium",
             )
         )
+    missing_agent_risk_evidence = _missing_agent_risk_evidence(agent_risk_ledger)
+    if missing_agent_risk_evidence:
+        evidence_ids = tuple(item.evidence_id for item in evidence if item.name == "agent_risk_ledger")
+        findings.append(
+            AutopsyFinding(
+                "missing_agent_risk_evidence",
+                "The record claims agent autonomy or self-improvement, but lacks supplied evidence: "
+                + ", ".join(missing_agent_risk_evidence)
+                + ".",
+                evidence_ids=evidence_ids,
+                intercept="require permission, tool-call, and skill-change evidence before accepting agent autonomy claims",
+                confidence="medium",
+            )
+        )
 
     failure_class = findings[0].finding_type if findings else ""
     status = "PASSED"
@@ -611,6 +641,9 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
     elif any(item.finding_type == "missing_final_claim_evidence" for item in findings):
         status = "UNVERIFIED"
         failed_at = "final_claim"
+    elif any(item.finding_type == "missing_agent_risk_evidence" for item in findings):
+        status = "UNVERIFIED"
+        failed_at = "agent_risk_ledger"
     elif any(item.finding_type == "verifier_tamper_risk" for item in findings):
         status = "UNVERIFIED"
         failed_at = "files_edited"
@@ -1206,6 +1239,7 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
     patch_shape = _report_patch_shape(report)
     artifact_provenance = _report_artifact_provenance(report)
     ledger_identity = _report_ledger_identity(report)
+    agent_risk_ledger = _report_agent_risk_ledger(report)
     verifier_tamper_risk = _report_verifier_tamper_risk(report)
 
     lines = [
@@ -1244,6 +1278,10 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
         "",
         f"- summary: {_ledger_identity_summary(ledger_identity)}",
         "",
+        "## Agent Risk Ledger",
+        "",
+        f"- summary: {_agent_risk_ledger_summary(agent_risk_ledger)}",
+        "",
         "## Test Verification",
         "",
         f"- status: {report.status}",
@@ -1277,6 +1315,7 @@ def dumps_evidence_court_json(report: AgentAutopsyReport) -> str:
         "patch_shape": _report_patch_shape(report),
         "artifact_provenance": _report_artifact_provenance(report),
         "ledger_identity": _report_ledger_identity(report),
+        "agent_risk_ledger": _report_agent_risk_ledger(report),
         "verifier_tamper_risk": _report_verifier_tamper_risk(report),
         "run_metrics": _report_run_metrics(report),
         "report": report.to_dict(),
@@ -1483,6 +1522,42 @@ def _ledger_identity(value: object) -> dict[str, object]:
     return identity
 
 
+def _agent_risk_ledger(value: object) -> dict[str, object]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError("agent_risk_ledger must be an object")
+    ledger: dict[str, object] = {}
+    for field in AGENT_RISK_BOOL_FIELDS:
+        if field not in value:
+            continue
+        if not isinstance(value[field], bool):
+            raise ValueError(f"agent_risk_ledger.{field} must be a boolean")
+        ledger[field] = value[field]
+    for field in AGENT_RISK_LIST_FIELDS:
+        items = _string_array(value.get(field), f"agent_risk_ledger.{field}")
+        if items:
+            ledger[field] = items
+    for key, item in value.items():
+        if key in {*AGENT_RISK_BOOL_FIELDS, *AGENT_RISK_LIST_FIELDS}:
+            continue
+        if isinstance(item, str) and item.strip():
+            ledger[key] = item.strip()
+    return ledger
+
+
+def _missing_agent_risk_evidence(ledger: dict[str, object]) -> list[str]:
+    missing: list[str] = []
+    if ledger.get("live_control") is True:
+        if not ledger.get("permission_evidence"):
+            missing.append("permission_evidence")
+        if not ledger.get("tool_call_evidence"):
+            missing.append("tool_call_evidence")
+    if ledger.get("self_improved") is True and not ledger.get("skill_change_evidence"):
+        missing.append("skill_change_evidence")
+    return missing
+
+
 def _string_array(value: object, label: str) -> list[str]:
     if value is None:
         return []
@@ -1674,6 +1749,14 @@ def _report_ledger_identity(report: AgentAutopsyReport) -> dict[str, object]:
     return dict(identity) if isinstance(identity, dict) else {}
 
 
+def _report_agent_risk_ledger(report: AgentAutopsyReport) -> dict[str, object]:
+    item = next((evidence for evidence in report.evidence if evidence.name == "agent_risk_ledger"), None)
+    if item is None:
+        return {}
+    ledger = item.data.get("agent_risk_ledger")
+    return dict(ledger) if isinstance(ledger, dict) else {}
+
+
 def _report_verifier_tamper_risk(report: AgentAutopsyReport) -> dict[str, object]:
     item = next((evidence for evidence in report.evidence if evidence.name == "verifier_tamper_risk"), None)
     if item is None:
@@ -1836,6 +1919,23 @@ def _ledger_identity_summary(identity: dict[str, object]) -> str:
         parts.append(f"{field}={value}")
     extra_fields = sorted(key for key in identity if key not in {*LEDGER_IDENTITY_TEXT_FIELDS, *LEDGER_IDENTITY_LIST_FIELDS})
     parts.extend(f"{key}={identity[key]}" for key in extra_fields)
+    return ", ".join(parts) if parts else "none supplied"
+
+
+def _agent_risk_ledger_summary(ledger: dict[str, object]) -> str:
+    parts: list[str] = []
+    for field in (*AGENT_RISK_BOOL_FIELDS, *AGENT_RISK_LIST_FIELDS):
+        if field not in ledger:
+            continue
+        value = ledger[field]
+        if isinstance(value, list):
+            value = ",".join(str(item) for item in value) or "none"
+        parts.append(f"{field}={value}")
+    extra_fields = sorted(key for key in ledger if key not in {*AGENT_RISK_BOOL_FIELDS, *AGENT_RISK_LIST_FIELDS})
+    parts.extend(f"{key}={ledger[key]}" for key in extra_fields)
+    missing = _missing_agent_risk_evidence(ledger)
+    if missing:
+        parts.append("missing_evidence=" + ",".join(missing))
     return ", ".join(parts) if parts else "none supplied"
 
 
