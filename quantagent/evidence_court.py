@@ -1981,6 +1981,15 @@ def _verifier_tamper_risk_summary(risk: dict[str, object]) -> str:
     paths = risk.get("modified_paths")
     if not risk.get("verifier_tamper_risk") or not isinstance(paths, list) or not paths:
         return "not detected"
+    reasons = risk.get("reasons")
+    if isinstance(reasons, dict):
+        details = [
+            f"{path}={reasons[path]}"
+            for path in paths
+            if isinstance(path, str) and isinstance(reasons.get(path), str)
+        ]
+        if details:
+            return "detected paths=" + ",".join(details)
     return "detected paths=" + ",".join(str(path) for path in paths)
 
 

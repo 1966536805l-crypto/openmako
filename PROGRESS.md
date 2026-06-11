@@ -1245,6 +1245,15 @@ Current public proof:
   wording only, not proof of malicious intent, native transcript ingestion,
   native live control, remote CI status for this new commit, external review,
   endorsement, stars, or reposts.
+- Runtime-shadowing review evidence summaries now include per-path reason
+  codes, such as `sitecustomize.py=runtime_shadowing_path`, instead of listing
+  only the modified path. The focused summary regression failed before the
+  formatter fix and passed after it; the full CLI wrapper test file, public
+  metadata tests, supplied transcript adapter matrix, and `git diff --check`
+  passed locally before this note was added. This is local supplied-record
+  report wording only, not proof of malicious intent, native transcript
+  ingestion, native live control, remote CI status for this new commit,
+  external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
