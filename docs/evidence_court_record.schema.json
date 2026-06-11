@@ -204,8 +204,10 @@
     },
     "agent_risk_ledger": {
       "type": "object",
-      "additionalProperties": true,
-      "description": "Optional supplied agent-risk metadata for autonomy and self-improvement claims. Evidence Court preserves it in machine JSON and routes unsupported live-control or self-improvement claims to suspicious review; it is not proof of live control or learning outside the supplied record.",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Optional supplied agent-risk metadata for autonomy and self-improvement claims. Evidence Court preserves recognized fields and extra supplied string fields in machine JSON, and routes unsupported live-control or self-improvement claims to suspicious review; it is not proof of live control or learning outside the supplied record.",
       "properties": {
         "live_control": {
           "type": "boolean"

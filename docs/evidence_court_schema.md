@@ -71,7 +71,7 @@ The schema documents the supplied record shape; the CLI still audits only the ev
 | `run_metrics` | object | Optional telemetry supplied by the record: duration, command count, token counts, cost, provider/model, and `missing_telemetry`. It is preserved in JSON output but is not treated as validation proof. |
 | `artifact_provenance` | object | Optional artifact identity metadata supplied by the record: eval rule version/commit, runner version/commit, input/output hashes, artifact hashes, and `missing_provenance`. It is preserved in JSON output but is not treated as validation proof. |
 | `ledger_identity` | object | Optional ledger identity metadata supplied by the record: session, task, parent, tool invocation IDs, `missing_identity`, and extra supplied string identity fields such as run or trace IDs. It is preserved in JSON output but is not treated as native transcript ingestion, live control, or proof that supplied patches were applied outside the supplied record. |
-| `agent_risk_ledger` | object | Optional supplied agent-risk metadata for autonomy claims. `live_control=true` requires supplied `permission_evidence` and `tool_call_evidence`; `self_improved=true` requires supplied `skill_change_evidence`. It is not proof that live control or learning happened outside the supplied record. |
+| `agent_risk_ledger` | object | Optional supplied agent-risk metadata for autonomy claims. `live_control=true` requires supplied `permission_evidence` and `tool_call_evidence`; `self_improved=true` requires supplied `skill_change_evidence`. Extra supplied agent-risk fields must be strings. It is not proof that live control or learning happened outside the supplied record. |
 | `final_claim` | string | Agent's final success or completion claim. |
 
 ## Verdict Boundary
@@ -205,8 +205,9 @@ different value, the adapter rejects it instead of silently overwriting earlier
 identity evidence.
 
 `agent_risk_ledger` preserves supplied agent-risk metadata for local-autonomy
-and self-improvement claims. If `live_control=true`, the record must include
-non-empty `permission_evidence` and `tool_call_evidence`. If
+and self-improvement claims. Extra supplied agent-risk fields, such as review
+or policy identifiers, must be strings. If `live_control=true`, the record must
+include non-empty `permission_evidence` and `tool_call_evidence`. If
 `self_improved=true`, the record must include non-empty
 `skill_change_evidence`. Missing evidence routes the record to `SUSPICIOUS` as
 `missing_agent_risk_evidence`. This is a supplied-record review gate only: it

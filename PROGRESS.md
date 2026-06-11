@@ -1074,6 +1074,17 @@ Current public proof:
   supplied-record agent-risk metadata validation only, not native live control,
   gateway safety proof, persistent memory proof, external review, endorsement,
   stars, or reposts.
+- Evidence Court `agent_risk_ledger` extra fields now follow the same explicit
+  supplied-string boundary as ledger identity extras: extra string fields are
+  preserved in JSON output, while malformed extra objects or arrays are
+  rejected with a concrete `agent_risk_ledger.<field> must be a string`
+  diagnostic instead of being silently dropped. The focused malformed extra
+  agent-risk regression and schema assertion failed before the diagnostic fix
+  and passed after it; the full CLI wrapper test file, public metadata tests,
+  supplied transcript adapter matrix, and `git diff --check` passed locally
+  before this note was added. This is local supplied-record metadata validation
+  only, not native live control, gateway safety proof, persistent memory proof,
+  external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1086,6 +1097,6 @@ Next smallest hygiene task:
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
 - Next concrete candidate: another adapter evidence edge case such as
-  event-level `allowed_files` item diagnostics, or `agent_risk_ledger`
-  malformed-field diagnostics that stay behind the supplied-record proof
-  boundary.
+  event-level `allowed_files` item diagnostics, or supplied transcript adapter
+  propagation for `agent_risk_ledger` metadata if it can be reduced to a
+  failing parser test behind the supplied-record proof boundary.

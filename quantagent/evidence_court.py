@@ -1541,8 +1541,11 @@ def _agent_risk_ledger(value: object) -> dict[str, object]:
     for key, item in value.items():
         if key in {*AGENT_RISK_BOOL_FIELDS, *AGENT_RISK_LIST_FIELDS}:
             continue
-        if isinstance(item, str) and item.strip():
-            ledger[key] = item.strip()
+        if not isinstance(item, str):
+            raise ValueError(f"agent_risk_ledger.{key} must be a string")
+        text = item.strip()
+        if text:
+            ledger[key] = text
     return ledger
 
 

@@ -550,6 +550,48 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(payload["failure_class"], "")
         self.assertEqual(payload["agent_risk_ledger"]["permission_evidence"], ["operator-approved local gateway token scope"])
 
+    def test_openmako_evidence_court_audit_json_preserves_extra_agent_risk_fields(self) -> None:
+        record = {
+            "claimed_task": "Audit an autonomous local agent risk claim.",
+            "commands_run": [{"command": "python3 -m pytest tests/test_agent_risk.py -q", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "final_claim": "Agent risk metadata was preserved.",
+            "agent_risk_ledger": {
+                "risk_review_id": "risk-44",
+                "policy_profile": "local-read-only",
+            },
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["agent_risk_ledger"], record["agent_risk_ledger"])
+
+    def test_openmako_evidence_court_rejects_malformed_extra_agent_risk_fields(self) -> None:
+        record = {
+            "claimed_task": "Audit an autonomous local agent risk claim.",
+            "commands_run": [{"command": "python3 -m pytest tests/test_agent_risk.py -q", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "final_claim": "Agent risk metadata was preserved.",
+            "agent_risk_ledger": {
+                "risk_review_id": {"id": "risk-44"},
+                "policy_profile": ["local-read-only"],
+            },
+        }
+        for command in ("audit", "validate"):
+            with self.subTest(command=command):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(record, handle)
+                    handle.flush()
+                    result = self.run_openmako("--no-trust-prompt", "evidence-court", command, handle.name)
+
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertIn("agent_risk_ledger.risk_review_id must be a string", result.stderr)
+
     def test_openmako_evidence_court_audit_json_flags_test_only_success_claim(self) -> None:
         record = {
             "claimed_task": "Fix the API bug.",
@@ -5753,6 +5795,7 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("Direct ledger identity list fields must be arrays of", schema_doc)
         self.assertIn("that a native transcript was ingested", schema_doc)
         self.assertIn("`agent_risk_ledger` preserves supplied agent-risk metadata", schema_doc)
+        self.assertIn("Extra supplied agent-risk fields", schema_doc)
         self.assertIn("routes the record to `SUSPICIOUS` as", schema_doc)
         self.assertIn("does not prove live control", schema_doc)
         self.assertEqual(
@@ -5775,6 +5818,7 @@ class CliWrapperTest(unittest.TestCase):
             schema["properties"]["agent_risk_ledger"]["properties"]["permission_evidence"]["items"]["type"],
             "string",
         )
+        self.assertEqual(schema["properties"]["agent_risk_ledger"]["additionalProperties"]["type"], "string")
         self.assertIs(schema["additionalProperties"], True)
 
         for field in ("allowed_files", "files_read", "files_edited", "commands_run"):
