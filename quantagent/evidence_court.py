@@ -1082,7 +1082,9 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
             if "allowed_files" in event:
                 allowed_files = _string_list(event.get("allowed_files"), label=f"{event_path}.allowed_files")
                 if allowed_files:
-                    record["allowed_files"] = _merge_allowed_files(record["allowed_files"], allowed_files)
+                    record["allowed_files"] = _merge_allowed_files(
+                        record["allowed_files"], allowed_files, label=f"{event_path}.allowed_files"
+                    )
         elif event_kind in {"read", "read_file", "file_read"}:
             files_read.extend(_codex_tool_files(event))
         elif event_kind in {"edit", "write", "write_file", "apply_patch", "patch"}:
@@ -1192,7 +1194,9 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
             if "allowed_files" in step:
                 allowed_files = _string_list(step.get("allowed_files"), label=f"{step_path}.allowed_files")
                 if allowed_files:
-                    record["allowed_files"] = _merge_allowed_files(record["allowed_files"], allowed_files)
+                    record["allowed_files"] = _merge_allowed_files(
+                        record["allowed_files"], allowed_files, label=f"{step_path}.allowed_files"
+                    )
         elif step_kind in {"read", "read_file", "open"}:
             files_read.extend(_codex_tool_files(step))
         elif step_kind in {"edit", "write", "write_file", "apply_patch", "patch"}:
@@ -2183,10 +2187,10 @@ def _merge_claimed_task(current: str, incoming: str) -> str:
     return current or incoming
 
 
-def _merge_allowed_files(current: object, incoming: list[str]) -> list[str]:
+def _merge_allowed_files(current: object, incoming: list[str], *, label: str = "allowed_files") -> list[str]:
     existing = _string_list(current)
     if existing and incoming and set(existing) != set(incoming):
-        raise ValueError("allowed_files values must not be mixed")
+        raise ValueError(f"{label} values must not be mixed")
     return existing or incoming
 
 

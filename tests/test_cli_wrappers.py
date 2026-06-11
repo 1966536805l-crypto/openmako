@@ -5831,7 +5831,7 @@ class CliWrapperTest(unittest.TestCase):
                         },
                     ],
                 },
-                "allowed_files values must not be mixed",
+                "events[0].allowed_files values must not be mixed",
             ),
         )
         for transcript, expected_error in cases:
@@ -6088,7 +6088,7 @@ class CliWrapperTest(unittest.TestCase):
                         },
                     ],
                 },
-                "allowed_files values must not be mixed",
+                "steps[0].allowed_files values must not be mixed",
             ),
         )
         for transcript, expected_error in cases:
@@ -6378,8 +6378,10 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("Root and step-level task/scope metadata must", schema_doc)
         self.assertIn("events[index].allowed_files", schema_doc)
         self.assertIn("events[index].allowed_files[item]", schema_doc)
+        self.assertIn("events[index].allowed_files values must not be mixed", schema_doc)
         self.assertIn("steps[index].allowed_files", schema_doc)
         self.assertIn("steps[index].allowed_files[item]", schema_doc)
+        self.assertIn("steps[index].allowed_files values must not be mixed", schema_doc)
         self.assertIn("Repeated final/finish messages must keep the same supplied final-claim text", schema_doc)
         self.assertIn("Repeated final/submit messages must keep the same", schema_doc)
         self.assertIn("Non-numeric run metric fields such as `provider` and `model`", schema_doc)
