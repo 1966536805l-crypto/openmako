@@ -2293,6 +2293,241 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(converted.stdout, "")
                 self.assertIn("agent_risk_ledger.risk_review_id must be a string", converted.stderr)
 
+    def test_openmako_evidence_court_transcript_adapters_preserve_event_agent_risk_ledger(self) -> None:
+        root_agent_risk = {
+            "live_control": True,
+            "permission_evidence": ["operator approved local tool scope"],
+            "risk_review_id": "risk-44",
+        }
+        event_agent_risk = {
+            "tool_call_evidence": ["tool-call ledger captured shell execution"],
+            "skill_change_evidence": ["skills/agent-risk-review.md updated"],
+        }
+        expected = {
+            "live_control": True,
+            "permission_evidence": ["operator approved local tool scope"],
+            "tool_call_evidence": ["tool-call ledger captured shell execution"],
+            "skill_change_evidence": ["skills/agent-risk-review.md updated"],
+            "risk_review_id": "risk-44",
+        }
+        transcripts = {
+            "codex": {
+                "claimed_task": "Audit live-control claim.",
+                "agent_risk_ledger": root_agent_risk,
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "tool_calls": [
+                            {
+                                "type": "exec_command",
+                                "command": "python3 -m pytest tests/test_agent_risk.py -q",
+                                "exit_code": 0,
+                                "output": "1 passed in 0.02s",
+                                "agent_risk_ledger": event_agent_risk,
+                            }
+                        ],
+                    }
+                ],
+            },
+            "claude": {
+                "task": "Audit live-control claim.",
+                "agent_risk_ledger": root_agent_risk,
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "content": [
+                            {
+                                "type": "tool_use",
+                                "name": "Bash",
+                                "input": {
+                                    "command": "python3 -m pytest tests/test_agent_risk.py -q",
+                                    "exit_code": 0,
+                                    "stdout": "1 passed in 0.02s",
+                                    "agent_risk_ledger": event_agent_risk,
+                                },
+                            }
+                        ],
+                    }
+                ],
+            },
+            "openhands": {
+                "task": "Audit live-control claim.",
+                "agent_risk_ledger": root_agent_risk,
+                "events": [
+                    {
+                        "action": "run",
+                        "command": "python3 -m pytest tests/test_agent_risk.py -q",
+                        "exit_code": 0,
+                        "observation": "1 passed in 0.02s",
+                        "agent_risk_ledger": event_agent_risk,
+                    }
+                ],
+            },
+            "swe-agent": {
+                "issue": "Audit live-control claim.",
+                "agent_risk_ledger": root_agent_risk,
+                "steps": [
+                    {
+                        "action": "test",
+                        "command": "python3 -m pytest tests/test_agent_risk.py -q",
+                        "exit_code": 0,
+                        "stdout": "1 passed in 0.02s",
+                        "agent_risk_ledger": event_agent_risk,
+                    }
+                ],
+            },
+        }
+
+        for adapter, transcript in transcripts.items():
+            with self.subTest(adapter=adapter):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 0, converted.stderr)
+                record = json.loads(converted.stdout)
+                self.assertEqual(record["agent_risk_ledger"], expected)
+
+    def test_openmako_evidence_court_transcript_adapters_reject_mixed_event_agent_risk_ledger(self) -> None:
+        transcripts = {
+            "codex": {
+                "claimed_task": "Audit live-control claim.",
+                "agent_risk_ledger": {"risk_review_id": "risk-a"},
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "tool_calls": [
+                            {
+                                "type": "exec_command",
+                                "command": "python3 -m pytest tests/test_agent_risk.py -q",
+                                "exit_code": 0,
+                                "output": "1 passed in 0.02s",
+                                "agent_risk_ledger": {"risk_review_id": "risk-b"},
+                            }
+                        ],
+                    }
+                ],
+            },
+            "claude": {
+                "task": "Audit live-control claim.",
+                "agent_risk_ledger": {"risk_review_id": "risk-a"},
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "content": [
+                            {
+                                "type": "tool_use",
+                                "name": "Bash",
+                                "input": {
+                                    "command": "python3 -m pytest tests/test_agent_risk.py -q",
+                                    "exit_code": 0,
+                                    "stdout": "1 passed in 0.02s",
+                                    "agent_risk_ledger": {"risk_review_id": "risk-b"},
+                                },
+                            }
+                        ],
+                    }
+                ],
+            },
+            "openhands": {
+                "task": "Audit live-control claim.",
+                "agent_risk_ledger": {"risk_review_id": "risk-a"},
+                "events": [
+                    {
+                        "action": "run",
+                        "command": "python3 -m pytest tests/test_agent_risk.py -q",
+                        "exit_code": 0,
+                        "observation": "1 passed in 0.02s",
+                        "agent_risk_ledger": {"risk_review_id": "risk-b"},
+                    }
+                ],
+            },
+            "swe-agent": {
+                "issue": "Audit live-control claim.",
+                "agent_risk_ledger": {"risk_review_id": "risk-a"},
+                "steps": [
+                    {
+                        "action": "test",
+                        "command": "python3 -m pytest tests/test_agent_risk.py -q",
+                        "exit_code": 0,
+                        "stdout": "1 passed in 0.02s",
+                        "agent_risk_ledger": {"risk_review_id": "risk-b"},
+                    }
+                ],
+            },
+        }
+
+        for adapter, transcript in transcripts.items():
+            with self.subTest(adapter=adapter):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn("agent_risk_ledger.risk_review_id values must not be mixed", converted.stderr)
+
+    def test_openmako_evidence_court_transcript_adapters_reject_malformed_event_agent_risk_ledger(self) -> None:
+        malformed = {
+            "risk_review_id": {"id": "risk-44"},
+        }
+        transcripts = {
+            "codex": {
+                "claimed_task": "Audit live-control claim.",
+                "messages": [{"role": "assistant", "tool_calls": [{"type": "exec_command", "agent_risk_ledger": malformed}]}],
+            },
+            "claude": {
+                "task": "Audit live-control claim.",
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "content": [
+                            {"type": "tool_use", "name": "Bash", "input": {"agent_risk_ledger": malformed}}
+                        ],
+                    }
+                ],
+            },
+            "openhands": {
+                "task": "Audit live-control claim.",
+                "events": [{"action": "run", "agent_risk_ledger": malformed}],
+            },
+            "swe-agent": {
+                "issue": "Audit live-control claim.",
+                "steps": [{"action": "test", "agent_risk_ledger": malformed}],
+            },
+        }
+
+        for adapter, transcript in transcripts.items():
+            with self.subTest(adapter=adapter):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn("agent_risk_ledger.risk_review_id must be a string", converted.stderr)
+
     def test_openmako_evidence_court_other_transcripts_aggregate_multi_command_metrics(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"
@@ -5887,7 +6122,9 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("that a native transcript was ingested", schema_doc)
         self.assertIn("`agent_risk_ledger` preserves supplied agent-risk metadata", schema_doc)
         self.assertIn("Extra supplied agent-risk fields", schema_doc)
-        self.assertIn("The root object may also include supplied `agent_risk_ledger` metadata", schema_doc)
+        self.assertIn("The root object and tool calls may also include supplied `agent_risk_ledger`", schema_doc)
+        self.assertIn("The root object and events may also include supplied `agent_risk_ledger`", schema_doc)
+        self.assertIn("The root object and steps may also include supplied `agent_risk_ledger`", schema_doc)
         self.assertIn("routes the record to `SUSPICIOUS` as", schema_doc)
         self.assertIn("does not prove live control", schema_doc)
         self.assertEqual(
