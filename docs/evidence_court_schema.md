@@ -227,6 +227,10 @@ reported with their transcript path, such as
 Malformed nested `agent_risk_ledger` objects on supplied tool/event/step entries
 are also reported with their transcript path, such as
 `messages[0].tool_calls[0].agent_risk_ledger.risk_review_id`.
+Conflicting nested `agent_risk_ledger` values are reported with the incoming
+transcript path, such as
+`messages[0].tool_calls[0].agent_risk_ledger.risk_review_id` or
+`events[0].agent_risk_ledger.risk_review_id`.
 
 `--ci` returns `0` for `PASS` and `SUSPICIOUS`, and `1` for `FAIL`.
 Use `SUSPICIOUS` as a review queue unless your workflow chooses to block on it.

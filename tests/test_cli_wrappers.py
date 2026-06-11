@@ -2575,6 +2575,12 @@ class CliWrapperTest(unittest.TestCase):
                 ],
             },
         }
+        expected_diagnostics = {
+            "codex": "messages[0].tool_calls[0].agent_risk_ledger.risk_review_id values must not be mixed",
+            "claude": "messages[0].content[0].agent_risk_ledger.risk_review_id values must not be mixed",
+            "openhands": "events[0].agent_risk_ledger.risk_review_id values must not be mixed",
+            "swe-agent": "steps[0].agent_risk_ledger.risk_review_id values must not be mixed",
+        }
 
         for adapter, transcript in transcripts.items():
             with self.subTest(adapter=adapter):
@@ -2591,7 +2597,7 @@ class CliWrapperTest(unittest.TestCase):
 
                 self.assertEqual(converted.returncode, 2)
                 self.assertEqual(converted.stdout, "")
-                self.assertIn("agent_risk_ledger.risk_review_id values must not be mixed", converted.stderr)
+                self.assertIn(expected_diagnostics[adapter], converted.stderr)
 
     def test_openmako_evidence_court_transcript_adapters_reject_malformed_event_agent_risk_ledger(self) -> None:
         malformed = {
@@ -7050,6 +7056,8 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("reported with their transcript path", schema_doc)
         self.assertIn("messages[0].tool_calls[0].live_control", schema_doc)
         self.assertIn("messages[0].tool_calls[0].agent_risk_ledger.risk_review_id", schema_doc)
+        self.assertIn("Conflicting nested `agent_risk_ledger`", schema_doc)
+        self.assertIn("events[0].agent_risk_ledger.risk_review_id", schema_doc)
         self.assertIn("The root object and tool calls may also include supplied `agent_risk_ledger`", schema_doc)
         self.assertIn("The root object and events may also include supplied `agent_risk_ledger`", schema_doc)
         self.assertIn("The root object and steps may also include supplied `agent_risk_ledger`", schema_doc)

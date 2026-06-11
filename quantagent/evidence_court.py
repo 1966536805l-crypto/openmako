@@ -1653,11 +1653,12 @@ def _add_event_ledger_identity(target: dict[str, object], event: dict[str, objec
 def _add_event_agent_risk_ledger(
     target: dict[str, object], event: dict[str, object], label: str = ""
 ) -> None:
+    ledger_label = _field_label(label, "agent_risk_ledger")
     nested = _agent_risk_ledger(
-        event.get("agent_risk_ledger"), _field_label(label, "agent_risk_ledger")
+        event.get("agent_risk_ledger"), ledger_label
     )
     if nested:
-        _merge_agent_risk_ledger(target, nested)
+        _merge_agent_risk_ledger(target, nested, label=ledger_label)
     direct: dict[str, object] = {}
     for field in AGENT_RISK_BOOL_FIELDS:
         if field not in event:
@@ -1785,7 +1786,12 @@ def _merge_ledger_identity(
             target[key] = value
 
 
-def _merge_agent_risk_ledger(target: dict[str, object], source: dict[str, object]) -> None:
+def _merge_agent_risk_ledger(
+    target: dict[str, object],
+    source: dict[str, object],
+    *,
+    label: str = "agent_risk_ledger",
+) -> None:
     for key, value in source.items():
         if key in AGENT_RISK_LIST_FIELDS:
             existing = target.get(key)
@@ -1798,7 +1804,7 @@ def _merge_agent_risk_ledger(target: dict[str, object], source: dict[str, object
             continue
         existing = target.get(key)
         if key in target and existing != value:
-            raise ValueError(f"agent_risk_ledger.{key} values must not be mixed")
+            raise ValueError(f"{label}.{key} values must not be mixed")
         target[key] = value
 
 
