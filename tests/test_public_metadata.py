@@ -254,12 +254,12 @@ def test_agent_trend_radar_tracks_current_next_build_target() -> None:
     assert "The `run-metrics` evidence extension, the first supplied-transcript adapter\nmatrix, and supplied diff-content evidence handling are already on `main`" in radar
     assert "rejects success claims when command/test proof, edited-file\nevidence, or supplied diff-content evidence is missing" in radar
     assert "duplicate diff-hunk handling are covered for the repository-defined\nCodex, Claude, OpenHands, and SWE-agent supplied formats" in radar
-    assert "adapter evidence edge-case\nhardening" in radar
-    assert "final-claim\n  evidence needed for a source repair assertion" in radar
-    assert "empty diff strings, failed test commands,\n  unsupported edit events, and malformed diff-hunk fields" in radar
-    assert "one fixture and one CLI smoke or focused regression per adapter" in radar
-    assert "cross-agent supplied-record audit\ncoverage" in radar
-    assert "not prove live orchestration, ACP control,\nbroad SWE-bench repair, native export ingestion, or external endorsement" in radar
+    assert "Adapter evidence edge-case hardening has also moved from next target into\ncurrent `main` work" in radar
+    assert "final-claim evidence, empty\ndiff strings, failed test commands, unsupported edit events, malformed" in radar
+    assert "malformed path fields, message roles, classifier fields,\ncontent text blocks, and nested tool payload containers" in radar
+    assert "The next concrete build target is narrower again: supplied evidence ledger\nidentity" in radar
+    assert "session, parent, task, and tool invocation identity fields" in radar
+    assert "not prove live orchestration, ACP control, broad\nSWE-bench repair, native export ingestion, or external endorsement" in radar
 
 
 def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
@@ -742,7 +742,7 @@ def test_agent_trend_radar_maps_sources_to_non_claim_development_bets() -> None:
     assert "Do not claim ACP, MCP orchestration, long-term memory, skill self-evolution,\n  cloud agent execution, or secure-code benchmarking as current public v0.1\n  capability." in radar
     assert "The `run-metrics` evidence extension, the first supplied-transcript adapter\nmatrix, and supplied diff-content evidence handling are already on `main`" in radar
     assert "current adapter\nmatrix now rejects success claims" in radar
-    assert "one fixture and one CLI smoke or focused regression per adapter" in radar
+    assert "one fixture and one CLI smoke or focused regression before broadening\n  any ledger claim" in radar
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in radar.lower()
 

@@ -922,6 +922,15 @@ Current public proof:
   schema validation only, not native export ingestion, live harness
   orchestration, benchmark score validation, remote CI status, external review,
   endorsement, stars, or reposts.
+- `docs/AGENT_TREND_RADAR.md` now treats the recent adapter evidence
+  edge-case hardening as completed `main` work and moves the next concrete
+  build target to supplied evidence ledger identity. The focused trend-radar
+  metadata test failed before the wording change and passed after it; the full
+  public metadata test, `git diff --check`, and public gate passed locally
+  before this note was added. This is planning/proof-surface alignment only,
+  not proof of native export ingestion, live harness control, ACP control,
+  broad SWE-bench repair, remote CI status, external review, endorsement,
+  stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
