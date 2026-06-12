@@ -6,6 +6,7 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import zipfile
 from pathlib import Path
 
 
@@ -173,7 +174,8 @@ def test_readme_links_public_proof_issue() -> None:
     assert "not external review or endorsement" in readme
     assert "Remote autonomous-learning artifact snapshot" in readme
     assert "bash scripts/remote_autonomous_learning_snapshot.sh" in readme
-    assert "a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id and digest" in readme
+    assert "a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, and downloaded `last_summary.json` contract fields" in readme
+    assert "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP" in readme
     assert "public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing" in readme
     assert "Public evidence comment check" in readme
     assert "bash scripts/public_evidence_comment_check.sh" in readme
@@ -292,6 +294,9 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert "It uploads\n  `.quantagent/autonomous_learning_gate` as the\n  `autonomous-learning-gate-summary` artifact" in progress
     assert "not attached to broad default push or\n  pull-request CI" in progress
     assert "manual or path-filtered push run is public CI artifact evidence only, not\n  external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair\n  proof, or external benchmark standing" in progress
+    assert "the downloaded `last_summary.json` contract fields for the selected\n  segments, observed pass counts, hidden task count, stability solved count,\n  and cheating caught count" in progress
+    assert "plus `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for saved artifact fixtures" in progress
+    assert "When API\n  data or artifact download is unavailable" in progress
     assert "`bash scripts/public_evidence_comment_check.sh` is the fail-closed marker\n  check for the published issue #1 evidence comment" in progress
     assert "comment id, commit, run id, job id, artifact name, artifact id, artifact\n  digest, and boundary phrase" in progress
     assert "`OPENMAKO_PUBLIC_EVIDENCE_HTML` fixture" in progress
@@ -829,10 +834,17 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "autonomous-learning-gate-summary" in text
     assert "OPENMAKO_AUTONOMOUS_RUNS_JSON" in text
     assert "OPENMAKO_AUTONOMOUS_ARTIFACTS_JSON" in text
+    assert "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP" in text
     assert "OPENMAKO_GITHUB_TOKEN" in text
     assert "GITHUB_TOKEN" in text
     assert "GH_TOKEN" in text
     assert "Authorization" in text
+    assert "archive_download_url" in text
+    assert "last_summary.json" in text
+    assert "artifact summary contract mismatch" in text
+    assert "artifact-summary-upstream-hidden-task-count=" in text
+    assert "artifact-summary-upstream-stability-solved=" in text
+    assert "artifact-summary-upstream-cheat-caught=" in text
     assert "per_page=1" in text
     assert "per_page=100" in text
     assert "latest autonomous-learning run does not match remote main" in text
@@ -857,6 +869,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     remote_sha = "1234567890abcdef1234567890abcdef12345678"
     runs_json = tmp_path / "runs.json"
     artifacts_json = tmp_path / "artifacts.json"
+    artifact_zip = tmp_path / "artifact.zip"
     runs_json.write_text(
         json.dumps(
             {
@@ -882,6 +895,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
                         "name": "autonomous-learning-gate-summary",
                         "size_in_bytes": 1503,
                         "expired": False,
+                        "archive_download_url": "https://api.github.com/repos/1966536805l-crypto/openmako/actions/artifacts/7600712280/zip",
                         "digest": "sha256:3d621acdd9a5cbe1a0dc6cc97042935dc46f978cacffc64020a4aaae2910f1a3",
                         "created_at": "2026-06-12T19:21:00Z",
                         "expires_at": "2026-09-10T19:21:00Z",
@@ -891,12 +905,64 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
         ),
         encoding="utf-8",
     )
+    artifact_summary = {
+        "schema_version": "autonomous-learning-gate/v0.1",
+        "status": "passed",
+        "invocation": {"git_commit": remote_sha, "argv": []},
+        "segments": {
+            "stage1_trajectory_reuse_matrix": "passed",
+            "upstream_hidden_pack_reuse": "passed",
+        },
+        "tests": {
+            "stage1_trajectory_reuse_matrix": {
+                "expected_passed": 3,
+                "observed_pytest": {
+                    "exit_code": 0,
+                    "passed": 3,
+                    "skipped": 0,
+                    "warnings": 0,
+                },
+            },
+            "upstream_hidden_pack_reuse": {
+                "expected_passed": 1,
+                "observed_pytest": {
+                    "exit_code": 0,
+                    "passed": 1,
+                    "skipped": 0,
+                    "warnings": 0,
+                },
+                "expected_contract": {
+                    "upstream_family_count": 5,
+                    "hidden_task_count": 10,
+                    "no_learning_solved": 0,
+                    "approved_learning_solved": 10,
+                    "stability_repeats": 10,
+                    "stability_solved": 100,
+                    "success_rate_spread": 0.0,
+                    "cheat_caught": 10,
+                },
+            },
+        },
+        "not_proof": [
+            "native live autonomy",
+            "broad unknown-repository repair",
+            "external benchmark standing",
+            "remote CI proof",
+            "external review",
+            "endorsement",
+            "stars",
+            "reposts",
+        ],
+    }
+    with zipfile.ZipFile(artifact_zip, "w") as archive:
+        archive.writestr("last_summary.json", json.dumps(artifact_summary))
     env = os.environ.copy()
     env.update(
         {
             "OPENMAKO_REMOTE_MAIN_SHA": remote_sha,
             "OPENMAKO_AUTONOMOUS_RUNS_JSON": str(runs_json),
             "OPENMAKO_AUTONOMOUS_ARTIFACTS_JSON": str(artifacts_json),
+            "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP": str(artifact_zip),
         }
     )
     result = subprocess.run(
@@ -912,7 +978,30 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "remote-autonomous-learning-snapshot: run-sha=1234567890abcdef1234567890abcdef12345678" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-id=7600712280" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-digest=sha256:3d621" in result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-summary=last_summary.json" in result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-summary-commit=1234567890abcdef1234567890abcdef12345678" in result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-hidden-task-count=10" in result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-stability-solved=100" in result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-cheat-caught=10" in result.stdout
     assert "remote-autonomous-learning-snapshot: PASS" in result.stdout
+
+    broken_summary = dict(artifact_summary)
+    broken_summary["tests"] = json.loads(json.dumps(artifact_summary["tests"]))
+    broken_summary["tests"]["upstream_hidden_pack_reuse"]["expected_contract"].pop("cheat_caught")
+    with zipfile.ZipFile(artifact_zip, "w") as archive:
+        archive.writestr("last_summary.json", json.dumps(broken_summary))
+    contract_mismatch = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert contract_mismatch.returncode == 1
+    assert "artifact summary contract mismatch" in contract_mismatch.stderr
+    assert "tests.upstream_hidden_pack_reuse.expected_contract.cheat_caught" in contract_mismatch.stderr
 
     artifacts_json.write_text(json.dumps({"artifacts": []}), encoding="utf-8")
     missing_artifact = subprocess.run(
@@ -1177,8 +1266,13 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "remote-autonomous-learning-snapshot: status=completed conclusion=success" in guide
     assert "remote-autonomous-learning-snapshot: artifact-name=autonomous-learning-gate-summary" in guide
     assert "remote-autonomous-learning-snapshot: artifact-digest=sha256:..." in guide
-    assert "stale, still running, failed, missing, rate limited, missing the named artifact,\nexpired, or missing an artifact digest" in guide
-    assert "Passing it is current public CI artifact\nevidence only, not external review, endorsement, stars, reposts, live autonomy,\nbroad unknown-repository repair, or external benchmark standing" in guide
+    assert "remote-autonomous-learning-snapshot: artifact-summary=last_summary.json" in guide
+    assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-hidden-task-count=10" in guide
+    assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-stability-solved=100" in guide
+    assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-cheat-caught=10" in guide
+    assert "stale, still running, failed, missing, rate limited, missing the named artifact,\nexpired, missing an artifact digest, unreadable as an artifact zip, or missing\nthe expected `last_summary.json` contract fields" in guide
+    assert "`OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` to verify the same contract against a saved\nartifact fixture" in guide
+    assert "Passing it is current public CI artifact evidence only, not\nexternal review, endorsement, stars, reposts, live autonomy, broad\nunknown-repository repair, or external benchmark standing" in guide
     assert "bash scripts/public_evidence_comment_check.sh" in guide
     assert "public-evidence-comment-check: marker=commit ok" in guide
     assert "public-evidence-comment-check: marker=run-id ok" in guide

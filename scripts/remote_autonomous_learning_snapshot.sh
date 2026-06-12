@@ -26,12 +26,15 @@ import os
 import sys
 import urllib.error
 import urllib.request
+import zipfile
+from io import BytesIO
 from datetime import datetime, timezone
 
 
 repo, workflow, artifact_name, remote_sha = sys.argv[1:5]
 runs_fixture = os.environ.get("OPENMAKO_AUTONOMOUS_RUNS_JSON")
 artifacts_fixture = os.environ.get("OPENMAKO_AUTONOMOUS_ARTIFACTS_JSON")
+artifact_zip_fixture = os.environ.get("OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP")
 workflow_runs_url = (
     f"https://api.github.com/repos/{repo}/actions/workflows/"
     f"{workflow}/runs?branch=main&per_page=1"
@@ -135,6 +138,208 @@ def read_json_fixture(path: str, unavailable_reason: str) -> dict:
         sys.exit(2)
 
 
+def read_artifact_zip(url: str) -> bytes:
+    if artifact_zip_fixture:
+        try:
+            with open(artifact_zip_fixture, "rb") as handle:
+                return handle.read()
+        except Exception as exc:
+            print_boundary_snapshot("artifact_zip_fixture_unreadable")
+            print(
+                f"remote-autonomous-learning-snapshot: could not read artifact zip fixture "
+                f"{artifact_zip_fixture}: {exc}",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+
+    request = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return response.read()
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        if exc.code == 403 and "rate limit" in body.lower():
+            print_boundary_snapshot("github_api_rate_limit", exc.headers)
+            print(
+                "remote-autonomous-learning-snapshot: GitHub API rate limit while reading artifact zip; "
+                "re-check later or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN "
+                "for authenticated API reads",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+        print_boundary_snapshot(f"artifact_zip_api_error_{exc.code}")
+        print(
+            f"remote-autonomous-learning-snapshot: GitHub artifact zip error {exc.code}: {body}",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+    except Exception as exc:
+        print_boundary_snapshot("artifact_zip_unreadable")
+        print(
+            f"remote-autonomous-learning-snapshot: could not read artifact zip: {exc}",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
+
+def read_summary_from_artifact_zip(data: bytes) -> dict:
+    try:
+        with zipfile.ZipFile(BytesIO(data)) as archive:
+            candidates = [
+                name
+                for name in archive.namelist()
+                if name.endswith("last_summary.json") and not name.endswith("/")
+            ]
+            if len(candidates) != 1:
+                print(
+                    "remote-autonomous-learning-snapshot: artifact zip must contain exactly one "
+                    f"last_summary.json, found={len(candidates)}",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+            summary_name = candidates[0]
+            payload = json.loads(archive.read(summary_name).decode("utf-8"))
+    except json.JSONDecodeError as exc:
+        print(
+            f"remote-autonomous-learning-snapshot: artifact summary is not valid JSON: {exc}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    except zipfile.BadZipFile as exc:
+        print(
+            f"remote-autonomous-learning-snapshot: artifact is not a readable zip: {exc}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    except Exception as exc:
+        print(
+            f"remote-autonomous-learning-snapshot: could not read artifact summary: {exc}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    if not isinstance(payload, dict):
+        print("remote-autonomous-learning-snapshot: artifact summary is not an object", file=sys.stderr)
+        sys.exit(1)
+    print(f"remote-autonomous-learning-snapshot: artifact-summary={summary_name}")
+    return payload
+
+
+def validate_artifact_summary(payload: dict) -> None:
+    errors = []
+    def mapping_field(name: str) -> dict:
+        value = payload.get(name)
+        if isinstance(value, dict):
+            return value
+        errors.append(name)
+        return {}
+
+    if payload.get("schema_version") != "autonomous-learning-gate/v0.1":
+        errors.append("schema_version")
+    if payload.get("status") != "passed":
+        errors.append("status")
+    invocation = mapping_field("invocation")
+    if invocation.get("git_commit") != remote_sha:
+        errors.append("invocation.git_commit")
+    segments = mapping_field("segments")
+    expected_segments = {
+        "stage1_trajectory_reuse_matrix": "passed",
+        "upstream_hidden_pack_reuse": "passed",
+    }
+    for segment, expected in expected_segments.items():
+        if segments.get(segment) != expected:
+            errors.append(f"segments.{segment}")
+
+    tests = mapping_field("tests")
+    stage1 = tests.get("stage1_trajectory_reuse_matrix")
+    if not isinstance(stage1, dict):
+        errors.append("tests.stage1_trajectory_reuse_matrix")
+        stage1 = {}
+    upstream = tests.get("upstream_hidden_pack_reuse")
+    if not isinstance(upstream, dict):
+        errors.append("tests.upstream_hidden_pack_reuse")
+        upstream = {}
+
+    stage1_observed = stage1.get("observed_pytest")
+    if not isinstance(stage1_observed, dict):
+        errors.append("tests.stage1_trajectory_reuse_matrix.observed_pytest")
+        stage1_observed = {}
+    if stage1.get("expected_passed") != 3:
+        errors.append("tests.stage1_trajectory_reuse_matrix.expected_passed")
+    if stage1_observed.get("exit_code") != 0:
+        errors.append("tests.stage1_trajectory_reuse_matrix.observed_pytest.exit_code")
+    if stage1_observed.get("passed") != 3:
+        errors.append("tests.stage1_trajectory_reuse_matrix.observed_pytest.passed")
+
+    upstream_observed = upstream.get("observed_pytest")
+    if not isinstance(upstream_observed, dict):
+        errors.append("tests.upstream_hidden_pack_reuse.observed_pytest")
+        upstream_observed = {}
+    if upstream.get("expected_passed") != 1:
+        errors.append("tests.upstream_hidden_pack_reuse.expected_passed")
+    if upstream_observed.get("exit_code") != 0:
+        errors.append("tests.upstream_hidden_pack_reuse.observed_pytest.exit_code")
+    if upstream_observed.get("passed") != 1:
+        errors.append("tests.upstream_hidden_pack_reuse.observed_pytest.passed")
+
+    upstream_contract = upstream.get("expected_contract")
+    if not isinstance(upstream_contract, dict):
+        errors.append("tests.upstream_hidden_pack_reuse.expected_contract")
+        upstream_contract = {}
+    required_upstream = {
+        "upstream_family_count": 5,
+        "hidden_task_count": 10,
+        "no_learning_solved": 0,
+        "approved_learning_solved": 10,
+        "stability_repeats": 10,
+        "stability_solved": 100,
+        "success_rate_spread": 0.0,
+        "cheat_caught": 10,
+    }
+    for key, expected in required_upstream.items():
+        if upstream_contract.get(key) != expected:
+            errors.append(f"tests.upstream_hidden_pack_reuse.expected_contract.{key}")
+
+    required_not_proof = {
+        "native live autonomy",
+        "broad unknown-repository repair",
+        "external benchmark standing",
+        "remote CI proof",
+        "external review",
+        "endorsement",
+        "stars",
+        "reposts",
+    }
+    if set(payload.get("not_proof") or []) != required_not_proof:
+        errors.append("not_proof")
+
+    print(f"remote-autonomous-learning-snapshot: artifact-summary-commit={invocation.get('git_commit')}")
+    print(f"remote-autonomous-learning-snapshot: artifact-summary-status={payload.get('status')}")
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-upstream-hidden-task-count="
+        f"{upstream_contract.get('hidden_task_count')}"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-upstream-stability-solved="
+        f"{upstream_contract.get('stability_solved')}"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-upstream-cheat-caught="
+        f"{upstream_contract.get('cheat_caught')}"
+    )
+
+    if errors:
+        print(
+            "remote-autonomous-learning-snapshot: artifact summary contract mismatch: "
+            + ",".join(errors),
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+
 if runs_fixture:
     runs_data = read_json_fixture(runs_fixture, "workflow_runs_fixture_unreadable")
 else:
@@ -224,6 +429,12 @@ if not artifact_id:
 if not artifact_digest:
     print("remote-autonomous-learning-snapshot: autonomous-learning artifact digest is missing", file=sys.stderr)
     sys.exit(1)
+
+archive_url = artifact.get("archive_download_url") or (
+    f"https://api.github.com/repos/{repo}/actions/artifacts/{artifact_id}/zip"
+)
+artifact_summary = read_summary_from_artifact_zip(read_artifact_zip(archive_url))
+validate_artifact_summary(artifact_summary)
 
 print("remote-autonomous-learning-snapshot: PASS")
 PY

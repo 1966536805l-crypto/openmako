@@ -151,14 +151,21 @@ remote-autonomous-learning-snapshot: run-sha=<current openmako/main SHA>
 remote-autonomous-learning-snapshot: status=completed conclusion=success
 remote-autonomous-learning-snapshot: artifact-name=autonomous-learning-gate-summary
 remote-autonomous-learning-snapshot: artifact-digest=sha256:...
+remote-autonomous-learning-snapshot: artifact-summary=last_summary.json
+remote-autonomous-learning-snapshot: artifact-summary-upstream-hidden-task-count=10
+remote-autonomous-learning-snapshot: artifact-summary-upstream-stability-solved=100
+remote-autonomous-learning-snapshot: artifact-summary-upstream-cheat-caught=10
 remote-autonomous-learning-snapshot: PASS
 ```
 
 The command fails closed if the latest autonomous-learning workflow run is
 stale, still running, failed, missing, rate limited, missing the named artifact,
-expired, or missing an artifact digest. Passing it is current public CI artifact
-evidence only, not external review, endorsement, stars, reposts, live autonomy,
-broad unknown-repository repair, or external benchmark standing.
+expired, missing an artifact digest, unreadable as an artifact zip, or missing
+the expected `last_summary.json` contract fields. Set
+`OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` to verify the same contract against a saved
+artifact fixture. Passing it is current public CI artifact evidence only, not
+external review, endorsement, stars, reposts, live autonomy, broad
+unknown-repository repair, or external benchmark standing.
 
 To re-check that the published public evidence comment still contains the
 recorded remote-run markers and non-proof boundary:

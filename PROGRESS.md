@@ -121,14 +121,18 @@ Current public proof:
 - `bash scripts/remote_autonomous_learning_snapshot.sh` is the fail-closed
   re-check tool for the latest autonomous-learning workflow on current
   `openmako/main`. It verifies the latest run SHA, completed/success
-  conclusion, and the `autonomous-learning-gate-summary` artifact id and digest.
-  It supports the same `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`
-  fallback token names as the focused snapshot. When API data is unavailable,
-  it prints the remote main SHA, manual Actions URL, local UTC check time,
-  rate-limit reset details, and a copyable rerun command when available before
-  exiting nonzero. Passing this script is current public CI artifact evidence
-  only, not external review, endorsement, stars, reposts, live autonomy, broad
-  unknown-repository repair, or external benchmark standing.
+  conclusion, the `autonomous-learning-gate-summary` artifact id and digest,
+  and the downloaded `last_summary.json` contract fields for the selected
+  segments, observed pass counts, hidden task count, stability solved count,
+  and cheating caught count. It supports the same `OPENMAKO_GITHUB_TOKEN`,
+  `GITHUB_TOKEN`, or `GH_TOKEN` fallback token names as the focused snapshot,
+  plus `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for saved artifact fixtures. When API
+  data or artifact download is unavailable, it prints the remote main SHA,
+  manual Actions URL, local UTC check time, rate-limit reset details, and a
+  copyable rerun command when available before exiting nonzero. Passing this
+  script is current public CI artifact evidence only, not external review,
+  endorsement, stars, reposts, live autonomy, broad unknown-repository repair,
+  or external benchmark standing.
 - `bash scripts/public_evidence_comment_check.sh` is the fail-closed marker
   check for the published issue #1 evidence comment. It verifies the configured
   comment id, commit, run id, job id, artifact name, artifact id, artifact
