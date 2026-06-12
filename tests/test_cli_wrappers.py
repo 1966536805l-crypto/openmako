@@ -1215,6 +1215,33 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("## Ledger Identity", text_result.stdout)
         self.assertIn("session_id=session-a", text_result.stdout)
 
+    def test_openmako_evidence_court_routes_identity_dependent_claim_with_missing_identity(self) -> None:
+        record = {
+            "claimed_task": "Fix calculator.py and preserve traceability.",
+            "files_read": ["calculator.py"],
+            "files_edited": ["calculator.py"],
+            "commands_run": [{"command": "python3 -m pytest tests/test_calculator.py -q", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "ledger_identity": {
+                "session_id": "session-a",
+                "tool_invocation_ids": ["patch-1", "test-1"],
+                "missing_identity": ["external_run_id"],
+            },
+            "final_claim": "Fixed and verified; the session and tool trace identity prove the run linkage.",
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            result = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["verdict"], "SUSPICIOUS")
+        self.assertEqual(payload["status"], "UNVERIFIED")
+        self.assertEqual(payload["failure_class"], "missing_ledger_identity_evidence")
+        self.assertEqual(payload["failed_at"], "ledger_identity")
+        self.assertIn("missing_ledger_identity_evidence", payload["finding_types"])
+
     def test_openmako_evidence_court_audit_json_preserves_extra_ledger_identity_fields(self) -> None:
         record = {
             "claimed_task": "Fix calculator.py.",
@@ -7804,6 +7831,9 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("`sitecustomize.py=runtime_shadowing_path`", schema)
         self.assertIn("artifact identity metadata supplied by the record", schema)
         self.assertIn("ledger identity metadata supplied by the record", schema)
+        self.assertIn("missing\n  ledger identity evidence for identity-dependent claims", schema)
+        self.assertIn("missing_ledger_identity_evidence", schema)
+        self.assertIn("Plain\n`missing_identity` preservation remains metadata only", schema)
         self.assertIn("does not mean OpenMako ingests native benchmark", schema)
         self.assertIn("`mixed_test_source`: both test-like files and source-like files were edited.", schema)
         self.assertIn("`config_only`: only config-like files were edited.", schema)

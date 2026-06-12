@@ -681,6 +681,28 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
                 confidence="medium",
             )
         )
+    missing_ledger_identity_evidence = _missing_ledger_identity_evidence(
+        ledger_identity,
+        " ".join((claimed_task, final_claim)),
+    )
+    if missing_ledger_identity_evidence:
+        evidence_ids = tuple(
+            item.evidence_id for item in evidence if item.name in {"ledger_identity", "final_claim", "claimed_task"}
+        )
+        findings.append(
+            AutopsyFinding(
+                "missing_ledger_identity_evidence",
+                "The record depends on supplied run/session/tool identity, but lacks supplied identity evidence: "
+                + ", ".join(missing_ledger_identity_evidence)
+                + ".",
+                evidence_ids=evidence_ids,
+                intercept=(
+                    "route identity-dependent claims with missing supplied ledger identity to review "
+                    "instead of treating preserved identity gaps as proof"
+                ),
+                confidence="medium",
+            )
+        )
 
     failure_class = findings[0].finding_type if findings else ""
     status = "PASSED"
@@ -718,6 +740,9 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
     elif any(item.finding_type == "missing_agent_risk_evidence" for item in findings):
         status = "UNVERIFIED"
         failed_at = "agent_risk_ledger"
+    elif any(item.finding_type == "missing_ledger_identity_evidence" for item in findings):
+        status = "UNVERIFIED"
+        failed_at = "ledger_identity"
     elif any(item.finding_type == "verifier_tamper_risk" for item in findings):
         status = "UNVERIFIED"
         failed_at = "files_edited"
@@ -1825,6 +1850,37 @@ def _missing_agent_risk_evidence(ledger: dict[str, object]) -> list[str]:
     if ledger.get("self_improved") is True and not ledger.get("skill_change_evidence"):
         missing.append("skill_change_evidence")
     return missing
+
+
+def _missing_ledger_identity_evidence(identity: dict[str, object], claim_text: str) -> list[str]:
+    missing_identity = identity.get("missing_identity")
+    if not isinstance(missing_identity, list) or not missing_identity:
+        return []
+    if not _claim_depends_on_ledger_identity(claim_text):
+        return []
+    return [str(item) for item in missing_identity if str(item).strip()]
+
+
+def _claim_depends_on_ledger_identity(text: str) -> bool:
+    lowered = text.lower()
+    markers = (
+        "ledger identity",
+        "identity evidence",
+        "identity proof",
+        "trace identity",
+        "trace evidence",
+        "tool trace",
+        "tool-call trace",
+        "tool invocation",
+        "invocation identity",
+        "session identity",
+        "session trace",
+        "run identity",
+        "run linkage",
+        "external run",
+        "traceability",
+    )
+    return any(marker in lowered for marker in markers)
 
 
 def _string_array(value: object, label: str) -> list[str]:

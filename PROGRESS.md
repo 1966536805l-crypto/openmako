@@ -1498,6 +1498,17 @@ Current public proof:
   planning/proof-surface alignment only, not new runtime behavior, native
   export ingestion, live harness control, ACP control, remote CI proof,
   external review, endorsement, stars, or reposts.
+- Evidence Court now routes identity-dependent claims with supplied
+  `ledger_identity.missing_identity` gaps to `SUSPICIOUS` as
+  `missing_ledger_identity_evidence`, while plain missing-identity metadata
+  remains preserved evidence and can still pass when the claim does not depend
+  on run, session, or tool trace identity. The focused regression failed before
+  the audit change and passed after it; the full CLI wrapper test file, public
+  metadata tests, `git diff --check`, and public review gate passed locally
+  before this note was added. This is supplied-record identity-gap review
+  routing only, not native export ingestion, live harness control, ACP control,
+  proof that supplied patches were applied outside the supplied record, remote
+  CI proof, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
