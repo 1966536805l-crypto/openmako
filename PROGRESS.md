@@ -1509,6 +1509,12 @@ Current public proof:
   routing only, not native export ingestion, live harness control, ACP control,
   proof that supplied patches were applied outside the supplied record, remote
   CI proof, external review, endorsement, stars, or reposts.
+- `docs/AGENT_TREND_RADAR.md` now treats raw-record identity-gap review routing
+  as current `main` work and narrows the next target to adapter-level
+  identity-gap matrix coverage across repository-defined supplied transcript
+  formats. This is planning/proof-surface alignment only, not new runtime
+  behavior, native export ingestion, live harness control, ACP control, remote
+  CI proof, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1520,6 +1526,6 @@ Next smallest hygiene task:
 
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
-- Next concrete candidate: another adapter evidence edge case or a trend-radar
-  follow-up only if it can be reduced to a failing metadata, parser, or audit
-  test behind the supplied-record proof boundary.
+- Next concrete candidate: adapter-level identity-gap matrix coverage only if
+  it can be reduced to a failing supplied transcript conversion and audit test
+  behind the supplied-record proof boundary.

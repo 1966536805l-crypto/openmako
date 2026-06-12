@@ -261,9 +261,12 @@ def test_agent_trend_radar_tracks_current_next_build_target() -> None:
     assert "Supplied evidence ledger identity has also moved into current `main` work" in radar
     assert "preserves supplied `session_id`, `task_id`, `parent_id`,\n`tool_invocation_ids`, `missing_identity`, and extra string identity fields" in radar
     assert "rejects conflicting or malformed nested/direct\nledger identity fields" in radar
-    assert "The next concrete build target is narrower again: supplied identity-gap review\nrouting" in radar
-    assert "treat `missing_identity` as preserved reviewer evidence today, not runtime\n  proof" in radar
-    assert "routes identity gaps to a review-risk finding only when\n  the claim depends on supplied session/tool trace identity" in radar
+    assert "Identity-gap review routing has now moved into current `main` work for raw\naudit records" in radar
+    assert "routes identity-dependent claims with\nsupplied `ledger_identity.missing_identity` gaps to\n`missing_ledger_identity_evidence`" in radar
+    assert "plain missing-identity metadata\nremains preserved reviewer evidence" in radar
+    assert "The next concrete build target is narrower again: adapter-level identity-gap\nmatrix coverage" in radar
+    assert "preserve `missing_identity` as reviewer evidence, not runtime proof" in radar
+    assert "identity-gap risk through conversion and audit" in radar
     assert "not prove live orchestration, ACP control, broad\nSWE-bench repair, native export ingestion, or external endorsement" in radar
 
 
@@ -753,7 +756,8 @@ def test_agent_trend_radar_maps_sources_to_non_claim_development_bets() -> None:
     assert "The `run-metrics` evidence extension, the first supplied-transcript adapter\nmatrix, and supplied diff-content evidence handling are already on `main`" in radar
     assert "current adapter\nmatrix now rejects success claims" in radar
     assert "Supplied evidence ledger identity has also moved into current `main` work" in radar
-    assert "one focused regression and one CLI smoke before broadening any identity\n  gap claim" in radar
+    assert "adapter-level identity-gap\nmatrix coverage across the repository-defined supplied transcript formats" in radar
+    assert "identity-gap risk through conversion and audit" in radar
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in radar.lower()
 

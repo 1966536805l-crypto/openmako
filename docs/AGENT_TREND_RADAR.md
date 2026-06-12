@@ -127,17 +127,24 @@ raw audit records and Codex, Claude, OpenHands, and SWE-agent supplied
 transcript adapters. It also rejects conflicting or malformed nested/direct
 ledger identity fields instead of silently overwriting or stringifying them.
 
-The next concrete build target is narrower again: supplied identity-gap review
-routing, without claiming native product-log ingestion or live harness control.
+Identity-gap review routing has now moved into current `main` work for raw
+audit records. Current local proof routes identity-dependent claims with
+supplied `ledger_identity.missing_identity` gaps to
+`missing_ledger_identity_evidence`, while plain missing-identity metadata
+remains preserved reviewer evidence when the claim does not depend on supplied
+run, session, trace, or tool invocation identity.
+
+The next concrete build target is narrower again: adapter-level identity-gap
+matrix coverage across the repository-defined supplied transcript formats,
+without claiming native product-log ingestion or live harness control.
 
 - keep Codex, Claude, OpenHands, and SWE-agent imports as supplied-record
   adapters first
-- treat `missing_identity` as preserved reviewer evidence today, not runtime
-  proof
-- add one fixture that routes identity gaps to a review-risk finding only when
-  the claim depends on supplied session/tool trace identity
-- keep one focused regression and one CLI smoke before broadening any identity
-  gap claim
+- preserve `missing_identity` as reviewer evidence, not runtime proof
+- add one adapter-matrix fixture per supplied format that carries the
+  identity-gap risk through conversion and audit
+- keep the raw-record regression as the baseline before broadening any adapter
+  identity-gap claim
 
 Public claim boundary: this would improve supplied-record audit durability and
 reviewer traceability, not prove live orchestration, ACP control, broad
