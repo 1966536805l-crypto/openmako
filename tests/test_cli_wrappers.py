@@ -4694,6 +4694,91 @@ class CliWrapperTest(unittest.TestCase):
                     self.assertEqual(converted.stdout, "")
                     self.assertIn("exit_code must be an integer", converted.stderr)
 
+    def test_openmako_evidence_court_transcript_adapters_require_validation_exit_status(self) -> None:
+        def transcript_for(adapter: str) -> dict[str, object]:
+            if adapter == "codex":
+                return {
+                    "claimed_task": "Fix calculator.py.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "tool_calls": [
+                                {
+                                    "type": "exec_command",
+                                    "command": "python3 -m pytest tests/test_calculator.py -q",
+                                    "output": "1 passed in 0.02s",
+                                }
+                            ],
+                        }
+                    ],
+                }
+            if adapter == "claude":
+                return {
+                    "task": "Fix calculator.py.",
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "name": "Bash",
+                                    "input": {
+                                        "command": "python3 -m pytest tests/test_calculator.py -q",
+                                        "stdout": "1 passed in 0.02s",
+                                    },
+                                }
+                            ],
+                        }
+                    ],
+                }
+            if adapter == "openhands":
+                return {
+                    "task": "Fix calculator.py.",
+                    "events": [
+                        {
+                            "action": "run",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "observation": "1 passed in 0.02s",
+                        }
+                    ],
+                }
+            if adapter == "swe-agent":
+                return {
+                    "issue": "Fix calculator.py.",
+                    "steps": [
+                        {
+                            "action": "test",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "stdout": "1 passed in 0.02s",
+                        }
+                    ],
+                }
+            raise AssertionError(f"unexpected adapter: {adapter}")
+
+        expected_errors = {
+            "codex": "messages[0].tool_calls[0].exit_code is required for validation commands",
+            "claude": "messages[0].content[0].exit_code is required for validation commands",
+            "openhands": "events[0].exit_code is required for validation commands",
+            "swe-agent": "steps[0].exit_code is required for validation commands",
+        }
+        for adapter in ("codex", "claude", "openhands", "swe-agent"):
+            with self.subTest(adapter=adapter):
+                transcript = transcript_for(adapter)
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertEqual(converted.stdout, "")
+                self.assertIn(expected_errors[adapter], converted.stderr)
+
     def test_openmako_evidence_court_transcript_adapters_reject_malformed_run_metrics(self) -> None:
         def transcript_for(adapter: str) -> dict[str, object]:
             if adapter == "codex":

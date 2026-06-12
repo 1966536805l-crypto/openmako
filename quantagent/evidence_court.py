@@ -894,6 +894,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
                     unsupported.append(f"{tool_path}: missing command")
                     continue
                 item: dict[str, object] = {"command": command}
+                _require_validation_exit_code(tool_payload, command, tool_path)
                 exit_code = _event_exit_code(tool_payload)
                 if exit_code is not None:
                     item["exit_code"] = exit_code
@@ -1005,6 +1006,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
                     unsupported.append(f"{tool_path}: missing command")
                     continue
                 item: dict[str, object] = {"command": command}
+                _require_validation_exit_code(tool_payload, command, tool_path)
                 exit_code = _event_exit_code(tool_payload)
                 if exit_code is not None:
                     item["exit_code"] = exit_code
@@ -1117,6 +1119,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
                 unsupported.append(f"{event_path}: missing command")
                 continue
             item: dict[str, object] = {"command": command}
+            _require_validation_exit_code(event, command, event_path)
             exit_code = _event_exit_code(event)
             if exit_code is not None:
                 item["exit_code"] = exit_code
@@ -1235,6 +1238,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
                 unsupported.append(f"{step_path}: missing command")
                 continue
             item: dict[str, object] = {"command": command}
+            _require_validation_exit_code(step, command, step_path)
             exit_code = _event_exit_code(step)
             if exit_code is not None:
                 item["exit_code"] = exit_code
@@ -2328,6 +2332,11 @@ def _event_exit_code(event: dict[str, object]) -> int | None:
     if not _is_integer_exit_code(value):
         raise ValueError("exit_code must be an integer")
     return int(value)
+
+
+def _require_validation_exit_code(event: dict[str, object], command: str, label: str) -> None:
+    if _looks_like_validation_command(command) and "exit_code" not in event:
+        raise ValueError(f"{label}.exit_code is required for validation commands")
 
 
 def _test_output_status(test_output: object, commands_run: object) -> tuple[str, str]:

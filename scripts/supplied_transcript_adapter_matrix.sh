@@ -137,6 +137,55 @@ smoke_adapter_missing_diff() {
   assert_audit_json "$audit" SUSPICIOUS missing_diff_content_evidence
 }
 
+smoke_adapter_missing_exit_status() {
+  local adapter="$1"
+  local source="$TMP_DIR/${adapter}.json"
+  local input="$TMP_DIR/${adapter}.missing-exit-status.json"
+  local record="$TMP_DIR/${adapter}.missing-exit-status.record.json"
+  local stderr="$TMP_DIR/${adapter}.missing-exit-status.stderr"
+
+  "$PYTHON_BIN" - "$source" "$input" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1])
+target = Path(sys.argv[2])
+payload = json.loads(source.read_text(encoding="utf-8"))
+
+def strip_exit_codes(value):
+    if isinstance(value, dict):
+        value.pop("exit_code", None)
+        for item in value.values():
+            strip_exit_codes(item)
+    elif isinstance(value, list):
+        for item in value:
+            strip_exit_codes(item)
+
+strip_exit_codes(payload)
+target.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+PY
+
+  echo "adapter-matrix: recording ${adapter} missing-exit-status-evidence"
+  set +e
+  "$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court record "from-${adapter}-transcript" \
+    --output "$record" "$input" 2> "$stderr"
+  local record_exit=$?
+  set -e
+
+  if [ "$record_exit" -ne 2 ]; then
+    echo "adapter-matrix: expected missing-exit-status record exit 2 for ${adapter}, got ${record_exit}" >&2
+    cat "$record" >&2 || true
+    cat "$stderr" >&2
+    exit 1
+  fi
+  if ! grep -q "exit_code is required for validation commands" "$stderr"; then
+    echo "adapter-matrix: missing exit-status diagnostic for ${adapter}" >&2
+    cat "$stderr" >&2
+    exit 1
+  fi
+}
+
 cat > "$TMP_DIR/codex.json" <<'JSON'
 {
   "claimed_task": "Fix calculator.py and tests/test_calculator.py.",
@@ -501,18 +550,22 @@ cat > "$TMP_DIR/swe-agent.missing-edits.json" <<'JSON'
 JSON
 
 smoke_adapter codex
+smoke_adapter_missing_exit_status codex
 smoke_adapter_missing_diff codex
 smoke_adapter_missing_tests codex
 smoke_adapter_missing_edits codex
 smoke_adapter claude
+smoke_adapter_missing_exit_status claude
 smoke_adapter_missing_diff claude
 smoke_adapter_missing_tests claude
 smoke_adapter_missing_edits claude
 smoke_adapter openhands
+smoke_adapter_missing_exit_status openhands
 smoke_adapter_missing_diff openhands
 smoke_adapter_missing_tests openhands
 smoke_adapter_missing_edits openhands
 smoke_adapter swe-agent
+smoke_adapter_missing_exit_status swe-agent
 smoke_adapter_missing_diff swe-agent
 smoke_adapter_missing_tests swe-agent
 smoke_adapter_missing_edits swe-agent

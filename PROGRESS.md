@@ -1423,6 +1423,15 @@ Current public proof:
   tests passed locally before this note was added. This is supplied-record
   parser hardening only, not native Claude export ingestion, live control,
   external review, endorsement, stars, or reposts.
+- Supplied transcript adapters now reject validation command events that omit
+  `exit_code`, so `1 passed` output text alone is not accepted as adapter test
+  proof. The adapter matrix now derives missing-exit-status fixtures for Codex,
+  Claude, OpenHands, and SWE-agent transcripts. The focused regression failed
+  before the parser change and passed after it; the full CLI wrapper test file,
+  supplied transcript adapter matrix, and public metadata tests passed locally
+  before this note was added. This is supplied-record adapter evidence
+  hardening only, not native transcript export ingestion, live control, remote
+  CI proof, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1434,6 +1443,6 @@ Next smallest hygiene task:
 
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
-- Next concrete candidate: a trend-radar follow-up or another adapter evidence
-  edge case only if it can be reduced to a failing parser/audit test behind the
-  supplied-record proof boundary.
+- Next concrete candidate: a trend-radar follow-up or another public-proof
+  wording alignment only if it can be reduced to a failing metadata or
+  parser/audit test behind the supplied-record proof boundary.

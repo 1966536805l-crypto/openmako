@@ -1044,6 +1044,10 @@ def test_supplied_transcript_adapter_matrix_script_is_reviewer_runnable() -> Non
     assert "smoke_adapter claude" in text
     assert "smoke_adapter openhands" in text
     assert "smoke_adapter swe-agent" in text
+    assert "smoke_adapter_missing_exit_status codex" in text
+    assert "smoke_adapter_missing_exit_status claude" in text
+    assert "smoke_adapter_missing_exit_status openhands" in text
+    assert "smoke_adapter_missing_exit_status swe-agent" in text
     assert "smoke_adapter_missing_tests codex" in text
     assert "smoke_adapter_missing_tests claude" in text
     assert "smoke_adapter_missing_tests openhands" in text
@@ -1054,6 +1058,7 @@ def test_supplied_transcript_adapter_matrix_script_is_reviewer_runnable() -> Non
     assert "smoke_adapter_missing_edits swe-agent" in text
     assert 'assert_audit_json "$audit" PASS' in text
     assert "--fail-on suspicious --json" in text
+    assert "exit_code is required for validation commands" in text
     assert 'assert_audit_json "$audit" SUSPICIOUS missing_test_evidence' in text
     assert 'assert_audit_json "$audit" SUSPICIOUS missing_edited_file_evidence' in text
     assert "adapter-matrix: PASS" in text
