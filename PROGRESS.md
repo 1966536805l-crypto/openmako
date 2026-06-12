@@ -1471,6 +1471,15 @@ Current public proof:
   alignment only, not new parser behavior, native patch application proof,
   native transcript ingestion, live control, remote CI proof, external review,
   endorsement, stars, or reposts.
+- Supplied transcript audits now preserve an ordered edit/command evidence
+  timeline and reject source-repair success claims when passing validation
+  appears before a later source edit with no later passing validation. The
+  focused regression failed before the audit change and passed after it; the
+  full CLI wrapper test file, public metadata tests, supplied transcript
+  adapter matrix, and `git diff --check` passed locally before this note was
+  added. This is supplied-record timeline validation only, not native patch
+  application proof, native transcript ingestion, live control, remote CI proof,
+  external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

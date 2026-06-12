@@ -1069,9 +1069,11 @@ def test_supplied_transcript_adapter_matrix_script_is_reviewer_runnable() -> Non
     assert "exit_code is required for validation commands" in text
     assert "test-only-source-diff-evidence" in text
     assert "partial-source-diff-evidence" in text
+    assert "stale-validation-after-source-edit" in text
     assert 'assert_audit_json "$audit" SUSPICIOUS missing_test_evidence' in text
     assert 'assert_audit_json "$audit" SUSPICIOUS missing_edited_file_evidence' in text
     assert 'assert_audit_json "$audit" SUSPICIOUS missing_diff_content_evidence' in text
+    assert 'assert_audit_json "$audit" SUSPICIOUS stale_validation_after_source_edit' in text
     assert "adapter-matrix: PASS" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()

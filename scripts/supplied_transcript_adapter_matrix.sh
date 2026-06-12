@@ -265,6 +265,112 @@ PY
   assert_audit_json "$audit" SUSPICIOUS missing_diff_content_evidence
 }
 
+smoke_adapter_stale_validation_after_source_edit() {
+  local adapter="$1"
+  local source="$TMP_DIR/${adapter}.json"
+  local input="$TMP_DIR/${adapter}.stale-validation-after-source-edit.json"
+  local record="$TMP_DIR/${adapter}.stale-validation-after-source-edit.record.json"
+  local audit="$TMP_DIR/${adapter}.stale-validation-after-source-edit.audit.json"
+
+  "$PYTHON_BIN" - "$source" "$input" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1])
+target = Path(sys.argv[2])
+payload = json.loads(source.read_text(encoding="utf-8"))
+late_hunk = (
+    "--- a/calculator.py\n"
+    "+++ b/calculator.py\n"
+    "@@ -4,2 +4,2 @@\n"
+    "-def sub(a, b): return a - b\n"
+    "+def sub(a, b): return b - a"
+)
+
+def late_edit_for(template):
+    if isinstance(template.get("input"), dict):
+        return {
+            "type": template.get("type", "tool_use"),
+            "name": template.get("name", "Edit"),
+            "input": {"file_path": "calculator.py", "diff": late_hunk},
+        }
+    event = {"diff_hunks": [late_hunk], "files": ["calculator.py"]}
+    if "action" in template:
+        event["action"] = template["action"]
+    elif "type" in template:
+        event["type"] = template["type"]
+    else:
+        event["type"] = "apply_patch"
+    return event
+
+def command_text(value):
+    if not isinstance(value, dict):
+        return ""
+    direct = value.get("command") or value.get("cmd")
+    if direct:
+        return str(direct)
+    nested = value.get("input")
+    if isinstance(nested, dict):
+        return str(nested.get("command") or nested.get("cmd") or "")
+    return ""
+
+def has_diff_content(value):
+    if not isinstance(value, dict):
+        return False
+    if any(key in value for key in ("diff", "patch", "unified_diff", "diff_hunks")):
+        return True
+    nested = value.get("input")
+    return isinstance(nested, dict) and any(key in nested for key in ("diff", "patch", "unified_diff", "diff_hunks"))
+
+def insert_late_edit(value):
+    if isinstance(value, dict):
+        for key in ("tool_calls", "content", "events", "steps"):
+            items = value.get(key)
+            if not isinstance(items, list):
+                continue
+            for index, item in enumerate(items):
+                if not isinstance(item, dict):
+                    continue
+                command = command_text(item).lower()
+                if "pytest" in command:
+                    edit_template = next((candidate for candidate in items if has_diff_content(candidate)), {})
+                    items.insert(index + 1, late_edit_for(edit_template))
+                    return True
+        for item in value.values():
+            if insert_late_edit(item):
+                return True
+    elif isinstance(value, list):
+        for item in value:
+            if insert_late_edit(item):
+                return True
+    return False
+
+if not insert_late_edit(payload):
+    raise SystemExit("could not insert stale-validation late edit")
+
+target.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+PY
+
+  echo "adapter-matrix: recording ${adapter} stale-validation-after-source-edit"
+  "$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court record "from-${adapter}-transcript" \
+    --output "$record" "$input"
+
+  echo "adapter-matrix: auditing ${adapter} stale-validation-after-source-edit"
+  set +e
+  "$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court audit --ci --fail-on suspicious --json "$record" > "$audit"
+  local audit_exit=$?
+  set -e
+
+  if [ "$audit_exit" -ne 1 ]; then
+    echo "adapter-matrix: expected stale-validation-after-source-edit audit exit 1 for ${adapter}, got ${audit_exit}" >&2
+    cat "$audit" >&2
+    exit 1
+  fi
+
+  assert_audit_json "$audit" SUSPICIOUS stale_validation_after_source_edit
+}
+
 smoke_adapter_missing_exit_status() {
   local adapter="$1"
   local source="$TMP_DIR/${adapter}.json"
@@ -682,6 +788,7 @@ smoke_adapter_missing_exit_status codex
 smoke_adapter_missing_diff codex
 smoke_adapter_test_only_source_diff codex
 smoke_adapter_partial_source_diff codex
+smoke_adapter_stale_validation_after_source_edit codex
 smoke_adapter_missing_tests codex
 smoke_adapter_missing_edits codex
 smoke_adapter claude
@@ -689,6 +796,7 @@ smoke_adapter_missing_exit_status claude
 smoke_adapter_missing_diff claude
 smoke_adapter_test_only_source_diff claude
 smoke_adapter_partial_source_diff claude
+smoke_adapter_stale_validation_after_source_edit claude
 smoke_adapter_missing_tests claude
 smoke_adapter_missing_edits claude
 smoke_adapter openhands
@@ -696,6 +804,7 @@ smoke_adapter_missing_exit_status openhands
 smoke_adapter_missing_diff openhands
 smoke_adapter_test_only_source_diff openhands
 smoke_adapter_partial_source_diff openhands
+smoke_adapter_stale_validation_after_source_edit openhands
 smoke_adapter_missing_tests openhands
 smoke_adapter_missing_edits openhands
 smoke_adapter swe-agent
@@ -703,6 +812,7 @@ smoke_adapter_missing_exit_status swe-agent
 smoke_adapter_missing_diff swe-agent
 smoke_adapter_test_only_source_diff swe-agent
 smoke_adapter_partial_source_diff swe-agent
+smoke_adapter_stale_validation_after_source_edit swe-agent
 smoke_adapter_missing_tests swe-agent
 smoke_adapter_missing_edits swe-agent
 

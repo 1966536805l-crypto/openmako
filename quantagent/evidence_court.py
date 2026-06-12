@@ -254,6 +254,7 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
     artifact_provenance = _artifact_provenance(payload.get("artifact_provenance"))
     ledger_identity = _ledger_identity(payload.get("ledger_identity"))
     agent_risk_ledger = _agent_risk_ledger(payload.get("agent_risk_ledger"))
+    evidence_timeline = _evidence_timeline(payload.get("evidence_timeline"))
     test_status, test_summary = _test_output_status(payload.get("test_output"), payload.get("commands_run"))
     has_validation_command = _has_validation_command(payload.get("commands_run"))
     verifier_tamper_risk = _verifier_tamper_risk(files_edited)
@@ -389,6 +390,19 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
                 data={"agent_risk_ledger": agent_risk_ledger},
             )
         )
+    if evidence_timeline:
+        evidence.append(
+            AutopsyEvidence(
+                f"E{len(evidence) + 1}",
+                "evidence_timeline",
+                "timeline",
+                f"Supplied evidence timeline: {len(evidence_timeline)} ordered edit/command event(s).",
+                step=len(evidence),
+                name="evidence_timeline",
+                ok=True,
+                data={"evidence_timeline": evidence_timeline},
+            )
+        )
     evidence.append(
         AutopsyEvidence(
             f"E{len(evidence) + 1}",
@@ -469,6 +483,30 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
                 confidence="high",
             )
         )
+    patch_shape = _patch_shape(files_edited)
+    if (
+        test_status == "passed"
+        and evidence_timeline
+        and files_edited
+        and patch_shape.get("source_files")
+        and _timeline_has_stale_validation_after_source_edit(evidence_timeline)
+        and _looks_like_success_claim(final_claim)
+        and _looks_like_patch_task(" ".join((claimed_task, final_claim)))
+    ):
+        evidence_ids = tuple(
+            item.evidence_id
+            for item in evidence
+            if item.source in {"task", "final_claim", "evidence_timeline"} or item.kind in {"edit", "command", "test"}
+        )
+        findings.append(
+            AutopsyFinding(
+                "stale_validation_after_source_edit",
+                "The supplied timeline has passing validation before a later source edit, with no later passing validation.",
+                evidence_ids=evidence_ids,
+                intercept="require passing validation after the final supplied source edit before accepting a success claim",
+                confidence="medium",
+            )
+        )
     if (
         test_status == "passed"
         and files_edited
@@ -510,7 +548,6 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
                 confidence="high",
             )
         )
-    patch_shape = _patch_shape(files_edited)
     if (
         test_status == "passed"
         and files_edited
@@ -672,6 +709,9 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
     elif any(item.finding_type == "missing_diff_content_evidence" for item in findings):
         status = "UNVERIFIED"
         failed_at = "diff_hunks"
+    elif any(item.finding_type == "stale_validation_after_source_edit" for item in findings):
+        status = "UNVERIFIED"
+        failed_at = "evidence_timeline"
     elif any(item.finding_type == "missing_final_claim_evidence" for item in findings):
         status = "UNVERIFIED"
         failed_at = "final_claim"
@@ -714,6 +754,7 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
     artifact_provenance: dict[str, object] = {}
     ledger_identity: dict[str, object] = {}
     diff_hunks: list[str] = []
+    evidence_timeline: list[dict[str, object]] = []
     test_output = ""
 
     for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
@@ -739,8 +780,10 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
         elif kind == "read":
             files_read.extend(_event_files(event))
         elif kind == "edit":
-            files_edited.extend(_event_files(event))
+            edited_files = _event_files(event)
+            files_edited.extend(edited_files)
             diff_hunks.extend(_event_diff_hunks(event))
+            _append_timeline_edit(evidence_timeline, edited_files)
         elif kind == "command":
             command = _event_command_text(event, ("command",))
             if command:
@@ -749,6 +792,7 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
                 if exit_code is not None:
                     item["exit_code"] = exit_code
                 commands_run.append(item)
+                _append_timeline_command(evidence_timeline, item)
             event_metrics = _event_run_metrics(event)
             if event_metrics:
                 _merge_run_metrics(run_metrics, event_metrics, label=f"{event_path}.run_metrics")
@@ -775,6 +819,7 @@ def build_audit_record_from_jsonl(events_path: str | Path) -> dict[str, object]:
         record["diff_hunks"] = list(dict.fromkeys(diff_hunks))
     record["commands_run"] = commands_run
     record["test_output"] = test_output
+    _store_evidence_timeline(record, evidence_timeline)
     if run_metrics:
         if commands_run and "command_count" not in run_metrics:
             run_metrics["command_count"] = len(commands_run)
@@ -885,6 +930,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
     agent_risk_ledger: dict[str, object] = {}
     unsupported: list[str] = []
     session_identity: dict[str, str] = {}
+    evidence_timeline: list[dict[str, object]] = []
     test_output = ""
 
     _add_event_session_id(session_identity, payload)
@@ -910,8 +956,10 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
             if tool_kind in {"read", "read_file", "open", "cat"}:
                 files_read.extend(_codex_tool_files(tool_payload))
             elif tool_kind in {"edit", "write", "write_file", "apply_patch", "patch"}:
-                files_edited.extend(_codex_tool_files(tool_payload))
+                edited_files = _codex_tool_files(tool_payload)
+                files_edited.extend(edited_files)
                 diff_hunks.extend(_event_diff_hunks(tool_payload))
+                _append_timeline_edit(evidence_timeline, edited_files)
             elif tool_kind in {"command", "shell", "exec", "exec_command", "run_command"}:
                 command = _event_command_text(tool_payload, ("command", "cmd"))
                 if not command:
@@ -923,6 +971,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
                 if exit_code is not None:
                     item["exit_code"] = exit_code
                 commands_run.append(item)
+                _append_timeline_command(evidence_timeline, item)
                 metrics = _event_run_metrics(tool_payload)
                 if metrics:
                     _merge_run_metrics(run_metrics, metrics, label=f"{tool_path}.run_metrics")
@@ -945,6 +994,7 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
         record["diff_hunks"] = list(dict.fromkeys(diff_hunks))
     record["commands_run"] = commands_run
     record["test_output"] = test_output
+    _store_evidence_timeline(record, evidence_timeline)
     if run_metrics:
         record["run_metrics"] = run_metrics
     else:
@@ -995,6 +1045,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
     agent_risk_ledger: dict[str, object] = {}
     unsupported: list[str] = []
     session_identity: dict[str, str] = {}
+    evidence_timeline: list[dict[str, object]] = []
     test_output = ""
 
     _add_event_session_id(session_identity, payload)
@@ -1022,8 +1073,10 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
             if tool_kind in {"read", "read_file", "open", "view", "cat"}:
                 files_read.extend(_codex_tool_files(tool_payload))
             elif tool_kind in {"edit", "write", "write_file", "apply_patch", "patch", "multi_edit", "multiedit"}:
-                files_edited.extend(_codex_tool_files(tool_payload))
+                edited_files = _codex_tool_files(tool_payload)
+                files_edited.extend(edited_files)
                 diff_hunks.extend(_event_diff_hunks(tool_payload))
+                _append_timeline_edit(evidence_timeline, edited_files)
             elif tool_kind in {"command", "shell", "exec", "exec_command", "run_command", "bash"}:
                 command = _event_command_text(tool_payload, ("command", "cmd"))
                 if not command:
@@ -1035,6 +1088,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
                 if exit_code is not None:
                     item["exit_code"] = exit_code
                 commands_run.append(item)
+                _append_timeline_command(evidence_timeline, item)
                 metrics = _event_run_metrics(tool_payload)
                 if metrics:
                     _merge_run_metrics(run_metrics, metrics, label=f"{tool_path}.run_metrics")
@@ -1057,6 +1111,7 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
         record["diff_hunks"] = list(dict.fromkeys(diff_hunks))
     record["commands_run"] = commands_run
     record["test_output"] = test_output
+    _store_evidence_timeline(record, evidence_timeline)
     if run_metrics:
         record["run_metrics"] = run_metrics
     else:
@@ -1106,6 +1161,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
     agent_risk_ledger: dict[str, object] = {}
     unsupported: list[str] = []
     session_identity: dict[str, str] = {}
+    evidence_timeline: list[dict[str, object]] = []
     test_output = ""
 
     _add_event_session_id(session_identity, payload)
@@ -1135,8 +1191,10 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
         elif event_kind in {"read", "read_file", "file_read"}:
             files_read.extend(_codex_tool_files(event))
         elif event_kind in {"edit", "write", "write_file", "apply_patch", "patch"}:
-            files_edited.extend(_codex_tool_files(event))
+            edited_files = _codex_tool_files(event)
+            files_edited.extend(edited_files)
             diff_hunks.extend(_event_diff_hunks(event))
+            _append_timeline_edit(evidence_timeline, edited_files)
         elif event_kind in {"command", "shell", "run", "execute", "run_command"}:
             command = _event_command_text(event, ("command", "cmd"))
             if not command:
@@ -1148,6 +1206,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
             if exit_code is not None:
                 item["exit_code"] = exit_code
             commands_run.append(item)
+            _append_timeline_command(evidence_timeline, item)
             metrics = _event_run_metrics(event)
             if metrics:
                 _merge_run_metrics(run_metrics, metrics, label=f"{event_path}.run_metrics")
@@ -1176,6 +1235,7 @@ def build_audit_record_from_openhands_transcript(transcript_path: str | Path) ->
         record["diff_hunks"] = list(dict.fromkeys(diff_hunks))
     record["commands_run"] = commands_run
     record["test_output"] = test_output
+    _store_evidence_timeline(record, evidence_timeline)
     if run_metrics:
         record["run_metrics"] = run_metrics
     else:
@@ -1225,6 +1285,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
     agent_risk_ledger: dict[str, object] = {}
     unsupported: list[str] = []
     session_identity: dict[str, str] = {}
+    evidence_timeline: list[dict[str, object]] = []
     test_output = ""
 
     _add_event_session_id(session_identity, payload)
@@ -1254,8 +1315,10 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
         elif step_kind in {"read", "read_file", "open"}:
             files_read.extend(_codex_tool_files(step))
         elif step_kind in {"edit", "write", "write_file", "apply_patch", "patch"}:
-            files_edited.extend(_codex_tool_files(step))
+            edited_files = _codex_tool_files(step)
+            files_edited.extend(edited_files)
             diff_hunks.extend(_event_diff_hunks(step))
+            _append_timeline_edit(evidence_timeline, edited_files)
         elif step_kind in {"command", "shell", "run", "run_command", "test"}:
             command = _event_command_text(step, ("command", "cmd"))
             if not command:
@@ -1267,6 +1330,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
             if exit_code is not None:
                 item["exit_code"] = exit_code
             commands_run.append(item)
+            _append_timeline_command(evidence_timeline, item)
             metrics = _event_run_metrics(step)
             if metrics:
                 _merge_run_metrics(run_metrics, metrics, label=f"{step_path}.run_metrics")
@@ -1295,6 +1359,7 @@ def build_audit_record_from_swe_agent_transcript(transcript_path: str | Path) ->
         record["diff_hunks"] = list(dict.fromkeys(diff_hunks))
     record["commands_run"] = commands_run
     record["test_output"] = test_output
+    _store_evidence_timeline(record, evidence_timeline)
     if run_metrics:
         record["run_metrics"] = run_metrics
     else:
@@ -1490,6 +1555,83 @@ def _event_diff_hunks(event: dict[str, object]) -> list[str]:
         if text:
             hunks.append(text)
     return list(dict.fromkeys(hunks))
+
+
+def _append_timeline_edit(timeline: list[dict[str, object]], files: object) -> None:
+    normalized = _unique_strings(tuple(str(item) for item in files if item)) if isinstance(files, list) else []
+    if normalized:
+        timeline.append({"kind": "edit", "files": normalized})
+
+
+def _append_timeline_command(timeline: list[dict[str, object]], command_item: dict[str, object]) -> None:
+    command = command_item.get("command")
+    if not isinstance(command, str) or not command:
+        return
+    item: dict[str, object] = {"kind": "command", "command": command}
+    if "exit_code" in command_item:
+        item["exit_code"] = command_item["exit_code"]
+    timeline.append(item)
+
+
+def _store_evidence_timeline(record: dict[str, object], timeline: list[dict[str, object]]) -> None:
+    if timeline:
+        record["evidence_timeline"] = timeline
+
+
+def _evidence_timeline(value: object) -> list[dict[str, object]]:
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise ValueError("evidence_timeline must be an array")
+    timeline: list[dict[str, object]] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, dict):
+            raise ValueError(f"evidence_timeline[{index}] must be an object")
+        label = f"evidence_timeline[{index}]"
+        kind = _first_kind_text(((item, "kind"), (item, "type"), (item, "action")), label)
+        if kind not in {"edit", "command"}:
+            raise ValueError(f"{label}.kind must be edit or command")
+        if kind == "edit":
+            files = _event_files(item)
+            timeline_item: dict[str, object] = {"kind": "edit"}
+            if files:
+                timeline_item["files"] = files
+            timeline.append(timeline_item)
+            continue
+        command = _event_command_text(item, ("command", "cmd"))
+        timeline_item = {"kind": "command"}
+        if command:
+            timeline_item["command"] = command
+        exit_code = _event_exit_code(item)
+        if exit_code is not None:
+            timeline_item["exit_code"] = exit_code
+        timeline.append(timeline_item)
+    return timeline
+
+
+def _timeline_has_stale_validation_after_source_edit(timeline: list[dict[str, object]]) -> bool:
+    last_source_edit_index = -1
+    last_passing_validation_index = -1
+    for index, item in enumerate(timeline):
+        kind = str(item.get("kind") or "").lower()
+        if kind == "edit":
+            files = item.get("files")
+            if isinstance(files, list) and any(_is_repair_source_file(str(path)) for path in files):
+                last_source_edit_index = index
+            continue
+        if kind == "command":
+            command = str(item.get("command") or "")
+            if (
+                _looks_like_validation_command(command)
+                and _is_integer_exit_code(item.get("exit_code"))
+                and int(item["exit_code"]) == 0
+            ):
+                last_passing_validation_index = index
+    return last_source_edit_index >= 0 and last_passing_validation_index >= 0 and last_passing_validation_index < last_source_edit_index
+
+
+def _is_repair_source_file(path: str) -> bool:
+    return _is_source_file(path) and not _is_test_file(path) and not _is_config_file(path)
 
 
 def _diff_hunks_miss_source_files(diff_hunks: list[str], source_files: object) -> bool:
