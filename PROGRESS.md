@@ -308,6 +308,14 @@ Current public proof:
   remain supplied metadata, not native benchmark ingestion, benchmark score
   validation, live agent control, external review, endorsement, stars, or
   reposts.
+- The supplied transcript adapters now have a local regression that converts
+  Codex, Claude, OpenHands, and SWE-agent style transcripts with supplied
+  `run_metrics`, including token, cost, provider/model, duration, and
+  `missing_telemetry` fields, and then audits the converted records. The
+  regression confirms the metrics are preserved in audit JSON while remaining
+  supplied telemetry metadata, not proof that validation ran, native telemetry
+  ingestion, benchmark scoring, external review, endorsement, stars, or
+  reposts.
 - `scripts/public_proof_card.sh` wraps the same gate and prints a
   screenshot-friendly proof card with commit, scope, non-proof boundaries,
   review issue, and external-review record form.

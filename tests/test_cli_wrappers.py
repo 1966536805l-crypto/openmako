@@ -3378,6 +3378,126 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(record["run_metrics"]["estimated_cost_usd"], 0.004)
                 self.assertEqual(record["run_metrics"]["missing_telemetry"], ["actual_cost_usd", "model"])
 
+    def test_openmako_evidence_court_transcript_adapters_preserve_run_metrics_for_audit(self) -> None:
+        supplied_metrics = {
+            "duration_seconds": 1.25,
+            "input_tokens": 120,
+            "output_tokens": 30,
+            "total_tokens": 150,
+            "estimated_cost_usd": 0.002,
+            "provider": "openai",
+            "model": "gpt-5",
+            "missing_telemetry": ["actual_cost_usd"],
+        }
+        expected_metrics = {**supplied_metrics, "command_count": 1}
+
+        cases = {
+            "codex": {
+                "claimed_task": "Record run telemetry metadata.",
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "tool_calls": [
+                            {
+                                "type": "exec_command",
+                                "command": "python3 scripts/collect_run_metrics.py",
+                                "exit_code": 0,
+                                "run_metrics": supplied_metrics,
+                            },
+                        ],
+                    },
+                    {
+                        "role": "assistant",
+                        "content": "Recorded supplied run metrics metadata only; validation proof was not inferred.",
+                    },
+                ],
+            },
+            "claude": {
+                "task": "Record run telemetry metadata.",
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "content": [
+                            {
+                                "type": "tool_use",
+                                "name": "Bash",
+                                "input": {
+                                    "command": "python3 scripts/collect_run_metrics.py",
+                                    "exit_code": 0,
+                                    "run_metrics": supplied_metrics,
+                                },
+                            }
+                        ],
+                    },
+                    {
+                        "role": "assistant",
+                        "content": "Recorded supplied run metrics metadata only; validation proof was not inferred.",
+                    },
+                ],
+            },
+            "openhands": {
+                "task": "Record run telemetry metadata.",
+                "events": [
+                    {
+                        "action": "run",
+                        "command": "python3 scripts/collect_run_metrics.py",
+                        "exit_code": 0,
+                        "run_metrics": supplied_metrics,
+                    },
+                    {
+                        "action": "finish",
+                        "message": "Recorded supplied run metrics metadata only; validation proof was not inferred.",
+                    },
+                ],
+            },
+            "swe-agent": {
+                "issue": "Record run telemetry metadata.",
+                "steps": [
+                    {
+                        "action": "run",
+                        "command": "python3 scripts/collect_run_metrics.py",
+                        "exit_code": 0,
+                        "run_metrics": supplied_metrics,
+                    },
+                    {
+                        "action": "submit",
+                        "message": "Recorded supplied run metrics metadata only; validation proof was not inferred.",
+                    },
+                ],
+            },
+        }
+
+        for adapter, transcript in cases.items():
+            with self.subTest(adapter=adapter):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 0, converted.stderr)
+                record = json.loads(converted.stdout)
+                self.assertEqual(record["run_metrics"], expected_metrics)
+                self.assertEqual(record["source_format"], f"{adapter}-transcript/v0.1")
+
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(record, handle)
+                    handle.flush()
+                    audited = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+                self.assertEqual(audited.returncode, 0, audited.stderr)
+                payload = json.loads(audited.stdout)
+                self.assertEqual(payload["verdict"], "PASS")
+                self.assertEqual(payload["run_metrics"], expected_metrics)
+                metric_items = [item for item in payload["report"]["evidence"] if item["name"] == "run_metrics"]
+                self.assertEqual(len(metric_items), 1)
+                self.assertEqual(metric_items[0]["data"]["run_metrics"], expected_metrics)
+
     def test_openmako_evidence_court_transcript_adapters_label_mixed_run_metric_provider(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"
