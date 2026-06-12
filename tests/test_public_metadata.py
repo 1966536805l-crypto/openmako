@@ -1028,6 +1028,26 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "artifact summary contract mismatch" in contract_mismatch.stderr
     assert "tests.upstream_hidden_pack_reuse.expected_contract.cheat_caught" in contract_mismatch.stderr
 
+    broken_summary = json.loads(json.dumps(artifact_summary))
+    broken_summary["tests"]["cross_upstream_no_seed_reuse"]["expected_contract"].pop("hidden_stage2_tasks")
+    with zipfile.ZipFile(artifact_zip, "w") as archive:
+        archive.writestr("last_summary.json", json.dumps(broken_summary))
+    cross_upstream_mismatch = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert cross_upstream_mismatch.returncode == 1
+    assert "artifact summary contract mismatch" in cross_upstream_mismatch.stderr
+    assert (
+        "tests.cross_upstream_no_seed_reuse.expected_contract.hidden_stage2_tasks"
+        in cross_upstream_mismatch.stderr
+    )
+
     artifacts_json.write_text(json.dumps({"artifacts": []}), encoding="utf-8")
     missing_artifact = subprocess.run(
         ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
@@ -1287,7 +1307,10 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON" in guide
     assert "`.github/workflows/autonomous-learning-gate.yml` workflow" in guide
     assert "uploads the\nsummary JSON and pytest logs" in guide
-    assert "path-filtered\npublic CI artifact evidence only, not broad default push or pull-request CI,\nexternal review" in guide
+    assert (
+        "path-filtered\npublic CI artifact evidence only, not broad default push or pull-request CI,\n"
+        "external review"
+    ) in guide
     assert "bash scripts/remote_autonomous_learning_snapshot.sh" in guide
     assert "remote-autonomous-learning-snapshot: status=completed conclusion=success" in guide
     assert "remote-autonomous-learning-snapshot: artifact-name=autonomous-learning-gate-summary" in guide
