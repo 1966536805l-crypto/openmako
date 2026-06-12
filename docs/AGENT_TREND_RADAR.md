@@ -1,6 +1,7 @@
 # OpenMako Agent Trend Radar
 
 Last refreshed: 2026-06-05.
+Status alignment updated: 2026-06-12.
 
 This is a source-linked planning map for deciding what OpenMako should build
 next after v0.1. It is not proof that OpenMako already implements these
@@ -119,17 +120,24 @@ diff-hunk fields, malformed path fields, message roles, classifier fields,
 content text blocks, and nested tool payload containers across the repository
 defined supplied formats.
 
-The next concrete build target is narrower again: supplied evidence ledger
-identity, without claiming native product-log ingestion or live harness control.
+Supplied evidence ledger identity has also moved into current `main` work.
+Current local proof preserves supplied `session_id`, `task_id`, `parent_id`,
+`tool_invocation_ids`, `missing_identity`, and extra string identity fields in
+raw audit records and Codex, Claude, OpenHands, and SWE-agent supplied
+transcript adapters. It also rejects conflicting or malformed nested/direct
+ledger identity fields instead of silently overwriting or stringifying them.
+
+The next concrete build target is narrower again: supplied identity-gap review
+routing, without claiming native product-log ingestion or live harness control.
 
 - keep Codex, Claude, OpenHands, and SWE-agent imports as supplied-record
   adapters first
-- preserve session, parent, task, and tool invocation identity fields when
-  supplied
-- surface identity gaps as audit evidence instead of treating them as runtime
+- treat `missing_identity` as preserved reviewer evidence today, not runtime
   proof
-- keep one fixture and one CLI smoke or focused regression before broadening
-  any ledger claim
+- add one fixture that routes identity gaps to a review-risk finding only when
+  the claim depends on supplied session/tool trace identity
+- keep one focused regression and one CLI smoke before broadening any identity
+  gap claim
 
 Public claim boundary: this would improve supplied-record audit durability and
 reviewer traceability, not prove live orchestration, ACP control, broad

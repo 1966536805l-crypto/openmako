@@ -1488,6 +1488,16 @@ Current public proof:
   public wording alignment only, not new parser behavior, native patch
   application proof, native transcript ingestion, live control, remote CI proof,
   external review, endorsement, stars, or reposts.
+- `docs/AGENT_TREND_RADAR.md` now treats supplied ledger identity as completed
+  `main` work instead of the next build target, matching the existing local
+  regressions for preserving and validating supplied session, task, parent,
+  tool invocation, missing-identity, and extra string identity fields across
+  supplied transcript adapters. The next target is narrowed to supplied
+  identity-gap review routing. Public metadata tests, `git diff --check`, and
+  public review gate passed locally before this note was added. This is
+  planning/proof-surface alignment only, not new runtime behavior, native
+  export ingestion, live harness control, ACP control, remote CI proof,
+  external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
