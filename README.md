@@ -84,6 +84,27 @@ unknown-repository repair, native runtime hardening, native benchmark
 ingestion, native CI hardening, or external endorsement. This is a local script
 result, not external reviewer approval.
 
+For a slower local autonomous-learning stress check:
+
+```bash
+bash scripts/autonomous_learning_gate.sh
+```
+
+Expected high-level signal:
+
+```text
+autonomous-learning-gate: running stage1 trajectory reuse matrix
+autonomous-learning-gate: running upstream hidden-pack reuse stress test
+autonomous-learning-gate: PASS
+```
+
+This optional gate is intentionally separate from the 60-second public gate. It
+runs repository tests for stage1 repair, trajectory extraction, eval-gated
+learning approval, clean stage2 reuse, upstream hidden-pack reuse, and cheating
+rejection. It is local high-intensity learning evidence only, not proof of
+native live autonomy, broad unknown-repository repair, external benchmark
+standing, remote CI proof, external review, endorsement, stars, or reposts.
+
 ## If You Came From A Benchmark Thread
 
 The useful review is not "do you like this project?" It is narrower:
@@ -245,6 +266,17 @@ python -m pytest -p no:cacheprovider \
 
 This is the same focused gate run by GitHub Actions. It is the current public
 evidence for the v0.1 snapshot.
+
+For a slower local autonomous-learning stress check, run:
+
+```bash
+bash scripts/autonomous_learning_gate.sh
+```
+
+That optional gate is local high-intensity evidence for the repository's
+stage1-to-stage2 learning reuse path; it is not native live autonomy or broad
+unknown-repository repair proof, remote CI proof, external review, endorsement,
+stars, or reposts.
 
 After installation, the CLI entrypoints are:
 

@@ -102,6 +102,27 @@ python -m pytest -p no:cacheprovider \
   -q
 ```
 
+Slower local autonomous-learning stress gate:
+
+```bash
+bash scripts/autonomous_learning_gate.sh
+```
+
+Expected high-level signal:
+
+```text
+autonomous-learning-gate: running stage1 trajectory reuse matrix
+autonomous-learning-gate: running upstream hidden-pack reuse stress test
+autonomous-learning-gate: PASS
+```
+
+This optional gate runs repository tests for stage1 repair, trajectory
+extraction, eval-gated learning approval, clean stage2 reuse, upstream
+hidden-pack reuse, and cheating rejection. It is local high-intensity learning
+evidence only, not native live autonomy, broad unknown-repository repair proof,
+external benchmark standing, remote CI proof, external review, endorsement,
+stars, or reposts.
+
 Public boundary metadata only:
 
 ```bash

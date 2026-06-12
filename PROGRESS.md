@@ -1586,6 +1586,13 @@ Current public proof:
   claim-boundary validation only, not native export ingestion, live control,
   proof that supplied patches were applied outside the supplied record, remote
   CI proof, external review, endorsement, stars, or reposts.
+- `scripts/autonomous_learning_gate.sh` now provides a slower local
+  high-intensity autonomous-learning stress gate. It wraps the existing
+  stage1-to-stage2 trajectory reuse matrix and upstream hidden-pack reuse test
+  so reviewers can reproduce learning-effect evidence beyond the 60-second
+  public gate. This is local high-intensity learning evidence only, not native
+  live autonomy, broad unknown-repository repair proof, external benchmark
+  standing, remote CI proof, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1597,6 +1604,7 @@ Next smallest hygiene task:
 
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
-- Next concrete candidate: another adapter evidence edge case, a broader
-  adversarial precedence slice, or a trend-radar follow-up only if it can be
-  reduced to a failing supplied-record test and a public-proof boundary.
+- Next concrete candidate: run the autonomous-learning stress gate under a
+  clean commit-only checkout and ask five agents to score the remaining
+  autonomous-learning gap before choosing the next adapter edge case or
+  trend-radar follow-up.

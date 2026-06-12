@@ -334,6 +334,15 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "supplied runtime-shadowing and verifier/CI tamper fixtures that classify\npassing success claims as review-risk" in proof_section
     assert "It does not prove broad\nunknown-repository repair, native runtime hardening, native benchmark\ningestion, native CI hardening, or external endorsement." in proof_section
     assert "This is a local script\nresult, not external reviewer approval." in proof_section
+    assert "bash scripts/autonomous_learning_gate.sh" in proof_section
+    assert "autonomous-learning-gate: running stage1 trajectory reuse matrix" in proof_section
+    assert "autonomous-learning-gate: running upstream hidden-pack reuse stress test" in proof_section
+    assert "autonomous-learning-gate: PASS" in proof_section
+    assert (
+        "local high-intensity learning evidence only, not proof of\n"
+        "native live autonomy, broad unknown-repository repair, external benchmark\n"
+        "standing, remote CI proof, external review, endorsement, stars, or reposts"
+    ) in proof_section
     assert "## If You Came From A Benchmark Thread" in proof_section
     assert "Start with the public gate:" in proof_section
     assert 'The useful review is not "do you like this project?"' in proof_section
@@ -357,6 +366,12 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert (
         "the\nsupplied Evidence Court bad-run audit, the artifact-provenance fixture, "
         "the\nSWTBench patch-artifact fixture, and the supplied transcript adapter matrix"
+    ) in install_section
+    assert "bash scripts/autonomous_learning_gate.sh" in install_section
+    assert (
+        "not native live autonomy or broad\n"
+        "unknown-repository repair proof, remote CI proof, external review, endorsement,\n"
+        "stars, or reposts"
     ) in install_section
     review_section = readme[review_index:scope_index]
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in review_section
@@ -864,6 +879,20 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "PYTHONPATH" in guide
     assert "stale installed package" in guide
     assert "tests/test_public_metadata.py" in guide
+    assert "bash scripts/autonomous_learning_gate.sh" in guide
+    assert "autonomous-learning-gate: running stage1 trajectory reuse matrix" in guide
+    assert "autonomous-learning-gate: running upstream hidden-pack reuse stress test" in guide
+    assert "autonomous-learning-gate: PASS" in guide
+    assert (
+        "This optional gate runs repository tests for stage1 repair, trajectory\n"
+        "extraction, eval-gated learning approval, clean stage2 reuse, upstream\n"
+        "hidden-pack reuse, and cheating rejection."
+    ) in guide
+    assert (
+        "not native live autonomy, broad unknown-repository repair proof,\n"
+        "external benchmark standing, remote CI proof, external review, endorsement,\n"
+        "stars, or reposts"
+    ) in guide
     assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in guide
     assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in guide
     assert "Config-only false-positive boundary:" in guide
@@ -1059,6 +1088,24 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
     assert "public-review-gate: running supplied transcript adapter matrix" in text
     assert "bash scripts/supplied_transcript_adapter_matrix.sh" in text
     assert "public-review-gate: PASS" in text
+    for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
+        assert forbidden not in text.lower()
+
+
+def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() -> None:
+    script = ROOT / "scripts" / "autonomous_learning_gate.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert 'export PYTHONPATH="$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}"' in text
+    assert "autonomous-learning-gate: running stage1 trajectory reuse matrix" in text
+    assert "test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2" in text
+    assert "test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2" in text
+    assert "test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2" in text
+    assert "autonomous-learning-gate: running upstream hidden-pack reuse stress test" in text
+    assert "test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating" in text
+    assert "autonomous-learning-gate: PASS" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()
 
