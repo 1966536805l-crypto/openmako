@@ -52,6 +52,9 @@ The schema documents the supplied record shape; the CLI still audits only the ev
     "tool_call_evidence": ["tool invocation ledger captured shell calls"],
     "skill_change_evidence": ["skills/agent-risk-review.md updated"]
   },
+  "adapter_report": {
+    "unsupported": ["messages[0].tool_calls[1]: replace_text"]
+  },
   "final_claim": "Fixed and verified."
 }
 ```
@@ -72,6 +75,7 @@ The schema documents the supplied record shape; the CLI still audits only the ev
 | `artifact_provenance` | object | Optional artifact identity metadata supplied by the record: eval rule version/commit, runner version/commit, input/output hashes, artifact hashes, and `missing_provenance`. It is preserved in JSON output but is not treated as validation proof. |
 | `ledger_identity` | object | Optional ledger identity metadata supplied by the record: session, task, parent, tool invocation IDs, `missing_identity`, and extra supplied string identity fields such as run or trace IDs. It is preserved in JSON output but is not treated as native transcript ingestion, live control, or proof that supplied patches were applied outside the supplied record. |
 | `agent_risk_ledger` | object | Optional supplied agent-risk metadata for autonomy claims. `live_control=true` requires supplied `permission_evidence` and `tool_call_evidence`; `self_improved=true` requires supplied `skill_change_evidence`. Extra supplied agent-risk fields must be strings. It is not proof that live control or learning happened outside the supplied record. |
+| `adapter_report` | object | Optional supplied transcript adapter diagnostics. `unsupported` entries are preserved in audit JSON but are not counted as edit, diff, command, or validation proof. |
 | `final_claim` | string | Agent's final success or completion claim. |
 
 ## Verdict Boundary

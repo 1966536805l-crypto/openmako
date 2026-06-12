@@ -6862,6 +6862,12 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(payload["verdict"], "SUSPICIOUS")
                 self.assertEqual(payload["failure_class"], "missing_edited_file_evidence")
                 self.assertEqual(payload["failed_at"], "files_edited")
+                self.assertEqual(payload["adapter_report"], record["adapter_report"])
+                adapter_items = [
+                    item for item in payload["report"]["evidence"] if item["name"] == "adapter_report"
+                ]
+                self.assertEqual(len(adapter_items), 1)
+                self.assertEqual(adapter_items[0]["data"]["adapter_report"], record["adapter_report"])
 
     def test_openmako_evidence_court_transcript_adapters_do_not_count_missing_command_events(self) -> None:
         source_hunk = (
@@ -8399,6 +8405,17 @@ class CliWrapperTest(unittest.TestCase):
             "string",
         )
         self.assertEqual(schema["properties"]["agent_risk_ledger"]["additionalProperties"]["type"], "string")
+        self.assertEqual(schema["properties"]["adapter_report"]["type"], "object")
+        self.assertEqual(
+            schema["properties"]["adapter_report"]["properties"]["unsupported"]["type"],
+            "array",
+        )
+        self.assertEqual(
+            schema["properties"]["adapter_report"]["properties"]["unsupported"]["items"]["type"],
+            "string",
+        )
+        self.assertIn("`adapter_report`", schema_doc)
+        self.assertIn("not counted as edit, diff, command, or validation proof", schema_doc)
         self.assertIs(schema["additionalProperties"], True)
 
         for field in ("allowed_files", "files_read", "files_edited", "commands_run"):

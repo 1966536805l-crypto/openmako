@@ -1561,6 +1561,17 @@ Current public proof:
   supplied-record adapter coverage only, not native live control, proof that
   supplied patches were applied outside the supplied record, remote CI proof,
   external review, endorsement, stars, or reposts.
+- Evidence Court audit JSON/report output now preserves supplied
+  `adapter_report.unsupported` diagnostics from supplied transcript adapter
+  records as metadata evidence. Unsupported adapter events still do not count
+  as edited-file, supplied diff-content, command, or validation proof. The
+  focused unsupported-adapter regression, schema-lock regression, full CLI
+  wrapper test file, public metadata tests, supplied transcript adapter matrix,
+  JSON schema formatting check, `git diff --check`, and public review gate
+  passed locally before commit. This is supplied-record adapter diagnostics
+  only, not native export ingestion, live control, proof that supplied patches
+  were applied outside the supplied record, remote CI proof, external review,
+  endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1572,6 +1583,6 @@ Next smallest hygiene task:
 
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
-- Next concrete candidate: another adapter evidence edge case only if it can be
-  reduced to a failing supplied transcript conversion and audit test behind the
-  supplied-record proof boundary.
+- Next concrete candidate: another adapter evidence edge case or a trend-radar
+  follow-up only if it can be reduced to a failing supplied-record test and a
+  public-proof boundary.

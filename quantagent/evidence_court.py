@@ -254,6 +254,7 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
     artifact_provenance = _artifact_provenance(payload.get("artifact_provenance"))
     ledger_identity = _ledger_identity(payload.get("ledger_identity"))
     agent_risk_ledger = _agent_risk_ledger(payload.get("agent_risk_ledger"))
+    adapter_report = _adapter_report(payload.get("adapter_report"))
     evidence_timeline = _evidence_timeline(payload.get("evidence_timeline"))
     test_status, test_summary = _test_output_status(payload.get("test_output"), payload.get("commands_run"))
     has_validation_command = _has_validation_command(payload.get("commands_run"))
@@ -388,6 +389,19 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
                 name="agent_risk_ledger",
                 ok=True,
                 data={"agent_risk_ledger": agent_risk_ledger},
+            )
+        )
+    if adapter_report:
+        evidence.append(
+            AutopsyEvidence(
+                f"E{len(evidence) + 1}",
+                "adapter_report",
+                "metadata",
+                "Adapter report: " + _adapter_report_summary(adapter_report),
+                step=len(evidence),
+                name="adapter_report",
+                ok=True,
+                data={"adapter_report": adapter_report},
             )
         )
     if evidence_timeline:
@@ -1413,6 +1427,7 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
     artifact_provenance = _report_artifact_provenance(report)
     ledger_identity = _report_ledger_identity(report)
     agent_risk_ledger = _report_agent_risk_ledger(report)
+    adapter_report = _report_adapter_report(report)
     verifier_tamper_risk = _report_verifier_tamper_risk(report)
 
     lines = [
@@ -1455,6 +1470,10 @@ def render_evidence_court_report(report: AgentAutopsyReport) -> str:
         "",
         f"- summary: {_agent_risk_ledger_summary(agent_risk_ledger)}",
         "",
+        "## Adapter Report",
+        "",
+        f"- summary: {_adapter_report_summary(adapter_report)}",
+        "",
         "## Test Verification",
         "",
         f"- status: {report.status}",
@@ -1489,6 +1508,7 @@ def dumps_evidence_court_json(report: AgentAutopsyReport) -> str:
         "artifact_provenance": _report_artifact_provenance(report),
         "ledger_identity": _report_ledger_identity(report),
         "agent_risk_ledger": _report_agent_risk_ledger(report),
+        "adapter_report": _report_adapter_report(report),
         "verifier_tamper_risk": _report_verifier_tamper_risk(report),
         "run_metrics": _report_run_metrics(report),
         "report": report.to_dict(),
@@ -1780,6 +1800,20 @@ def _event_run_metrics(event: dict[str, object]) -> dict[str, object]:
     if "cost_usd" in metrics and "estimated_cost_usd" not in metrics:
         metrics["estimated_cost_usd"] = metrics["cost_usd"]
     return _run_metrics(metrics) if metrics else {}
+
+
+def _adapter_report(value: object) -> dict[str, object]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError("adapter_report must be an object")
+    unsupported = value.get("unsupported")
+    if unsupported is None:
+        return {}
+    if not isinstance(unsupported, list) or not all(isinstance(item, str) for item in unsupported):
+        raise ValueError("adapter_report.unsupported must be an array of strings")
+    items = [item.strip() for item in unsupported if item.strip()]
+    return {"unsupported": list(dict.fromkeys(items))} if items else {}
 
 
 def _ledger_identity(value: object, label: str = "ledger_identity") -> dict[str, object]:
@@ -2147,6 +2181,14 @@ def _report_agent_risk_ledger(report: AgentAutopsyReport) -> dict[str, object]:
     return dict(ledger) if isinstance(ledger, dict) else {}
 
 
+def _report_adapter_report(report: AgentAutopsyReport) -> dict[str, object]:
+    item = next((evidence for evidence in report.evidence if evidence.name == "adapter_report"), None)
+    if item is None:
+        return {}
+    adapter_report = item.data.get("adapter_report")
+    return dict(adapter_report) if isinstance(adapter_report, dict) else {}
+
+
 def _report_verifier_tamper_risk(report: AgentAutopsyReport) -> dict[str, object]:
     item = next((evidence for evidence in report.evidence if evidence.name == "verifier_tamper_risk"), None)
     if item is None:
@@ -2343,6 +2385,13 @@ def _agent_risk_ledger_summary(ledger: dict[str, object]) -> str:
     if missing:
         parts.append("missing_evidence=" + ",".join(missing))
     return ", ".join(parts) if parts else "none supplied"
+
+
+def _adapter_report_summary(adapter_report: dict[str, object]) -> str:
+    unsupported = adapter_report.get("unsupported")
+    if isinstance(unsupported, list) and unsupported:
+        return "unsupported=" + "; ".join(str(item) for item in unsupported)
+    return "none supplied"
 
 
 def _event_files(event: dict[str, object]) -> list[str]:

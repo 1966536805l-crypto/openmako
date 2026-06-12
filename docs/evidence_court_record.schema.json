@@ -235,6 +235,19 @@
         }
       }
     },
+    "adapter_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional supplied transcript adapter diagnostics. Unsupported adapter events are preserved in machine JSON but are not counted as edit, diff, command, or validation proof.",
+      "properties": {
+        "unsupported": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "final_claim": {
       "type": "string",
       "description": "Agent's final success or completion claim."
