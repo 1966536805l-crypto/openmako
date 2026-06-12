@@ -953,7 +953,8 @@ def test_public_share_packet_preserves_review_boundary_without_promotion() -> No
     assert "patch-scope discipline" in share_packet
     assert "test-proof evidence" in share_packet
     assert "Evidence Court audits for supplied records, provenance, and supplied transcript\nadapters" in share_packet
-    assert "supplied-record/provenance audits, and supplied\ntranscript adapter checks" in share_packet
+    assert "runtime-shadowing and verifier/CI tamper review-risk\nfixtures" in share_packet
+    assert "supplied-record/provenance audits, supplied\ntranscript adapter checks, and supplied runtime/verifier/CI tamper-risk checks" in share_packet
     assert "Evidence Court CLI that audits supplied records" not in share_packet
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in share_packet
     assert "https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0" in share_packet
@@ -973,7 +974,7 @@ def test_public_share_packet_preserves_review_boundary_without_promotion() -> No
     )
     assert short_post_match, "public share packet must include a short technical review post"
     assert len(short_post_match.group("post")) <= 280
-    assert "supplied/provenance audits, and adapter checks" in short_post_match.group("post")
+    assert "provenance, adapters, and tamper-risk checks" in short_post_match.group("post")
     assert "Looking for technical boundary criticism" in short_post_match.group("post")
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in share_packet.lower()
@@ -984,8 +985,8 @@ def test_openmako_review_card_is_boundary_focused_not_promotional() -> None:
 
     assert "OpenMako public review card" in card
     assert "Evidence checks for agent run records" in card
-    assert "Current public proof covers: learning effect, patch scope," in card
-    assert "test proof, supplied audits, provenance, and adapters." in card
+    assert "Current proof: learning effect, scope, test proof," in card
+    assert "provenance, adapters, and tamper-risk checks." in card
     assert "test proof, and supplied-record audit." not in card
     assert "Boundary check" in card
     assert "github.com/1966536805l-crypto/openmako/issues/2" in card
@@ -1755,14 +1756,15 @@ def test_wave1_review_request_script_prints_short_non_promotional_messages() -> 
     assert "openhands" in text
     assert "agent-runtime" in text
     assert "Can you point out where OpenMako v0.1 overclaims its evidence boundary?" in text
-    assert "supplied-record/provenance audits, and a supplied\ntranscript adapter matrix" in text
+    assert "supplied-record/provenance audits, runtime-shadowing\nand verifier/CI tamper review-risk fixtures, and a supplied transcript adapter\nmatrix" in text
+    assert "SWE-bench-scale repair or native runtime/CI\nhardening" in text
     assert "Can you check OpenMako v0.1's evidence boundary?" in text
     assert "I'm mainly looking for README lines or proof-command gaps that overclaim." in text
     assert "useful or too noisy from a coding-agent user's view" in text
     assert "Could you check OpenMako v0.1 for overclaim?" in text
     assert "runtime-adjacent docs overread the current proof" in text
     assert "skills, memory, ACP-style sessions, and desktop-control work as trends or future bets" in text
-    assert "test-proof checks, supplied-record/provenance audits, and a supplied transcript adapter matrix" in text
+    assert "test-proof checks, supplied-record/provenance audits, runtime-shadowing and verifier/CI tamper review-risk fixtures, and a supplied transcript adapter matrix" in text
     assert "test-proof checks, and supplied-record audit" not in text
     assert "THREAD_HOOK: replace this with the specific eval-proof point from the thread." in text
     assert "for a narrow repair run, would touched-file scope, exact test\ncommand, and exit status be enough" in text
