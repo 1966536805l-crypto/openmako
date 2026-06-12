@@ -95,22 +95,24 @@ Expected high-level signal:
 ```text
 autonomous-learning-gate: running stage1 trajectory reuse matrix
 autonomous-learning-gate: running upstream hidden-pack reuse stress test
+autonomous-learning-gate: running cross-upstream no-seed reuse stress tests
 autonomous-learning-gate: PASS
 ```
 
 This optional gate is intentionally separate from the 60-second public gate. It
 runs repository tests for stage1 repair, trajectory extraction, eval-gated
-learning approval, clean stage2 reuse, upstream hidden-pack reuse, and cheating
-rejection. It is local high-intensity learning evidence only, not proof of
-native live autonomy, broad unknown-repository repair, external benchmark
-standing, remote CI proof, external review, endorsement, stars, or reposts.
+learning approval, clean stage2 reuse, upstream hidden-pack reuse,
+cross-upstream no-seed reuse, and cheating rejection. It is local
+high-intensity learning evidence only, not proof of native live autonomy, broad
+unknown-repository repair, external benchmark standing, remote CI proof,
+external review, endorsement, stars, or reposts.
 It writes a machine-readable run summary to
 `.quantagent/autonomous_learning_gate/last_summary.json` by default. That
 summary records the invoking commit, selected tests, per-segment elapsed
 seconds, per-segment pytest log paths and log tails, observed pass/skip/warning
-counts, expected stage1/upstream learning-effect contract counts, and the same
-not-proof boundary; set `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to
-write it elsewhere.
+counts, expected stage1/upstream/cross-upstream learning-effect contract
+counts, and the same not-proof boundary; set
+`OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to write it elsewhere.
 For commit-pinned public artifact capture, run the manual
 `.github/workflows/autonomous-learning-gate.yml` workflow or push a change to
 the workflow, gate script, or selected gate-test paths; it uploads the

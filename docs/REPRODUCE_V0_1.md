@@ -113,22 +113,24 @@ Expected high-level signal:
 ```text
 autonomous-learning-gate: running stage1 trajectory reuse matrix
 autonomous-learning-gate: running upstream hidden-pack reuse stress test
+autonomous-learning-gate: running cross-upstream no-seed reuse stress tests
 autonomous-learning-gate: PASS
 ```
 
 This optional gate runs repository tests for stage1 repair, trajectory
 extraction, eval-gated learning approval, clean stage2 reuse, upstream
-hidden-pack reuse, and cheating rejection. It is local high-intensity learning
-evidence only, not native live autonomy, broad unknown-repository repair proof,
-external benchmark standing, remote CI proof, external review, endorsement,
-stars, or reposts.
+hidden-pack reuse, cross-upstream no-seed reuse, and cheating rejection. It is
+local high-intensity learning evidence only, not native live autonomy, broad
+unknown-repository repair proof, external benchmark standing, remote CI proof,
+external review, endorsement, stars, or reposts.
 It writes a machine-readable summary to
 `.quantagent/autonomous_learning_gate/last_summary.json` by default. The summary
 records the invoking commit, selected tests, per-segment elapsed seconds, the
 per-segment pytest log paths and log tails, observed pass/skip/warning counts,
-the expected stage1/upstream learning-effect contract counts, and the same
-not-proof boundary. Set `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to
-write the summary elsewhere.
+the expected stage1/upstream/cross-upstream learning-effect contract counts,
+and the same not-proof boundary. Set
+`OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to write the summary
+elsewhere.
 For commit-pinned public artifact capture, use the manual
 `.github/workflows/autonomous-learning-gate.yml` workflow or push a change to
 the workflow, gate script, or selected gate-test paths. It uploads the
@@ -155,6 +157,8 @@ remote-autonomous-learning-snapshot: artifact-summary=last_summary.json
 remote-autonomous-learning-snapshot: artifact-summary-upstream-hidden-task-count=10
 remote-autonomous-learning-snapshot: artifact-summary-upstream-stability-solved=100
 remote-autonomous-learning-snapshot: artifact-summary-upstream-cheat-caught=10
+remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-hidden-stage2-tasks=4
+remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-stability-solved=8
 remote-autonomous-learning-snapshot: PASS
 ```
 

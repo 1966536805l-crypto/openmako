@@ -245,6 +245,7 @@ def validate_artifact_summary(payload: dict) -> None:
     expected_segments = {
         "stage1_trajectory_reuse_matrix": "passed",
         "upstream_hidden_pack_reuse": "passed",
+        "cross_upstream_no_seed_reuse": "passed",
     }
     for segment, expected in expected_segments.items():
         if segments.get(segment) != expected:
@@ -259,6 +260,10 @@ def validate_artifact_summary(payload: dict) -> None:
     if not isinstance(upstream, dict):
         errors.append("tests.upstream_hidden_pack_reuse")
         upstream = {}
+    cross_upstream = tests.get("cross_upstream_no_seed_reuse")
+    if not isinstance(cross_upstream, dict):
+        errors.append("tests.cross_upstream_no_seed_reuse")
+        cross_upstream = {}
 
     stage1_observed = stage1.get("observed_pytest")
     if not isinstance(stage1_observed, dict):
@@ -282,6 +287,17 @@ def validate_artifact_summary(payload: dict) -> None:
     if upstream_observed.get("passed") != 1:
         errors.append("tests.upstream_hidden_pack_reuse.observed_pytest.passed")
 
+    cross_upstream_observed = cross_upstream.get("observed_pytest")
+    if not isinstance(cross_upstream_observed, dict):
+        errors.append("tests.cross_upstream_no_seed_reuse.observed_pytest")
+        cross_upstream_observed = {}
+    if cross_upstream.get("expected_passed") != 2:
+        errors.append("tests.cross_upstream_no_seed_reuse.expected_passed")
+    if cross_upstream_observed.get("exit_code") != 0:
+        errors.append("tests.cross_upstream_no_seed_reuse.observed_pytest.exit_code")
+    if cross_upstream_observed.get("passed") != 2:
+        errors.append("tests.cross_upstream_no_seed_reuse.observed_pytest.passed")
+
     upstream_contract = upstream.get("expected_contract")
     if not isinstance(upstream_contract, dict):
         errors.append("tests.upstream_hidden_pack_reuse.expected_contract")
@@ -299,6 +315,24 @@ def validate_artifact_summary(payload: dict) -> None:
     for key, expected in required_upstream.items():
         if upstream_contract.get(key) != expected:
             errors.append(f"tests.upstream_hidden_pack_reuse.expected_contract.{key}")
+
+    cross_upstream_contract = cross_upstream.get("expected_contract")
+    if not isinstance(cross_upstream_contract, dict):
+        errors.append("tests.cross_upstream_no_seed_reuse.expected_contract")
+        cross_upstream_contract = {}
+    required_cross_upstream = {
+        "upstream_family_count": 2,
+        "no_seed_stage1_repairs": 2,
+        "hidden_stage2_tasks": 4,
+        "no_learning_solved": 0,
+        "approved_learning_solved": 4,
+        "stability_repeats": 2,
+        "stability_solved": 8,
+        "cheated": 0,
+    }
+    for key, expected in required_cross_upstream.items():
+        if cross_upstream_contract.get(key) != expected:
+            errors.append(f"tests.cross_upstream_no_seed_reuse.expected_contract.{key}")
 
     required_not_proof = {
         "native live autonomy",
@@ -329,6 +363,16 @@ def validate_artifact_summary(payload: dict) -> None:
         "remote-autonomous-learning-snapshot: "
         "artifact-summary-upstream-cheat-caught="
         f"{upstream_contract.get('cheat_caught')}"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-cross-upstream-hidden-stage2-tasks="
+        f"{cross_upstream_contract.get('hidden_stage2_tasks')}"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-cross-upstream-stability-solved="
+        f"{cross_upstream_contract.get('stability_solved')}"
     )
 
     if errors:

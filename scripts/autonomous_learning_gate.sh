@@ -43,6 +43,7 @@ payload = {
     "segments": {
         "stage1_trajectory_reuse_matrix": "pending",
         "upstream_hidden_pack_reuse": "pending",
+        "cross_upstream_no_seed_reuse": "pending",
     },
     "segment_elapsed_seconds": {},
     "tests": {
@@ -77,6 +78,23 @@ payload = {
                 "stability_solved": 100,
                 "success_rate_spread": 0.0,
                 "cheat_caught": 10,
+            },
+        },
+        "cross_upstream_no_seed_reuse": {
+            "selected": [
+                "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair",
+                "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2",
+            ],
+            "expected_passed": 2,
+            "expected_contract": {
+                "upstream_family_count": 2,
+                "no_seed_stage1_repairs": 2,
+                "hidden_stage2_tasks": 4,
+                "no_learning_solved": 0,
+                "approved_learning_solved": 4,
+                "stability_repeats": 2,
+                "stability_solved": 8,
+                "cheated": 0,
             },
         },
     },
@@ -206,6 +224,7 @@ elapsed = payload.get("segment_elapsed_seconds") or {}
 expected_segments = {
     "stage1_trajectory_reuse_matrix": "passed",
     "upstream_hidden_pack_reuse": "passed",
+    "cross_upstream_no_seed_reuse": "passed",
 }
 for segment, expected_status in expected_segments.items():
     if segments.get(segment) != expected_status:
@@ -217,6 +236,7 @@ for segment, expected_status in expected_segments.items():
 tests = payload.get("tests") or {}
 stage1 = tests.get("stage1_trajectory_reuse_matrix") or {}
 upstream = tests.get("upstream_hidden_pack_reuse") or {}
+cross_upstream = tests.get("cross_upstream_no_seed_reuse") or {}
 
 expected_stage1_selected = [
     "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2",
@@ -226,6 +246,10 @@ expected_stage1_selected = [
 expected_upstream_selected = [
     "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating",
 ]
+expected_cross_upstream_selected = [
+    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair",
+    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2",
+]
 if stage1.get("selected") != expected_stage1_selected:
     errors.append("tests.stage1_trajectory_reuse_matrix.selected")
 if stage1.get("expected_passed") != 3:
@@ -234,6 +258,10 @@ if upstream.get("selected") != expected_upstream_selected:
     errors.append("tests.upstream_hidden_pack_reuse.selected")
 if upstream.get("expected_passed") != 1:
     errors.append("tests.upstream_hidden_pack_reuse.expected_passed")
+if cross_upstream.get("selected") != expected_cross_upstream_selected:
+    errors.append("tests.cross_upstream_no_seed_reuse.selected")
+if cross_upstream.get("expected_passed") != 2:
+    errors.append("tests.cross_upstream_no_seed_reuse.expected_passed")
 
 
 def check_observed(segment: str, entry: dict, expected_passed: int) -> None:
@@ -260,6 +288,7 @@ def check_observed(segment: str, entry: dict, expected_passed: int) -> None:
 
 check_observed("stage1_trajectory_reuse_matrix", stage1, 3)
 check_observed("upstream_hidden_pack_reuse", upstream, 1)
+check_observed("cross_upstream_no_seed_reuse", cross_upstream, 2)
 
 stage1_contract = stage1.get("expected_contract") or {}
 for key in ("stage1_agent_repair", "trajectory_extraction", "eval_gated_approval", "clean_stage2_reuse"):
@@ -286,6 +315,21 @@ required_upstream = {
 for key, expected in required_upstream.items():
     if upstream_contract.get(key) != expected:
         errors.append(f"tests.upstream_hidden_pack_reuse.expected_contract.{key}")
+
+cross_upstream_contract = cross_upstream.get("expected_contract") or {}
+required_cross_upstream = {
+    "upstream_family_count": 2,
+    "no_seed_stage1_repairs": 2,
+    "hidden_stage2_tasks": 4,
+    "no_learning_solved": 0,
+    "approved_learning_solved": 4,
+    "stability_repeats": 2,
+    "stability_solved": 8,
+    "cheated": 0,
+}
+for key, expected in required_cross_upstream.items():
+    if cross_upstream_contract.get(key) != expected:
+        errors.append(f"tests.cross_upstream_no_seed_reuse.expected_contract.{key}")
 
 not_proof = payload.get("not_proof")
 required_not_proof = {
@@ -428,6 +472,13 @@ echo "autonomous-learning-gate: running upstream hidden-pack reuse stress test"
 run_pytest_segment "upstream_hidden_pack_reuse" 1 \
   "$PYTHON_BIN" -m pytest -p no:cacheprovider \
   tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating \
+  -q
+
+echo "autonomous-learning-gate: running cross-upstream no-seed reuse stress tests"
+run_pytest_segment "cross_upstream_no_seed_reuse" 2 \
+  "$PYTHON_BIN" -m pytest -p no:cacheprovider \
+  tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair \
+  tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2 \
   -q
 
 update_summary_status passed

@@ -292,11 +292,11 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
 
     assert "`.github/workflows/autonomous-learning-gate.yml` exposes the autonomous-learning\n  stress gate as a manual `workflow_dispatch` check and as a path-filtered\n  `push` check" in progress
     assert "It uploads\n  `.quantagent/autonomous_learning_gate` as the\n  `autonomous-learning-gate-summary` artifact" in progress
-    assert "not attached to broad default push or\n  pull-request CI" in progress
-    assert "manual or path-filtered push run is public CI artifact evidence only, not\n  external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair\n  proof, or external benchmark standing" in progress
-    assert "the downloaded `last_summary.json` contract fields for the selected\n  segments, observed pass counts, hidden task count, stability solved count,\n  and cheating caught count" in progress
-    assert "plus `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for saved artifact fixtures" in progress
-    assert "When API\n  data or artifact download is unavailable" in progress
+    assert "attached to broad default push or pull-request CI" in progress
+    assert "A passing manual or path-filtered push run is public\n  CI artifact evidence only, not external review, endorsement, stars, reposts,\n  live autonomy, broad unknown-repository repair proof, or external benchmark\n  standing" in progress
+    assert "the downloaded `last_summary.json` contract fields for the selected\n  segments, observed pass counts, hidden task count, stability solved count,\n  cheating caught count, and cross-upstream no-seed hidden-stage2/stability\n  counts" in progress
+    assert "plus\n  `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for saved artifact fixtures" in progress
+    assert "When API data\n  or artifact download is unavailable" in progress
     assert "`bash scripts/public_evidence_comment_check.sh` is the fail-closed marker\n  check for the published issue #1 evidence comment" in progress
     assert "comment id, commit, run id, job id, artifact name, artifact id, artifact\n  digest, and boundary phrase" in progress
     assert "`OPENMAKO_PUBLIC_EVIDENCE_HTML` fixture" in progress
@@ -393,11 +393,12 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "bash scripts/autonomous_learning_gate.sh" in proof_section
     assert "autonomous-learning-gate: running stage1 trajectory reuse matrix" in proof_section
     assert "autonomous-learning-gate: running upstream hidden-pack reuse stress test" in proof_section
+    assert "autonomous-learning-gate: running cross-upstream no-seed reuse stress tests" in proof_section
     assert "autonomous-learning-gate: PASS" in proof_section
     assert (
-        "local high-intensity learning evidence only, not proof of\n"
-        "native live autonomy, broad unknown-repository repair, external benchmark\n"
-        "standing, remote CI proof, external review, endorsement, stars, or reposts"
+        "high-intensity learning evidence only, not proof of native live autonomy, broad\n"
+        "unknown-repository repair, external benchmark standing, remote CI proof,\n"
+        "external review, endorsement, stars, or reposts"
     ) in proof_section
     assert "`.quantagent/autonomous_learning_gate/last_summary.json` by default" in proof_section
     assert "selected tests, per-segment elapsed\nseconds" in proof_section
@@ -845,6 +846,8 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "artifact-summary-upstream-hidden-task-count=" in text
     assert "artifact-summary-upstream-stability-solved=" in text
     assert "artifact-summary-upstream-cheat-caught=" in text
+    assert "artifact-summary-cross-upstream-hidden-stage2-tasks=" in text
+    assert "artifact-summary-cross-upstream-stability-solved=" in text
     assert "per_page=1" in text
     assert "per_page=100" in text
     assert "latest autonomous-learning run does not match remote main" in text
@@ -912,6 +915,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
         "segments": {
             "stage1_trajectory_reuse_matrix": "passed",
             "upstream_hidden_pack_reuse": "passed",
+            "cross_upstream_no_seed_reuse": "passed",
         },
         "tests": {
             "stage1_trajectory_reuse_matrix": {
@@ -940,6 +944,25 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
                     "stability_solved": 100,
                     "success_rate_spread": 0.0,
                     "cheat_caught": 10,
+                },
+            },
+            "cross_upstream_no_seed_reuse": {
+                "expected_passed": 2,
+                "observed_pytest": {
+                    "exit_code": 0,
+                    "passed": 2,
+                    "skipped": 0,
+                    "warnings": 0,
+                },
+                "expected_contract": {
+                    "upstream_family_count": 2,
+                    "no_seed_stage1_repairs": 2,
+                    "hidden_stage2_tasks": 4,
+                    "no_learning_solved": 0,
+                    "approved_learning_solved": 4,
+                    "stability_repeats": 2,
+                    "stability_solved": 8,
+                    "cheated": 0,
                 },
             },
         },
@@ -983,6 +1006,8 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-hidden-task-count=10" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-stability-solved=100" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-cheat-caught=10" in result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-hidden-stage2-tasks=4" in result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-stability-solved=8" in result.stdout
     assert "remote-autonomous-learning-snapshot: PASS" in result.stdout
 
     broken_summary = dict(artifact_summary)
@@ -1244,16 +1269,17 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "bash scripts/autonomous_learning_gate.sh" in guide
     assert "autonomous-learning-gate: running stage1 trajectory reuse matrix" in guide
     assert "autonomous-learning-gate: running upstream hidden-pack reuse stress test" in guide
+    assert "autonomous-learning-gate: running cross-upstream no-seed reuse stress tests" in guide
     assert "autonomous-learning-gate: PASS" in guide
     assert (
         "This optional gate runs repository tests for stage1 repair, trajectory\n"
         "extraction, eval-gated learning approval, clean stage2 reuse, upstream\n"
-        "hidden-pack reuse, and cheating rejection."
+        "hidden-pack reuse, cross-upstream no-seed reuse, and cheating rejection."
     ) in guide
     assert (
-        "not native live autonomy, broad unknown-repository repair proof,\n"
-        "external benchmark standing, remote CI proof, external review, endorsement,\n"
-        "stars, or reposts"
+        "not native live autonomy, broad\n"
+        "unknown-repository repair proof, external benchmark standing, remote CI proof,\n"
+        "external review, endorsement, stars, or reposts"
     ) in guide
     assert "`.quantagent/autonomous_learning_gate/last_summary.json` by default" in guide
     assert "invoking commit, selected tests, per-segment elapsed seconds" in guide
@@ -1270,6 +1296,8 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-hidden-task-count=10" in guide
     assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-stability-solved=100" in guide
     assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-cheat-caught=10" in guide
+    assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-hidden-stage2-tasks=4" in guide
+    assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-stability-solved=8" in guide
     assert "stale, still running, failed, missing, rate limited, missing the named artifact,\nexpired, missing an artifact digest, unreadable as an artifact zip, or missing\nthe expected `last_summary.json` contract fields" in guide
     assert "`OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` to verify the same contract against a saved\nartifact fixture" in guide
     assert "Passing it is current public CI artifact evidence only, not\nexternal review, endorsement, stars, reposts, live autonomy, broad\nunknown-repository repair, or external benchmark standing" in guide
@@ -1507,6 +1535,10 @@ def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() 
     assert "test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2" in text
     assert "autonomous-learning-gate: running upstream hidden-pack reuse stress test" in text
     assert "test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating" in text
+    assert "autonomous-learning-gate: running cross-upstream no-seed reuse stress tests" in text
+    assert "test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair" in text
+    assert "test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2" in text
+    assert '"cross_upstream_no_seed_reuse": "pending"' in text
     assert '"upstream_family_count": 5' in text
     assert '"hidden_task_count": 10' in text
     assert '"no_learning_solved": 0' in text
@@ -1514,6 +1546,8 @@ def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() 
     assert '"stability_repeats": 10' in text
     assert '"stability_solved": 100' in text
     assert '"cheat_caught": 10' in text
+    assert '"no_seed_stage1_repairs": 2' in text
+    assert '"hidden_stage2_tasks": 4' in text
     assert "autonomous-learning-gate: PASS" in text
     assert "autonomous-learning-gate: summary=$SUMMARY_JSON" in text
     assert "not-proof=native live autonomy, broad unknown-repository repair" in text
@@ -1528,7 +1562,9 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
         "if [ \"$1\" = \"-m\" ] && [ \"$2\" = \"pytest\" ]; then\n"
         "  args=\"$*\"\n"
         "  echo '.                                                                        [100%]'\n"
-        "  if [[ \"$args\" == *test_upstream_function_file_bundle_regression* ]]; then\n"
+        "  if [[ \"$args\" == *test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair* ]]; then\n"
+        "    echo '2 passed in 0.01s'\n"
+        "  elif [[ \"$args\" == *test_upstream_function_file_bundle_regression* ]]; then\n"
         "    echo '1 passed in 0.01s'\n"
         "  else\n"
         "    echo '3 passed in 0.01s'\n"
@@ -1563,20 +1599,28 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
     assert payload["segments"] == {
         "stage1_trajectory_reuse_matrix": "passed",
         "upstream_hidden_pack_reuse": "passed",
+        "cross_upstream_no_seed_reuse": "passed",
     }
     assert payload["tests"]["upstream_hidden_pack_reuse"]["expected_contract"]["approved_learning_solved"] == 10
     assert payload["tests"]["upstream_hidden_pack_reuse"]["expected_contract"]["stability_solved"] == 100
     assert payload["tests"]["upstream_hidden_pack_reuse"]["expected_contract"]["cheat_caught"] == 10
     stage1 = payload["tests"]["stage1_trajectory_reuse_matrix"]
     upstream = payload["tests"]["upstream_hidden_pack_reuse"]
+    cross_upstream = payload["tests"]["cross_upstream_no_seed_reuse"]
     assert stage1["observed_pytest"]["passed"] == 3
     assert stage1["observed_pytest"]["exit_code"] == 0
     assert upstream["observed_pytest"]["passed"] == 1
     assert upstream["observed_pytest"]["exit_code"] == 0
+    assert cross_upstream["observed_pytest"]["passed"] == 2
+    assert cross_upstream["observed_pytest"]["exit_code"] == 0
+    assert cross_upstream["expected_contract"]["hidden_stage2_tasks"] == 4
+    assert cross_upstream["expected_contract"]["stability_solved"] == 8
     assert Path(stage1["log_path"]).name == "stage1_trajectory_reuse_matrix.log"
     assert Path(upstream["log_path"]).name == "upstream_hidden_pack_reuse.log"
+    assert Path(cross_upstream["log_path"]).name == "cross_upstream_no_seed_reuse.log"
     assert any("3 passed" in line for line in stage1["log_tail"])
     assert any("1 passed" in line for line in upstream["log_tail"])
+    assert any("2 passed" in line for line in cross_upstream["log_tail"])
     assert "remote CI proof" in payload["not_proof"]
 
     corrupt_summary = tmp_path / "corrupt-summary.json"

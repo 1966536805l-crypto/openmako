@@ -113,26 +113,28 @@ Current public proof:
   observed pytest counts, and per-segment logs can be inspected for an exact
   workflow run. The workflow installs `pytest` and `typing_extensions` in the
   fresh GitHub runner so upstream-style fixture imports match the gate's
-  hidden-pack coverage. It is intentionally not attached to broad default push or
-  pull-request CI because it is slower than the focused public gate. A passing
-  manual or path-filtered push run is public CI artifact evidence only, not
-  external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair
-  proof, or external benchmark standing.
+  hidden-pack and cross-upstream no-seed coverage. It is intentionally not
+  attached to broad default push or pull-request CI because it is slower than
+  the focused public gate. A passing manual or path-filtered push run is public
+  CI artifact evidence only, not external review, endorsement, stars, reposts,
+  live autonomy, broad unknown-repository repair proof, or external benchmark
+  standing.
 - `bash scripts/remote_autonomous_learning_snapshot.sh` is the fail-closed
   re-check tool for the latest autonomous-learning workflow on current
   `openmako/main`. It verifies the latest run SHA, completed/success
   conclusion, the `autonomous-learning-gate-summary` artifact id and digest,
   and the downloaded `last_summary.json` contract fields for the selected
   segments, observed pass counts, hidden task count, stability solved count,
-  and cheating caught count. It supports the same `OPENMAKO_GITHUB_TOKEN`,
-  `GITHUB_TOKEN`, or `GH_TOKEN` fallback token names as the focused snapshot,
-  plus `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for saved artifact fixtures. When API
-  data or artifact download is unavailable, it prints the remote main SHA,
-  manual Actions URL, local UTC check time, rate-limit reset details, and a
-  copyable rerun command when available before exiting nonzero. Passing this
-  script is current public CI artifact evidence only, not external review,
-  endorsement, stars, reposts, live autonomy, broad unknown-repository repair,
-  or external benchmark standing.
+  cheating caught count, and cross-upstream no-seed hidden-stage2/stability
+  counts. It supports the same `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or
+  `GH_TOKEN` fallback token names as the focused snapshot, plus
+  `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for saved artifact fixtures. When API data
+  or artifact download is unavailable, it prints the remote main SHA, manual
+  Actions URL, local UTC check time, rate-limit reset details, and a copyable
+  rerun command when available before exiting nonzero. Passing this script is
+  current public CI artifact evidence only, not external review, endorsement,
+  stars, reposts, live autonomy, broad unknown-repository repair, or external
+  benchmark standing.
 - `bash scripts/public_evidence_comment_check.sh` is the fail-closed marker
   check for the published issue #1 evidence comment. It verifies the configured
   comment id, commit, run id, job id, artifact name, artifact id, artifact
