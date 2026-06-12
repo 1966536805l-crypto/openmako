@@ -64,8 +64,9 @@ What this checks is narrow: the focused learning-effect gate passes, public
 metadata stays inside the v0.1 boundary, Evidence Court fails closed on a
 supplied bad-run record, the local Evidence Court intensity matrix covers
 supplied test-output parser edge cases, and supplied transcript adapters
-preserve complete supplied proof fields while rejecting missing-test-proof
-and missing edited-file or missing diff-content evidence success claims. It
+preserve complete supplied proof fields while rejecting success claims that
+have missing-test-proof, missing exit-status evidence, missing edited-file
+evidence, or missing supplied diff-content evidence. It
 also checks a supplied config-only repair fixture so that packaging/config
 metadata fixes do not get confused with README-only repair claims, plus
 supplied runtime-shadowing and verifier/CI tamper fixtures that classify

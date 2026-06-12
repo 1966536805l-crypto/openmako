@@ -128,9 +128,10 @@ Supplied transcript adapter matrix:
 This script generates temporary repository-defined Codex, Claude, OpenHands,
 and SWE-agent style transcripts, converts each one into an Evidence Court
 record, audits each generated record, and checks that each adapter rejects a
-success claim when command/test proof is missing or when validation exists but
-edited-file or diff-content evidence is missing. It is still a supplied-format
-smoke test, not native product export parsing, proof that supplied patches were
+success claim when command/test proof is missing, when validation command
+exit-status evidence is missing, or when validation exists but edited-file or
+supplied diff-content evidence is missing. It is still a supplied-format smoke
+test, not native product export parsing, proof that supplied patches were
 applied outside the supplied record, or live agent control.
 
 ## What Passing Does Not Prove

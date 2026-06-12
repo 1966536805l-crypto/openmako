@@ -1432,6 +1432,13 @@ Current public proof:
   before this note was added. This is supplied-record adapter evidence
   hardening only, not native transcript export ingestion, live control, remote
   CI proof, external review, endorsement, stars, or reposts.
+- The README proof section and v0.1 reproduction guide now mention missing
+  exit-status evidence alongside missing test, edited-file, and supplied
+  diff-content evidence in supplied transcript adapter checks. Public metadata
+  tests, supplied transcript adapter matrix, `git diff --check`, and public
+  review gate passed locally before this note was added. This is public wording
+  alignment only, not new parser behavior, native transcript ingestion, live
+  control, remote CI proof, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1443,6 +1450,6 @@ Next smallest hygiene task:
 
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
-- Next concrete candidate: a trend-radar follow-up or another public-proof
-  wording alignment only if it can be reduced to a failing metadata or
-  parser/audit test behind the supplied-record proof boundary.
+- Next concrete candidate: another adapter evidence edge case or a trend-radar
+  follow-up only if it can be reduced to a failing metadata, parser, or audit
+  test behind the supplied-record proof boundary.
