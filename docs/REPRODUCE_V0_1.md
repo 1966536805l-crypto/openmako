@@ -38,6 +38,7 @@ public-review-gate: running learning-effect focused public test
 1 passed
 public-review-gate: running public metadata boundary tests
 <N> passed
+public-review-gate: checking adversarial claim matrix generator
 public-review-gate: running Evidence Court intensity matrix
 316 passed
 public-review-gate: recording Evidence Court bad-run fixture
@@ -73,6 +74,8 @@ metadata section passes and the script reaches `public-review-gate: PASS`.
 - The local Evidence Court intensity matrix covers supplied test-output parser
   edge cases and 105 full supplied audit-record claim-boundary cases, including
   five multi-finding precedence cases.
+- The adversarial claim matrix generator check prevents checked-in fixture
+  metadata from drifting from the compact generator.
 - The Evidence Court CLI audits a supplied bad-run record and fails closed on a
   scope violation.
 - The artifact-provenance fixture preserves supplied benchmark artifact

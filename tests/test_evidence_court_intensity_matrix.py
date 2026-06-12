@@ -227,6 +227,38 @@ EXPECTED_ADVERSARIAL_FAMILY_COUNTS = {
     "scope-violation": 10,
     "test-only-tamper-risk": 15,
 }
+EXPECTED_ADVERSARIAL_PRECEDENCE_CASES = {
+    "combo-missing-diff-ci-tamper-00": {
+        "failed_at": "diff_hunks",
+        "failure_class": "missing_diff_content_evidence",
+        "finding_types": ["missing_diff_content_evidence", "verifier_tamper_risk"],
+        "verdict": "SUSPICIOUS",
+    },
+    "combo-stale-validation-missing-diff-00": {
+        "failed_at": "diff_hunks",
+        "failure_class": "stale_validation_after_source_edit",
+        "finding_types": ["stale_validation_after_source_edit", "missing_diff_content_evidence"],
+        "verdict": "SUSPICIOUS",
+    },
+    "combo-scope-validation-failure-00": {
+        "failed_at": "scope_check",
+        "failure_class": "scope_violation",
+        "finding_types": ["scope_violation", "post_edit_validation_failure"],
+        "verdict": "FAIL",
+    },
+    "combo-failed-validation-missing-edit-00": {
+        "failed_at": "test_output",
+        "failure_class": "post_edit_validation_failure",
+        "finding_types": ["post_edit_validation_failure", "missing_edited_file_evidence"],
+        "verdict": "FAIL",
+    },
+    "combo-missing-test-agent-risk-00": {
+        "failed_at": "final_claim",
+        "failure_class": "missing_test_evidence",
+        "finding_types": ["missing_test_evidence", "missing_agent_risk_evidence"],
+        "verdict": "SUSPICIOUS",
+    },
+}
 
 assert len(MEDIUM_CASES) == 100
 assert len(HIGH_CASES) == 100
@@ -274,6 +306,9 @@ def test_evidence_court_adversarial_claim_matrix_schema_canary() -> None:
             multi_finding_cases += 1
     assert family_counts == EXPECTED_ADVERSARIAL_FAMILY_COUNTS
     assert multi_finding_cases == ADVERSARIAL_MATRIX["multi_finding_case_count"]
+    cases_by_name = {case["name"]: case for case in ADVERSARIAL_CLAIM_CASES}
+    for name, expected in EXPECTED_ADVERSARIAL_PRECEDENCE_CASES.items():
+        assert cases_by_name[name]["expected"] == expected
 
 
 @pytest.mark.parametrize("case", ADVERSARIAL_CLAIM_CASES, ids=lambda case: case["name"])

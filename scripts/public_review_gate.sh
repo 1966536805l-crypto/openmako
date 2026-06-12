@@ -61,6 +61,9 @@ echo "public-review-gate: running public metadata boundary tests"
   tests/test_public_metadata.py \
   -q
 
+echo "public-review-gate: checking adversarial claim matrix generator"
+"$PYTHON_BIN" scripts/generate_adversarial_claim_matrix.py --check
+
 echo "public-review-gate: running Evidence Court intensity matrix"
 "$PYTHON_BIN" -m pytest -p no:cacheprovider \
   tests/test_evidence_court_intensity_matrix.py \

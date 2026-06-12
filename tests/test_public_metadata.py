@@ -1,4 +1,5 @@
 import ast
+import json
 import os
 import re
 import subprocess
@@ -305,6 +306,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "./scripts/public_review_gate.sh" in proof_section
     assert "bash scripts/public_proof_card.sh" in proof_section
     assert "screenshot-friendly summary" in proof_section
+    assert "public-review-gate: checking adversarial claim matrix generator" in proof_section
     assert "public-review-gate: running Evidence Court intensity matrix" in proof_section
     assert "public-review-gate: recording Evidence Court bad-run fixture" in proof_section
     assert "public-review-gate: auditing supplied Evidence Court record" in proof_section
@@ -324,7 +326,11 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
         "supplied test-output parser edge cases and 105 full supplied audit-record\n"
         "claim-boundary cases, including five multi-finding precedence cases"
     ) in proof_section
-    assert "supplied transcript adapters preserve complete\nsupplied proof fields while rejecting success claims that have\nmissing-test-proof, missing exit-status evidence, missing edited-file evidence,\nmissing supplied diff-content evidence, supplied diff-content that only names\ntest files, or supplied diff-content that covers only a subset of edited source\nfiles, or supplied ordered edit/command evidence where passing validation\noccurs before a later source edit for a claimed source repair" in proof_section
+    assert (
+        "adversarial claim matrix generator check prevents checked-in fixture\n"
+        "metadata from drifting from the compact generator"
+    ) in proof_section
+    assert "Supplied transcript adapters\npreserve complete\nsupplied proof fields while rejecting success claims that have\nmissing-test-proof, missing exit-status evidence, missing edited-file evidence,\nmissing supplied diff-content evidence, supplied diff-content that only names\ntest files, or supplied diff-content that covers only a subset of edited source\nfiles, or supplied ordered edit/command evidence where passing validation\noccurs before a later source edit for a claimed source repair" in proof_section
     assert "supplied runtime-shadowing and verifier/CI tamper fixtures that classify\npassing success claims as review-risk" in proof_section
     assert "It does not prove broad\nunknown-repository repair, native runtime hardening, native benchmark\ningestion, native CI hardening, or external endorsement." in proof_section
     assert "This is a local script\nresult, not external reviewer approval." in proof_section
@@ -845,6 +851,7 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "metadata-test count is intentionally not fixed" in guide
     assert "25 passed" not in guide
     assert "public-review-gate: PASS" in guide
+    assert "public-review-gate: checking adversarial claim matrix generator" in guide
     assert "public-review-gate: running Evidence Court intensity matrix" in guide
     assert "316 passed" in guide
     assert "public-review-gate: recording Evidence Court bad-run fixture" in guide
@@ -867,6 +874,10 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
         "The local Evidence Court intensity matrix covers supplied test-output parser\n"
         "  edge cases and 105 full supplied audit-record claim-boundary cases, including\n"
         "  five multi-finding precedence cases."
+    ) in guide
+    assert (
+        "The adversarial claim matrix generator check prevents checked-in fixture\n"
+        "  metadata from drifting from the compact generator."
     ) in guide
     assert "./scripts/supplied_transcript_adapter_matrix.sh" in guide
     assert "repository-defined Codex, Claude, OpenHands,\nand SWE-agent style transcripts" in guide
@@ -1042,12 +1053,43 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
     assert "examples/evidence_court/config_only_repair.json" in text
     assert 'assert_json_field "$TMP_DIR/config_only_repair.json" patch_shape.bucket config_only' in text
     assert 'assert_json_field "$TMP_DIR/config_only_repair.json" failure_class ""' in text
+    assert "public-review-gate: checking adversarial claim matrix generator" in text
+    assert "scripts/generate_adversarial_claim_matrix.py --check" in text
     assert "public-review-gate: running Evidence Court intensity matrix" in text
     assert "public-review-gate: running supplied transcript adapter matrix" in text
     assert "bash scripts/supplied_transcript_adapter_matrix.sh" in text
     assert "public-review-gate: PASS" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()
+
+
+def test_adversarial_claim_matrix_generator_check_rejects_stale_fixture(tmp_path: Path) -> None:
+    fixture = ROOT / "tests" / "fixtures" / "evidence_court" / "adversarial_claim_matrix.json"
+    stale_fixture = tmp_path / "adversarial_claim_matrix.json"
+    payload = json.loads(fixture.read_text(encoding="utf-8"))
+    payload["multi_finding_case_count"] = 999
+    stale_fixture.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            os.environ.get("PYTHON", "python3"),
+            "scripts/generate_adversarial_claim_matrix.py",
+            "--check",
+            "--output",
+            str(stale_fixture),
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "--- " in result.stderr
+    assert "+++ generated adversarial_claim_matrix.json" in result.stderr
+    assert '"multi_finding_case_count": 999' in result.stderr
+    assert '"multi_finding_case_count": 5' in result.stderr
 
 
 def test_supplied_transcript_adapter_matrix_script_is_reviewer_runnable() -> None:

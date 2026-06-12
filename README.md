@@ -45,6 +45,7 @@ Expected high-level signal:
 public-review-gate: running planner focused public test
 public-review-gate: running learning-effect focused public test
 public-review-gate: running public metadata boundary tests
+public-review-gate: checking adversarial claim matrix generator
 public-review-gate: running Evidence Court intensity matrix
 public-review-gate: recording Evidence Court bad-run fixture
 public-review-gate: auditing supplied Evidence Court record
@@ -65,7 +66,9 @@ metadata stays inside the v0.1 boundary, Evidence Court fails closed on a
 supplied bad-run record, the local Evidence Court intensity matrix covers
 supplied test-output parser edge cases and 105 full supplied audit-record
 claim-boundary cases, including five multi-finding precedence cases, and
-supplied transcript adapters preserve complete
+the adversarial claim matrix generator check prevents checked-in fixture
+metadata from drifting from the compact generator. Supplied transcript adapters
+preserve complete
 supplied proof fields while rejecting success claims that have
 missing-test-proof, missing exit-status evidence, missing edited-file evidence,
 missing supplied diff-content evidence, supplied diff-content that only names
