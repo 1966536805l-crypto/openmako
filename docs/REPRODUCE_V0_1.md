@@ -125,7 +125,8 @@ stars, or reposts.
 It writes a machine-readable summary to
 `.quantagent/autonomous_learning_gate/last_summary.json` by default. The summary
 records the invoking commit, selected tests, per-segment elapsed seconds, the
-expected stage1/upstream learning-effect contract counts, and the same
+per-segment pytest log paths and log tails, observed pass/skip/warning counts,
+the expected stage1/upstream learning-effect contract counts, and the same
 not-proof boundary. Set `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to
 write the summary elsewhere.
 

@@ -245,6 +245,8 @@ def test_despair_gate_is_repeatable_but_not_a_public_claim() -> None:
     assert "validates the summary before printing `PASS`" in progress
     assert "CodingBench solved, total, success rate, artifact directory, and elapsed\n  fields are also type-checked" in progress
     assert "A corrupt-summary smoke path deletes those fields\n  before validation and must fail closed" in progress
+    assert "pytest log paths and log tails,\n  observed pass/skip/warning counts" in progress
+    assert "observed pytest result fields so validation fails closed" in progress
     assert "Failed summaries are validated after\n  failure metadata is written" in progress
     assert "internally inconsistent summaries fail closed" in progress
 
@@ -347,6 +349,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     ) in proof_section
     assert "`.quantagent/autonomous_learning_gate/last_summary.json` by default" in proof_section
     assert "selected tests, per-segment elapsed\nseconds" in proof_section
+    assert "per-segment pytest log paths and log tails, observed pass/skip/warning\ncounts" in proof_section
     assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON" in proof_section
     assert "## If You Came From A Benchmark Thread" in proof_section
     assert "Start with the public gate:" in proof_section
@@ -379,7 +382,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
         "stars, or reposts"
     ) in install_section
     assert "`.quantagent/autonomous_learning_gate/last_summary.json` unless" in install_section
-    assert "validates that summary before printing `PASS`" in install_section
+    assert "validates that summary, including observed pytest result counts and log tails,\nbefore printing `PASS`" in install_section
     review_section = readme[review_index:scope_index]
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in review_section
     assert "issues/new?template=technical-boundary-check.yml" in review_section
@@ -902,6 +905,7 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     ) in guide
     assert "`.quantagent/autonomous_learning_gate/last_summary.json` by default" in guide
     assert "invoking commit, selected tests, per-segment elapsed seconds" in guide
+    assert "per-segment pytest log paths and log tails, observed pass/skip/warning counts" in guide
     assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON" in guide
     assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in guide
     assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in guide
@@ -1114,7 +1118,11 @@ def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() 
     assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON" in text
     assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_TEST_CORRUPT_SUMMARY" in text
     assert "missing_contract_fields" in text
+    assert "missing_observed_result" in text
     assert "expected_contract" in text
+    assert "observed_pytest" in text
+    assert "log_tail" in text
+    assert "PYTEST_LOG_DIR" in text
     assert "summary_validation" in text
     assert "validate_summary" in text
     assert "validate_failure_summary" in text
@@ -1144,7 +1152,13 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
     fake_python.write_text(
         "#!/usr/bin/env bash\n"
         "if [ \"$1\" = \"-m\" ] && [ \"$2\" = \"pytest\" ]; then\n"
+        "  args=\"$*\"\n"
         "  echo '.                                                                        [100%]'\n"
+        "  if [[ \"$args\" == *test_upstream_function_file_bundle_regression* ]]; then\n"
+        "    echo '1 passed in 0.01s'\n"
+        "  else\n"
+        "    echo '3 passed in 0.01s'\n"
+        "  fi\n"
         "  exit 0\n"
         "fi\n"
         f"exec {shlex.quote(sys.executable)} \"$@\"\n",
@@ -1179,6 +1193,16 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
     assert payload["tests"]["upstream_hidden_pack_reuse"]["expected_contract"]["approved_learning_solved"] == 10
     assert payload["tests"]["upstream_hidden_pack_reuse"]["expected_contract"]["stability_solved"] == 100
     assert payload["tests"]["upstream_hidden_pack_reuse"]["expected_contract"]["cheat_caught"] == 10
+    stage1 = payload["tests"]["stage1_trajectory_reuse_matrix"]
+    upstream = payload["tests"]["upstream_hidden_pack_reuse"]
+    assert stage1["observed_pytest"]["passed"] == 3
+    assert stage1["observed_pytest"]["exit_code"] == 0
+    assert upstream["observed_pytest"]["passed"] == 1
+    assert upstream["observed_pytest"]["exit_code"] == 0
+    assert Path(stage1["log_path"]).name == "stage1_trajectory_reuse_matrix.log"
+    assert Path(upstream["log_path"]).name == "upstream_hidden_pack_reuse.log"
+    assert any("3 passed" in line for line in stage1["log_tail"])
+    assert any("1 passed" in line for line in upstream["log_tail"])
     assert "remote CI proof" in payload["not_proof"]
 
     corrupt_summary = tmp_path / "corrupt-summary.json"
@@ -1203,6 +1227,34 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
     corrupt_payload = json.loads(corrupt_summary.read_text(encoding="utf-8"))
     assert corrupt_payload["status"] == "failed"
     assert corrupt_payload["failure"] == {"segment": "summary_validation", "exit_code": 1}
+
+    observed_summary = tmp_path / "observed-summary.json"
+    observed_env = env.copy()
+    observed_env["OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON"] = str(observed_summary)
+    observed_env["OPENMAKO_AUTONOMOUS_LEARNING_GATE_TEST_CORRUPT_SUMMARY"] = "missing_observed_result"
+    observed_corrupt = subprocess.run(
+        ["bash", "scripts/autonomous_learning_gate.sh"],
+        cwd=ROOT,
+        env=observed_env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert observed_corrupt.returncode == 1
+    assert (
+        "autonomous-learning-gate: invalid summary fields="
+        "tests.stage1_trajectory_reuse_matrix.observed_pytest.exit_code,"
+        "tests.stage1_trajectory_reuse_matrix.observed_pytest.passed,"
+        "tests.stage1_trajectory_reuse_matrix.observed_pytest.expected_passed,"
+        "tests.stage1_trajectory_reuse_matrix.observed_pytest.skipped,"
+        "tests.stage1_trajectory_reuse_matrix.observed_pytest.expected_skipped,"
+        "tests.stage1_trajectory_reuse_matrix.observed_pytest.warnings"
+    ) in observed_corrupt.stderr
+    observed_payload = json.loads(observed_summary.read_text(encoding="utf-8"))
+    assert observed_payload["status"] == "failed"
+    assert observed_payload["failure"] == {"segment": "summary_validation", "exit_code": 1}
 
 
 def test_adversarial_claim_matrix_generator_check_rejects_stale_fixture(tmp_path: Path) -> None:

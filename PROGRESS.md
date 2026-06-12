@@ -1596,11 +1596,12 @@ Current public proof:
 - The autonomous-learning stress gate now writes
   `.quantagent/autonomous_learning_gate/last_summary.json` as a local
   machine-readable run summary. The summary records the invoking commit,
-  selected tests, per-segment elapsed seconds, expected stage1/upstream
-  learning-effect contract counts, and the same not-proof boundary. Failed
-  segments are recorded with the failed segment and exit code, and the gate
-  validates the summary before printing `PASS`; a corrupt-summary smoke path can
-  delete required contract fields so the validation fails closed.
+  selected tests, per-segment elapsed seconds, pytest log paths and log tails,
+  observed pass/skip/warning counts, expected stage1/upstream learning-effect
+  contract counts, and the same not-proof boundary. Failed segments are recorded
+  with the failed segment and exit code, and the gate validates the summary
+  before printing `PASS`; corrupt-summary smoke paths can delete required
+  contract fields or observed pytest result fields so validation fails closed.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1613,6 +1614,6 @@ Next smallest hygiene task:
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
 - Next concrete candidate: run the autonomous-learning stress gate under a
-  clean commit-only checkout, verify the summary JSON, and ask five agents to
-  score the remaining autonomous-learning gap before choosing the next adapter
-  edge case or trend-radar follow-up.
+  clean commit-only checkout, verify the observed pytest summary JSON and logs,
+  and ask five agents to score the remaining autonomous-learning gap before
+  choosing the next adapter edge case or trend-radar follow-up.

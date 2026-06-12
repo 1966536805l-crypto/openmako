@@ -107,7 +107,8 @@ standing, remote CI proof, external review, endorsement, stars, or reposts.
 It writes a machine-readable run summary to
 `.quantagent/autonomous_learning_gate/last_summary.json` by default. That
 summary records the invoking commit, selected tests, per-segment elapsed
-seconds, expected stage1/upstream learning-effect contract counts, and the same
+seconds, per-segment pytest log paths and log tails, observed pass/skip/warning
+counts, expected stage1/upstream learning-effect contract counts, and the same
 not-proof boundary; set `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to
 write it elsewhere.
 
@@ -285,7 +286,8 @@ unknown-repository repair proof, remote CI proof, external review, endorsement,
 stars, or reposts.
 It writes `.quantagent/autonomous_learning_gate/last_summary.json` unless
 `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` points to another path, and it
-validates that summary before printing `PASS`.
+validates that summary, including observed pytest result counts and log tails,
+before printing `PASS`.
 
 After installation, the CLI entrypoints are:
 

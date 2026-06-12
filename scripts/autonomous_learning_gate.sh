@@ -11,12 +11,14 @@ ORIGINAL_ARGS=("$@")
 GIT_COMMIT="$(git rev-parse HEAD 2>/dev/null || printf unknown)"
 SUMMARY_JSON="${OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON:-.quantagent/autonomous_learning_gate/last_summary.json}"
 SUMMARY_DIR="$(dirname -- "$SUMMARY_JSON")"
+PYTEST_LOG_DIR="$SUMMARY_DIR/pytest_logs"
 CURRENT_SEGMENT=""
 CURRENT_SEGMENT_STARTED_AT=0
 
 init_summary() {
   mkdir -p "$SUMMARY_DIR"
-  summary_args=("$SUMMARY_JSON" "$GIT_COMMIT")
+  mkdir -p "$PYTEST_LOG_DIR"
+  summary_args=("$SUMMARY_JSON" "$GIT_COMMIT" "$PYTEST_LOG_DIR")
   if [ "${#ORIGINAL_ARGS[@]}" -gt 0 ]; then
     summary_args+=("${ORIGINAL_ARGS[@]}")
   fi
@@ -33,7 +35,10 @@ payload = {
     "created_at_utc": datetime.now(timezone.utc).isoformat(),
     "invocation": {
         "git_commit": sys.argv[2],
-        "argv": sys.argv[3:],
+        "argv": sys.argv[4:],
+    },
+    "artifacts": {
+        "pytest_log_dir": sys.argv[3],
     },
     "segments": {
         "stage1_trajectory_reuse_matrix": "pending",
@@ -103,6 +108,49 @@ path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True
 PY
 }
 
+record_segment_pytest_result() {
+  "$PYTHON_BIN" - "$SUMMARY_JSON" "$1" "$2" "$3" "$4" "$5" <<'PY'
+import json
+import re
+import sys
+from pathlib import Path
+
+summary_path = Path(sys.argv[1])
+segment = sys.argv[2]
+log_path = Path(sys.argv[3])
+expected_passed = int(sys.argv[4])
+expected_skipped = int(sys.argv[5])
+exit_code = int(sys.argv[6])
+
+text = log_path.read_text(encoding="utf-8", errors="replace")
+lines = text.splitlines()
+
+
+def count_for(label):
+    matches = [int(match.group(1)) for match in re.finditer(rf"(\d+)\s+{label}\b", text)]
+    if not matches:
+        return None
+    return matches[-1]
+
+
+observed = {
+    "exit_code": exit_code,
+    "passed": count_for("passed"),
+    "skipped": count_for("skipped") or 0,
+    "warnings": count_for("warnings?") or 0,
+    "expected_passed": expected_passed,
+    "expected_skipped": expected_skipped,
+}
+
+payload = json.loads(summary_path.read_text(encoding="utf-8"))
+test_entry = payload.setdefault("tests", {}).setdefault(segment, {})
+test_entry["observed_pytest"] = observed
+test_entry["log_path"] = str(log_path)
+test_entry["log_tail"] = lines[-12:]
+summary_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
 start_segment() {
   CURRENT_SEGMENT="$1"
   CURRENT_SEGMENT_STARTED_AT="$(date +%s)"
@@ -149,6 +197,10 @@ if not invocation.get("git_commit"):
 if not isinstance(invocation.get("argv"), list):
     errors.append("invocation.argv")
 
+artifacts = payload.get("artifacts") or {}
+if not isinstance(artifacts.get("pytest_log_dir"), str) or not artifacts["pytest_log_dir"]:
+    errors.append("artifacts.pytest_log_dir")
+
 segments = payload.get("segments") or {}
 elapsed = payload.get("segment_elapsed_seconds") or {}
 expected_segments = {
@@ -165,14 +217,49 @@ for segment, expected_status in expected_segments.items():
 tests = payload.get("tests") or {}
 stage1 = tests.get("stage1_trajectory_reuse_matrix") or {}
 upstream = tests.get("upstream_hidden_pack_reuse") or {}
-if len(stage1.get("selected") or []) != 3:
+
+expected_stage1_selected = [
+    "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2",
+    "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2",
+    "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2",
+]
+expected_upstream_selected = [
+    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating",
+]
+if stage1.get("selected") != expected_stage1_selected:
     errors.append("tests.stage1_trajectory_reuse_matrix.selected")
 if stage1.get("expected_passed") != 3:
     errors.append("tests.stage1_trajectory_reuse_matrix.expected_passed")
-if len(upstream.get("selected") or []) != 1:
+if upstream.get("selected") != expected_upstream_selected:
     errors.append("tests.upstream_hidden_pack_reuse.selected")
 if upstream.get("expected_passed") != 1:
     errors.append("tests.upstream_hidden_pack_reuse.expected_passed")
+
+
+def check_observed(segment: str, entry: dict, expected_passed: int) -> None:
+    observed = entry.get("observed_pytest") or {}
+    if observed.get("exit_code") != 0:
+        errors.append(f"tests.{segment}.observed_pytest.exit_code")
+    if observed.get("passed") != expected_passed:
+        errors.append(f"tests.{segment}.observed_pytest.passed")
+    if observed.get("expected_passed") != expected_passed:
+        errors.append(f"tests.{segment}.observed_pytest.expected_passed")
+    if observed.get("skipped") != 0:
+        errors.append(f"tests.{segment}.observed_pytest.skipped")
+    if observed.get("expected_skipped") != 0:
+        errors.append(f"tests.{segment}.observed_pytest.expected_skipped")
+    if not isinstance(observed.get("warnings"), int) or observed["warnings"] < 0:
+        errors.append(f"tests.{segment}.observed_pytest.warnings")
+    log_path = entry.get("log_path")
+    if not isinstance(log_path, str) or not log_path.endswith(f"{segment}.log"):
+        errors.append(f"tests.{segment}.log_path")
+    log_tail = entry.get("log_tail")
+    if not isinstance(log_tail, list) or not log_tail or len(log_tail) > 12:
+        errors.append(f"tests.{segment}.log_tail")
+
+
+check_observed("stage1_trajectory_reuse_matrix", stage1, 3)
+check_observed("upstream_hidden_pack_reuse", upstream, 1)
 
 stage1_contract = stage1.get("expected_contract") or {}
 for key in ("stage1_agent_repair", "trajectory_extraction", "eval_gated_approval", "clean_stage2_reuse"):
@@ -255,20 +342,44 @@ PY
 }
 
 maybe_corrupt_summary_for_test() {
-  if [ "${OPENMAKO_AUTONOMOUS_LEARNING_GATE_TEST_CORRUPT_SUMMARY:-}" != "missing_contract_fields" ]; then
+  corrupt_mode="${OPENMAKO_AUTONOMOUS_LEARNING_GATE_TEST_CORRUPT_SUMMARY:-}"
+  if [ -z "$corrupt_mode" ]; then
     return
   fi
-  echo "autonomous-learning-gate: corrupting summary for test=missing_contract_fields" >&2
-  "$PYTHON_BIN" - "$SUMMARY_JSON" <<'PY'
+  echo "autonomous-learning-gate: corrupting summary for test=$corrupt_mode" >&2
+  "$PYTHON_BIN" - "$SUMMARY_JSON" "$corrupt_mode" <<'PY'
 import json
 import sys
 from pathlib import Path
 
 path = Path(sys.argv[1])
+mode = sys.argv[2]
 payload = json.loads(path.read_text(encoding="utf-8"))
-payload.get("tests", {}).get("upstream_hidden_pack_reuse", {}).get("expected_contract", {}).pop("cheat_caught", None)
+if mode == "missing_contract_fields":
+    payload.get("tests", {}).get("upstream_hidden_pack_reuse", {}).get("expected_contract", {}).pop("cheat_caught", None)
+elif mode == "missing_observed_result":
+    payload.get("tests", {}).get("stage1_trajectory_reuse_matrix", {}).pop("observed_pytest", None)
+else:
+    raise SystemExit(f"unsupported corrupt summary mode: {mode}")
 path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 PY
+}
+
+run_pytest_segment() {
+  segment="$1"
+  expected_passed="$2"
+  shift 2
+  log_path="$PYTEST_LOG_DIR/${segment}.log"
+  start_segment "$segment"
+  set +e
+  "$@" 2>&1 | tee "$log_path"
+  rc="${PIPESTATUS[0]}"
+  set -e
+  record_segment_pytest_result "$segment" "$log_path" "$expected_passed" 0 "$rc"
+  if [ "$rc" -ne 0 ]; then
+    return "$rc"
+  fi
+  finish_segment "$segment" passed
 }
 
 on_error() {
@@ -306,20 +417,18 @@ trap 'on_error $?' ERR
 init_summary
 
 echo "autonomous-learning-gate: running stage1 trajectory reuse matrix"
-start_segment "stage1_trajectory_reuse_matrix"
-"$PYTHON_BIN" -m pytest -p no:cacheprovider \
+run_pytest_segment "stage1_trajectory_reuse_matrix" 3 \
+  "$PYTHON_BIN" -m pytest -p no:cacheprovider \
   tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2 \
   tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2 \
   tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2 \
   -q
-finish_segment "stage1_trajectory_reuse_matrix" passed
 
 echo "autonomous-learning-gate: running upstream hidden-pack reuse stress test"
-start_segment "upstream_hidden_pack_reuse"
-"$PYTHON_BIN" -m pytest -p no:cacheprovider \
+run_pytest_segment "upstream_hidden_pack_reuse" 1 \
+  "$PYTHON_BIN" -m pytest -p no:cacheprovider \
   tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating \
   -q
-finish_segment "upstream_hidden_pack_reuse" passed
 
 update_summary_status passed
 maybe_corrupt_summary_for_test
