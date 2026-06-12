@@ -1572,6 +1572,17 @@ Current public proof:
   only, not native export ingestion, live control, proof that supplied patches
   were applied outside the supplied record, remote CI proof, external review,
   endorsement, stars, or reposts.
+- Evidence Court now has a 100-case adversarial supplied audit-record
+  claim-boundary matrix in the public review gate. The matrix locks exact
+  `finding_types` for successful source-repair records, missing supplied
+  diff-content evidence, missing edited-file evidence, test-only tamper risk,
+  failed validation, scope violations, missing test evidence, and missing final
+  claims; the intensity matrix now reports `310 passed`. The focused intensity
+  matrix, public metadata tests, JSON formatting check, `git diff --check`, and
+  public review gate passed locally before this note was added. This is local
+  supplied-record claim-boundary validation only, not native export ingestion,
+  live control, proof that supplied patches were applied outside the supplied
+  record, remote CI proof, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1583,6 +1594,6 @@ Next smallest hygiene task:
 
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
-- Next concrete candidate: another adapter evidence edge case or a trend-radar
-  follow-up only if it can be reduced to a failing supplied-record test and a
-  public-proof boundary.
+- Next concrete candidate: an adversarial-matrix fixture generator/schema canary,
+  another adapter evidence edge case, or a trend-radar follow-up only if it can
+  be reduced to a failing supplied-record test and a public-proof boundary.

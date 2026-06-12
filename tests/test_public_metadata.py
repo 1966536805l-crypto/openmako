@@ -319,8 +319,12 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "adapter-matrix: PASS" in proof_section
     assert "public-review-gate: PASS" in proof_section
     assert "What this checks is narrow" in proof_section
-    assert "local Evidence Court intensity matrix covers\nsupplied test-output parser edge cases" in proof_section
-    assert "supplied transcript adapters\npreserve complete supplied proof fields while rejecting success claims that\nhave missing-test-proof, missing exit-status evidence, missing edited-file\nevidence, missing supplied diff-content evidence, supplied diff-content that\nonly names test files, or supplied diff-content that covers only a subset of\nedited source files, or supplied ordered edit/command evidence where passing\nvalidation occurs before a later source edit for a claimed source repair" in proof_section
+    assert (
+        "local Evidence Court intensity matrix covers\n"
+        "supplied test-output parser edge cases and 100 full supplied audit-record\n"
+        "claim-boundary cases"
+    ) in proof_section
+    assert "supplied transcript adapters preserve complete\nsupplied proof fields while rejecting success claims that have\nmissing-test-proof, missing exit-status evidence, missing edited-file evidence,\nmissing supplied diff-content evidence, supplied diff-content that only names\ntest files, or supplied diff-content that covers only a subset of edited source\nfiles, or supplied ordered edit/command evidence where passing validation\noccurs before a later source edit for a claimed source repair" in proof_section
     assert "supplied runtime-shadowing and verifier/CI tamper fixtures that classify\npassing success claims as review-risk" in proof_section
     assert "It does not prove broad\nunknown-repository repair, native runtime hardening, native benchmark\ningestion, native CI hardening, or external endorsement." in proof_section
     assert "This is a local script\nresult, not external reviewer approval." in proof_section
@@ -842,7 +846,7 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "25 passed" not in guide
     assert "public-review-gate: PASS" in guide
     assert "public-review-gate: running Evidence Court intensity matrix" in guide
-    assert "210 passed" in guide
+    assert "310 passed" in guide
     assert "public-review-gate: recording Evidence Court bad-run fixture" in guide
     assert "public-review-gate: auditing supplied Evidence Court record" in guide
     assert "public-review-gate: auditing artifact provenance fixture" in guide
@@ -859,7 +863,10 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "examples/evidence_court/config_only_repair.json" in guide
     assert "The config-only repair fixture keeps supplied project metadata/config repair" in guide
     assert "evidence in `PASS/config_only`" in guide
-    assert "The local Evidence Court intensity matrix covers supplied test-output parser\n  edge cases." in guide
+    assert (
+        "The local Evidence Court intensity matrix covers supplied test-output parser\n"
+        "  edge cases and 100 full supplied audit-record claim-boundary cases."
+    ) in guide
     assert "./scripts/supplied_transcript_adapter_matrix.sh" in guide
     assert "repository-defined Codex, Claude, OpenHands,\nand SWE-agent style transcripts" in guide
     assert "checks that each adapter rejects a\nsuccess claim when command/test proof is missing, when validation command\nexit-status evidence is missing, or when validation exists but edited-file or\nsupplied diff-content evidence is missing, only names test files, or covers\nonly a subset of edited source files, or when supplied ordered edit/command\nevidence has passing validation before a later source edit for a claimed source\nrepair" in guide
