@@ -2116,7 +2116,7 @@ def _claude_content_tool_uses(message: dict[str, object], message_index: int) ->
     calls: list[tuple[str, dict[str, object]]] = []
     for block_index, block in enumerate(content):
         if not isinstance(block, dict):
-            continue
+            raise ValueError(f"messages[{message_index}].content[{block_index}] must be an object")
         block_type = _first_kind_text(((block, "type"),), f"messages[{message_index}].content[{block_index}]")
         if block_type not in {"tool_use", "server_tool_use"}:
             continue

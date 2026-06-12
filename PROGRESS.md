@@ -1415,6 +1415,14 @@ Current public proof:
   `git diff --check` passed locally before this note was added. This is wording
   alignment only, not outreach evidence, external review, endorsement, stars,
   or reposts.
+- The supplied Claude transcript adapter now rejects malformed content array
+  blocks, such as a string item at `messages[0].content[0]`, instead of
+  silently ignoring it and risking truncated supplied evidence. The focused
+  regression failed before the parser change and passed after it; the full CLI
+  wrapper test file, supplied transcript adapter matrix, and public metadata
+  tests passed locally before this note was added. This is supplied-record
+  parser hardening only, not native Claude export ingestion, live control,
+  external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1426,6 +1434,6 @@ Next smallest hygiene task:
 
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
-- Next concrete candidate: another adapter evidence edge case or trend-radar
-  follow-up only if it can be reduced to a failing parser/audit test behind the
+- Next concrete candidate: a trend-radar follow-up or another adapter evidence
+  edge case only if it can be reduced to a failing parser/audit test behind the
   supplied-record proof boundary.

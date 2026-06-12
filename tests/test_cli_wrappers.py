@@ -5226,6 +5226,38 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(converted.stdout, "")
                 self.assertIn(expected_error, converted.stderr)
 
+    def test_openmako_evidence_court_claude_transcript_rejects_malformed_content_blocks(self) -> None:
+        transcript = {
+            "task": "Fix calculator.py.",
+            "messages": [
+                {
+                    "role": "assistant",
+                    "content": [
+                        "I edited calculator.py.",
+                        {
+                            "type": "tool_use",
+                            "name": "Edit",
+                            "input": {"file_path": "calculator.py"},
+                        },
+                    ],
+                }
+            ],
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(transcript, handle)
+            handle.flush()
+            converted = self.run_openmako(
+                "--no-trust-prompt",
+                "evidence-court",
+                "record",
+                "from-claude-transcript",
+                handle.name,
+            )
+
+        self.assertEqual(converted.returncode, 2)
+        self.assertEqual(converted.stdout, "")
+        self.assertIn("messages[0].content[0] must be an object", converted.stderr)
+
     def test_openmako_evidence_court_transcript_adapters_reject_mixed_session_evidence(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"
