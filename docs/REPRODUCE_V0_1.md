@@ -130,10 +130,12 @@ the expected stage1/upstream learning-effect contract counts, and the same
 not-proof boundary. Set `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to
 write the summary elsewhere.
 For commit-pinned public artifact capture, use the manual
-`.github/workflows/autonomous-learning-gate.yml` workflow. It uploads the
-summary JSON and pytest logs for that workflow run. This is public CI artifact
-evidence only, not external review, endorsement, live autonomy, or broad
-unknown-repository repair proof.
+`.github/workflows/autonomous-learning-gate.yml` workflow or push a change to
+the workflow, gate script, or selected gate-test paths. It uploads the
+summary JSON and pytest logs for that workflow run. This is path-filtered
+public CI artifact evidence only, not broad default push or pull-request CI,
+external review, endorsement, live autonomy, or broad unknown-repository repair
+proof.
 
 Public boundary metadata only:
 

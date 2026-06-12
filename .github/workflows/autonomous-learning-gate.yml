@@ -2,6 +2,15 @@ name: autonomous-learning-gate
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/autonomous-learning-gate.yml"
+      - "scripts/autonomous_learning_gate.sh"
+      - "tests/test_learning_effect_e2e.py"
+      - "tests/test_upstream_function_file_bundle_regression.py"
+      - "tests/test_public_metadata.py"
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"

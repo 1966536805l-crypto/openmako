@@ -257,7 +257,15 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
 
     assert "name: autonomous-learning-gate" in workflow
     assert "workflow_dispatch:" in workflow
-    assert "push:" not in workflow
+    assert "push:" in workflow
+    assert "branches:" in workflow
+    assert "- main" in workflow
+    assert "paths:" in workflow
+    assert '".github/workflows/autonomous-learning-gate.yml"' in workflow
+    assert '"scripts/autonomous_learning_gate.sh"' in workflow
+    assert '"tests/test_learning_effect_e2e.py"' in workflow
+    assert '"tests/test_upstream_function_file_bundle_regression.py"' in workflow
+    assert '"tests/test_public_metadata.py"' in workflow
     assert "pull_request:" not in workflow
     assert "timeout-minutes: 20" in workflow
     assert "python -m pip install -e . pytest" in workflow
@@ -269,10 +277,10 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert "path: .quantagent/autonomous_learning_gate" in workflow
     assert "if-no-files-found: error" in workflow
 
-    assert "`.github/workflows/autonomous-learning-gate.yml` exposes the autonomous-learning\n  stress gate as a manual `workflow_dispatch` check" in progress
+    assert "`.github/workflows/autonomous-learning-gate.yml` exposes the autonomous-learning\n  stress gate as a manual `workflow_dispatch` check and as a path-filtered\n  `push` check" in progress
     assert "It uploads\n  `.quantagent/autonomous_learning_gate` as the\n  `autonomous-learning-gate-summary` artifact" in progress
-    assert "not attached to default push or\n  pull-request CI" in progress
-    assert "not external review,\n  endorsement, stars, reposts, live autonomy, broad unknown-repository repair\n  proof, or external benchmark standing" in progress
+    assert "not attached to broad default push or\n  pull-request CI" in progress
+    assert "manual or path-filtered push run is public CI artifact evidence only, not\n  external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair\n  proof, or external benchmark standing" in progress
 
 
 def test_agent_trend_radar_tracks_current_next_build_target() -> None:
@@ -377,7 +385,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON" in proof_section
     assert "`.github/workflows/autonomous-learning-gate.yml` workflow" in proof_section
     assert "uploads the\nsummary and pytest logs" in proof_section
-    assert "not attached to\ndefault push CI and is not external review or endorsement" in proof_section
+    assert "path-filtered\nand is not broad default push or pull-request CI, external review, or\nendorsement" in proof_section
     assert "## If You Came From A Benchmark Thread" in proof_section
     assert "Start with the public gate:" in proof_section
     assert 'The useful review is not "do you like this project?"' in proof_section
@@ -936,7 +944,7 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON" in guide
     assert "`.github/workflows/autonomous-learning-gate.yml` workflow" in guide
     assert "uploads the\nsummary JSON and pytest logs" in guide
-    assert "public CI artifact\nevidence only, not external review" in guide
+    assert "path-filtered\npublic CI artifact evidence only, not broad default push or pull-request CI,\nexternal review" in guide
     assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in guide
     assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in guide
     assert "Config-only false-positive boundary:" in guide
