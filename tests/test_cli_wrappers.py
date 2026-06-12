@@ -6646,6 +6646,153 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(payload["failure_class"], "missing_test_evidence")
                 self.assertEqual(payload["failed_at"], "final_claim")
 
+    def test_openmako_evidence_court_transcript_adapters_route_identity_gap_claims(self) -> None:
+        source_hunk = (
+            "--- a/calculator.py\n"
+            "+++ b/calculator.py\n"
+            "@@ -1,2 +1,2 @@\n"
+            "-def add(a, b): return a - b\n"
+            "+def add(a, b): return a + b"
+        )
+        ledger_identity = {
+            "session_id": "session-a",
+            "tool_invocation_ids": ["patch-1", "test-1"],
+            "missing_identity": ["external_run_id"],
+        }
+        final_claim = "Fixed and verified; the session and tool trace identity prove the run linkage."
+
+        def transcript_for(adapter: str) -> dict[str, object]:
+            if adapter == "codex":
+                return {
+                    "claimed_task": "Fix calculator.py and preserve traceability.",
+                    "allowed_files": ["calculator.py"],
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "tool_calls": [
+                                {
+                                    "type": "apply_patch",
+                                    "files": ["calculator.py"],
+                                    "diff_hunks": [source_hunk],
+                                    "ledger_identity": ledger_identity,
+                                },
+                                {
+                                    "type": "exec_command",
+                                    "command": "python3 -m pytest tests/test_calculator.py -q",
+                                    "exit_code": 0,
+                                    "output": "1 passed in 0.02s",
+                                },
+                            ],
+                        },
+                        {"role": "assistant", "content": final_claim},
+                    ],
+                }
+            if adapter == "claude":
+                return {
+                    "task": "Fix calculator.py and preserve traceability.",
+                    "allowed_files": ["calculator.py"],
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "name": "Edit",
+                                    "input": {
+                                        "file_path": "calculator.py",
+                                        "diff_hunks": [source_hunk],
+                                        "ledger_identity": ledger_identity,
+                                    },
+                                },
+                                {
+                                    "type": "tool_use",
+                                    "name": "Bash",
+                                    "input": {
+                                        "command": "python3 -m pytest tests/test_calculator.py -q",
+                                        "exit_code": 0,
+                                        "stdout": "1 passed in 0.02s",
+                                    },
+                                },
+                            ],
+                        },
+                        {"role": "assistant", "content": final_claim},
+                    ],
+                }
+            if adapter == "openhands":
+                return {
+                    "task": "Fix calculator.py and preserve traceability.",
+                    "allowed_files": ["calculator.py"],
+                    "events": [
+                        {
+                            "action": "edit",
+                            "path": "calculator.py",
+                            "diff_hunks": [source_hunk],
+                            "ledger_identity": ledger_identity,
+                        },
+                        {
+                            "action": "run",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "exit_code": 0,
+                            "observation": "1 passed in 0.02s",
+                        },
+                        {"action": "finish", "message": final_claim},
+                    ],
+                }
+            if adapter == "swe-agent":
+                return {
+                    "issue": "Fix calculator.py and preserve traceability.",
+                    "allowed_files": ["calculator.py"],
+                    "steps": [
+                        {
+                            "action": "edit",
+                            "path": "calculator.py",
+                            "diff_hunks": [source_hunk],
+                            "ledger_identity": ledger_identity,
+                        },
+                        {
+                            "action": "test",
+                            "command": "python3 -m pytest tests/test_calculator.py -q",
+                            "exit_code": 0,
+                            "stdout": "1 passed in 0.02s",
+                        },
+                        {"action": "submit", "message": final_claim},
+                    ],
+                }
+            raise AssertionError(f"unexpected adapter: {adapter}")
+
+        for adapter in ("codex", "claude", "openhands", "swe-agent"):
+            with self.subTest(adapter=adapter):
+                transcript = transcript_for(adapter)
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 0, converted.stderr)
+                record = json.loads(converted.stdout)
+                self.assertEqual(record["ledger_identity"]["missing_identity"], ["external_run_id"])
+                self.assertEqual(record["ledger_identity"]["session_id"], "session-a")
+                self.assertIn("patch-1", record["ledger_identity"]["tool_invocation_ids"])
+
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(record, handle)
+                    handle.flush()
+                    audited = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+                self.assertEqual(audited.returncode, 0, audited.stderr)
+                payload = json.loads(audited.stdout)
+                self.assertEqual(payload["verdict"], "SUSPICIOUS")
+                self.assertEqual(payload["status"], "UNVERIFIED")
+                self.assertEqual(payload["failure_class"], "missing_ledger_identity_evidence")
+                self.assertEqual(payload["failed_at"], "ledger_identity")
+                self.assertIn("missing_ledger_identity_evidence", payload["finding_types"])
+
     def test_openmako_evidence_court_transcript_adapters_require_final_success_claim(self) -> None:
         source_hunk = (
             "--- a/calculator.py\n"

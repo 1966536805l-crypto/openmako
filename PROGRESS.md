@@ -1515,6 +1515,16 @@ Current public proof:
   formats. This is planning/proof-surface alignment only, not new runtime
   behavior, native export ingestion, live harness control, ACP control, remote
   CI proof, external review, endorsement, stars, or reposts.
+- Supplied transcript adapters now have an identity-gap conversion-and-audit
+  regression across Codex, Claude, OpenHands, and SWE-agent supplied formats.
+  The regression confirms converted records preserve
+  `ledger_identity.missing_identity` and route identity-dependent claims to
+  `missing_ledger_identity_evidence`. The focused adapter regression, the full
+  CLI wrapper test file, public metadata tests, `git diff --check`, and public
+  review gate passed locally before commit. This is supplied-record adapter
+  coverage only, not native export ingestion, live harness control, ACP
+  control, proof that supplied patches were applied outside the supplied
+  record, remote CI proof, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1526,6 +1536,6 @@ Next smallest hygiene task:
 
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
-- Next concrete candidate: adapter-level identity-gap matrix coverage only if
-  it can be reduced to a failing supplied transcript conversion and audit test
-  behind the supplied-record proof boundary.
+- Next concrete candidate: another adapter evidence edge case only if it can be
+  reduced to a failing supplied transcript conversion and audit test behind the
+  supplied-record proof boundary.
