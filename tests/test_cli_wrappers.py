@@ -2603,6 +2603,111 @@ class CliWrapperTest(unittest.TestCase):
                 record = json.loads(converted.stdout)
                 self.assertEqual(record["agent_risk_ledger"], expected)
 
+    def test_openmako_evidence_court_transcript_adapters_route_missing_agent_risk_evidence(self) -> None:
+        risky_ledger = {
+            "live_control": True,
+            "self_improved": True,
+        }
+        final_claim = "Live control and self-improvement are verified."
+        transcripts = {
+            "codex": {
+                "claimed_task": "Audit an autonomous local agent risk claim.",
+                "agent_risk_ledger": risky_ledger,
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "tool_calls": [
+                            {
+                                "type": "exec_command",
+                                "command": "python3 -m pytest tests/test_agent_risk.py -q",
+                                "exit_code": 0,
+                                "output": "1 passed in 0.02s",
+                            }
+                        ],
+                    },
+                    {"role": "assistant", "content": final_claim},
+                ],
+            },
+            "claude": {
+                "task": "Audit an autonomous local agent risk claim.",
+                "agent_risk_ledger": risky_ledger,
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "content": [
+                            {
+                                "type": "tool_use",
+                                "name": "Bash",
+                                "input": {
+                                    "command": "python3 -m pytest tests/test_agent_risk.py -q",
+                                    "exit_code": 0,
+                                    "stdout": "1 passed in 0.02s",
+                                },
+                            }
+                        ],
+                    },
+                    {"role": "assistant", "content": final_claim},
+                ],
+            },
+            "openhands": {
+                "task": "Audit an autonomous local agent risk claim.",
+                "agent_risk_ledger": risky_ledger,
+                "events": [
+                    {
+                        "action": "run",
+                        "command": "python3 -m pytest tests/test_agent_risk.py -q",
+                        "exit_code": 0,
+                        "observation": "1 passed in 0.02s",
+                    },
+                    {"action": "finish", "message": final_claim},
+                ],
+            },
+            "swe-agent": {
+                "issue": "Audit an autonomous local agent risk claim.",
+                "agent_risk_ledger": risky_ledger,
+                "steps": [
+                    {
+                        "action": "test",
+                        "command": "python3 -m pytest tests/test_agent_risk.py -q",
+                        "exit_code": 0,
+                        "stdout": "1 passed in 0.02s",
+                    },
+                    {"action": "submit", "message": final_claim},
+                ],
+            },
+        }
+
+        for adapter, transcript in transcripts.items():
+            with self.subTest(adapter=adapter):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 0, converted.stderr)
+                record = json.loads(converted.stdout)
+                self.assertEqual(record["agent_risk_ledger"], risky_ledger)
+
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(record, handle)
+                    handle.flush()
+                    audited = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+                self.assertEqual(audited.returncode, 0, audited.stderr)
+                payload = json.loads(audited.stdout)
+                self.assertEqual(payload["verdict"], "SUSPICIOUS")
+                self.assertEqual(payload["status"], "UNVERIFIED")
+                self.assertEqual(payload["failure_class"], "missing_agent_risk_evidence")
+                self.assertEqual(payload["failed_at"], "agent_risk_ledger")
+                self.assertIn("missing_agent_risk_evidence", payload["finding_types"])
+                self.assertEqual(payload["agent_risk_ledger"], risky_ledger)
+
     def test_openmako_evidence_court_transcript_adapters_reject_mixed_event_agent_risk_ledger(self) -> None:
         transcripts = {
             "codex": {

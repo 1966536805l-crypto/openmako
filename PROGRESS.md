@@ -1525,6 +1525,16 @@ Current public proof:
   coverage only, not native export ingestion, live harness control, ACP
   control, proof that supplied patches were applied outside the supplied
   record, remote CI proof, external review, endorsement, stars, or reposts.
+- Supplied transcript adapters now have an agent-risk conversion-and-audit
+  regression across Codex, Claude, OpenHands, and SWE-agent supplied formats.
+  The regression confirms converted records preserve risky
+  `agent_risk_ledger` metadata and route live-control/self-improvement claims
+  with missing supplied evidence to `missing_agent_risk_evidence`. The focused
+  adapter regression, the full CLI wrapper test file, public metadata tests,
+  and `git diff --check` passed locally before this note was added. This is
+  supplied-record adapter coverage only, not native live control, skill
+  self-evolution proof, native export ingestion, remote CI proof, external
+  review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
