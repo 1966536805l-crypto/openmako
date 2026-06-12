@@ -1439,6 +1439,14 @@ Current public proof:
   review gate passed locally before this note was added. This is public wording
   alignment only, not new parser behavior, native transcript ingestion, live
   control, remote CI proof, external review, endorsement, stars, or reposts.
+- Supplied transcript audits now reject source-repair success claims when the
+  record marks source files as edited but the supplied path-bearing diff hunks
+  only name test files. The focused regression failed before the audit change
+  and passed after it; the full CLI wrapper test file, public metadata tests,
+  and supplied transcript adapter matrix passed locally before this note was
+  added. This is supplied-record source-diff evidence validation only, not
+  native patch application proof, native transcript ingestion, live control,
+  remote CI proof, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

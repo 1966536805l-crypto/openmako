@@ -563,6 +563,30 @@ def build_audit_record_report(record_path: str | Path) -> AgentAutopsyReport:
         and files_edited
         and patch_shape.get("source_files")
         and diff_hunks
+        and _diff_hunks_miss_source_files(diff_hunks, patch_shape.get("source_files", []))
+        and _is_supplied_transcript_format(source_format)
+        and _looks_like_success_claim(final_claim)
+        and _looks_like_patch_task(" ".join((claimed_task, final_claim)))
+    ):
+        evidence_ids = tuple(
+            item.evidence_id
+            for item in evidence
+            if item.source in {"task", "final_claim"} or item.kind in {"edit", "command", "test"}
+        )
+        findings.append(
+            AutopsyFinding(
+                "missing_diff_content_evidence",
+                "The supplied transcript claims a successful source repair, but it contains no diff-content evidence for the edited source file(s).",
+                evidence_ids=evidence_ids,
+                intercept="require supplied source-file diff hunks before accepting transcript-based source repair claims",
+                confidence="medium",
+            )
+        )
+    if (
+        test_status == "passed"
+        and files_edited
+        and patch_shape.get("source_files")
+        and diff_hunks
         and _is_supplied_transcript_format(source_format)
         and not final_claim
         and _looks_like_patch_task(claimed_task)
@@ -1466,6 +1490,47 @@ def _event_diff_hunks(event: dict[str, object]) -> list[str]:
         if text:
             hunks.append(text)
     return list(dict.fromkeys(hunks))
+
+
+def _diff_hunks_miss_source_files(diff_hunks: list[str], source_files: object) -> bool:
+    source_paths = {
+        _normalize_diff_path(str(path))
+        for path in source_files
+        if isinstance(path, str) and _normalize_diff_path(path)
+    }
+    diff_paths = _diff_hunk_file_paths(diff_hunks)
+    if not source_paths or not diff_paths:
+        return False
+    return not any(path in source_paths for path in diff_paths)
+
+
+def _diff_hunk_file_paths(diff_hunks: list[str]) -> set[str]:
+    paths: set[str] = set()
+    for hunk in diff_hunks:
+        for raw_line in hunk.splitlines():
+            line = raw_line.strip()
+            if line.startswith("diff --git "):
+                parts = line.split()
+                for path in parts[2:4]:
+                    normalized = _normalize_diff_path(path)
+                    if normalized:
+                        paths.add(normalized)
+                continue
+            if line.startswith(("--- ", "+++ ")):
+                path = line[4:].strip().split("\t", 1)[0].split(" ", 1)[0]
+                normalized = _normalize_diff_path(path)
+                if normalized:
+                    paths.add(normalized)
+    return paths
+
+
+def _normalize_diff_path(path: str) -> str:
+    normalized = path.strip().strip('"').replace("\\", "/")
+    if not normalized or normalized == "/dev/null":
+        return ""
+    if normalized.startswith(("a/", "b/")):
+        normalized = normalized[2:]
+    return normalized.lstrip("./")
 
 
 def _is_supplied_transcript_format(source_format: str) -> bool:
