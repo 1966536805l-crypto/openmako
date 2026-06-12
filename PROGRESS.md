@@ -1535,6 +1535,16 @@ Current public proof:
   supplied-record adapter coverage only, not native live control, skill
   self-evolution proof, native export ingestion, remote CI proof, external
   review, endorsement, stars, or reposts.
+- Supplied transcript adapters now have a verifier/test-control
+  conversion-and-audit regression across Codex, Claude, OpenHands, and
+  SWE-agent supplied formats. The regression confirms converted records
+  preserve a test-only edited path and route successful source-repair claims
+  that only edit test/control evidence to `verifier_tamper_risk`. The focused
+  adapter regression, the full CLI wrapper test file, public metadata tests,
+  and `git diff --check` passed locally before this note was added. This is
+  supplied-record adapter coverage only, not native live control, proof that
+  supplied patches were applied outside the supplied record, remote CI proof,
+  external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
