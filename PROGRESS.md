@@ -111,7 +111,9 @@ Current public proof:
   `.quantagent/autonomous_learning_gate` as the
   `autonomous-learning-gate-summary` artifact so the machine-readable summary,
   observed pytest counts, and per-segment logs can be inspected for an exact
-  workflow run. It is intentionally not attached to broad default push or
+  workflow run. The workflow installs `pytest` and `typing_extensions` in the
+  fresh GitHub runner so upstream-style fixture imports match the gate's
+  hidden-pack coverage. It is intentionally not attached to broad default push or
   pull-request CI because it is slower than the focused public gate. A passing
   manual or path-filtered push run is public CI artifact evidence only, not
   external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair

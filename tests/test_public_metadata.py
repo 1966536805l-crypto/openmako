@@ -268,7 +268,7 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert '"tests/test_public_metadata.py"' in workflow
     assert "pull_request:" not in workflow
     assert "timeout-minutes: 20" in workflow
-    assert "python -m pip install -e . pytest" in workflow
+    assert "python -m pip install -e . pytest typing_extensions" in workflow
     assert "bash scripts/autonomous_learning_gate.sh" in workflow
     assert "Upload autonomous-learning summary and logs" in workflow
     assert "if: always()" in workflow
