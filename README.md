@@ -104,6 +104,12 @@ learning approval, clean stage2 reuse, upstream hidden-pack reuse, and cheating
 rejection. It is local high-intensity learning evidence only, not proof of
 native live autonomy, broad unknown-repository repair, external benchmark
 standing, remote CI proof, external review, endorsement, stars, or reposts.
+It writes a machine-readable run summary to
+`.quantagent/autonomous_learning_gate/last_summary.json` by default. That
+summary records the invoking commit, selected tests, per-segment elapsed
+seconds, expected stage1/upstream learning-effect contract counts, and the same
+not-proof boundary; set `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to
+write it elsewhere.
 
 ## If You Came From A Benchmark Thread
 
@@ -277,6 +283,9 @@ That optional gate is local high-intensity evidence for the repository's
 stage1-to-stage2 learning reuse path; it is not native live autonomy or broad
 unknown-repository repair proof, remote CI proof, external review, endorsement,
 stars, or reposts.
+It writes `.quantagent/autonomous_learning_gate/last_summary.json` unless
+`OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` points to another path, and it
+validates that summary before printing `PASS`.
 
 After installation, the CLI entrypoints are:
 

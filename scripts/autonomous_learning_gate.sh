@@ -7,16 +7,328 @@ cd "$ROOT_DIR"
 PYTHON_BIN="${PYTHON:-python3}"
 export PYTHONPATH="$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}"
 
+ORIGINAL_ARGS=("$@")
+GIT_COMMIT="$(git rev-parse HEAD 2>/dev/null || printf unknown)"
+SUMMARY_JSON="${OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON:-.quantagent/autonomous_learning_gate/last_summary.json}"
+SUMMARY_DIR="$(dirname -- "$SUMMARY_JSON")"
+CURRENT_SEGMENT=""
+CURRENT_SEGMENT_STARTED_AT=0
+
+init_summary() {
+  mkdir -p "$SUMMARY_DIR"
+  summary_args=("$SUMMARY_JSON" "$GIT_COMMIT")
+  if [ "${#ORIGINAL_ARGS[@]}" -gt 0 ]; then
+    summary_args+=("${ORIGINAL_ARGS[@]}")
+  fi
+  "$PYTHON_BIN" - "${summary_args[@]}" <<'PY'
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = {
+    "schema_version": "autonomous-learning-gate/v0.1",
+    "status": "running",
+    "created_at_utc": datetime.now(timezone.utc).isoformat(),
+    "invocation": {
+        "git_commit": sys.argv[2],
+        "argv": sys.argv[3:],
+    },
+    "segments": {
+        "stage1_trajectory_reuse_matrix": "pending",
+        "upstream_hidden_pack_reuse": "pending",
+    },
+    "segment_elapsed_seconds": {},
+    "tests": {
+        "stage1_trajectory_reuse_matrix": {
+            "selected": [
+                "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2",
+                "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2",
+                "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2",
+            ],
+            "expected_passed": 3,
+            "expected_contract": {
+                "stage1_agent_repair": True,
+                "trajectory_extraction": True,
+                "eval_gated_approval": True,
+                "clean_stage2_reuse": True,
+                "no_learning_solved": 0,
+                "approved_learning_solved_min": 1,
+                "cheated": 0,
+            },
+        },
+        "upstream_hidden_pack_reuse": {
+            "selected": [
+                "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating",
+            ],
+            "expected_passed": 1,
+            "expected_contract": {
+                "upstream_family_count": 5,
+                "hidden_task_count": 10,
+                "no_learning_solved": 0,
+                "approved_learning_solved": 10,
+                "stability_repeats": 10,
+                "stability_solved": 100,
+                "success_rate_spread": 0.0,
+                "cheat_caught": 10,
+            },
+        },
+    },
+    "not_proof": [
+        "native live autonomy",
+        "broad unknown-repository repair",
+        "external benchmark standing",
+        "remote CI proof",
+        "external review",
+        "endorsement",
+        "stars",
+        "reposts",
+    ],
+}
+path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
+update_summary_status() {
+  "$PYTHON_BIN" - "$SUMMARY_JSON" "$1" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+payload["status"] = sys.argv[2]
+path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
+start_segment() {
+  CURRENT_SEGMENT="$1"
+  CURRENT_SEGMENT_STARTED_AT="$(date +%s)"
+}
+
+finish_segment() {
+  segment="$1"
+  status="$2"
+  elapsed=$(( $(date +%s) - CURRENT_SEGMENT_STARTED_AT ))
+  "$PYTHON_BIN" - "$SUMMARY_JSON" "$segment" "$status" "$elapsed" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+segment = sys.argv[2]
+payload["segments"][segment] = sys.argv[3]
+payload.setdefault("segment_elapsed_seconds", {})[segment] = int(sys.argv[4])
+path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+  CURRENT_SEGMENT=""
+  CURRENT_SEGMENT_STARTED_AT=0
+}
+
+validate_summary() {
+  "$PYTHON_BIN" - "$SUMMARY_JSON" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+errors = []
+
+if payload.get("schema_version") != "autonomous-learning-gate/v0.1":
+    errors.append("schema_version")
+if payload.get("status") != "passed":
+    errors.append("status")
+
+invocation = payload.get("invocation") or {}
+if not invocation.get("git_commit"):
+    errors.append("invocation.git_commit")
+if not isinstance(invocation.get("argv"), list):
+    errors.append("invocation.argv")
+
+segments = payload.get("segments") or {}
+elapsed = payload.get("segment_elapsed_seconds") or {}
+expected_segments = {
+    "stage1_trajectory_reuse_matrix": "passed",
+    "upstream_hidden_pack_reuse": "passed",
+}
+for segment, expected_status in expected_segments.items():
+    if segments.get(segment) != expected_status:
+        errors.append(f"segments.{segment}")
+    value = elapsed.get(segment)
+    if not isinstance(value, int) or value < 0:
+        errors.append(f"segment_elapsed_seconds.{segment}")
+
+tests = payload.get("tests") or {}
+stage1 = tests.get("stage1_trajectory_reuse_matrix") or {}
+upstream = tests.get("upstream_hidden_pack_reuse") or {}
+if len(stage1.get("selected") or []) != 3:
+    errors.append("tests.stage1_trajectory_reuse_matrix.selected")
+if stage1.get("expected_passed") != 3:
+    errors.append("tests.stage1_trajectory_reuse_matrix.expected_passed")
+if len(upstream.get("selected") or []) != 1:
+    errors.append("tests.upstream_hidden_pack_reuse.selected")
+if upstream.get("expected_passed") != 1:
+    errors.append("tests.upstream_hidden_pack_reuse.expected_passed")
+
+stage1_contract = stage1.get("expected_contract") or {}
+for key in ("stage1_agent_repair", "trajectory_extraction", "eval_gated_approval", "clean_stage2_reuse"):
+    if stage1_contract.get(key) is not True:
+        errors.append(f"tests.stage1_trajectory_reuse_matrix.expected_contract.{key}")
+if stage1_contract.get("no_learning_solved") != 0:
+    errors.append("tests.stage1_trajectory_reuse_matrix.expected_contract.no_learning_solved")
+if not isinstance(stage1_contract.get("approved_learning_solved_min"), int) or stage1_contract["approved_learning_solved_min"] < 1:
+    errors.append("tests.stage1_trajectory_reuse_matrix.expected_contract.approved_learning_solved_min")
+if stage1_contract.get("cheated") != 0:
+    errors.append("tests.stage1_trajectory_reuse_matrix.expected_contract.cheated")
+
+upstream_contract = upstream.get("expected_contract") or {}
+required_upstream = {
+    "upstream_family_count": 5,
+    "hidden_task_count": 10,
+    "no_learning_solved": 0,
+    "approved_learning_solved": 10,
+    "stability_repeats": 10,
+    "stability_solved": 100,
+    "success_rate_spread": 0.0,
+    "cheat_caught": 10,
+}
+for key, expected in required_upstream.items():
+    if upstream_contract.get(key) != expected:
+        errors.append(f"tests.upstream_hidden_pack_reuse.expected_contract.{key}")
+
+not_proof = payload.get("not_proof")
+required_not_proof = {
+    "native live autonomy",
+    "broad unknown-repository repair",
+    "external benchmark standing",
+    "remote CI proof",
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+}
+if not isinstance(not_proof, list) or set(not_proof) != required_not_proof:
+    errors.append("not_proof")
+
+if errors:
+    print("autonomous-learning-gate: invalid summary fields=" + ",".join(errors), file=sys.stderr)
+    raise SystemExit(1)
+PY
+}
+
+validate_failure_summary() {
+  "$PYTHON_BIN" - "$SUMMARY_JSON" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+errors = []
+
+if payload.get("schema_version") != "autonomous-learning-gate/v0.1":
+    errors.append("schema_version")
+if payload.get("status") != "failed":
+    errors.append("status")
+failure = payload.get("failure") or {}
+segment = failure.get("segment")
+if not segment:
+    errors.append("failure.segment")
+if not isinstance(failure.get("exit_code"), int) or failure["exit_code"] == 0:
+    errors.append("failure.exit_code")
+if segment and segment != "unknown":
+    segments = payload.get("segments") or {}
+    if segments.get(segment) != "failed":
+        errors.append(f"segments.{segment}")
+    elapsed = payload.get("segment_elapsed_seconds") or {}
+    value = elapsed.get(segment)
+    if not isinstance(value, int) or value < 0:
+        errors.append(f"segment_elapsed_seconds.{segment}")
+if errors:
+    print("autonomous-learning-gate: invalid failure summary fields=" + ",".join(errors), file=sys.stderr)
+    raise SystemExit(1)
+PY
+}
+
+maybe_corrupt_summary_for_test() {
+  if [ "${OPENMAKO_AUTONOMOUS_LEARNING_GATE_TEST_CORRUPT_SUMMARY:-}" != "missing_contract_fields" ]; then
+    return
+  fi
+  echo "autonomous-learning-gate: corrupting summary for test=missing_contract_fields" >&2
+  "$PYTHON_BIN" - "$SUMMARY_JSON" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+payload.get("tests", {}).get("upstream_hidden_pack_reuse", {}).get("expected_contract", {}).pop("cheat_caught", None)
+path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
+on_error() {
+  rc="$1"
+  trap - ERR
+  if [ -f "$SUMMARY_JSON" ]; then
+    if [ -n "$CURRENT_SEGMENT" ]; then
+      failed_segment="$CURRENT_SEGMENT"
+      finish_segment "$failed_segment" failed || true
+    else
+      failed_segment="unknown"
+    fi
+    update_summary_status failed || true
+    "$PYTHON_BIN" - "$SUMMARY_JSON" "$failed_segment" "$rc" <<'PY' || true
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+payload["failure"] = {
+    "segment": sys.argv[2],
+    "exit_code": int(sys.argv[3]),
+}
+path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+    validate_failure_summary || true
+    echo "autonomous-learning-gate: FAILED segment=$failed_segment summary=$SUMMARY_JSON" >&2
+  fi
+  exit "$rc"
+}
+
+trap 'on_error $?' ERR
+
+init_summary
+
 echo "autonomous-learning-gate: running stage1 trajectory reuse matrix"
+start_segment "stage1_trajectory_reuse_matrix"
 "$PYTHON_BIN" -m pytest -p no:cacheprovider \
   tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2 \
   tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2 \
   tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2 \
   -q
+finish_segment "stage1_trajectory_reuse_matrix" passed
 
 echo "autonomous-learning-gate: running upstream hidden-pack reuse stress test"
+start_segment "upstream_hidden_pack_reuse"
 "$PYTHON_BIN" -m pytest -p no:cacheprovider \
   tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating \
   -q
+finish_segment "upstream_hidden_pack_reuse" passed
+
+update_summary_status passed
+maybe_corrupt_summary_for_test
+if ! validate_summary; then
+  CURRENT_SEGMENT="summary_validation"
+  CURRENT_SEGMENT_STARTED_AT="$(date +%s)"
+  on_error 1
+fi
 
 echo "autonomous-learning-gate: PASS"
+echo "autonomous-learning-gate: summary=$SUMMARY_JSON"
+echo "autonomous-learning-gate: not-proof=native live autonomy, broad unknown-repository repair, external benchmark standing, remote CI proof, external review, endorsement, stars, reposts"
