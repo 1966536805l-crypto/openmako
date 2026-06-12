@@ -212,11 +212,26 @@ ADVERSARIAL_MATRIX = json.loads(
     ).read_text(encoding="utf-8")
 )
 ADVERSARIAL_CLAIM_CASES = ADVERSARIAL_MATRIX["cases"]
+EXPECTED_ADVERSARIAL_FAMILY_COUNTS = {
+    "combo-failed-validation-missing-edit": 1,
+    "combo-missing-diff-ci-tamper": 1,
+    "combo-missing-test-agent-risk": 1,
+    "combo-scope-validation-failure": 1,
+    "combo-stale-validation-missing-diff": 1,
+    "missing-diff-content": 15,
+    "missing-edited-file": 15,
+    "missing-final-claim": 5,
+    "missing-test-evidence": 10,
+    "pass-source-repair": 20,
+    "post-edit-validation-failure": 10,
+    "scope-violation": 10,
+    "test-only-tamper-risk": 15,
+}
 
 assert len(MEDIUM_CASES) == 100
 assert len(HIGH_CASES) == 100
 assert len(ULTRA_CASES) == 10
-assert len(ADVERSARIAL_CLAIM_CASES) == 100
+assert len(ADVERSARIAL_CLAIM_CASES) == 105
 
 
 @pytest.mark.parametrize("case", MEDIUM_CASES, ids=lambda case: case.name)
@@ -232,6 +247,33 @@ def test_evidence_court_high_intensity_matrix(case: StatusCase) -> None:
 @pytest.mark.parametrize("case", ULTRA_CASES, ids=lambda case: case.name)
 def test_evidence_court_ultra_intensity_matrix(case: StatusCase) -> None:
     _assert_status_case(case)
+
+
+def test_evidence_court_adversarial_claim_matrix_schema_canary() -> None:
+    assert ADVERSARIAL_MATRIX["schema_version"] == "openmako-adversarial-claim-matrix/v0.1"
+    assert set(ADVERSARIAL_MATRIX) == {
+        "case_family_counts",
+        "cases",
+        "description",
+        "multi_finding_case_count",
+        "schema_version",
+    }
+    assert ADVERSARIAL_MATRIX["case_family_counts"] == EXPECTED_ADVERSARIAL_FAMILY_COUNTS
+    assert ADVERSARIAL_MATRIX["multi_finding_case_count"] == 5
+
+    names = [case["name"] for case in ADVERSARIAL_CLAIM_CASES]
+    assert len(names) == len(set(names))
+    family_counts: dict[str, int] = {}
+    multi_finding_cases = 0
+    for case in ADVERSARIAL_CLAIM_CASES:
+        assert set(case) == {"expected", "name", "record"}
+        assert set(case["expected"]) == {"failed_at", "failure_class", "finding_types", "verdict"}
+        family = case["name"].rsplit("-", 1)[0]
+        family_counts[family] = family_counts.get(family, 0) + 1
+        if len(case["expected"]["finding_types"]) > 1:
+            multi_finding_cases += 1
+    assert family_counts == EXPECTED_ADVERSARIAL_FAMILY_COUNTS
+    assert multi_finding_cases == ADVERSARIAL_MATRIX["multi_finding_case_count"]
 
 
 @pytest.mark.parametrize("case", ADVERSARIAL_CLAIM_CASES, ids=lambda case: case["name"])

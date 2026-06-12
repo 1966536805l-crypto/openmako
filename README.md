@@ -63,8 +63,9 @@ public-review-gate: PASS
 What this checks is narrow: the focused learning-effect gate passes, public
 metadata stays inside the v0.1 boundary, Evidence Court fails closed on a
 supplied bad-run record, the local Evidence Court intensity matrix covers
-supplied test-output parser edge cases and 100 full supplied audit-record
-claim-boundary cases, and supplied transcript adapters preserve complete
+supplied test-output parser edge cases and 105 full supplied audit-record
+claim-boundary cases, including five multi-finding precedence cases, and
+supplied transcript adapters preserve complete
 supplied proof fields while rejecting success claims that have
 missing-test-proof, missing exit-status evidence, missing edited-file evidence,
 missing supplied diff-content evidence, supplied diff-content that only names

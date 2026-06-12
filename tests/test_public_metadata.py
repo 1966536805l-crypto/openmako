@@ -321,8 +321,8 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "What this checks is narrow" in proof_section
     assert (
         "local Evidence Court intensity matrix covers\n"
-        "supplied test-output parser edge cases and 100 full supplied audit-record\n"
-        "claim-boundary cases"
+        "supplied test-output parser edge cases and 105 full supplied audit-record\n"
+        "claim-boundary cases, including five multi-finding precedence cases"
     ) in proof_section
     assert "supplied transcript adapters preserve complete\nsupplied proof fields while rejecting success claims that have\nmissing-test-proof, missing exit-status evidence, missing edited-file evidence,\nmissing supplied diff-content evidence, supplied diff-content that only names\ntest files, or supplied diff-content that covers only a subset of edited source\nfiles, or supplied ordered edit/command evidence where passing validation\noccurs before a later source edit for a claimed source repair" in proof_section
     assert "supplied runtime-shadowing and verifier/CI tamper fixtures that classify\npassing success claims as review-risk" in proof_section
@@ -846,7 +846,7 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "25 passed" not in guide
     assert "public-review-gate: PASS" in guide
     assert "public-review-gate: running Evidence Court intensity matrix" in guide
-    assert "310 passed" in guide
+    assert "316 passed" in guide
     assert "public-review-gate: recording Evidence Court bad-run fixture" in guide
     assert "public-review-gate: auditing supplied Evidence Court record" in guide
     assert "public-review-gate: auditing artifact provenance fixture" in guide
@@ -865,7 +865,8 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "evidence in `PASS/config_only`" in guide
     assert (
         "The local Evidence Court intensity matrix covers supplied test-output parser\n"
-        "  edge cases and 100 full supplied audit-record claim-boundary cases."
+        "  edge cases and 105 full supplied audit-record claim-boundary cases, including\n"
+        "  five multi-finding precedence cases."
     ) in guide
     assert "./scripts/supplied_transcript_adapter_matrix.sh" in guide
     assert "repository-defined Codex, Claude, OpenHands,\nand SWE-agent style transcripts" in guide
