@@ -66,7 +66,8 @@ supplied bad-run record, the local Evidence Court intensity matrix covers
 supplied test-output parser edge cases, and supplied transcript adapters
 preserve complete supplied proof fields while rejecting success claims that
 have missing-test-proof, missing exit-status evidence, missing edited-file
-evidence, or missing supplied diff-content evidence. It
+evidence, missing supplied diff-content evidence, or supplied diff-content
+that only names test files for a claimed source repair. It
 also checks a supplied config-only repair fixture so that packaging/config
 metadata fixes do not get confused with README-only repair claims, plus
 supplied runtime-shadowing and verifier/CI tamper fixtures that classify
