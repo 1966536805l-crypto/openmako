@@ -160,6 +160,28 @@ expired, or missing an artifact digest. Passing it is current public CI artifact
 evidence only, not external review, endorsement, stars, reposts, live autonomy,
 broad unknown-repository repair, or external benchmark standing.
 
+To re-check that the published public evidence comment still contains the
+recorded remote-run markers and non-proof boundary:
+
+```bash
+bash scripts/public_evidence_comment_check.sh
+```
+
+Expected high-level signal:
+
+```text
+public-evidence-comment-check: marker=commit ok
+public-evidence-comment-check: marker=run-id ok
+public-evidence-comment-check: marker=artifact-id ok
+public-evidence-comment-check: marker=artifact-digest ok
+public-evidence-comment-check: PASS
+```
+
+Set `OPENMAKO_PUBLIC_EVIDENCE_HTML` to point the same checker at a saved HTML
+fixture. This is public comment marker consistency only, not external review,
+endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or
+external benchmark standing.
+
 Public boundary metadata only:
 
 ```bash

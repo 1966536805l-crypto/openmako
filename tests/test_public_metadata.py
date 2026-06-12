@@ -175,6 +175,13 @@ def test_readme_links_public_proof_issue() -> None:
     assert "bash scripts/remote_autonomous_learning_snapshot.sh" in readme
     assert "a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id and digest" in readme
     assert "public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing" in readme
+    assert "Public evidence comment check" in readme
+    assert "bash scripts/public_evidence_comment_check.sh" in readme
+    assert "a fail-closed marker check for the published issue evidence comment" in readme
+    assert "defaults to issue #1 comment `4694860161`" in readme
+    assert "verifies the configured commit, run, job, artifact id, artifact digest, and boundary phrase in public HTML" in readme
+    assert "OPENMAKO_PUBLIC_EVIDENCE_HTML" in readme
+    assert "public record consistency only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing" in readme
     assert "Why It Is Worth Checking" in readme
 
 
@@ -285,6 +292,10 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert "It uploads\n  `.quantagent/autonomous_learning_gate` as the\n  `autonomous-learning-gate-summary` artifact" in progress
     assert "not attached to broad default push or\n  pull-request CI" in progress
     assert "manual or path-filtered push run is public CI artifact evidence only, not\n  external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair\n  proof, or external benchmark standing" in progress
+    assert "`bash scripts/public_evidence_comment_check.sh` is the fail-closed marker\n  check for the published issue #1 evidence comment" in progress
+    assert "comment id, commit, run id, job id, artifact name, artifact id, artifact\n  digest, and boundary phrase" in progress
+    assert "`OPENMAKO_PUBLIC_EVIDENCE_HTML` fixture" in progress
+    assert "Passing this script is public comment\n  record consistency only, not external review, endorsement, stars, reposts,\n  live autonomy, broad unknown-repository repair, or external benchmark\n  standing" in progress
 
 
 def test_agent_trend_radar_tracks_current_next_build_target() -> None:
@@ -917,6 +928,108 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "artifact 'autonomous-learning-gate-summary' is missing" in missing_artifact.stderr
 
 
+def test_public_evidence_comment_check_script_is_fail_closed_and_marker_aware(tmp_path: Path) -> None:
+    script = ROOT / "scripts" / "public_evidence_comment_check.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert "OPENMAKO_PUBLIC_EVIDENCE_COMMENT_URL" in text
+    assert "https://github.com/1966536805l-crypto/openmako/issues/1#issuecomment-4694860161" in text
+    assert "OPENMAKO_PUBLIC_EVIDENCE_HTML" in text
+    assert "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_COMMENT_ID" in text
+    assert "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_COMMIT" in text
+    assert "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_RUN_ID" in text
+    assert "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_JOB_ID" in text
+    assert "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_ARTIFACT_NAME" in text
+    assert "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_ARTIFACT_ID" in text
+    assert "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_ARTIFACT_DIGEST" in text
+    assert "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_BOUNDARY" in text
+    assert "html.unescape" in text
+    assert "urllib.request.urlopen" in text
+    assert "missing public evidence markers=" in text
+    assert '"artifact-digest": expected_artifact_digest' in text
+    assert "not-proof=external review; endorsement; stars; reposts; live autonomy" in text
+    assert "broad unknown-repository repair; external benchmark standing" in text
+    for forbidden in FORBIDDEN_README_CLAIMS:
+        assert forbidden.lower() not in text.lower()
+
+    fixture = tmp_path / "issue.html"
+    env = os.environ.copy()
+    env.update(
+        {
+            "OPENMAKO_PUBLIC_EVIDENCE_COMMENT_URL": "https://example.invalid/openmako/issues/1#issuecomment-12345",
+            "OPENMAKO_PUBLIC_EVIDENCE_HTML": str(fixture),
+            "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_COMMENT_ID": "12345",
+            "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_COMMIT": "abc123",
+            "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_RUN_ID": "run-789",
+            "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_JOB_ID": "job-456",
+            "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_ARTIFACT_NAME": "autonomous-learning-gate-summary",
+            "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_ARTIFACT_ID": "artifact-222",
+            "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_ARTIFACT_DIGEST": "sha256:feedface",
+            "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_BOUNDARY": "not external review",
+        }
+    )
+    fixture.write_text(
+        """
+        <html>
+          <div id="issuecomment-12345">
+            commit abc123
+            run run-789
+            job job-456
+            autonomous-learning-gate-summary
+            artifact artifact-222
+            digest sha256:feedface
+            public CI artifact evidence only, not external review
+          </div>
+        </html>
+        """,
+        encoding="utf-8",
+    )
+    result = subprocess.run(
+        ["bash", "scripts/public_evidence_comment_check.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "public-evidence-comment-check: marker=commit ok" in result.stdout
+    assert "public-evidence-comment-check: marker=run-id ok" in result.stdout
+    assert "public-evidence-comment-check: marker=artifact-id ok" in result.stdout
+    assert "public-evidence-comment-check: marker=artifact-digest ok" in result.stdout
+    assert "public-evidence-comment-check: PASS" in result.stdout
+
+    fixture.write_text(
+        """
+        <html>
+          <div id="issuecomment-12345">
+            commit abc123
+            run run-789
+            job job-456
+            autonomous-learning-gate-summary
+            artifact artifact-222
+            public CI artifact evidence only, not external review
+          </div>
+        </html>
+        """,
+        encoding="utf-8",
+    )
+    missing_digest = subprocess.run(
+        ["bash", "scripts/public_evidence_comment_check.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert missing_digest.returncode == 1
+    assert "missing public evidence markers=artifact-digest" in missing_digest.stderr
+
+
 def test_agent_trend_radar_maps_sources_to_non_claim_development_bets() -> None:
     radar = (ROOT / "docs" / "AGENT_TREND_RADAR.md").read_text(encoding="utf-8")
 
@@ -1066,6 +1179,14 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "remote-autonomous-learning-snapshot: artifact-digest=sha256:..." in guide
     assert "stale, still running, failed, missing, rate limited, missing the named artifact,\nexpired, or missing an artifact digest" in guide
     assert "Passing it is current public CI artifact\nevidence only, not external review, endorsement, stars, reposts, live autonomy,\nbroad unknown-repository repair, or external benchmark standing" in guide
+    assert "bash scripts/public_evidence_comment_check.sh" in guide
+    assert "public-evidence-comment-check: marker=commit ok" in guide
+    assert "public-evidence-comment-check: marker=run-id ok" in guide
+    assert "public-evidence-comment-check: marker=artifact-id ok" in guide
+    assert "public-evidence-comment-check: marker=artifact-digest ok" in guide
+    assert "public-evidence-comment-check: PASS" in guide
+    assert "Set `OPENMAKO_PUBLIC_EVIDENCE_HTML` to point the same checker at a saved HTML\nfixture" in guide
+    assert "This is public comment marker consistency only, not external review,\nendorsement, stars, reposts, live autonomy, broad unknown-repository repair, or\nexternal benchmark standing" in guide
     assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in guide
     assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in guide
     assert "Config-only false-positive boundary:" in guide

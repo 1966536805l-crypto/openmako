@@ -129,6 +129,14 @@ Current public proof:
   exiting nonzero. Passing this script is current public CI artifact evidence
   only, not external review, endorsement, stars, reposts, live autonomy, broad
   unknown-repository repair, or external benchmark standing.
+- `bash scripts/public_evidence_comment_check.sh` is the fail-closed marker
+  check for the published issue #1 evidence comment. It verifies the configured
+  comment id, commit, run id, job id, artifact name, artifact id, artifact
+  digest, and boundary phrase in public HTML or in a local
+  `OPENMAKO_PUBLIC_EVIDENCE_HTML` fixture. Passing this script is public comment
+  record consistency only, not external review, endorsement, stars, reposts,
+  live autonomy, broad unknown-repository repair, or external benchmark
+  standing.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:
