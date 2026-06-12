@@ -300,6 +300,14 @@ Current public proof:
   machine-readable fields. It is a supplied-format smoke test, not native
   product export parsing, live agent control, benchmark ingestion,
   diff-content proof, or endorsement.
+- The supplied transcript adapters now have a local regression that converts
+  Codex, Claude, OpenHands, and SWE-agent style transcripts with supplied
+  `artifact_provenance`, including `missing_provenance`, and then audits the
+  converted records. The regression confirms the metadata is preserved in audit
+  JSON while `benchmark_score_validated=false` and `runner_verified=false`
+  remain supplied metadata, not native benchmark ingestion, benchmark score
+  validation, live agent control, external review, endorsement, stars, or
+  reposts.
 - `scripts/public_proof_card.sh` wraps the same gate and prints a
   screenshot-friendly proof card with commit, scope, non-proof boundaries,
   review issue, and external-review record form.

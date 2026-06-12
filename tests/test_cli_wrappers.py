@@ -3640,6 +3640,130 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(converted.stdout, "")
                 self.assertIn(expected_error, converted.stderr)
 
+    def test_openmako_evidence_court_transcript_adapters_preserve_artifact_provenance_for_audit(
+        self,
+    ) -> None:
+        expected_provenance = {
+            "eval_rule_version": "swtbench-strip-model-patch/v2",
+            "eval_rule_commit": "abc1234",
+            "runner_version": "openhands-benchmark/2026-06-05",
+            "runner_commit": "def5678",
+            "input_hashes": {"output.jsonl": "sha256:111"},
+            "output_hashes": {"output.swtbench.jsonl": "sha256:222"},
+            "benchmark_score_validated": False,
+            "runner_verified": False,
+            "missing_provenance": ["container_digest"],
+        }
+
+        cases = {
+            "codex": {
+                "claimed_task": "Compare benchmark artifacts.",
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "tool_calls": [
+                            {
+                                "type": "exec_command",
+                                "command": "python3 scripts/compare_outputs.py",
+                                "exit_code": 0,
+                                "artifact_provenance": expected_provenance,
+                            },
+                        ],
+                    },
+                    {
+                        "role": "assistant",
+                        "content": "Recorded supplied artifact provenance metadata only; benchmark score was not validated.",
+                    },
+                ],
+            },
+            "claude": {
+                "task": "Compare benchmark artifacts.",
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "content": [
+                            {
+                                "type": "tool_use",
+                                "name": "Bash",
+                                "input": {
+                                    "command": "python3 scripts/compare_outputs.py",
+                                    "exit_code": 0,
+                                    "artifact_provenance": expected_provenance,
+                                },
+                            }
+                        ],
+                    },
+                    {
+                        "role": "assistant",
+                        "content": "Recorded supplied artifact provenance metadata only; benchmark score was not validated.",
+                    },
+                ],
+            },
+            "openhands": {
+                "task": "Compare benchmark artifacts.",
+                "events": [
+                    {
+                        "action": "run",
+                        "command": "python3 scripts/compare_outputs.py",
+                        "exit_code": 0,
+                        "artifact_provenance": expected_provenance,
+                    },
+                    {
+                        "action": "finish",
+                        "message": "Recorded supplied artifact provenance metadata only; benchmark score was not validated.",
+                    },
+                ],
+            },
+            "swe-agent": {
+                "issue": "Compare benchmark artifacts.",
+                "steps": [
+                    {
+                        "action": "test",
+                        "command": "python3 scripts/compare_outputs.py",
+                        "exit_code": 0,
+                        "artifact_provenance": expected_provenance,
+                    },
+                    {
+                        "action": "submit",
+                        "message": "Recorded supplied artifact provenance metadata only; benchmark score was not validated.",
+                    },
+                ],
+            },
+        }
+
+        for adapter, transcript in cases.items():
+            with self.subTest(adapter=adapter):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 0, converted.stderr)
+                record = json.loads(converted.stdout)
+                self.assertEqual(record["artifact_provenance"], expected_provenance)
+                self.assertEqual(record["source_format"], f"{adapter}-transcript/v0.1")
+
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(record, handle)
+                    handle.flush()
+                    audited = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+                self.assertEqual(audited.returncode, 0, audited.stderr)
+                payload = json.loads(audited.stdout)
+                self.assertEqual(payload["verdict"], "PASS")
+                self.assertEqual(payload["artifact_provenance"], expected_provenance)
+                provenance_items = [
+                    item for item in payload["report"]["evidence"] if item["name"] == "artifact_provenance"
+                ]
+                self.assertEqual(len(provenance_items), 1)
+                self.assertEqual(provenance_items[0]["data"]["artifact_provenance"], expected_provenance)
+
     def test_openmako_evidence_court_transcript_adapters_label_first_combined_command_conflict(
         self,
     ) -> None:
