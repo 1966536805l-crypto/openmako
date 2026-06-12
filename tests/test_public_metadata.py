@@ -310,7 +310,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "public-review-gate: PASS" in proof_section
     assert "What this checks is narrow" in proof_section
     assert "local Evidence Court intensity matrix covers\nsupplied test-output parser edge cases" in proof_section
-    assert "supplied transcript adapters\npreserve complete supplied proof fields while rejecting success claims that\nhave missing-test-proof, missing exit-status evidence, missing edited-file\nevidence, missing supplied diff-content evidence, supplied diff-content that\nonly names test files, or supplied diff-content that covers only a subset of\nedited source files for a claimed source repair" in proof_section
+    assert "supplied transcript adapters\npreserve complete supplied proof fields while rejecting success claims that\nhave missing-test-proof, missing exit-status evidence, missing edited-file\nevidence, missing supplied diff-content evidence, supplied diff-content that\nonly names test files, or supplied diff-content that covers only a subset of\nedited source files, or supplied ordered edit/command evidence where passing\nvalidation occurs before a later source edit for a claimed source repair" in proof_section
     assert "supplied runtime-shadowing and verifier/CI tamper fixtures that classify\npassing success claims as review-risk" in proof_section
     assert "It does not prove broad\nunknown-repository repair, native runtime hardening, native benchmark\ningestion, native CI hardening, or external endorsement." in proof_section
     assert "This is a local script\nresult, not external reviewer approval." in proof_section
@@ -850,7 +850,7 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "The local Evidence Court intensity matrix covers supplied test-output parser\n  edge cases." in guide
     assert "./scripts/supplied_transcript_adapter_matrix.sh" in guide
     assert "repository-defined Codex, Claude, OpenHands,\nand SWE-agent style transcripts" in guide
-    assert "checks that each adapter rejects a\nsuccess claim when command/test proof is missing, when validation command\nexit-status evidence is missing, or when validation exists but edited-file or\nsupplied diff-content evidence is missing, only names test files, or covers\nonly a subset of edited source files for a claimed source repair" in guide
+    assert "checks that each adapter rejects a\nsuccess claim when command/test proof is missing, when validation command\nexit-status evidence is missing, or when validation exists but edited-file or\nsupplied diff-content evidence is missing, only names test files, or covers\nonly a subset of edited source files, or when supplied ordered edit/command\nevidence has passing validation before a later source edit for a claimed source\nrepair" in guide
     assert "not native\nproduct export parsing, proof that supplied patches were\napplied outside the supplied record, or live agent control" in guide
     assert "It does not prove broad unknown-repository SWE repair." in guide
     assert "It does not prove external endorsement." in guide

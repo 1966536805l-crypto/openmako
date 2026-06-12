@@ -131,7 +131,9 @@ record, audits each generated record, and checks that each adapter rejects a
 success claim when command/test proof is missing, when validation command
 exit-status evidence is missing, or when validation exists but edited-file or
 supplied diff-content evidence is missing, only names test files, or covers
-only a subset of edited source files for a claimed source repair. It is still
+only a subset of edited source files, or when supplied ordered edit/command
+evidence has passing validation before a later source edit for a claimed source
+repair. It is still
 a supplied-format smoke test, not native
 product export parsing, proof that supplied patches were
 applied outside the supplied record, or live agent control.

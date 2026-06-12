@@ -1480,6 +1480,14 @@ Current public proof:
   added. This is supplied-record timeline validation only, not native patch
   application proof, native transcript ingestion, live control, remote CI proof,
   external review, endorsement, stars, or reposts.
+- The README proof section and v0.1 reproduction guide now mention the stale
+  validation timeline boundary alongside missing, test-only, and partial
+  supplied diff-content boundaries in supplied transcript adapter checks.
+  Public metadata tests, supplied transcript adapter matrix, `git diff --check`,
+  and public review gate passed locally before this note was added. This is
+  public wording alignment only, not new parser behavior, native patch
+  application proof, native transcript ingestion, live control, remote CI proof,
+  external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
