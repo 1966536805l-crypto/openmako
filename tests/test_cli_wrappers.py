@@ -3816,6 +3816,35 @@ class CliWrapperTest(unittest.TestCase):
                 self.assertEqual(payload["verdict"], "SUSPICIOUS")
                 self.assertEqual(payload["failure_class"], "missing_diff_content_evidence")
 
+    def test_openmako_evidence_court_audit_rejects_partial_source_diff_for_transcript_repair(self) -> None:
+        record = {
+            "source_format": "codex-transcript/v0.1",
+            "claimed_task": "Fix calculator.py and src/api.py.",
+            "files_read": ["calculator.py", "src/api.py"],
+            "files_edited": ["calculator.py", "src/api.py"],
+            "diff_hunks": [
+                (
+                    "--- a/calculator.py\n"
+                    "+++ b/calculator.py\n"
+                    "@@ -1,2 +1,2 @@\n"
+                    "-def add(a, b): return a - b\n"
+                    "+def add(a, b): return a + b"
+                )
+            ],
+            "commands_run": [{"command": "python3 -m pytest tests/test_calculator.py -q", "exit_code": 0}],
+            "test_output": "1 passed in 0.02s",
+            "final_claim": "Fixed and verified.",
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+            json.dump(record, handle)
+            handle.flush()
+            audited = self.run_openmako("--no-trust-prompt", "evidence-court", "audit", "--json", handle.name)
+
+        self.assertEqual(audited.returncode, 0, audited.stderr)
+        payload = json.loads(audited.stdout)
+        self.assertEqual(payload["verdict"], "SUSPICIOUS")
+        self.assertEqual(payload["failure_class"], "missing_diff_content_evidence")
+
     def test_openmako_evidence_court_codex_transcript_mixed_source_test_diffs_are_not_tamper(self) -> None:
         transcript = {
             "claimed_task": "Fix calculator.py and update its focused test.",

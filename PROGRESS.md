@@ -1455,6 +1455,14 @@ Current public proof:
   parser behavior, native patch application proof, native transcript ingestion,
   live control, remote CI proof, external review, endorsement, stars, or
   reposts.
+- Supplied transcript audits now reject source-repair success claims when the
+  record marks multiple source files as edited but path-bearing diff hunks only
+  cover a subset of those source files. The focused regression failed before
+  the audit change and passed after it; the full CLI wrapper test file, public
+  metadata tests, and supplied transcript adapter matrix passed locally before
+  this note was added. This is supplied-record source-diff coverage validation
+  only, not native patch application proof, native transcript ingestion, live
+  control, remote CI proof, external review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

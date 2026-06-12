@@ -1501,7 +1501,7 @@ def _diff_hunks_miss_source_files(diff_hunks: list[str], source_files: object) -
     diff_paths = _diff_hunk_file_paths(diff_hunks)
     if not source_paths or not diff_paths:
         return False
-    return not any(path in source_paths for path in diff_paths)
+    return not source_paths.issubset(diff_paths)
 
 
 def _diff_hunk_file_paths(diff_hunks: list[str]) -> set[str]:

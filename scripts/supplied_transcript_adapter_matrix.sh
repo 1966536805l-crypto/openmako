@@ -196,6 +196,75 @@ PY
   assert_audit_json "$audit" SUSPICIOUS missing_diff_content_evidence
 }
 
+smoke_adapter_partial_source_diff() {
+  local adapter="$1"
+  local source="$TMP_DIR/${adapter}.json"
+  local input="$TMP_DIR/${adapter}.partial-source-diff.json"
+  local record="$TMP_DIR/${adapter}.partial-source-diff.record.json"
+  local audit="$TMP_DIR/${adapter}.partial-source-diff.audit.json"
+
+  "$PYTHON_BIN" - "$source" "$input" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1])
+target = Path(sys.argv[2])
+payload = json.loads(source.read_text(encoding="utf-8"))
+
+def add_allowed_source(value):
+    if isinstance(value, dict):
+        allowed = value.get("allowed_files")
+        if isinstance(allowed, list) and "src/api.py" not in allowed:
+            allowed.append("src/api.py")
+        for item in value.values():
+            add_allowed_source(item)
+    elif isinstance(value, list):
+        for item in value:
+            add_allowed_source(item)
+
+def has_diff_content(value):
+    return any(key in value for key in ("diff", "patch", "unified_diff", "diff_hunks"))
+
+def add_source_file(value):
+    if isinstance(value, dict):
+        if has_diff_content(value):
+            files = value.get("files")
+            if isinstance(files, list):
+                if "src/api.py" not in files:
+                    files.append("src/api.py")
+            else:
+                value["files"] = ["calculator.py", "src/api.py"]
+        for item in value.values():
+            add_source_file(item)
+    elif isinstance(value, list):
+        for item in value:
+            add_source_file(item)
+
+add_allowed_source(payload)
+add_source_file(payload)
+target.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+PY
+
+  echo "adapter-matrix: recording ${adapter} partial-source-diff-evidence"
+  "$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court record "from-${adapter}-transcript" \
+    --output "$record" "$input"
+
+  echo "adapter-matrix: auditing ${adapter} partial-source-diff-evidence"
+  set +e
+  "$PYTHON_BIN" -m quantagent.cli --no-trust-prompt evidence-court audit --ci --fail-on suspicious --json "$record" > "$audit"
+  local audit_exit=$?
+  set -e
+
+  if [ "$audit_exit" -ne 1 ]; then
+    echo "adapter-matrix: expected partial-source-diff-evidence audit exit 1 for ${adapter}, got ${audit_exit}" >&2
+    cat "$audit" >&2
+    exit 1
+  fi
+
+  assert_audit_json "$audit" SUSPICIOUS missing_diff_content_evidence
+}
+
 smoke_adapter_missing_exit_status() {
   local adapter="$1"
   local source="$TMP_DIR/${adapter}.json"
@@ -612,24 +681,28 @@ smoke_adapter codex
 smoke_adapter_missing_exit_status codex
 smoke_adapter_missing_diff codex
 smoke_adapter_test_only_source_diff codex
+smoke_adapter_partial_source_diff codex
 smoke_adapter_missing_tests codex
 smoke_adapter_missing_edits codex
 smoke_adapter claude
 smoke_adapter_missing_exit_status claude
 smoke_adapter_missing_diff claude
 smoke_adapter_test_only_source_diff claude
+smoke_adapter_partial_source_diff claude
 smoke_adapter_missing_tests claude
 smoke_adapter_missing_edits claude
 smoke_adapter openhands
 smoke_adapter_missing_exit_status openhands
 smoke_adapter_missing_diff openhands
 smoke_adapter_test_only_source_diff openhands
+smoke_adapter_partial_source_diff openhands
 smoke_adapter_missing_tests openhands
 smoke_adapter_missing_edits openhands
 smoke_adapter swe-agent
 smoke_adapter_missing_exit_status swe-agent
 smoke_adapter_missing_diff swe-agent
 smoke_adapter_test_only_source_diff swe-agent
+smoke_adapter_partial_source_diff swe-agent
 smoke_adapter_missing_tests swe-agent
 smoke_adapter_missing_edits swe-agent
 
