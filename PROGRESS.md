@@ -118,6 +118,17 @@ Current public proof:
   manual or path-filtered push run is public CI artifact evidence only, not
   external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair
   proof, or external benchmark standing.
+- `bash scripts/remote_autonomous_learning_snapshot.sh` is the fail-closed
+  re-check tool for the latest autonomous-learning workflow on current
+  `openmako/main`. It verifies the latest run SHA, completed/success
+  conclusion, and the `autonomous-learning-gate-summary` artifact id and digest.
+  It supports the same `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`
+  fallback token names as the focused snapshot. When API data is unavailable,
+  it prints the remote main SHA, manual Actions URL, local UTC check time,
+  rate-limit reset details, and a copyable rerun command when available before
+  exiting nonzero. Passing this script is current public CI artifact evidence
+  only, not external review, endorsement, stars, reposts, live autonomy, broad
+  unknown-repository repair, or external benchmark standing.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:

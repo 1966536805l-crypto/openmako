@@ -137,6 +137,29 @@ public CI artifact evidence only, not broad default push or pull-request CI,
 external review, endorsement, live autonomy, or broad unknown-repository repair
 proof.
 
+After a remote autonomous-learning run exists, re-check the current artifact
+boundary with:
+
+```bash
+bash scripts/remote_autonomous_learning_snapshot.sh
+```
+
+Expected high-level signal:
+
+```text
+remote-autonomous-learning-snapshot: run-sha=<current openmako/main SHA>
+remote-autonomous-learning-snapshot: status=completed conclusion=success
+remote-autonomous-learning-snapshot: artifact-name=autonomous-learning-gate-summary
+remote-autonomous-learning-snapshot: artifact-digest=sha256:...
+remote-autonomous-learning-snapshot: PASS
+```
+
+The command fails closed if the latest autonomous-learning workflow run is
+stale, still running, failed, missing, rate limited, missing the named artifact,
+expired, or missing an artifact digest. Passing it is current public CI artifact
+evidence only, not external review, endorsement, stars, reposts, live autonomy,
+broad unknown-repository repair, or external benchmark standing.
+
 Public boundary metadata only:
 
 ```bash

@@ -118,6 +118,21 @@ summary and pytest logs when the gate finishes. The workflow is path-filtered
 and is not broad default push or pull-request CI, external review, or
 endorsement.
 
+After such a run exists, verify the current remote artifact boundary with:
+
+```bash
+bash scripts/remote_autonomous_learning_snapshot.sh
+```
+
+That command is a fail-closed GitHub Actions snapshot for current
+`openmako/main`: it requires the latest autonomous-learning workflow run to
+match the remote main commit, complete successfully, and expose the
+`autonomous-learning-gate-summary` artifact with an artifact id and digest. It
+prints a manual Actions URL and rate-limit reset details when the GitHub API is
+unavailable, then exits nonzero. Passing it is public CI artifact evidence only,
+not external review, endorsement, stars, reposts, live autonomy, broad
+unknown-repository repair, or external benchmark standing.
+
 ## If You Came From A Benchmark Thread
 
 The useful review is not "do you like this project?" It is narrower:
@@ -323,6 +338,7 @@ qagent --help
 | v0.1 release | [release v0.1.0](https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0) |
 | Focused public CI | [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml) |
 | Remote focused CI snapshot | `bash scripts/remote_focused_ci_snapshot.sh`, a fail-closed check for the latest focused workflow on current `openmako/main`; supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`; if the GitHub API is unavailable it prints the remote SHA, local UTC check time, manual Actions URL, rate-limit reset countdown, and a copyable rerun command when available before exiting nonzero; not external review or endorsement |
+| Remote autonomous-learning artifact snapshot | `bash scripts/remote_autonomous_learning_snapshot.sh`, a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id and digest; supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`; API-unavailable results print the remote SHA, local UTC check time, manual Actions URL, rate-limit reset countdown, and a copyable rerun command when available before exiting nonzero; public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing |
 | Screenshot-friendly proof card | [`scripts/public_proof_card.sh`](scripts/public_proof_card.sh), runs the public gate then prints scope and non-proof boundaries |
 | Learning-effect gate | [`quantagent/learning_effect_coding_bench.py`](quantagent/learning_effect_coding_bench.py) |
 | CodingBench execution | [`quantagent/coding_bench.py`](quantagent/coding_bench.py) |

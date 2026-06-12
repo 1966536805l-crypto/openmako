@@ -171,6 +171,10 @@ def test_readme_links_public_proof_issue() -> None:
     assert "supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`" in readme
     assert "if the GitHub API is unavailable it prints the remote SHA, local UTC check time, manual Actions URL, rate-limit reset countdown, and a copyable rerun command when available before exiting nonzero" in readme
     assert "not external review or endorsement" in readme
+    assert "Remote autonomous-learning artifact snapshot" in readme
+    assert "bash scripts/remote_autonomous_learning_snapshot.sh" in readme
+    assert "a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id and digest" in readme
+    assert "public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing" in readme
     assert "Why It Is Worth Checking" in readme
 
 
@@ -802,6 +806,117 @@ def test_remote_focused_ci_snapshot_script_is_fail_closed_and_token_aware() -> N
         assert forbidden.lower() not in text.lower()
 
 
+def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_aware(tmp_path: Path) -> None:
+    script = ROOT / "scripts" / "remote_autonomous_learning_snapshot.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert "OPENMAKO_AUTONOMOUS_WORKFLOW" in text
+    assert "autonomous-learning-gate.yml" in text
+    assert "OPENMAKO_AUTONOMOUS_ARTIFACT_NAME" in text
+    assert "autonomous-learning-gate-summary" in text
+    assert "OPENMAKO_AUTONOMOUS_RUNS_JSON" in text
+    assert "OPENMAKO_AUTONOMOUS_ARTIFACTS_JSON" in text
+    assert "OPENMAKO_GITHUB_TOKEN" in text
+    assert "GITHUB_TOKEN" in text
+    assert "GH_TOKEN" in text
+    assert "Authorization" in text
+    assert "per_page=1" in text
+    assert "per_page=100" in text
+    assert "latest autonomous-learning run does not match remote main" in text
+    assert "autonomous-learning workflow is not completed/success" in text
+    assert "artifact {artifact_name!r} is missing" in text
+    assert "autonomous-learning artifact is expired" in text
+    assert "autonomous-learning artifact digest is missing" in text
+    assert "artifact-digest=" in text
+    assert "manual-url=" in text
+    assert "checked-at-utc=" in text
+    assert "github_api_rate_limit" in text
+    assert "no_autonomous_workflow_runs" in text
+    assert "Retry-After" in text
+    assert "X-RateLimit-Reset" in text
+    assert "rerun-after-command=" in text
+    assert "sleep {seconds_until_reset} && bash scripts/remote_autonomous_learning_snapshot.sh" in text
+    assert "not-proof=external review; endorsement; stars; reposts; live autonomy" in text
+    assert "broad unknown-repository repair; external benchmark standing" in text
+    for forbidden in FORBIDDEN_README_CLAIMS:
+        assert forbidden.lower() not in text.lower()
+
+    remote_sha = "1234567890abcdef1234567890abcdef12345678"
+    runs_json = tmp_path / "runs.json"
+    artifacts_json = tmp_path / "artifacts.json"
+    runs_json.write_text(
+        json.dumps(
+            {
+                "workflow_runs": [
+                    {
+                        "id": 27437928257,
+                        "head_sha": remote_sha,
+                        "status": "completed",
+                        "conclusion": "success",
+                        "html_url": "https://github.com/1966536805l-crypto/openmako/actions/runs/27437928257",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    artifacts_json.write_text(
+        json.dumps(
+            {
+                "artifacts": [
+                    {
+                        "id": 7600712280,
+                        "name": "autonomous-learning-gate-summary",
+                        "size_in_bytes": 1503,
+                        "expired": False,
+                        "digest": "sha256:3d621acdd9a5cbe1a0dc6cc97042935dc46f978cacffc64020a4aaae2910f1a3",
+                        "created_at": "2026-06-12T19:21:00Z",
+                        "expires_at": "2026-09-10T19:21:00Z",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env.update(
+        {
+            "OPENMAKO_REMOTE_MAIN_SHA": remote_sha,
+            "OPENMAKO_AUTONOMOUS_RUNS_JSON": str(runs_json),
+            "OPENMAKO_AUTONOMOUS_ARTIFACTS_JSON": str(artifacts_json),
+        }
+    )
+    result = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "remote-autonomous-learning-snapshot: run-sha=1234567890abcdef1234567890abcdef12345678" in result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-id=7600712280" in result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-digest=sha256:3d621" in result.stdout
+    assert "remote-autonomous-learning-snapshot: PASS" in result.stdout
+
+    artifacts_json.write_text(json.dumps({"artifacts": []}), encoding="utf-8")
+    missing_artifact = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert missing_artifact.returncode == 1
+    assert "artifact 'autonomous-learning-gate-summary' is missing" in missing_artifact.stderr
+
+
 def test_agent_trend_radar_maps_sources_to_non_claim_development_bets() -> None:
     radar = (ROOT / "docs" / "AGENT_TREND_RADAR.md").read_text(encoding="utf-8")
 
@@ -945,6 +1060,12 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "`.github/workflows/autonomous-learning-gate.yml` workflow" in guide
     assert "uploads the\nsummary JSON and pytest logs" in guide
     assert "path-filtered\npublic CI artifact evidence only, not broad default push or pull-request CI,\nexternal review" in guide
+    assert "bash scripts/remote_autonomous_learning_snapshot.sh" in guide
+    assert "remote-autonomous-learning-snapshot: status=completed conclusion=success" in guide
+    assert "remote-autonomous-learning-snapshot: artifact-name=autonomous-learning-gate-summary" in guide
+    assert "remote-autonomous-learning-snapshot: artifact-digest=sha256:..." in guide
+    assert "stale, still running, failed, missing, rate limited, missing the named artifact,\nexpired, or missing an artifact digest" in guide
+    assert "Passing it is current public CI artifact\nevidence only, not external review, endorsement, stars, reposts, live autonomy,\nbroad unknown-repository repair, or external benchmark standing" in guide
     assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in guide
     assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in guide
     assert "Config-only false-positive boundary:" in guide
