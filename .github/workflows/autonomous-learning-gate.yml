@@ -1,0 +1,37 @@
+name: autonomous-learning-gate
+
+on:
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  autonomous-learning-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install package and test runner
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . pytest
+
+      - name: Run autonomous-learning stress gate
+        run: |
+          bash scripts/autonomous_learning_gate.sh
+
+      - name: Upload autonomous-learning summary and logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: autonomous-learning-gate-summary
+          path: .quantagent/autonomous_learning_gate
+          if-no-files-found: error

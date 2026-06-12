@@ -129,6 +129,11 @@ per-segment pytest log paths and log tails, observed pass/skip/warning counts,
 the expected stage1/upstream learning-effect contract counts, and the same
 not-proof boundary. Set `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to
 write the summary elsewhere.
+For commit-pinned public artifact capture, use the manual
+`.github/workflows/autonomous-learning-gate.yml` workflow. It uploads the
+summary JSON and pytest logs for that workflow run. This is public CI artifact
+evidence only, not external review, endorsement, live autonomy, or broad
+unknown-repository repair proof.
 
 Public boundary metadata only:
 

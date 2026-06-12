@@ -104,6 +104,16 @@ Current public proof:
   equality by accident. A corrupt-summary smoke path deletes those fields
   before validation and must fail closed. Failed summaries are validated after
   failure metadata is written for the same local artifact boundary.
+- `.github/workflows/autonomous-learning-gate.yml` exposes the autonomous-learning
+  stress gate as a manual `workflow_dispatch` check. It uploads
+  `.quantagent/autonomous_learning_gate` as the
+  `autonomous-learning-gate-summary` artifact so the machine-readable summary,
+  observed pytest counts, and per-segment logs can be inspected for an exact
+  workflow run. It is intentionally not attached to default push or
+  pull-request CI because it is slower than the focused public gate. A passing
+  manual run is public CI artifact evidence only, not external review,
+  endorsement, stars, reposts, live autonomy, broad unknown-repository repair
+  proof, or external benchmark standing.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:

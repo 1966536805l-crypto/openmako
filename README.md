@@ -111,6 +111,10 @@ seconds, per-segment pytest log paths and log tails, observed pass/skip/warning
 counts, expected stage1/upstream learning-effect contract counts, and the same
 not-proof boundary; set `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to
 write it elsewhere.
+For commit-pinned public artifact capture, run the manual
+`.github/workflows/autonomous-learning-gate.yml` workflow; it uploads the
+summary and pytest logs when the gate finishes. The workflow is not attached to
+default push CI and is not external review or endorsement.
 
 ## If You Came From A Benchmark Thread
 
