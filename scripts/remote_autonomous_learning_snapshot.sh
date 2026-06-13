@@ -22,6 +22,7 @@ fi
 
 python3 - "$REPO" "$WORKFLOW" "$ARTIFACT_NAME" "$remote_sha" <<'PY'
 import json
+import hashlib
 import os
 import sys
 import urllib.error
@@ -577,7 +578,21 @@ if not artifact_digest:
 archive_url = artifact.get("archive_download_url") or (
     f"https://api.github.com/repos/{repo}/actions/artifacts/{artifact_id}/zip"
 )
-artifact_summary = read_summary_from_artifact_zip(read_artifact_zip(archive_url))
+artifact_zip = read_artifact_zip(archive_url)
+artifact_zip_sha256 = hashlib.sha256(artifact_zip).hexdigest()
+print(f"remote-autonomous-learning-snapshot: artifact-zip-sha256={artifact_zip_sha256}")
+if artifact_digest.startswith("sha256:"):
+    expected_artifact_sha256 = artifact_digest.removeprefix("sha256:")
+    if artifact_zip_sha256 != expected_artifact_sha256:
+        print(
+            "remote-autonomous-learning-snapshot: artifact zip sha256 does not match artifact digest",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+else:
+    print("remote-autonomous-learning-snapshot: unsupported artifact digest format", file=sys.stderr)
+    sys.exit(1)
+artifact_summary = read_summary_from_artifact_zip(artifact_zip)
 validate_artifact_summary(artifact_summary)
 
 print("remote-autonomous-learning-snapshot: PASS")

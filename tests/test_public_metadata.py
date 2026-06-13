@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import os
 import re
@@ -965,6 +966,9 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "autonomous-learning artifact is expired" in text
     assert "autonomous-learning artifact digest is missing" in text
     assert "artifact-digest=" in text
+    assert "artifact-zip-sha256=" in text
+    assert "hashlib.sha256" in text
+    assert "artifact zip sha256 does not match artifact digest" in text
     assert "manual-url=" in text
     assert "checked-at-utc=" in text
     assert "github_api_rate_limit" in text
@@ -992,25 +996,6 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
                         "status": "completed",
                         "conclusion": "success",
                         "html_url": "https://github.com/1966536805l-crypto/openmako/actions/runs/27437928257",
-                    }
-                ]
-            }
-        ),
-        encoding="utf-8",
-    )
-    artifacts_json.write_text(
-        json.dumps(
-            {
-                "artifacts": [
-                    {
-                        "id": 7600712280,
-                        "name": "autonomous-learning-gate-summary",
-                        "size_in_bytes": 1503,
-                        "expired": False,
-                        "archive_download_url": "https://api.github.com/repos/1966536805l-crypto/openmako/actions/artifacts/7600712280/zip",
-                        "digest": "sha256:3d621acdd9a5cbe1a0dc6cc97042935dc46f978cacffc64020a4aaae2910f1a3",
-                        "created_at": "2026-06-12T19:21:00Z",
-                        "expires_at": "2026-09-10T19:21:00Z",
                     }
                 ]
             }
@@ -1087,8 +1072,32 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
             "reposts",
         ],
     }
-    with zipfile.ZipFile(artifact_zip, "w") as archive:
-        archive.writestr("last_summary.json", json.dumps(artifact_summary))
+    artifact_payload = {
+        "artifacts": [
+            {
+                "id": 7600712280,
+                "name": "autonomous-learning-gate-summary",
+                "size_in_bytes": 0,
+                "expired": False,
+                "archive_download_url": "https://api.github.com/repos/1966536805l-crypto/openmako/actions/artifacts/7600712280/zip",
+                "digest": "sha256:",
+                "created_at": "2026-06-12T19:21:00Z",
+                "expires_at": "2026-09-10T19:21:00Z",
+            }
+        ]
+    }
+
+    def write_artifact_summary(summary: dict) -> str:
+        with zipfile.ZipFile(artifact_zip, "w") as archive:
+            archive.writestr("last_summary.json", json.dumps(summary))
+        artifact_zip_sha256 = hashlib.sha256(artifact_zip.read_bytes()).hexdigest()
+        updated_payload = json.loads(json.dumps(artifact_payload))
+        updated_payload["artifacts"][0]["size_in_bytes"] = artifact_zip.stat().st_size
+        updated_payload["artifacts"][0]["digest"] = f"sha256:{artifact_zip_sha256}"
+        artifacts_json.write_text(json.dumps(updated_payload), encoding="utf-8")
+        return artifact_zip_sha256
+
+    artifact_zip_sha256 = write_artifact_summary(artifact_summary)
     env = os.environ.copy()
     env.update(
         {
@@ -1110,7 +1119,8 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert result.returncode == 0, result.stderr
     assert "remote-autonomous-learning-snapshot: run-sha=1234567890abcdef1234567890abcdef12345678" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-id=7600712280" in result.stdout
-    assert "remote-autonomous-learning-snapshot: artifact-digest=sha256:3d621" in result.stdout
+    assert f"remote-autonomous-learning-snapshot: artifact-digest=sha256:{artifact_zip_sha256}" in result.stdout
+    assert f"remote-autonomous-learning-snapshot: artifact-zip-sha256={artifact_zip_sha256}" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary=last_summary.json" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-commit=1234567890abcdef1234567890abcdef12345678" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-hidden-task-count=10" in result.stdout
@@ -1125,8 +1135,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     broken_summary = dict(artifact_summary)
     broken_summary["tests"] = json.loads(json.dumps(artifact_summary["tests"]))
     broken_summary["tests"]["upstream_hidden_pack_reuse"]["expected_contract"].pop("cheat_caught")
-    with zipfile.ZipFile(artifact_zip, "w") as archive:
-        archive.writestr("last_summary.json", json.dumps(broken_summary))
+    write_artifact_summary(broken_summary)
     contract_mismatch = subprocess.run(
         ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
         cwd=ROOT,
@@ -1142,8 +1151,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
 
     broken_summary = json.loads(json.dumps(artifact_summary))
     broken_summary["tests"]["cross_upstream_no_seed_reuse"]["expected_contract"].pop("hidden_stage2_tasks")
-    with zipfile.ZipFile(artifact_zip, "w") as archive:
-        archive.writestr("last_summary.json", json.dumps(broken_summary))
+    write_artifact_summary(broken_summary)
     cross_upstream_mismatch = subprocess.run(
         ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
         cwd=ROOT,
@@ -1164,8 +1172,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     broken_summary["task_proofs"]["cross_upstream_no_seed_reuse"][0]["result_sets"]["approved_learning"][0][
         "changed_files"
     ] = []
-    with zipfile.ZipFile(artifact_zip, "w") as archive:
-        archive.writestr("last_summary.json", json.dumps(broken_summary))
+    write_artifact_summary(broken_summary)
     proof_mismatch = subprocess.run(
         ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
         cwd=ROOT,
@@ -1179,7 +1186,23 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "artifact summary contract mismatch" in proof_mismatch.stderr
     assert "task_proofs.pandera_scale_no_seed.approved_learning.changed_files" in proof_mismatch.stderr
 
+    artifact_zip_sha256 = write_artifact_summary(artifact_summary)
     valid_artifacts = json.loads(artifacts_json.read_text(encoding="utf-8"))
+    bad_digest_artifacts = json.loads(json.dumps(valid_artifacts))
+    bad_digest_artifacts["artifacts"][0]["digest"] = "sha256:" + "0" * 64
+    artifacts_json.write_text(json.dumps(bad_digest_artifacts), encoding="utf-8")
+    digest_mismatch = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert digest_mismatch.returncode == 1
+    assert "artifact zip sha256 does not match artifact digest" in digest_mismatch.stderr
+
     expired_artifacts = json.loads(json.dumps(valid_artifacts))
     expired_artifacts["artifacts"][0]["expired"] = True
     artifacts_json.write_text(json.dumps(expired_artifacts), encoding="utf-8")
@@ -1213,8 +1236,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     artifacts_json.write_text(json.dumps(valid_artifacts), encoding="utf-8")
     broken_summary = json.loads(json.dumps(artifact_summary))
     broken_summary["tests"]["cross_upstream_no_seed_reuse"]["observed_pytest"]["passed"] = 1
-    with zipfile.ZipFile(artifact_zip, "w") as archive:
-        archive.writestr("last_summary.json", json.dumps(broken_summary))
+    write_artifact_summary(broken_summary)
     cross_upstream_observed_mismatch = subprocess.run(
         ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
         cwd=ROOT,
