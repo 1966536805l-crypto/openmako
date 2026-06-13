@@ -334,6 +334,93 @@ def validate_artifact_summary(payload: dict) -> None:
         if cross_upstream_contract.get(key) != expected:
             errors.append(f"tests.cross_upstream_no_seed_reuse.expected_contract.{key}")
 
+    task_proofs = payload.get("task_proofs")
+    if not isinstance(task_proofs, dict):
+        errors.append("task_proofs")
+        task_proofs = {}
+    upstream_proofs = task_proofs.get("upstream_hidden_pack_reuse")
+    if not isinstance(upstream_proofs, list) or len(upstream_proofs) != 1:
+        errors.append("task_proofs.upstream_hidden_pack_reuse")
+        upstream_proofs = []
+    cross_upstream_proofs = task_proofs.get("cross_upstream_no_seed_reuse")
+    if not isinstance(cross_upstream_proofs, list) or len(cross_upstream_proofs) != 4:
+        errors.append("task_proofs.cross_upstream_no_seed_reuse")
+        cross_upstream_proofs = []
+
+    def count_result_set(proofs: list, set_name: str, *, status: str, solved: bool) -> int:
+        total = 0
+        for proof in proofs:
+            if proof.get("schema_version") != "autonomous-task-proof/v0.1":
+                errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.schema_version")
+            result_sets = proof.get("result_sets")
+            if not isinstance(result_sets, dict):
+                errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.result_sets")
+                continue
+            results = result_sets.get(set_name)
+            if not isinstance(results, list) or not results:
+                errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.result_sets.{set_name}")
+                continue
+            total += len(results)
+            for item in results:
+                if item.get("status") != status:
+                    errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.{set_name}.status")
+                if item.get("solved") is not solved:
+                    errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.{set_name}.solved")
+                if not item.get("task_id"):
+                    errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.{set_name}.task_id")
+                if status == "solved" and item.get("out_of_scope_files") != []:
+                    errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.{set_name}.out_of_scope_files")
+                if status == "cheated" and item.get("failure_class") != "policy":
+                    errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.{set_name}.failure_class")
+        return total
+
+    def sum_observed(proofs: list, key: str) -> int:
+        total = 0
+        for proof in proofs:
+            counts = proof.get("observed_counts")
+            if not isinstance(counts, dict):
+                errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.observed_counts")
+                continue
+            value = counts.get(key)
+            if not isinstance(value, int):
+                errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.observed_counts.{key}")
+                continue
+            total += value
+        return total
+
+    if upstream_proofs:
+        if count_result_set(upstream_proofs, "no_learning", status="failed", solved=False) != required_upstream["hidden_task_count"]:
+            errors.append("task_proofs.upstream_hidden_pack_reuse.no_learning.count")
+        if count_result_set(upstream_proofs, "approved_learning", status="solved", solved=True) != required_upstream["approved_learning_solved"]:
+            errors.append("task_proofs.upstream_hidden_pack_reuse.approved_learning.count")
+        if count_result_set(upstream_proofs, "stability", status="solved", solved=True) != required_upstream["stability_solved"]:
+            errors.append("task_proofs.upstream_hidden_pack_reuse.stability.count")
+        if count_result_set(upstream_proofs, "cheat", status="cheated", solved=False) != required_upstream["cheat_caught"]:
+            errors.append("task_proofs.upstream_hidden_pack_reuse.cheat.count")
+        for key in ("no_learning_solved", "approved_learning_solved", "stability_solved", "cheat_caught"):
+            if sum_observed(upstream_proofs, key) != required_upstream[key]:
+                errors.append(f"task_proofs.upstream_hidden_pack_reuse.observed_counts.{key}")
+
+    if cross_upstream_proofs:
+        if count_result_set(cross_upstream_proofs, "no_learning", status="failed", solved=False) != required_cross_upstream["hidden_stage2_tasks"]:
+            errors.append("task_proofs.cross_upstream_no_seed_reuse.no_learning.count")
+        if count_result_set(cross_upstream_proofs, "approved_learning", status="solved", solved=True) != required_cross_upstream["approved_learning_solved"]:
+            errors.append("task_proofs.cross_upstream_no_seed_reuse.approved_learning.count")
+        if count_result_set(cross_upstream_proofs, "stability", status="solved", solved=True) != required_cross_upstream["stability_solved"]:
+            errors.append("task_proofs.cross_upstream_no_seed_reuse.stability.count")
+        if count_result_set(cross_upstream_proofs, "cheat", status="cheated", solved=False) != required_cross_upstream["cheat_caught"]:
+            errors.append("task_proofs.cross_upstream_no_seed_reuse.cheat.count")
+        expected_cross_counts = {
+            "approved_learning_solved": required_cross_upstream["approved_learning_solved"],
+            "cheat_caught": required_cross_upstream["cheat_caught"],
+            "hidden_stage2_tasks": required_cross_upstream["hidden_stage2_tasks"],
+            "no_learning_solved": required_cross_upstream["no_learning_solved"],
+            "stability_solved": required_cross_upstream["stability_solved"],
+        }
+        for key, expected in expected_cross_counts.items():
+            if sum_observed(cross_upstream_proofs, key) != expected:
+                errors.append(f"task_proofs.cross_upstream_no_seed_reuse.observed_counts.{key}")
+
     required_not_proof = {
         "native live autonomy",
         "broad unknown-repository repair",
@@ -378,6 +465,11 @@ def validate_artifact_summary(payload: dict) -> None:
         "remote-autonomous-learning-snapshot: "
         "artifact-summary-cross-upstream-cheat-caught="
         f"{cross_upstream_contract.get('cheat_caught')}"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-task-proof-files="
+        f"{len(upstream_proofs) + len(cross_upstream_proofs)}"
     )
 
     if errors:

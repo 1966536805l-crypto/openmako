@@ -160,6 +160,7 @@ remote-autonomous-learning-snapshot: artifact-summary-upstream-cheat-caught=10
 remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-hidden-stage2-tasks=8
 remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-stability-solved=16
 remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-cheat-caught=8
+remote-autonomous-learning-snapshot: artifact-summary-task-proof-files=5
 remote-autonomous-learning-snapshot: PASS
 ```
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import os
 import shlex
 import sys
 import tempfile
@@ -373,6 +374,7 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
                     ),
                 ),
             )
+            benchmark_fingerprint = _sha256(task_file.read_text(encoding="utf-8"))
             command_prefix = (
                 "{python} -m quantagent.cli --no-trust-prompt agent --project {workspace} "
                 f"--learning-project {shlex.quote(str(project))} --mode repair --json --max-steps 12 "
@@ -439,6 +441,16 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
         self.assertEqual(stability.summary()["errors"], 0)
         self.assertEqual(stability.summary()["invalid"], 0)
         _assert_hidden_test_cheat_run_caught(self, cheat_run, expected_total=2)
+        _write_no_seed_task_proof(
+            "pandera_scale_no_seed",
+            family="pandera_scale",
+            target_path=PANDERA_TARGET_PATH,
+            function_name="_scale_to_exp",
+            benchmark_fingerprint=benchmark_fingerprint,
+            report=report,
+            stability=stability,
+            cheat_run=cheat_run,
+        )
 
     def test_vendored_pandera_bool_predicate_no_seed_stage1_reuses_with_stability(self) -> None:
         with tempfile.TemporaryDirectory(prefix="upstream-pandera-bool-no-seed-stage1-") as tmp:
@@ -521,6 +533,7 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
                     ),
                 ),
             )
+            benchmark_fingerprint = _sha256(task_file.read_text(encoding="utf-8"))
             command_prefix = (
                 "{python} -m quantagent.cli --no-trust-prompt agent --project {workspace} "
                 f"--learning-project {shlex.quote(str(project))} --mode repair --json --max-steps 12 "
@@ -587,6 +600,16 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
         self.assertEqual(stability.summary()["errors"], 0)
         self.assertEqual(stability.summary()["invalid"], 0)
         _assert_hidden_test_cheat_run_caught(self, cheat_run, expected_total=2)
+        _write_no_seed_task_proof(
+            "pandera_bool_no_seed",
+            family="pandera_bool",
+            target_path=PANDERA_TARGET_PATH,
+            function_name="is_bool",
+            benchmark_fingerprint=benchmark_fingerprint,
+            report=report,
+            stability=stability,
+            cheat_run=cheat_run,
+        )
 
     def test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair(self) -> None:
         with tempfile.TemporaryDirectory(prefix="upstream-ge-result-format-no-seed-stage1-") as tmp:
@@ -671,6 +694,7 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
                     ),
                 ),
             )
+            benchmark_fingerprint = _sha256(task_file.read_text(encoding="utf-8"))
             command_prefix = (
                 "{python} -m quantagent.cli --no-trust-prompt agent --project {workspace} "
                 f"--learning-project {shlex.quote(str(project))} --mode repair --json --max-steps 12 "
@@ -737,6 +761,16 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
         self.assertEqual(stability.summary()["errors"], 0)
         self.assertEqual(stability.summary()["invalid"], 0)
         _assert_hidden_test_cheat_run_caught(self, cheat_run, expected_total=2)
+        _write_no_seed_task_proof(
+            "great_expectations_result_format_no_seed",
+            family="great_expectations_result_format",
+            target_path=GE_TARGET_PATH,
+            function_name="parse_result_format",
+            benchmark_fingerprint=benchmark_fingerprint,
+            report=report,
+            stability=stability,
+            cheat_run=cheat_run,
+        )
 
     def test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2(self) -> None:
         with tempfile.TemporaryDirectory(prefix="upstream-aider-random-color-no-seed-") as tmp:
@@ -821,6 +855,7 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
                     ),
                 ),
             )
+            benchmark_fingerprint = _sha256(task_file.read_text(encoding="utf-8"))
             command_prefix = (
                 "{python} -m quantagent.cli --no-trust-prompt agent --project {workspace} "
                 f"--learning-project {shlex.quote(str(project))} --mode repair --json --max-steps 12 "
@@ -887,6 +922,16 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
         self.assertEqual(stability.summary()["errors"], 0)
         self.assertEqual(stability.summary()["invalid"], 0)
         _assert_hidden_test_cheat_run_caught(self, cheat_run, expected_total=2)
+        _write_no_seed_task_proof(
+            "aider_random_color_no_seed",
+            family="aider_random_color",
+            target_path=AIDER_TARGET_PATH,
+            function_name="get_random_color",
+            benchmark_fingerprint=benchmark_fingerprint,
+            report=report,
+            stability=stability,
+            cheat_run=cheat_run,
+        )
 
     def test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating(self) -> None:
         with tempfile.TemporaryDirectory(prefix="upstream-combined-hidden-pack-") as tmp:
@@ -1136,6 +1181,13 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
                 any(path.startswith("tests/test_") for path in cheat_result.patch_metrics.out_of_scope_files),
                 cheat_result.to_dict(),
             )
+        _write_combined_upstream_task_proof(
+            benchmark_fingerprint=benchmark_fingerprint,
+            no_learning_results=no_learning_results,
+            approved_results=approved_results,
+            stability_results=stability_results,
+            cheat_results=cheat_results,
+        )
 
 
 def _install_seed_file_function_skill(
@@ -1335,6 +1387,110 @@ def _assert_hidden_test_cheat_run_caught(test_case: unittest.TestCase, cheat_run
             any(path.startswith("tests/test_") for path in cheat_result.patch_metrics.out_of_scope_files),
             cheat_result.to_dict(),
         )
+
+
+def _write_no_seed_task_proof(
+    name: str,
+    *,
+    family: str,
+    target_path: str,
+    function_name: str,
+    benchmark_fingerprint: str,
+    report: Any,
+    stability: Any,
+    cheat_run: Any,
+) -> None:
+    stability_results = [result for run in stability.runs for result in run.results]
+    _write_task_proof(
+        "cross_upstream_no_seed_reuse",
+        name,
+        {
+            "benchmark_fingerprint": benchmark_fingerprint,
+            "family": family,
+            "function_name": function_name,
+            "target_path": target_path,
+            "observed_counts": {
+                "approved_learning_solved": report.approved_learning_run.summary()["solved"],
+                "cheat_caught": cheat_run.summary()["cheated"],
+                "hidden_stage2_tasks": report.approved_learning_run.summary()["total"],
+                "no_learning_solved": report.no_learning_run.summary()["solved"],
+                "stability_solved": stability.summary()["solved"],
+            },
+            "result_sets": {
+                "approved_learning": _result_proofs(report.approved_learning_run.results),
+                "cheat": _result_proofs(cheat_run.results),
+                "no_learning": _result_proofs(report.no_learning_run.results),
+                "stability": _result_proofs(stability_results),
+            },
+        },
+    )
+
+
+def _write_combined_upstream_task_proof(
+    *,
+    benchmark_fingerprint: str,
+    no_learning_results: Any,
+    approved_results: Any,
+    stability_results: Any,
+    cheat_results: Any,
+) -> None:
+    _write_task_proof(
+        "upstream_hidden_pack_reuse",
+        "combined_upstream_hidden_pack",
+        {
+            "benchmark_fingerprint": benchmark_fingerprint,
+            "observed_counts": {
+                "approved_learning_solved": len([result for result in approved_results if result.solved]),
+                "cheat_caught": len([result for result in cheat_results if result.status == "cheated"]),
+                "hidden_task_count": len(list(approved_results)),
+                "no_learning_solved": len([result for result in no_learning_results if result.solved]),
+                "stability_solved": len([result for result in stability_results if result.solved]),
+            },
+            "result_sets": {
+                "approved_learning": _result_proofs(approved_results),
+                "cheat": _result_proofs(cheat_results),
+                "no_learning": _result_proofs(no_learning_results),
+                "stability": _result_proofs(stability_results),
+            },
+        },
+    )
+
+
+def _write_task_proof(segment: str, name: str, payload: dict[str, Any]) -> None:
+    proof_root = os.environ.get("OPENMAKO_AUTONOMOUS_TASK_PROOF_DIR")
+    if not proof_root:
+        return
+    segment_dir = Path(proof_root) / segment
+    segment_dir.mkdir(parents=True, exist_ok=True)
+    proof = {
+        "schema_version": "autonomous-task-proof/v0.1",
+        "segment": segment,
+        "test_name": name,
+        **payload,
+    }
+    (segment_dir / f"{name}.json").write_text(
+        json.dumps(proof, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _result_proofs(results: Any) -> list[dict[str, Any]]:
+    records = []
+    for result in results:
+        patch_metrics = result.patch_metrics
+        records.append(
+            {
+                "changed_files": list(patch_metrics.changed_files),
+                "failure_class": result.failure_class,
+                "out_of_scope_files": list(patch_metrics.out_of_scope_files),
+                "solved": result.solved,
+                "status": result.status,
+                "task_id": result.task_id,
+                "workspace_added_files": list(patch_metrics.workspace_added_files),
+                "workspace_deleted_files": list(patch_metrics.workspace_deleted_files),
+            }
+        )
+    return records
 
 
 def _stage2_task_files(broken_source: str, *, target_path: str, test_source: str) -> dict[str, str]:

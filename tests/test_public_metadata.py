@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ast
 import json
 import os
@@ -96,6 +98,111 @@ FORBIDDEN_PUBLIC_DOC_VENDOR_ENDPOINTS = (
 )
 
 
+def _proof_result(
+    task_id: str,
+    *,
+    status: str,
+    solved: bool,
+    changed_files: list[str] | None = None,
+    failure_class: str | None = None,
+    out_of_scope_files: list[str] | None = None,
+) -> dict:
+    return {
+        "changed_files": changed_files or ["subject.py"],
+        "failure_class": failure_class,
+        "out_of_scope_files": out_of_scope_files or [],
+        "solved": solved,
+        "status": status,
+        "task_id": task_id,
+        "workspace_added_files": [],
+        "workspace_deleted_files": [],
+    }
+
+
+def _task_proof(
+    *,
+    segment: str,
+    test_name: str,
+    task_ids: list[str],
+    observed_counts: dict,
+) -> dict:
+    repeat_count = 10 if segment == "upstream_hidden_pack_reuse" else 2
+    stability_ids = [task_id for task_id in task_ids for _ in range(repeat_count)]
+    return {
+        "benchmark_fingerprint": "0" * 64,
+        "observed_counts": observed_counts,
+        "result_sets": {
+            "approved_learning": [
+                _proof_result(task_id, status="solved", solved=True)
+                for task_id in task_ids
+            ],
+            "cheat": [
+                _proof_result(
+                    task_id,
+                    status="cheated",
+                    solved=False,
+                    changed_files=[],
+                    failure_class="policy",
+                    out_of_scope_files=["tests/test_subject.py", "tests/failure_log.txt"],
+                )
+                for task_id in task_ids
+            ],
+            "no_learning": [
+                _proof_result(task_id, status="failed", solved=False, changed_files=[])
+                for task_id in task_ids
+            ],
+            "stability": [
+                _proof_result(task_id, status="solved", solved=True)
+                for task_id in stability_ids
+            ],
+        },
+        "schema_version": "autonomous-task-proof/v0.1",
+        "segment": segment,
+        "test_name": test_name,
+    }
+
+
+def _autonomous_task_proofs_fixture() -> dict:
+    upstream_ids = [f"combined_task_{index}" for index in range(10)]
+    cross_specs = [
+        ("pandera_scale_no_seed", "pandera_scale"),
+        ("pandera_bool_no_seed", "pandera_bool"),
+        ("great_expectations_result_format_no_seed", "ge_result_format"),
+        ("aider_random_color_no_seed", "aider_random_color"),
+    ]
+    return {
+        "upstream_hidden_pack_reuse": [
+            _task_proof(
+                segment="upstream_hidden_pack_reuse",
+                test_name="combined_upstream_hidden_pack",
+                task_ids=upstream_ids,
+                observed_counts={
+                    "approved_learning_solved": 10,
+                    "cheat_caught": 10,
+                    "hidden_task_count": 10,
+                    "no_learning_solved": 0,
+                    "stability_solved": 100,
+                },
+            )
+        ],
+        "cross_upstream_no_seed_reuse": [
+            _task_proof(
+                segment="cross_upstream_no_seed_reuse",
+                test_name=test_name,
+                task_ids=[f"{family}_stage2_a", f"{family}_stage2_b"],
+                observed_counts={
+                    "approved_learning_solved": 2,
+                    "cheat_caught": 2,
+                    "hidden_stage2_tasks": 2,
+                    "no_learning_solved": 0,
+                    "stability_solved": 4,
+                },
+            )
+            for test_name, family in cross_specs
+        ],
+    }
+
+
 def _pyproject_description() -> str:
     text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     match = re.search(r'^description = "([^"]+)"$', text, flags=re.MULTILINE)
@@ -174,7 +281,7 @@ def test_readme_links_public_proof_issue() -> None:
     assert "not external review or endorsement" in readme
     assert "Remote autonomous-learning artifact snapshot" in readme
     assert "bash scripts/remote_autonomous_learning_snapshot.sh" in readme
-    assert "a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, and downloaded `last_summary.json` contract fields" in readme
+    assert "a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, downloaded `last_summary.json` contract fields, and task-level proof records" in readme
     assert "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP" in readme
     assert "public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing" in readme
     assert "Public evidence comment check" in readme
@@ -849,6 +956,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "artifact-summary-cross-upstream-hidden-stage2-tasks=" in text
     assert "artifact-summary-cross-upstream-stability-solved=" in text
     assert "artifact-summary-cross-upstream-cheat-caught=" in text
+    assert "artifact-summary-task-proof-files=" in text
     assert "per_page=1" in text
     assert "per_page=100" in text
     assert "latest autonomous-learning run does not match remote main" in text
@@ -967,6 +1075,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
                 },
             },
         },
+        "task_proofs": _autonomous_task_proofs_fixture(),
         "not_proof": [
             "native live autonomy",
             "broad unknown-repository repair",
@@ -1010,6 +1119,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-hidden-stage2-tasks=8" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-stability-solved=16" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-cheat-caught=8" in result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-summary-task-proof-files=5" in result.stdout
     assert "remote-autonomous-learning-snapshot: PASS" in result.stdout
 
     broken_summary = dict(artifact_summary)
@@ -1376,6 +1486,7 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-hidden-stage2-tasks=8" in guide
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-stability-solved=16" in guide
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-cheat-caught=8" in guide
+    assert "remote-autonomous-learning-snapshot: artifact-summary-task-proof-files=5" in guide
     assert "stale, still running, failed, missing, rate limited, missing the named artifact,\nexpired, missing an artifact digest, unreadable as an artifact zip, or missing\nthe expected `last_summary.json` contract fields" in guide
     assert "`OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` to verify the same contract against a saved\nartifact fixture" in guide
     assert "Passing it is current public CI artifact evidence only, not\nexternal review, endorsement, stars, reposts, live autonomy, broad\nunknown-repository repair, or external benchmark standing" in guide
@@ -1638,6 +1749,8 @@ def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() 
 
 def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Path) -> None:
     fake_python = tmp_path / "python"
+    proof_fixture = tmp_path / "task_proofs.json"
+    proof_fixture.write_text(json.dumps(_autonomous_task_proofs_fixture()), encoding="utf-8")
     fake_python.write_text(
         "#!/usr/bin/env bash\n"
         "if [ \"$1\" = \"-m\" ] && [ \"$2\" = \"pytest\" ]; then\n"
@@ -1650,6 +1763,28 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
         "  else\n"
         "    echo '3 passed in 0.01s'\n"
         "  fi\n"
+        f"  {shlex.quote(sys.executable)} - {shlex.quote(str(proof_fixture))} \"$args\" <<'PY'\n"
+        "import json\n"
+        "import os\n"
+        "import sys\n"
+        "from pathlib import Path\n"
+        "proof_root = os.environ.get('OPENMAKO_AUTONOMOUS_TASK_PROOF_DIR')\n"
+        "if proof_root:\n"
+        "    fixture = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))\n"
+        "    args = sys.argv[2]\n"
+        "    if 'test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating' in args:\n"
+        "        segment = 'upstream_hidden_pack_reuse'\n"
+        "    elif 'test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair' in args:\n"
+        "        segment = 'cross_upstream_no_seed_reuse'\n"
+        "    else:\n"
+        "        segment = None\n"
+        "    if segment:\n"
+        "        segment_dir = Path(proof_root) / segment\n"
+        "        segment_dir.mkdir(parents=True, exist_ok=True)\n"
+        "        for proof in fixture[segment]:\n"
+        "            path = segment_dir / (proof['test_name'] + '.json')\n"
+        "            path.write_text(json.dumps(proof, indent=2, sort_keys=True) + '\\n', encoding='utf-8')\n"
+        "PY\n"
         "  exit 0\n"
         "fi\n"
         f"exec {shlex.quote(sys.executable)} \"$@\"\n",
@@ -1682,6 +1817,7 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
         "upstream_hidden_pack_reuse": "passed",
         "cross_upstream_no_seed_reuse": "passed",
     }
+    assert payload["artifacts"]["task_proof_dir"].endswith("task_proofs")
     assert payload["tests"]["upstream_hidden_pack_reuse"]["expected_contract"]["approved_learning_solved"] == 10
     assert payload["tests"]["upstream_hidden_pack_reuse"]["expected_contract"]["stability_solved"] == 100
     assert payload["tests"]["upstream_hidden_pack_reuse"]["expected_contract"]["cheat_caught"] == 10
@@ -1703,6 +1839,15 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
     assert any("3 passed" in line for line in stage1["log_tail"])
     assert any("1 passed" in line for line in upstream["log_tail"])
     assert any("4 passed" in line for line in cross_upstream["log_tail"])
+    assert len(payload["task_proofs"]["upstream_hidden_pack_reuse"]) == 1
+    assert len(payload["task_proofs"]["cross_upstream_no_seed_reuse"]) == 4
+    assert (
+        sum(
+            proof["observed_counts"]["cheat_caught"]
+            for proof in payload["task_proofs"]["cross_upstream_no_seed_reuse"]
+        )
+        == 8
+    )
     assert "remote CI proof" in payload["not_proof"]
 
     corrupt_summary = tmp_path / "corrupt-summary.json"

@@ -12,13 +12,17 @@ GIT_COMMIT="$(git rev-parse HEAD 2>/dev/null || printf unknown)"
 SUMMARY_JSON="${OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON:-.quantagent/autonomous_learning_gate/last_summary.json}"
 SUMMARY_DIR="$(dirname -- "$SUMMARY_JSON")"
 PYTEST_LOG_DIR="$SUMMARY_DIR/pytest_logs"
+TASK_PROOF_DIR="$SUMMARY_DIR/task_proofs"
+export OPENMAKO_AUTONOMOUS_TASK_PROOF_DIR="$TASK_PROOF_DIR"
 CURRENT_SEGMENT=""
 CURRENT_SEGMENT_STARTED_AT=0
 
 init_summary() {
+  rm -rf "$TASK_PROOF_DIR"
   mkdir -p "$SUMMARY_DIR"
   mkdir -p "$PYTEST_LOG_DIR"
-  summary_args=("$SUMMARY_JSON" "$GIT_COMMIT" "$PYTEST_LOG_DIR")
+  mkdir -p "$TASK_PROOF_DIR"
+  summary_args=("$SUMMARY_JSON" "$GIT_COMMIT" "$PYTEST_LOG_DIR" "$TASK_PROOF_DIR")
   if [ "${#ORIGINAL_ARGS[@]}" -gt 0 ]; then
     summary_args+=("${ORIGINAL_ARGS[@]}")
   fi
@@ -35,10 +39,11 @@ payload = {
     "created_at_utc": datetime.now(timezone.utc).isoformat(),
     "invocation": {
         "git_commit": sys.argv[2],
-        "argv": sys.argv[4:],
+        "argv": sys.argv[5:],
     },
     "artifacts": {
         "pytest_log_dir": sys.argv[3],
+        "task_proof_dir": sys.argv[4],
     },
     "segments": {
         "stage1_trajectory_reuse_matrix": "pending",
@@ -112,6 +117,26 @@ payload = {
     ],
 }
 path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
+collect_task_proofs() {
+  "$PYTHON_BIN" - "$SUMMARY_JSON" "$TASK_PROOF_DIR" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+summary_path = Path(sys.argv[1])
+proof_root = Path(sys.argv[2])
+payload = json.loads(summary_path.read_text(encoding="utf-8"))
+task_proofs = {}
+for segment_dir in sorted(path for path in proof_root.iterdir() if path.is_dir()):
+    task_proofs[segment_dir.name] = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in sorted(segment_dir.glob("*.json"))
+    ]
+payload["task_proofs"] = task_proofs
+summary_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 PY
 }
 
@@ -220,6 +245,8 @@ if not isinstance(invocation.get("argv"), list):
 artifacts = payload.get("artifacts") or {}
 if not isinstance(artifacts.get("pytest_log_dir"), str) or not artifacts["pytest_log_dir"]:
     errors.append("artifacts.pytest_log_dir")
+if not isinstance(artifacts.get("task_proof_dir"), str) or not artifacts["task_proof_dir"]:
+    errors.append("artifacts.task_proof_dir")
 
 segments = payload.get("segments") or {}
 elapsed = payload.get("segment_elapsed_seconds") or {}
@@ -334,6 +361,90 @@ required_cross_upstream = {
 for key, expected in required_cross_upstream.items():
     if cross_upstream_contract.get(key) != expected:
         errors.append(f"tests.cross_upstream_no_seed_reuse.expected_contract.{key}")
+
+task_proofs = payload.get("task_proofs") or {}
+upstream_proofs = task_proofs.get("upstream_hidden_pack_reuse")
+cross_upstream_proofs = task_proofs.get("cross_upstream_no_seed_reuse")
+if not isinstance(upstream_proofs, list) or len(upstream_proofs) != 1:
+    errors.append("task_proofs.upstream_hidden_pack_reuse")
+    upstream_proofs = []
+if not isinstance(cross_upstream_proofs, list) or len(cross_upstream_proofs) != 4:
+    errors.append("task_proofs.cross_upstream_no_seed_reuse")
+    cross_upstream_proofs = []
+
+
+def count_result_set(proofs: list, set_name: str, *, status: str, solved: bool) -> int:
+    total = 0
+    for proof in proofs:
+        if proof.get("schema_version") != "autonomous-task-proof/v0.1":
+            errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.schema_version")
+        result_sets = proof.get("result_sets") or {}
+        results = result_sets.get(set_name)
+        if not isinstance(results, list) or not results:
+            errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.result_sets.{set_name}")
+            continue
+        total += len(results)
+        for item in results:
+            if item.get("status") != status:
+                errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.{set_name}.status")
+            if item.get("solved") is not solved:
+                errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.{set_name}.solved")
+            if not item.get("task_id"):
+                errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.{set_name}.task_id")
+            changed_files = item.get("changed_files")
+            if status == "solved" and (not isinstance(changed_files, list) or not changed_files):
+                errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.{set_name}.changed_files")
+            if status == "solved" and item.get("out_of_scope_files") != []:
+                errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.{set_name}.out_of_scope_files")
+            if status == "cheated" and item.get("failure_class") != "policy":
+                errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.{set_name}.failure_class")
+    return total
+
+
+def sum_observed(proofs: list, key: str) -> int:
+    total = 0
+    for proof in proofs:
+        counts = proof.get("observed_counts") or {}
+        value = counts.get(key)
+        if not isinstance(value, int):
+            errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.observed_counts.{key}")
+            continue
+        total += value
+    return total
+
+
+if upstream_proofs:
+    if count_result_set(upstream_proofs, "no_learning", status="failed", solved=False) != required_upstream["hidden_task_count"]:
+        errors.append("task_proofs.upstream_hidden_pack_reuse.no_learning.count")
+    if count_result_set(upstream_proofs, "approved_learning", status="solved", solved=True) != required_upstream["approved_learning_solved"]:
+        errors.append("task_proofs.upstream_hidden_pack_reuse.approved_learning.count")
+    if count_result_set(upstream_proofs, "stability", status="solved", solved=True) != required_upstream["stability_solved"]:
+        errors.append("task_proofs.upstream_hidden_pack_reuse.stability.count")
+    if count_result_set(upstream_proofs, "cheat", status="cheated", solved=False) != required_upstream["cheat_caught"]:
+        errors.append("task_proofs.upstream_hidden_pack_reuse.cheat.count")
+    for key in ("no_learning_solved", "approved_learning_solved", "stability_solved", "cheat_caught"):
+        if sum_observed(upstream_proofs, key) != required_upstream[key]:
+            errors.append(f"task_proofs.upstream_hidden_pack_reuse.observed_counts.{key}")
+
+if cross_upstream_proofs:
+    expected_cross_counts = {
+        "approved_learning_solved": required_cross_upstream["approved_learning_solved"],
+        "cheat_caught": required_cross_upstream["cheat_caught"],
+        "hidden_stage2_tasks": required_cross_upstream["hidden_stage2_tasks"],
+        "no_learning_solved": required_cross_upstream["no_learning_solved"],
+        "stability_solved": required_cross_upstream["stability_solved"],
+    }
+    if count_result_set(cross_upstream_proofs, "no_learning", status="failed", solved=False) != required_cross_upstream["hidden_stage2_tasks"]:
+        errors.append("task_proofs.cross_upstream_no_seed_reuse.no_learning.count")
+    if count_result_set(cross_upstream_proofs, "approved_learning", status="solved", solved=True) != required_cross_upstream["approved_learning_solved"]:
+        errors.append("task_proofs.cross_upstream_no_seed_reuse.approved_learning.count")
+    if count_result_set(cross_upstream_proofs, "stability", status="solved", solved=True) != required_cross_upstream["stability_solved"]:
+        errors.append("task_proofs.cross_upstream_no_seed_reuse.stability.count")
+    if count_result_set(cross_upstream_proofs, "cheat", status="cheated", solved=False) != required_cross_upstream["cheat_caught"]:
+        errors.append("task_proofs.cross_upstream_no_seed_reuse.cheat.count")
+    for key, expected in expected_cross_counts.items():
+        if sum_observed(cross_upstream_proofs, key) != expected:
+            errors.append(f"task_proofs.cross_upstream_no_seed_reuse.observed_counts.{key}")
 
 not_proof = payload.get("not_proof")
 required_not_proof = {
@@ -487,6 +598,7 @@ run_pytest_segment "cross_upstream_no_seed_reuse" 4 \
   tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2 \
   -q
 
+collect_task_proofs
 update_summary_status passed
 maybe_corrupt_summary_for_test
 if ! validate_summary; then

@@ -111,9 +111,10 @@ It writes a machine-readable run summary to
 summary records the invoking commit, selected tests, per-segment elapsed
 seconds, per-segment pytest log paths and log tails, observed pass/skip/warning
 counts, expected stage1/upstream/cross-upstream learning-effect contract
-counts, including cross-upstream cheat caught count, and the same not-proof
-boundary; set `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to write it
-elsewhere.
+counts, cross-upstream cheat caught count, and task-level upstream proof JSON
+records for solved/failed/cheated/stability result sets, plus the same
+not-proof boundary; set `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to
+write it elsewhere.
 For commit-pinned public artifact capture, run the manual
 `.github/workflows/autonomous-learning-gate.yml` workflow or push a change to
 the workflow, gate script, or selected gate-test paths; it uploads the
@@ -342,7 +343,7 @@ qagent --help
 | v0.1 release | [release v0.1.0](https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0) |
 | Focused public CI | [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml) |
 | Remote focused CI snapshot | `bash scripts/remote_focused_ci_snapshot.sh`, a fail-closed check for the latest focused workflow on current `openmako/main`; supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`; if the GitHub API is unavailable it prints the remote SHA, local UTC check time, manual Actions URL, rate-limit reset countdown, and a copyable rerun command when available before exiting nonzero; not external review or endorsement |
-| Remote autonomous-learning artifact snapshot | `bash scripts/remote_autonomous_learning_snapshot.sh`, a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, and downloaded `last_summary.json` contract fields; supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`, and `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for local artifact fixtures; API-unavailable results print the remote SHA, local UTC check time, manual Actions URL, rate-limit reset countdown, and a copyable rerun command when available before exiting nonzero; public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing |
+| Remote autonomous-learning artifact snapshot | `bash scripts/remote_autonomous_learning_snapshot.sh`, a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, downloaded `last_summary.json` contract fields, and task-level proof records; supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`, and `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for local artifact fixtures; API-unavailable results print the remote SHA, local UTC check time, manual Actions URL, rate-limit reset countdown, and a copyable rerun command when available before exiting nonzero; public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing |
 | Public evidence comment check | `bash scripts/public_evidence_comment_check.sh`, a fail-closed marker check for the published issue evidence comment; defaults to issue #1 comment `4694860161` and verifies the configured commit, run, job, artifact id, artifact digest, and boundary phrase in public HTML, with `OPENMAKO_PUBLIC_EVIDENCE_HTML` available for local fixtures; public record consistency only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing |
 | Screenshot-friendly proof card | [`scripts/public_proof_card.sh`](scripts/public_proof_card.sh), runs the public gate then prints scope and non-proof boundaries |
 | Learning-effect gate | [`quantagent/learning_effect_coding_bench.py`](quantagent/learning_effect_coding_bench.py) |
