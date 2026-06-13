@@ -590,6 +590,7 @@ artifact_id = artifact.get("id")
 artifact_digest = artifact.get("digest")
 artifact_size = artifact.get("size_in_bytes")
 artifact_expired = artifact.get("expired")
+artifact_workflow_run = artifact.get("workflow_run")
 
 print(f"remote-autonomous-learning-snapshot: artifact-name={artifact_name}")
 print(f"remote-autonomous-learning-snapshot: artifact-id={artifact_id}")
@@ -609,6 +610,25 @@ if not artifact_id:
 if not artifact_digest:
     print("remote-autonomous-learning-snapshot: autonomous-learning artifact digest is missing", file=sys.stderr)
     sys.exit(1)
+if artifacts_fixture:
+    if not isinstance(artifact_workflow_run, dict):
+        print(
+            "remote-autonomous-learning-snapshot: artifact fixture is missing workflow_run binding",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    if artifact_workflow_run.get("id") != run_id:
+        print(
+            "remote-autonomous-learning-snapshot: artifact fixture workflow_run id does not match run id",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    if artifact_workflow_run.get("head_sha") != head_sha:
+        print(
+            "remote-autonomous-learning-snapshot: artifact fixture workflow_run head_sha does not match run sha",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 archive_url = artifact.get("archive_download_url") or (
     f"https://api.github.com/repos/{repo}/actions/artifacts/{artifact_id}/zip"

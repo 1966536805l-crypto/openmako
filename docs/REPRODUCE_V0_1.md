@@ -182,9 +182,12 @@ bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json auto
 ```
 
 This delegates to `remote_autonomous_learning_snapshot.sh` with explicit
-fixture paths. It is saved public CI artifact evidence only, not a substitute
-for external review, endorsement, stars, reposts, live autonomy, broad
-unknown-repository repair, or external benchmark standing.
+fixture paths. It checks the same artifact contract against saved inputs,
+including the artifact metadata's `workflow_run` binding when present, but it
+does not prove fixture provenance or current live GitHub API state. It is saved
+public CI artifact evidence only, not a substitute for external review,
+endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or
+external benchmark standing.
 
 To re-check that the published public evidence comment still contains the
 recorded remote-run markers and non-proof boundary:

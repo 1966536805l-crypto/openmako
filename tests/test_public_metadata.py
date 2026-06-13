@@ -286,9 +286,10 @@ def test_readme_links_public_proof_issue() -> None:
     assert "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP" in readme
     assert "public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing" in readme
     assert "Saved autonomous artifact snapshot" in readme
-    assert "bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json autonomous-learning-gate-summary.zip OPENMAKO_MAIN_SHA" in readme
+    assert "bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json autonomous-learning-gate-summary.zip <openmako-main-sha>" in readme
     assert "an explicit fixture wrapper for saved GitHub Actions run metadata, artifact metadata, and the downloaded autonomous-learning artifact zip" in readme
     assert "useful when live API reads are rate-limited" in readme
+    assert "checks the same artifact contract against saved inputs but does not prove fixture provenance or current live GitHub API state" in readme
     assert "saved public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing" in readme
     assert "Public evidence comment check" in readme
     assert "bash scripts/public_evidence_comment_check.sh" in readme
@@ -994,6 +995,9 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "artifact {artifact_name!r} is missing" in text
     assert "autonomous-learning artifact is expired" in text
     assert "autonomous-learning artifact digest is missing" in text
+    assert "artifact fixture is missing workflow_run binding" in text
+    assert "artifact fixture workflow_run id does not match run id" in text
+    assert "artifact fixture workflow_run head_sha does not match run sha" in text
     assert "artifact-digest=" in text
     assert "artifact-zip-sha256=" in text
     assert "hashlib.sha256" in text
@@ -1129,6 +1133,10 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
                 "digest": "sha256:",
                 "created_at": "2026-06-12T19:21:00Z",
                 "expires_at": "2026-09-10T19:21:00Z",
+                "workflow_run": {
+                    "id": 27437928257,
+                    "head_sha": remote_sha,
+                },
             }
         ]
     }
@@ -1380,6 +1388,51 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     )
     assert missing_digest.returncode == 1
     assert "autonomous-learning artifact digest is missing" in missing_digest.stderr
+
+    missing_binding_artifacts = json.loads(json.dumps(valid_artifacts))
+    missing_binding_artifacts["artifacts"][0].pop("workflow_run")
+    artifacts_json.write_text(json.dumps(missing_binding_artifacts), encoding="utf-8")
+    missing_binding = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert missing_binding.returncode == 1
+    assert "artifact fixture is missing workflow_run binding" in missing_binding.stderr
+
+    mismatched_run_artifacts = json.loads(json.dumps(valid_artifacts))
+    mismatched_run_artifacts["artifacts"][0]["workflow_run"]["id"] = 999
+    artifacts_json.write_text(json.dumps(mismatched_run_artifacts), encoding="utf-8")
+    mismatched_run = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert mismatched_run.returncode == 1
+    assert "artifact fixture workflow_run id does not match run id" in mismatched_run.stderr
+
+    mismatched_sha_artifacts = json.loads(json.dumps(valid_artifacts))
+    mismatched_sha_artifacts["artifacts"][0]["workflow_run"]["head_sha"] = "0" * 40
+    artifacts_json.write_text(json.dumps(mismatched_sha_artifacts), encoding="utf-8")
+    mismatched_sha = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert mismatched_sha.returncode == 1
+    assert "artifact fixture workflow_run head_sha does not match run sha" in mismatched_sha.stderr
 
     artifacts_json.write_text(json.dumps(valid_artifacts), encoding="utf-8")
     broken_summary = json.loads(json.dumps(artifact_summary))
@@ -1684,10 +1737,13 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
         "autonomous-learning-gate-summary.zip <openmako-main-sha>"
     ) in guide
     assert "This delegates to `remote_autonomous_learning_snapshot.sh` with explicit\nfixture paths" in guide
+    assert "including the artifact metadata's `workflow_run` binding when present" in guide
+    assert "does not prove fixture provenance or current live GitHub API state" in guide
     assert (
-        "It is saved public CI artifact evidence only, not a substitute\n"
-        "for external review, endorsement, stars, reposts, live autonomy, broad\n"
-        "unknown-repository repair, or external benchmark standing"
+        "It is saved\n"
+        "public CI artifact evidence only, not a substitute for external review,\n"
+        "endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or\n"
+        "external benchmark standing"
     ) in guide
     assert "bash scripts/public_evidence_comment_check.sh" in guide
     assert "public-evidence-comment-check: marker=commit ok" in guide

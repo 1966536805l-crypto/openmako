@@ -146,8 +146,10 @@ bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json auto
 ```
 
 That wrapper only supplies explicit fixture paths to
-`remote_autonomous_learning_snapshot.sh`; it does not make a weaker claim than
-the live snapshot.
+`remote_autonomous_learning_snapshot.sh`. It checks the same artifact contract
+against saved inputs, including the artifact metadata's `workflow_run` binding
+when present, but it does not prove fixture provenance or current live GitHub
+API state.
 
 ## If You Came From A Benchmark Thread
 
@@ -355,7 +357,7 @@ qagent --help
 | Focused public CI | [focused workflow](https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml) |
 | Remote focused CI snapshot | `bash scripts/remote_focused_ci_snapshot.sh`, a fail-closed check for the latest focused workflow on current `openmako/main`; supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`; if the GitHub API is unavailable it prints the remote SHA, local UTC check time, manual Actions URL, rate-limit reset countdown, and a copyable rerun command when available before exiting nonzero; not external review or endorsement |
 | Remote autonomous-learning artifact snapshot | `bash scripts/remote_autonomous_learning_snapshot.sh`, a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, downloaded `last_summary.json` contract fields, and task-level proof records; supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`, and `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for local artifact fixtures; API-unavailable results print the remote SHA, local UTC check time, manual Actions URL, rate-limit reset countdown, and a copyable rerun command when available before exiting nonzero; public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing |
-| Saved autonomous artifact snapshot | `bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json autonomous-learning-gate-summary.zip OPENMAKO_MAIN_SHA`, an explicit fixture wrapper for saved GitHub Actions run metadata, artifact metadata, and the downloaded autonomous-learning artifact zip; useful when live API reads are rate-limited; saved public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing |
+| Saved autonomous artifact snapshot | `bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json autonomous-learning-gate-summary.zip <openmako-main-sha>`, an explicit fixture wrapper for saved GitHub Actions run metadata, artifact metadata, and the downloaded autonomous-learning artifact zip; useful when live API reads are rate-limited; checks the same artifact contract against saved inputs but does not prove fixture provenance or current live GitHub API state; saved public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing |
 | Public evidence comment check | `bash scripts/public_evidence_comment_check.sh`, a fail-closed marker check for the published issue evidence comment; defaults to issue #1 comment `4694860161` and verifies the configured commit, run, job, artifact id, artifact digest, and boundary phrase in public HTML, with `OPENMAKO_PUBLIC_EVIDENCE_HTML` available for local fixtures; public record consistency only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing |
 | Screenshot-friendly proof card | [`scripts/public_proof_card.sh`](scripts/public_proof_card.sh), runs the public gate then prints scope and non-proof boundaries |
 | Learning-effect gate | [`quantagent/learning_effect_coding_bench.py`](quantagent/learning_effect_coding_bench.py) |
