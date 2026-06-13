@@ -49,3 +49,5 @@ AI_协作交接/quantagent_sessions/
 AI_协作交接/quantagent_tasks/runtime/
 AI_协作交接/quantagent_tasks/subagent_contexts/
 test_extreme_planner/
+/CEABench/
+/outputs/ceabench-*/

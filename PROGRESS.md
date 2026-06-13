@@ -4,6 +4,17 @@ This file is a public status boundary, not an internal scoreboard.
 
 Current public proof:
 
+- A CEABench v0.1 research framing document is available at
+  `docs/CEABENCH_V0_1.md`. It treats OpenMako as the implemented audit
+  prototype and CEABench as the benchmark/dataset/metric/paper framework layer
+  on top. A seed case index is available at
+  `benchmarks/ceabench/v0.1/cases.json` and is checked by
+  `tests/test_ceabench_v01_doc.py` against current Evidence Court outputs.
+  This is research framing and seed dataset design only; it is not a benchmark
+  result, external review, leaderboard, native product-log ingestion, or
+  adoption evidence. The local `CEABench/` research workspace is ignored; the
+  tracked public surface is the framing doc, seed case index, and regression
+  test.
 - The public v0.1 proof command is `./scripts/public_review_gate.sh`; `README.md`
   defines the narrower claim and non-proof boundaries.
 - Remote focused CI is live GitHub state, not a durable fact in this file.
