@@ -1260,6 +1260,29 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "artifact summary contract mismatch" in log_tail_mismatch.stderr
     assert "tests.upstream_hidden_pack_reuse.log_tail" in log_tail_mismatch.stderr
 
+    write_artifact_summary(
+        artifact_summary,
+        log_overrides={
+            "stage1_trajectory_reuse_matrix": (
+                "...                                                                      [100%]\n"
+                "3 passed in 14.63s\n"
+                "extra final line after the advertised tail\n"
+            )
+        },
+    )
+    non_tail_match = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert non_tail_match.returncode == 1
+    assert "artifact summary contract mismatch" in non_tail_match.stderr
+    assert "tests.stage1_trajectory_reuse_matrix.log_tail" in non_tail_match.stderr
+
     artifact_zip_sha256 = write_artifact_summary(artifact_summary)
     valid_artifacts = json.loads(artifacts_json.read_text(encoding="utf-8"))
     bad_digest_artifacts = json.loads(json.dumps(valid_artifacts))

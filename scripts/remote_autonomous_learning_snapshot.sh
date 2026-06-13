@@ -292,7 +292,8 @@ def validate_artifact_summary(payload: dict, archive_text_files: dict[str, str])
         ):
             errors.append(f"tests.{segment}.log_tail")
             return
-        if any(line not in log_text for line in log_tail):
+        log_lines = log_text.rstrip().splitlines()
+        if len(log_lines) < len(log_tail) or log_lines[-len(log_tail):] != log_tail:
             errors.append(f"tests.{segment}.log_tail")
         if f"{expected_passed} passed" not in log_text:
             errors.append(f"artifact.pytest_logs.{segment}.passed")
