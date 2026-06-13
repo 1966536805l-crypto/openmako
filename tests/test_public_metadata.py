@@ -1048,6 +1048,58 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
         in cross_upstream_mismatch.stderr
     )
 
+    valid_artifacts = json.loads(artifacts_json.read_text(encoding="utf-8"))
+    expired_artifacts = json.loads(json.dumps(valid_artifacts))
+    expired_artifacts["artifacts"][0]["expired"] = True
+    artifacts_json.write_text(json.dumps(expired_artifacts), encoding="utf-8")
+    expired_artifact = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert expired_artifact.returncode == 1
+    assert "autonomous-learning artifact is expired" in expired_artifact.stderr
+
+    missing_digest_artifacts = json.loads(json.dumps(valid_artifacts))
+    missing_digest_artifacts["artifacts"][0].pop("digest")
+    artifacts_json.write_text(json.dumps(missing_digest_artifacts), encoding="utf-8")
+    missing_digest = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert missing_digest.returncode == 1
+    assert "autonomous-learning artifact digest is missing" in missing_digest.stderr
+
+    artifacts_json.write_text(json.dumps(valid_artifacts), encoding="utf-8")
+    broken_summary = json.loads(json.dumps(artifact_summary))
+    broken_summary["tests"]["cross_upstream_no_seed_reuse"]["observed_pytest"]["passed"] = 1
+    with zipfile.ZipFile(artifact_zip, "w") as archive:
+        archive.writestr("last_summary.json", json.dumps(broken_summary))
+    cross_upstream_observed_mismatch = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert cross_upstream_observed_mismatch.returncode == 1
+    assert "artifact summary contract mismatch" in cross_upstream_observed_mismatch.stderr
+    assert (
+        "tests.cross_upstream_no_seed_reuse.observed_pytest.passed"
+        in cross_upstream_observed_mismatch.stderr
+    )
+
     artifacts_json.write_text(json.dumps({"artifacts": []}), encoding="utf-8")
     missing_artifact = subprocess.run(
         ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
