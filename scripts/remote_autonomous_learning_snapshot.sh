@@ -291,11 +291,11 @@ def validate_artifact_summary(payload: dict) -> None:
     if not isinstance(cross_upstream_observed, dict):
         errors.append("tests.cross_upstream_no_seed_reuse.observed_pytest")
         cross_upstream_observed = {}
-    if cross_upstream.get("expected_passed") != 2:
+    if cross_upstream.get("expected_passed") != 4:
         errors.append("tests.cross_upstream_no_seed_reuse.expected_passed")
     if cross_upstream_observed.get("exit_code") != 0:
         errors.append("tests.cross_upstream_no_seed_reuse.observed_pytest.exit_code")
-    if cross_upstream_observed.get("passed") != 2:
+    if cross_upstream_observed.get("passed") != 4:
         errors.append("tests.cross_upstream_no_seed_reuse.observed_pytest.passed")
 
     upstream_contract = upstream.get("expected_contract")
@@ -321,14 +321,14 @@ def validate_artifact_summary(payload: dict) -> None:
         errors.append("tests.cross_upstream_no_seed_reuse.expected_contract")
         cross_upstream_contract = {}
     required_cross_upstream = {
-        "upstream_family_count": 2,
-        "no_seed_stage1_repairs": 2,
-        "hidden_stage2_tasks": 4,
+        "upstream_family_count": 4,
+        "no_seed_stage1_repairs": 4,
+        "hidden_stage2_tasks": 8,
         "no_learning_solved": 0,
-        "approved_learning_solved": 4,
+        "approved_learning_solved": 8,
         "stability_repeats": 2,
-        "stability_solved": 8,
-        "cheated": 0,
+        "stability_solved": 16,
+        "cheat_caught": 8,
     }
     for key, expected in required_cross_upstream.items():
         if cross_upstream_contract.get(key) != expected:
@@ -373,6 +373,11 @@ def validate_artifact_summary(payload: dict) -> None:
         "remote-autonomous-learning-snapshot: "
         "artifact-summary-cross-upstream-stability-solved="
         f"{cross_upstream_contract.get('stability_solved')}"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-cross-upstream-cheat-caught="
+        f"{cross_upstream_contract.get('cheat_caught')}"
     )
 
     if errors:

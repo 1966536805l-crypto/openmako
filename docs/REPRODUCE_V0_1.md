@@ -157,8 +157,9 @@ remote-autonomous-learning-snapshot: artifact-summary=last_summary.json
 remote-autonomous-learning-snapshot: artifact-summary-upstream-hidden-task-count=10
 remote-autonomous-learning-snapshot: artifact-summary-upstream-stability-solved=100
 remote-autonomous-learning-snapshot: artifact-summary-upstream-cheat-caught=10
-remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-hidden-stage2-tasks=4
-remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-stability-solved=8
+remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-hidden-stage2-tasks=8
+remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-stability-solved=16
+remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-cheat-caught=8
 remote-autonomous-learning-snapshot: PASS
 ```
 

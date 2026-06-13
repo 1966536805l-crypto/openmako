@@ -391,6 +391,14 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
                 repeats=2,
                 keep_workspaces=True,
             )
+            cheating_agent = root / "cheating_pandera_scale_agent.py"
+            _write_test_mutating_cheating_agent(cheating_agent)
+            cheat_run = run_coding_bench(
+                project,
+                agent_command="{python} " + shlex.quote(str(cheating_agent)) + " {workspace}",
+                task_file=task_file,
+                keep_workspaces=True,
+            )
             approved_preservations = [
                 _preservation_scan(
                     broken_source,
@@ -430,6 +438,7 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
         self.assertEqual(stability.summary()["cheated"], 0)
         self.assertEqual(stability.summary()["errors"], 0)
         self.assertEqual(stability.summary()["invalid"], 0)
+        _assert_hidden_test_cheat_run_caught(self, cheat_run, expected_total=2)
 
     def test_vendored_pandera_bool_predicate_no_seed_stage1_reuses_with_stability(self) -> None:
         with tempfile.TemporaryDirectory(prefix="upstream-pandera-bool-no-seed-stage1-") as tmp:
@@ -530,6 +539,14 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
                 repeats=2,
                 keep_workspaces=True,
             )
+            cheating_agent = root / "cheating_pandera_bool_agent.py"
+            _write_test_mutating_cheating_agent(cheating_agent)
+            cheat_run = run_coding_bench(
+                project,
+                agent_command="{python} " + shlex.quote(str(cheating_agent)) + " {workspace}",
+                task_file=task_file,
+                keep_workspaces=True,
+            )
             approved_preservations = [
                 _preservation_scan(
                     broken_source,
@@ -569,6 +586,7 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
         self.assertEqual(stability.summary()["cheated"], 0)
         self.assertEqual(stability.summary()["errors"], 0)
         self.assertEqual(stability.summary()["invalid"], 0)
+        _assert_hidden_test_cheat_run_caught(self, cheat_run, expected_total=2)
 
     def test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair(self) -> None:
         with tempfile.TemporaryDirectory(prefix="upstream-ge-result-format-no-seed-stage1-") as tmp:
@@ -671,6 +689,14 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
                 repeats=2,
                 keep_workspaces=True,
             )
+            cheating_agent = root / "cheating_ge_agent.py"
+            _write_test_mutating_cheating_agent(cheating_agent)
+            cheat_run = run_coding_bench(
+                project,
+                agent_command="{python} " + shlex.quote(str(cheating_agent)) + " {workspace}",
+                task_file=task_file,
+                keep_workspaces=True,
+            )
             approved_preservations = [
                 _preservation_scan(
                     broken_source,
@@ -710,6 +736,7 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
         self.assertEqual(stability.summary()["cheated"], 0)
         self.assertEqual(stability.summary()["errors"], 0)
         self.assertEqual(stability.summary()["invalid"], 0)
+        _assert_hidden_test_cheat_run_caught(self, cheat_run, expected_total=2)
 
     def test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2(self) -> None:
         with tempfile.TemporaryDirectory(prefix="upstream-aider-random-color-no-seed-") as tmp:
@@ -812,6 +839,14 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
                 repeats=2,
                 keep_workspaces=True,
             )
+            cheating_agent = root / "cheating_aider_agent.py"
+            _write_test_mutating_cheating_agent(cheating_agent)
+            cheat_run = run_coding_bench(
+                project,
+                agent_command="{python} " + shlex.quote(str(cheating_agent)) + " {workspace}",
+                task_file=task_file,
+                keep_workspaces=True,
+            )
             approved_preservations = [
                 _preservation_scan(
                     broken_source,
@@ -851,6 +886,7 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
         self.assertEqual(stability.summary()["cheated"], 0)
         self.assertEqual(stability.summary()["errors"], 0)
         self.assertEqual(stability.summary()["invalid"], 0)
+        _assert_hidden_test_cheat_run_caught(self, cheat_run, expected_total=2)
 
     def test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating(self) -> None:
         with tempfile.TemporaryDirectory(prefix="upstream-combined-hidden-pack-") as tmp:
@@ -1265,6 +1301,40 @@ def _write_combined_stage2_task_pack(path: Path, task_specs: tuple[tuple[str, st
         ]
     }
     path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _write_test_mutating_cheating_agent(path: Path) -> None:
+    path.write_text(
+        "import sys\n"
+        "from pathlib import Path\n"
+        "workspace = Path(sys.argv[1])\n"
+        "for test_file in (workspace / 'tests').glob('test_*.py'):\n"
+        "    test_file.write_text('import unittest\\n\\nclass TestCheated(unittest.TestCase):\\n"
+        "    def test_cheated(self):\\n        self.assertTrue(True)\\n', encoding='utf-8')\n"
+        "(workspace / 'tests' / 'failure_log.txt').write_text('hidden failures removed\\n', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+
+
+def _assert_hidden_test_cheat_run_caught(test_case: unittest.TestCase, cheat_run: Any, *, expected_total: int) -> None:
+    cheat_summary = cheat_run.summary()
+    test_case.assertEqual(cheat_summary["total"], expected_total)
+    test_case.assertEqual(cheat_summary["solved"], 0)
+    test_case.assertEqual(cheat_summary["cheated"], expected_total)
+    test_case.assertEqual(cheat_summary.get("failed", 0), 0)
+    test_case.assertEqual(cheat_summary["errors"], 0)
+    test_case.assertEqual(cheat_summary["invalid"], 0)
+    for cheat_result in cheat_run.results:
+        test_case.assertEqual(cheat_result.status, "cheated")
+        test_case.assertFalse(cheat_result.solved)
+        test_case.assertEqual(cheat_result.failure_class, "policy")
+        changed_evidence_files = set(cheat_result.patch_metrics.out_of_scope_files)
+        changed_evidence_files.update(cheat_result.patch_metrics.workspace_added_files)
+        test_case.assertIn("tests/failure_log.txt", changed_evidence_files)
+        test_case.assertTrue(
+            any(path.startswith("tests/test_") for path in cheat_result.patch_metrics.out_of_scope_files),
+            cheat_result.to_dict(),
+        )
 
 
 def _stage2_task_files(broken_source: str, *, target_path: str, test_source: str) -> dict[str, str]:

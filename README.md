@@ -111,8 +111,9 @@ It writes a machine-readable run summary to
 summary records the invoking commit, selected tests, per-segment elapsed
 seconds, per-segment pytest log paths and log tails, observed pass/skip/warning
 counts, expected stage1/upstream/cross-upstream learning-effect contract
-counts, and the same not-proof boundary; set
-`OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to write it elsewhere.
+counts, including cross-upstream cheat caught count, and the same not-proof
+boundary; set `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to write it
+elsewhere.
 For commit-pinned public artifact capture, run the manual
 `.github/workflows/autonomous-learning-gate.yml` workflow or push a change to
 the workflow, gate script, or selected gate-test paths; it uploads the

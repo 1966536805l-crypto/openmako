@@ -82,19 +82,21 @@ payload = {
         },
         "cross_upstream_no_seed_reuse": {
             "selected": [
+                "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_scale_no_seed_stage1_extracts_function_repair_without_non_target_drift",
+                "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_bool_predicate_no_seed_stage1_reuses_with_stability",
                 "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair",
                 "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2",
             ],
-            "expected_passed": 2,
+            "expected_passed": 4,
             "expected_contract": {
-                "upstream_family_count": 2,
-                "no_seed_stage1_repairs": 2,
-                "hidden_stage2_tasks": 4,
+                "upstream_family_count": 4,
+                "no_seed_stage1_repairs": 4,
+                "hidden_stage2_tasks": 8,
                 "no_learning_solved": 0,
-                "approved_learning_solved": 4,
+                "approved_learning_solved": 8,
                 "stability_repeats": 2,
-                "stability_solved": 8,
-                "cheated": 0,
+                "stability_solved": 16,
+                "cheat_caught": 8,
             },
         },
     },
@@ -247,6 +249,8 @@ expected_upstream_selected = [
     "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating",
 ]
 expected_cross_upstream_selected = [
+    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_scale_no_seed_stage1_extracts_function_repair_without_non_target_drift",
+    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_bool_predicate_no_seed_stage1_reuses_with_stability",
     "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair",
     "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2",
 ]
@@ -260,7 +264,7 @@ if upstream.get("expected_passed") != 1:
     errors.append("tests.upstream_hidden_pack_reuse.expected_passed")
 if cross_upstream.get("selected") != expected_cross_upstream_selected:
     errors.append("tests.cross_upstream_no_seed_reuse.selected")
-if cross_upstream.get("expected_passed") != 2:
+if cross_upstream.get("expected_passed") != 4:
     errors.append("tests.cross_upstream_no_seed_reuse.expected_passed")
 
 
@@ -288,7 +292,7 @@ def check_observed(segment: str, entry: dict, expected_passed: int) -> None:
 
 check_observed("stage1_trajectory_reuse_matrix", stage1, 3)
 check_observed("upstream_hidden_pack_reuse", upstream, 1)
-check_observed("cross_upstream_no_seed_reuse", cross_upstream, 2)
+check_observed("cross_upstream_no_seed_reuse", cross_upstream, 4)
 
 stage1_contract = stage1.get("expected_contract") or {}
 for key in ("stage1_agent_repair", "trajectory_extraction", "eval_gated_approval", "clean_stage2_reuse"):
@@ -318,14 +322,14 @@ for key, expected in required_upstream.items():
 
 cross_upstream_contract = cross_upstream.get("expected_contract") or {}
 required_cross_upstream = {
-    "upstream_family_count": 2,
-    "no_seed_stage1_repairs": 2,
-    "hidden_stage2_tasks": 4,
+    "upstream_family_count": 4,
+    "no_seed_stage1_repairs": 4,
+    "hidden_stage2_tasks": 8,
     "no_learning_solved": 0,
-    "approved_learning_solved": 4,
+    "approved_learning_solved": 8,
     "stability_repeats": 2,
-    "stability_solved": 8,
-    "cheated": 0,
+    "stability_solved": 16,
+    "cheat_caught": 8,
 }
 for key, expected in required_cross_upstream.items():
     if cross_upstream_contract.get(key) != expected:
@@ -475,8 +479,10 @@ run_pytest_segment "upstream_hidden_pack_reuse" 1 \
   -q
 
 echo "autonomous-learning-gate: running cross-upstream no-seed reuse stress tests"
-run_pytest_segment "cross_upstream_no_seed_reuse" 2 \
+run_pytest_segment "cross_upstream_no_seed_reuse" 4 \
   "$PYTHON_BIN" -m pytest -p no:cacheprovider \
+  tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_scale_no_seed_stage1_extracts_function_repair_without_non_target_drift \
+  tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_bool_predicate_no_seed_stage1_reuses_with_stability \
   tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair \
   tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2 \
   -q
