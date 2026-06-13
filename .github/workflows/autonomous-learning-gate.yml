@@ -8,6 +8,13 @@ on:
     paths:
       - ".github/workflows/autonomous-learning-gate.yml"
       - "scripts/autonomous_learning_gate.sh"
+      - "scripts/supplied_transcript_adapter_matrix.sh"
+      - "quantagent/agent_loop_core.py"
+      - "quantagent/coding_bench.py"
+      - "quantagent/evidence_court.py"
+      - "quantagent/learning_effect_coding_bench.py"
+      - "quantagent/skill_pipeline.py"
+      - "tests/test_cli_wrappers.py"
       - "tests/test_learning_effect_e2e.py"
       - "tests/test_upstream_function_file_bundle_regression.py"
       - "tests/test_public_metadata.py"

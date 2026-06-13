@@ -133,11 +133,11 @@ and the same not-proof boundary. Set
 elsewhere.
 For commit-pinned public artifact capture, use the manual
 `.github/workflows/autonomous-learning-gate.yml` workflow or push a change to
-the workflow, gate script, or selected gate-test paths. It uploads the
-summary JSON and pytest logs for that workflow run. This is path-filtered
-public CI artifact evidence only, not broad default push or pull-request CI,
-external review, endorsement, live autonomy, or broad unknown-repository repair
-proof.
+the workflow, gate script, core learning modules, selected gate-test paths, or
+supplied Evidence Court/transcript proof surfaces. It uploads the summary JSON
+and pytest logs for that workflow run. This is path-filtered public CI artifact
+evidence only, not broad default push or pull-request CI, external review,
+endorsement, live autonomy, or broad unknown-repository repair proof.
 
 After a remote autonomous-learning run exists, re-check the current artifact
 boundary with:

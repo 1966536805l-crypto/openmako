@@ -390,6 +390,13 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert "paths:" in workflow
     assert '".github/workflows/autonomous-learning-gate.yml"' in workflow
     assert '"scripts/autonomous_learning_gate.sh"' in workflow
+    assert '"scripts/supplied_transcript_adapter_matrix.sh"' in workflow
+    assert '"quantagent/agent_loop_core.py"' in workflow
+    assert '"quantagent/coding_bench.py"' in workflow
+    assert '"quantagent/evidence_court.py"' in workflow
+    assert '"quantagent/learning_effect_coding_bench.py"' in workflow
+    assert '"quantagent/skill_pipeline.py"' in workflow
+    assert '"tests/test_cli_wrappers.py"' in workflow
     assert '"tests/test_learning_effect_e2e.py"' in workflow
     assert '"tests/test_upstream_function_file_bundle_regression.py"' in workflow
     assert '"tests/test_public_metadata.py"' in workflow
@@ -405,6 +412,7 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert "if-no-files-found: error" in workflow
 
     assert "`.github/workflows/autonomous-learning-gate.yml` exposes the autonomous-learning\n  stress gate as a manual `workflow_dispatch` check and as a path-filtered\n  `push` check" in progress
+    assert "The path filter also includes core learning modules,\n  the supplied transcript adapter matrix, `quantagent/evidence_court.py`, and\n  `tests/test_cli_wrappers.py`" in progress
     assert "It uploads\n  `.quantagent/autonomous_learning_gate` as the\n  `autonomous-learning-gate-summary` artifact" in progress
     assert "attached to broad default push or pull-request CI" in progress
     assert "A passing manual or path-filtered push run is public\n  CI artifact evidence only, not external review, endorsement, stars, reposts,\n  live autonomy, broad unknown-repository repair proof, or external benchmark\n  standing" in progress
@@ -519,8 +527,9 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "per-segment pytest log paths and log tails, observed pass/skip/warning\ncounts" in proof_section
     assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON" in proof_section
     assert "`.github/workflows/autonomous-learning-gate.yml` workflow" in proof_section
-    assert "uploads the\nsummary and pytest logs" in proof_section
-    assert "path-filtered\nand is not broad default push or pull-request CI, external review, or\nendorsement" in proof_section
+    assert "core learning modules, selected gate-test paths, or\nsupplied Evidence Court/transcript proof surfaces" in proof_section
+    assert "uploads the summary and\npytest logs" in proof_section
+    assert "path-filtered and is not\nbroad default push or pull-request CI, external review, or endorsement" in proof_section
     assert "## If You Came From A Benchmark Thread" in proof_section
     assert "Start with the public gate:" in proof_section
     assert 'The useful review is not "do you like this project?"' in proof_section
@@ -1712,10 +1721,11 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "per-segment pytest log paths and log tails, observed pass/skip/warning counts" in guide
     assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON" in guide
     assert "`.github/workflows/autonomous-learning-gate.yml` workflow" in guide
-    assert "uploads the\nsummary JSON and pytest logs" in guide
+    assert "core learning modules, selected gate-test paths, or\nsupplied Evidence Court/transcript proof surfaces" in guide
+    assert "uploads the summary JSON\nand pytest logs" in guide
     assert (
-        "path-filtered\npublic CI artifact evidence only, not broad default push or pull-request CI,\n"
-        "external review"
+        "path-filtered public CI artifact\n"
+        "evidence only, not broad default push or pull-request CI, external review"
     ) in guide
     assert "bash scripts/remote_autonomous_learning_snapshot.sh" in guide
     assert "remote-autonomous-learning-snapshot: status=completed conclusion=success" in guide

@@ -117,10 +117,10 @@ not-proof boundary; set `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to
 write it elsewhere.
 For commit-pinned public artifact capture, run the manual
 `.github/workflows/autonomous-learning-gate.yml` workflow or push a change to
-the workflow, gate script, or selected gate-test paths; it uploads the
-summary and pytest logs when the gate finishes. The workflow is path-filtered
-and is not broad default push or pull-request CI, external review, or
-endorsement.
+the workflow, gate script, core learning modules, selected gate-test paths, or
+supplied Evidence Court/transcript proof surfaces; it uploads the summary and
+pytest logs when the gate finishes. The workflow is path-filtered and is not
+broad default push or pull-request CI, external review, or endorsement.
 
 After such a run exists, verify the current remote artifact boundary with:
 

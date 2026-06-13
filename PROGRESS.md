@@ -118,6 +118,11 @@ Current public proof:
 - `.github/workflows/autonomous-learning-gate.yml` exposes the autonomous-learning
   stress gate as a manual `workflow_dispatch` check and as a path-filtered
   `push` check for the workflow file, gate script, and selected gate-test paths.
+  The path filter also includes core learning modules,
+  the supplied transcript adapter matrix, `quantagent/evidence_court.py`, and
+  `tests/test_cli_wrappers.py` so changes to the autonomous-learning machinery
+  or public Evidence Court/transcript proof boundary get a current
+  autonomous-learning artifact run instead of only the faster focused gate.
   It uploads
   `.quantagent/autonomous_learning_gate` as the
   `autonomous-learning-gate-summary` artifact so the machine-readable summary,
