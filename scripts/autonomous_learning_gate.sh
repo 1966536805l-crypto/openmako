@@ -13,6 +13,7 @@ SUMMARY_JSON="${OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON:-.quantagent/auto
 SUMMARY_DIR="$(dirname -- "$SUMMARY_JSON")"
 PYTEST_LOG_DIR="$SUMMARY_DIR/pytest_logs"
 TASK_PROOF_DIR="$SUMMARY_DIR/task_proofs"
+TASK_SOURCE_MANIFEST="${OPENMAKO_AUTONOMOUS_TASK_SOURCE_MANIFEST:-scripts/autonomous_task_source_provenance.json}"
 export OPENMAKO_AUTONOMOUS_TASK_PROOF_DIR="$TASK_PROOF_DIR"
 CURRENT_SEGMENT=""
 CURRENT_SEGMENT_STARTED_AT=0
@@ -22,24 +23,32 @@ init_summary() {
   mkdir -p "$SUMMARY_DIR"
   mkdir -p "$PYTEST_LOG_DIR"
   mkdir -p "$TASK_PROOF_DIR"
-  summary_args=("$SUMMARY_JSON" "$GIT_COMMIT" "$PYTEST_LOG_DIR" "$TASK_PROOF_DIR")
+  summary_args=("$SUMMARY_JSON" "$GIT_COMMIT" "$PYTEST_LOG_DIR" "$TASK_PROOF_DIR" "$TASK_SOURCE_MANIFEST")
   if [ "${#ORIGINAL_ARGS[@]}" -gt 0 ]; then
     summary_args+=("${ORIGINAL_ARGS[@]}")
   fi
   "$PYTHON_BIN" - "${summary_args[@]}" <<'PY'
+import hashlib
 import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 path = Path(sys.argv[1])
+manifest_path = Path(sys.argv[5])
+manifest_resolved = manifest_path if manifest_path.is_absolute() else Path.cwd() / manifest_path
+manifest_text = manifest_resolved.read_text(encoding="utf-8")
+task_source_provenance = json.loads(manifest_text)
+manifest_sha256 = hashlib.sha256(manifest_text.encode("utf-8")).hexdigest()
+manifest_artifact_path = path.parent / "task_source_provenance_manifest.json"
+manifest_artifact_path.write_text(manifest_text, encoding="utf-8")
 payload = {
     "schema_version": "autonomous-learning-gate/v0.1",
     "status": "running",
     "created_at_utc": datetime.now(timezone.utc).isoformat(),
     "invocation": {
         "git_commit": sys.argv[2],
-        "argv": sys.argv[5:],
+        "argv": sys.argv[6:],
     },
     "artifacts": {
         "pytest_log_dir": sys.argv[3],
@@ -50,31 +59,12 @@ payload = {
         "upstream_hidden_pack_reuse": "pending",
         "cross_upstream_no_seed_reuse": "pending",
     },
-    "task_source_provenance": {
-        "schema_version": "autonomous-task-source-provenance/v0.1",
-        "independence_claim": "repo-authored-regression-pack",
-        "external_heldout": False,
-        "source_boundary": (
-            "Selected tasks are repository-authored regression fixtures, "
-            "including upstream-inspired local hidden packs. This is not an "
-            "independent external held-out benchmark, external review, or "
-            "external benchmark standing."
-        ),
-        "segments": {
-            "stage1_trajectory_reuse_matrix": {
-                "source_kind": "repo-authored-e2e-regression",
-                "external_heldout": False,
-            },
-            "upstream_hidden_pack_reuse": {
-                "source_kind": "repo-authored-upstream-inspired-hidden-pack",
-                "external_heldout": False,
-            },
-            "cross_upstream_no_seed_reuse": {
-                "source_kind": "repo-authored-cross-upstream-inspired-regression",
-                "external_heldout": False,
-            },
-        },
+    "task_source_manifest": {
+        "path": str(manifest_path),
+        "artifact_path": str(manifest_artifact_path),
+        "sha256": manifest_sha256,
     },
+    "task_source_provenance": task_source_provenance,
     "segment_elapsed_seconds": {},
     "tests": {
         "stage1_trajectory_reuse_matrix": {
@@ -249,7 +239,9 @@ PY
 
 validate_summary() {
   "$PYTHON_BIN" - "$SUMMARY_JSON" <<'PY'
+import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -292,6 +284,40 @@ tests = payload.get("tests") or {}
 stage1 = tests.get("stage1_trajectory_reuse_matrix") or {}
 upstream = tests.get("upstream_hidden_pack_reuse") or {}
 cross_upstream = tests.get("cross_upstream_no_seed_reuse") or {}
+
+manifest = payload.get("task_source_manifest") or {}
+manifest_path_value = manifest.get("path")
+manifest_artifact_path_value = manifest.get("artifact_path")
+manifest_sha256 = manifest.get("sha256")
+if not isinstance(manifest_path_value, str) or not manifest_path_value.endswith("scripts/autonomous_task_source_provenance.json"):
+    errors.append("task_source_manifest.path")
+if not isinstance(manifest_artifact_path_value, str) or not manifest_artifact_path_value.endswith("task_source_provenance_manifest.json"):
+    errors.append("task_source_manifest.artifact_path")
+if not isinstance(manifest_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", manifest_sha256):
+    errors.append("task_source_manifest.sha256")
+
+manifest_payload = None
+if isinstance(manifest_path_value, str):
+    manifest_path = Path(manifest_path_value)
+    if not manifest_path.is_absolute():
+        manifest_path = Path.cwd() / manifest_path
+    try:
+        manifest_text = manifest_path.read_text(encoding="utf-8")
+        if hashlib.sha256(manifest_text.encode("utf-8")).hexdigest() != manifest_sha256:
+            errors.append("task_source_manifest.sha256")
+        manifest_payload = json.loads(manifest_text)
+    except Exception:
+        errors.append("task_source_manifest.path")
+if isinstance(manifest_artifact_path_value, str):
+    manifest_artifact_path = Path(manifest_artifact_path_value)
+    try:
+        artifact_manifest_text = manifest_artifact_path.read_text(encoding="utf-8")
+        if hashlib.sha256(artifact_manifest_text.encode("utf-8")).hexdigest() != manifest_sha256:
+            errors.append("task_source_manifest.artifact_path")
+        if manifest_payload is not None and json.loads(artifact_manifest_text) != manifest_payload:
+            errors.append("task_source_manifest.artifact_path")
+    except Exception:
+        errors.append("task_source_manifest.artifact_path")
 
 expected_stage1_selected = [
     "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2",
@@ -473,6 +499,8 @@ if cross_upstream_proofs:
             errors.append(f"task_proofs.cross_upstream_no_seed_reuse.observed_counts.{key}")
 
 provenance = payload.get("task_source_provenance") or {}
+if manifest_payload is not None and provenance != manifest_payload:
+    errors.append("task_source_provenance.manifest")
 if provenance.get("schema_version") != "autonomous-task-source-provenance/v0.1":
     errors.append("task_source_provenance.schema_version")
 if provenance.get("independence_claim") != "repo-authored-regression-pack":
@@ -494,6 +522,9 @@ for segment, source_kind in required_provenance_segments.items():
         errors.append(f"task_source_provenance.segments.{segment}.source_kind")
     if segment_entry.get("external_heldout") is not False:
         errors.append(f"task_source_provenance.segments.{segment}.external_heldout")
+    tests_entry = tests.get(segment) or {}
+    if segment_entry.get("selected_tests") != tests_entry.get("selected"):
+        errors.append(f"task_source_provenance.segments.{segment}.selected_tests")
 
 not_proof = payload.get("not_proof")
 required_not_proof = {
@@ -570,6 +601,8 @@ elif mode == "missing_observed_result":
     payload.get("tests", {}).get("stage1_trajectory_reuse_matrix", {}).pop("observed_pytest", None)
 elif mode == "misstated_task_source_provenance":
     payload.get("task_source_provenance", {})["external_heldout"] = True
+elif mode == "missing_task_source_manifest":
+    payload.pop("task_source_manifest", None)
 else:
     raise SystemExit(f"unsupported corrupt summary mode: {mode}")
 path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")

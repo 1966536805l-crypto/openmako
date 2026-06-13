@@ -24,6 +24,7 @@ python3 - "$REPO" "$WORKFLOW" "$ARTIFACT_NAME" "$remote_sha" <<'PY'
 import json
 import hashlib
 import os
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -318,6 +319,56 @@ def validate_artifact_summary(payload: dict, archive_text_files: dict[str, str])
         errors.append("tests.cross_upstream_no_seed_reuse")
         cross_upstream = {}
 
+    expected_stage1_selected = [
+        "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2",
+        "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2",
+        "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2",
+    ]
+    expected_upstream_selected = [
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating",
+    ]
+    expected_cross_upstream_selected = [
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_scale_no_seed_stage1_extracts_function_repair_without_non_target_drift",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_bool_predicate_no_seed_stage1_reuses_with_stability",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2",
+    ]
+    if stage1.get("selected") != expected_stage1_selected:
+        errors.append("tests.stage1_trajectory_reuse_matrix.selected")
+    if upstream.get("selected") != expected_upstream_selected:
+        errors.append("tests.upstream_hidden_pack_reuse.selected")
+    if cross_upstream.get("selected") != expected_cross_upstream_selected:
+        errors.append("tests.cross_upstream_no_seed_reuse.selected")
+
+    manifest = mapping_field("task_source_manifest")
+    manifest_path = manifest.get("path")
+    manifest_artifact_path = manifest.get("artifact_path")
+    manifest_sha256 = manifest.get("sha256")
+    if not isinstance(manifest_path, str) or not manifest_path.endswith("scripts/autonomous_task_source_provenance.json"):
+        errors.append("task_source_manifest.path")
+    if not isinstance(manifest_artifact_path, str) or not manifest_artifact_path.endswith("task_source_provenance_manifest.json"):
+        errors.append("task_source_manifest.artifact_path")
+    if not isinstance(manifest_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", manifest_sha256):
+        errors.append("task_source_manifest.sha256")
+    manifest_payload = None
+    manifest_matches = [
+        name
+        for name in archive_text_files
+        if name.endswith("task_source_provenance_manifest.json")
+    ]
+    if len(manifest_matches) != 1:
+        errors.append("artifact.task_source_manifest")
+    else:
+        manifest_name = manifest_matches[0]
+        print(f"remote-autonomous-learning-snapshot: artifact-task-source-manifest={manifest_name}")
+        manifest_text = archive_text_files[manifest_name]
+        if hashlib.sha256(manifest_text.encode("utf-8")).hexdigest() != manifest_sha256:
+            errors.append("task_source_manifest.sha256")
+        try:
+            manifest_payload = json.loads(manifest_text)
+        except json.JSONDecodeError:
+            errors.append("artifact.task_source_manifest")
+
     def validate_pytest_segment_log(segment: str, entry: dict, expected_passed: int) -> None:
         log_path = entry.get("log_path")
         if not isinstance(log_path, str) or not log_path.endswith(f"pytest_logs/{segment}.log"):
@@ -511,6 +562,8 @@ def validate_artifact_summary(payload: dict, archive_text_files: dict[str, str])
     if not isinstance(provenance, dict):
         errors.append("task_source_provenance")
         provenance = {}
+    if manifest_payload is not None and provenance != manifest_payload:
+        errors.append("task_source_provenance.manifest")
     if provenance.get("schema_version") != "autonomous-task-source-provenance/v0.1":
         errors.append("task_source_provenance.schema_version")
     if provenance.get("independence_claim") != "repo-authored-regression-pack":
@@ -538,6 +591,11 @@ def validate_artifact_summary(payload: dict, archive_text_files: dict[str, str])
             errors.append(f"task_source_provenance.segments.{segment}.source_kind")
         if segment_entry.get("external_heldout") is not False:
             errors.append(f"task_source_provenance.segments.{segment}.external_heldout")
+        tests_entry = tests.get(segment)
+        if not isinstance(tests_entry, dict):
+            tests_entry = {}
+        if segment_entry.get("selected_tests") != tests_entry.get("selected"):
+            errors.append(f"task_source_provenance.segments.{segment}.selected_tests")
 
     required_not_proof = {
         "native live autonomy",
@@ -594,6 +652,16 @@ def validate_artifact_summary(payload: dict, archive_text_files: dict[str, str])
         "remote-autonomous-learning-snapshot: "
         "artifact-summary-task-source-provenance="
         f"{provenance.get('independence_claim')}"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-task-source-manifest="
+        f"{manifest.get('path')}"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-task-source-manifest-sha256="
+        f"{manifest.get('sha256')}"
     )
     print(
         "remote-autonomous-learning-snapshot: "

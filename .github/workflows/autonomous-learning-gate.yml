@@ -7,7 +7,9 @@ on:
       - main
     paths:
       - ".github/workflows/autonomous-learning-gate.yml"
+      - "scripts/autonomous_task_source_provenance.json"
       - "scripts/autonomous_learning_gate.sh"
+      - "scripts/remote_autonomous_learning_snapshot.sh"
       - "scripts/supplied_transcript_adapter_matrix.sh"
       - "quantagent/agent_loop_core.py"
       - "quantagent/coding_bench.py"

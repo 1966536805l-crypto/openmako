@@ -17,6 +17,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+AUTONOMOUS_TASK_SOURCE_MANIFEST = ROOT / "scripts" / "autonomous_task_source_provenance.json"
 PUBLIC_DESCRIPTION = (
     "Evidence harness for coding agents: learning-effect, patch-scope, and test-proof checks."
 )
@@ -208,30 +209,15 @@ def _autonomous_task_proofs_fixture() -> dict:
 
 
 def _autonomous_task_source_provenance_fixture() -> dict:
+    return json.loads(AUTONOMOUS_TASK_SOURCE_MANIFEST.read_text(encoding="utf-8"))
+
+
+def _autonomous_task_source_manifest_fixture() -> dict:
+    manifest_text = AUTONOMOUS_TASK_SOURCE_MANIFEST.read_text(encoding="utf-8")
     return {
-        "schema_version": "autonomous-task-source-provenance/v0.1",
-        "independence_claim": "repo-authored-regression-pack",
-        "external_heldout": False,
-        "source_boundary": (
-            "Selected tasks are repository-authored regression fixtures, "
-            "including upstream-inspired local hidden packs. This is not an "
-            "independent external held-out benchmark, external review, or "
-            "external benchmark standing."
-        ),
-        "segments": {
-            "stage1_trajectory_reuse_matrix": {
-                "source_kind": "repo-authored-e2e-regression",
-                "external_heldout": False,
-            },
-            "upstream_hidden_pack_reuse": {
-                "source_kind": "repo-authored-upstream-inspired-hidden-pack",
-                "external_heldout": False,
-            },
-            "cross_upstream_no_seed_reuse": {
-                "source_kind": "repo-authored-cross-upstream-inspired-regression",
-                "external_heldout": False,
-            },
-        },
+        "path": "scripts/autonomous_task_source_provenance.json",
+        "artifact_path": ".quantagent/autonomous_learning_gate/task_source_provenance_manifest.json",
+        "sha256": hashlib.sha256(manifest_text.encode("utf-8")).hexdigest(),
     }
 
 
@@ -421,7 +407,9 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert "- main" in workflow
     assert "paths:" in workflow
     assert '".github/workflows/autonomous-learning-gate.yml"' in workflow
+    assert '"scripts/autonomous_task_source_provenance.json"' in workflow
     assert '"scripts/autonomous_learning_gate.sh"' in workflow
+    assert '"scripts/remote_autonomous_learning_snapshot.sh"' in workflow
     assert '"scripts/supplied_transcript_adapter_matrix.sh"' in workflow
     assert '"quantagent/agent_loop_core.py"' in workflow
     assert '"quantagent/coding_bench.py"' in workflow
@@ -1038,7 +1026,12 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "artifact-summary-cross-upstream-cheat-caught=" in text
     assert "artifact-summary-task-proof-files=" in text
     assert "artifact-summary-task-source-provenance=" in text
+    assert "artifact-summary-task-source-manifest=" in text
+    assert "artifact-summary-task-source-manifest-sha256=" in text
     assert "artifact-summary-external-heldout=" in text
+    assert "artifact-task-source-manifest=" in text
+    assert "task_source_manifest" in text
+    assert "task_source_provenance_manifest.json" in text
     assert "task_source_provenance" in text
     assert "autonomous-task-source-provenance/v0.1" in text
     assert "repo-authored-regression-pack" in text
@@ -1059,6 +1052,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "artifact zip sha256 does not match artifact digest" in text
     assert "artifact-pytest-log=" in text
     assert "artifact.pytest_logs" in text
+    assert "artifact.task_source_manifest" in text
     assert "manual-url=" in text
     assert "checked-at-utc=" in text
     assert "github_api_rate_limit" in text
@@ -1081,6 +1075,8 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
         assert forbidden.lower() not in text.lower()
 
     remote_sha = "1234567890abcdef1234567890abcdef12345678"
+    task_source_provenance = _autonomous_task_source_provenance_fixture()
+    task_source_manifest = _autonomous_task_source_manifest_fixture()
     runs_json = tmp_path / "runs.json"
     artifacts_json = tmp_path / "artifacts.json"
     artifact_zip = tmp_path / "artifact.zip"
@@ -1111,6 +1107,9 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
         },
         "tests": {
             "stage1_trajectory_reuse_matrix": {
+                "selected": task_source_provenance["segments"]["stage1_trajectory_reuse_matrix"][
+                    "selected_tests"
+                ],
                 "expected_passed": 3,
                 "observed_pytest": {
                     "exit_code": 0,
@@ -1125,6 +1124,9 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
                 ],
             },
             "upstream_hidden_pack_reuse": {
+                "selected": task_source_provenance["segments"]["upstream_hidden_pack_reuse"][
+                    "selected_tests"
+                ],
                 "expected_passed": 1,
                 "observed_pytest": {
                     "exit_code": 0,
@@ -1149,6 +1151,9 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
                 },
             },
             "cross_upstream_no_seed_reuse": {
+                "selected": task_source_provenance["segments"]["cross_upstream_no_seed_reuse"][
+                    "selected_tests"
+                ],
                 "expected_passed": 4,
                 "observed_pytest": {
                     "exit_code": 0,
@@ -1174,7 +1179,8 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
             },
         },
         "task_proofs": _autonomous_task_proofs_fixture(),
-        "task_source_provenance": _autonomous_task_source_provenance_fixture(),
+        "task_source_manifest": task_source_manifest,
+        "task_source_provenance": task_source_provenance,
         "not_proof": [
             "native live autonomy",
             "broad unknown-repository repair",
@@ -1211,9 +1217,16 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
         *,
         omit_log_segment: str | None = None,
         log_overrides: dict[str, str] | None = None,
+        manifest_text: str | None = None,
     ) -> str:
         with zipfile.ZipFile(artifact_zip, "w") as archive:
             archive.writestr("last_summary.json", json.dumps(summary))
+            archive.writestr(
+                "task_source_provenance_manifest.json",
+                manifest_text
+                if manifest_text is not None
+                else AUTONOMOUS_TASK_SOURCE_MANIFEST.read_text(encoding="utf-8"),
+            )
             for segment, test_entry in summary.get("tests", {}).items():
                 if segment == omit_log_segment:
                     continue
@@ -1257,6 +1270,10 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "remote-autonomous-learning-snapshot: artifact-summary=last_summary.json" in result.stdout
     assert (
         "remote-autonomous-learning-snapshot: "
+        "artifact-task-source-manifest=task_source_provenance_manifest.json"
+    ) in result.stdout
+    assert (
+        "remote-autonomous-learning-snapshot: "
         "artifact-pytest-log=pytest_logs/stage1_trajectory_reuse_matrix.log"
     ) in result.stdout
     assert (
@@ -1276,6 +1293,14 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-cheat-caught=8" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-task-proof-files=5" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-task-source-provenance=repo-authored-regression-pack" in result.stdout
+    assert (
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-task-source-manifest=scripts/autonomous_task_source_provenance.json"
+    ) in result.stdout
+    assert (
+        "remote-autonomous-learning-snapshot: artifact-summary-task-source-manifest-sha256="
+        f"{task_source_manifest['sha256']}"
+    ) in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-external-heldout=false" in result.stdout
     assert "remote-autonomous-learning-snapshot: PASS" in result.stdout
 
@@ -1365,7 +1390,44 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     )
     assert provenance_mismatch.returncode == 1
     assert "artifact summary contract mismatch" in provenance_mismatch.stderr
+    assert "task_source_provenance.manifest" in provenance_mismatch.stderr
     assert "task_source_provenance.external_heldout" in provenance_mismatch.stderr
+
+    broken_summary = json.loads(json.dumps(artifact_summary))
+    write_artifact_summary(broken_summary, manifest_text='{"schema_version":"tampered"}\n')
+    manifest_mismatch = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert manifest_mismatch.returncode == 1
+    assert "artifact summary contract mismatch" in manifest_mismatch.stderr
+    assert "task_source_manifest.sha256" in manifest_mismatch.stderr
+    assert "task_source_provenance.manifest" in manifest_mismatch.stderr
+
+    broken_summary = json.loads(json.dumps(artifact_summary))
+    broken_summary["tests"]["upstream_hidden_pack_reuse"]["selected"] = []
+    write_artifact_summary(broken_summary)
+    selected_mismatch = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert selected_mismatch.returncode == 1
+    assert "artifact summary contract mismatch" in selected_mismatch.stderr
+    assert "tests.upstream_hidden_pack_reuse.selected" in selected_mismatch.stderr
+    assert (
+        "task_source_provenance.segments.upstream_hidden_pack_reuse.selected_tests"
+        in selected_mismatch.stderr
+    )
 
     broken_summary = dict(artifact_summary)
     broken_summary["tests"] = json.loads(json.dumps(artifact_summary["tests"]))
@@ -2102,8 +2164,14 @@ def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() 
     assert "schema_version\": \"autonomous-learning-gate/v0.1\"" in text
     assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON" in text
     assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_TEST_CORRUPT_SUMMARY" in text
+    assert "OPENMAKO_AUTONOMOUS_TASK_SOURCE_MANIFEST" in text
+    assert "scripts/autonomous_task_source_provenance.json" in text
+    assert "task_source_manifest" in text
+    assert "task_source_provenance_manifest.json" in text
+    assert "hashlib.sha256" in text
     assert "missing_contract_fields" in text
     assert "missing_observed_result" in text
+    assert "missing_task_source_manifest" in text
     assert "expected_contract" in text
     assert "observed_pytest" in text
     assert "log_tail" in text
@@ -2213,6 +2281,15 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
         "cross_upstream_no_seed_reuse": "passed",
     }
     assert payload["artifacts"]["task_proof_dir"].endswith("task_proofs")
+    assert payload["task_source_manifest"]["path"].endswith(
+        "scripts/autonomous_task_source_provenance.json"
+    )
+    assert payload["task_source_manifest"]["artifact_path"].endswith(
+        "task_source_provenance_manifest.json"
+    )
+    assert payload["task_source_manifest"]["sha256"] == _autonomous_task_source_manifest_fixture()[
+        "sha256"
+    ]
     assert payload["task_source_provenance"] == _autonomous_task_source_provenance_fixture()
     assert payload["tests"]["upstream_hidden_pack_reuse"]["expected_contract"]["approved_learning_solved"] == 10
     assert payload["tests"]["upstream_hidden_pack_reuse"]["expected_contract"]["stability_solved"] == 100
@@ -2291,8 +2368,35 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
     assert corrupt_provenance.returncode == 1
     assert (
         "autonomous-learning-gate: invalid summary fields="
+        "task_source_provenance.manifest,"
         "task_source_provenance.external_heldout"
     ) in corrupt_provenance.stderr
+
+    missing_manifest_summary = tmp_path / "missing-manifest-summary.json"
+    missing_manifest_env = env.copy()
+    missing_manifest_env["OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON"] = str(
+        missing_manifest_summary
+    )
+    missing_manifest_env[
+        "OPENMAKO_AUTONOMOUS_LEARNING_GATE_TEST_CORRUPT_SUMMARY"
+    ] = "missing_task_source_manifest"
+    missing_manifest = subprocess.run(
+        ["bash", "scripts/autonomous_learning_gate.sh"],
+        cwd=ROOT,
+        env=missing_manifest_env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert missing_manifest.returncode == 1
+    assert (
+        "autonomous-learning-gate: invalid summary fields="
+        "task_source_manifest.path,"
+        "task_source_manifest.artifact_path,"
+        "task_source_manifest.sha256"
+    ) in missing_manifest.stderr
 
     observed_summary = tmp_path / "observed-summary.json"
     observed_env = env.copy()

@@ -1,0 +1,34 @@
+{
+  "external_heldout": false,
+  "independence_claim": "repo-authored-regression-pack",
+  "schema_version": "autonomous-task-source-provenance/v0.1",
+  "segments": {
+    "cross_upstream_no_seed_reuse": {
+      "external_heldout": false,
+      "selected_tests": [
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_scale_no_seed_stage1_extracts_function_repair_without_non_target_drift",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_bool_predicate_no_seed_stage1_reuses_with_stability",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2"
+      ],
+      "source_kind": "repo-authored-cross-upstream-inspired-regression"
+    },
+    "stage1_trajectory_reuse_matrix": {
+      "external_heldout": false,
+      "selected_tests": [
+        "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2",
+        "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2",
+        "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2"
+      ],
+      "source_kind": "repo-authored-e2e-regression"
+    },
+    "upstream_hidden_pack_reuse": {
+      "external_heldout": false,
+      "selected_tests": [
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating"
+      ],
+      "source_kind": "repo-authored-upstream-inspired-hidden-pack"
+    }
+  },
+  "source_boundary": "Selected tasks are repository-authored regression fixtures, including upstream-inspired local hidden packs. This is not an independent external held-out benchmark, external review, or external benchmark standing."
+}
