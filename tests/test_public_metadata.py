@@ -1160,6 +1160,25 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
         in cross_upstream_mismatch.stderr
     )
 
+    broken_summary = json.loads(json.dumps(artifact_summary))
+    broken_summary["task_proofs"]["cross_upstream_no_seed_reuse"][0]["result_sets"]["approved_learning"][0][
+        "changed_files"
+    ] = []
+    with zipfile.ZipFile(artifact_zip, "w") as archive:
+        archive.writestr("last_summary.json", json.dumps(broken_summary))
+    proof_mismatch = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert proof_mismatch.returncode == 1
+    assert "artifact summary contract mismatch" in proof_mismatch.stderr
+    assert "task_proofs.pandera_scale_no_seed.approved_learning.changed_files" in proof_mismatch.stderr
+
     valid_artifacts = json.loads(artifacts_json.read_text(encoding="utf-8"))
     expired_artifacts = json.loads(json.dumps(valid_artifacts))
     expired_artifacts["artifacts"][0]["expired"] = True

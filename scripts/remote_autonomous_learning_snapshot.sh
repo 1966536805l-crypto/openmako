@@ -368,6 +368,9 @@ def validate_artifact_summary(payload: dict) -> None:
                     errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.{set_name}.solved")
                 if not item.get("task_id"):
                     errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.{set_name}.task_id")
+                changed_files = item.get("changed_files")
+                if status == "solved" and (not isinstance(changed_files, list) or not changed_files):
+                    errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.{set_name}.changed_files")
                 if status == "solved" and item.get("out_of_scope_files") != []:
                     errors.append(f"task_proofs.{proof.get('test_name', 'unknown')}.{set_name}.out_of_scope_files")
                 if status == "cheated" and item.get("failure_class") != "policy":
