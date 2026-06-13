@@ -147,7 +147,9 @@ Current public proof:
   `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for saved artifact fixtures. When API data
   or artifact download is unavailable, it prints the remote main SHA, manual
   Actions URL, local UTC check time, rate-limit reset details, and a copyable
-  rerun command when available before exiting nonzero. Passing this script is
+  rerun command when available before exiting nonzero. Artifact zip 401 now gets
+  a distinct `artifact_zip_requires_auth` boundary snapshot with token and saved
+  fixture rerun commands, while still failing closed. Passing this script is
   current public CI artifact evidence only, not external review, endorsement,
   stars, reposts, live autonomy, broad unknown-repository repair, or external
   benchmark standing.
@@ -1680,7 +1682,7 @@ Next smallest hygiene task:
 
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
-- Next concrete candidate: run the autonomous-learning stress gate under a
-  clean commit-only checkout, verify the observed pytest summary JSON and logs,
-  and ask five agents to score the remaining autonomous-learning gap before
-  choosing the next adapter edge case or trend-radar follow-up.
+- Next concrete candidate: rerun the remote autonomous artifact snapshot with a
+  token or saved artifact fixture, then ask five agents to score whether the
+  remaining autonomous-learning gap is artifact access, benchmark coverage, or
+  another adapter evidence edge case.

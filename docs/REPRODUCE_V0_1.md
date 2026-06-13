@@ -166,8 +166,10 @@ remote-autonomous-learning-snapshot: PASS
 
 The command fails closed if the latest autonomous-learning workflow run is
 stale, still running, failed, missing, rate limited, missing the named artifact,
-expired, missing an artifact digest, unreadable as an artifact zip, or missing
-the expected `last_summary.json` contract fields. Set
+expired, missing an artifact digest, unreadable as an artifact zip, blocked by
+an artifact zip 401 that needs authenticated API access, or missing the expected
+`last_summary.json` contract fields. Set `OPENMAKO_GITHUB_TOKEN`,
+`GITHUB_TOKEN`, or `GH_TOKEN` for live artifact zip reads, or set
 `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` to verify the same contract against a saved
 artifact fixture. Passing it is current public CI artifact evidence only, not
 external review, endorsement, stars, reposts, live autonomy, broad

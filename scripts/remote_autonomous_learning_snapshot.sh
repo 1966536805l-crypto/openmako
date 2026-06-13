@@ -55,7 +55,27 @@ if token:
     headers["X-GitHub-Api-Version"] = "2022-11-28"
 
 
-def print_boundary_snapshot(reason: str, response_headers=None) -> None:
+def print_auth_hint() -> None:
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "auth-required=OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "rerun-auth-command=OPENMAKO_GITHUB_TOKEN=<token> "
+        "bash scripts/remote_autonomous_learning_snapshot.sh"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "fixture-rerun-command="
+        "OPENMAKO_AUTONOMOUS_RUNS_JSON=runs.json "
+        "OPENMAKO_AUTONOMOUS_ARTIFACTS_JSON=artifacts.json "
+        "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP=autonomous-learning-gate-summary.zip "
+        "bash scripts/remote_autonomous_learning_snapshot.sh"
+    )
+
+
+def print_boundary_snapshot(reason: str, response_headers=None, *, include_auth_hint: bool = False) -> None:
     checked_at = datetime.now(timezone.utc)
     print(f"remote-autonomous-learning-snapshot: repo={repo}")
     print(f"remote-autonomous-learning-snapshot: remote-main-sha={remote_sha}")
@@ -88,6 +108,8 @@ def print_boundary_snapshot(reason: str, response_headers=None) -> None:
                     "rerun-after-command="
                     f"sleep {seconds_until_reset} && bash scripts/remote_autonomous_learning_snapshot.sh"
                 )
+    if include_auth_hint:
+        print_auth_hint()
     print(
         "remote-autonomous-learning-snapshot: "
         "not-proof=external review; endorsement; stars; reposts; live autonomy; "
@@ -108,6 +130,14 @@ def read_json_url(url: str, unavailable_reason: str) -> dict:
                 "remote-autonomous-learning-snapshot: GitHub API rate limit; "
                 "re-check later or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN "
                 "for authenticated API reads",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+        if exc.code == 401:
+            print_boundary_snapshot("github_api_requires_auth", exc.headers, include_auth_hint=True)
+            print(
+                "remote-autonomous-learning-snapshot: GitHub API requires authenticated reads; "
+                "set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN or use saved fixtures",
                 file=sys.stderr,
             )
             sys.exit(2)
@@ -165,6 +195,22 @@ def read_artifact_zip(url: str) -> bytes:
                 "remote-autonomous-learning-snapshot: GitHub API rate limit while reading artifact zip; "
                 "re-check later or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN "
                 "for authenticated API reads",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+        if exc.code == 401:
+            print_boundary_snapshot("artifact_zip_requires_auth", exc.headers, include_auth_hint=True)
+            if token:
+                token_message = (
+                    "provided token was rejected or lacks Actions artifact read access"
+                )
+            else:
+                token_message = "no GitHub token was provided"
+            print(
+                "remote-autonomous-learning-snapshot: GitHub artifact zip download "
+                "requires authenticated API access; "
+                f"{token_message}; set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN "
+                "or provide OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP",
                 file=sys.stderr,
             )
             sys.exit(2)

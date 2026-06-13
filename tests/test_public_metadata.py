@@ -284,6 +284,7 @@ def test_readme_links_public_proof_issue() -> None:
     assert "bash scripts/remote_autonomous_learning_snapshot.sh" in readme
     assert "a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, downloaded `last_summary.json` contract fields, and task-level proof records" in readme
     assert "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP" in readme
+    assert "artifact zip 401 results print token and saved-fixture rerun commands before exiting nonzero" in readme
     assert "public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing" in readme
     assert "Saved autonomous artifact snapshot" in readme
     assert "bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json autonomous-learning-gate-summary.zip <openmako-main-sha>" in readme
@@ -419,6 +420,7 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert "the downloaded `last_summary.json` contract fields for the selected\n  segments, observed pass counts, hidden task count, stability solved count,\n  cheating caught count, and cross-upstream no-seed hidden-stage2/stability\n  counts" in progress
     assert "plus\n  `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for saved artifact fixtures" in progress
     assert "When API data\n  or artifact download is unavailable" in progress
+    assert "Artifact zip 401 now gets\n  a distinct `artifact_zip_requires_auth` boundary snapshot with token and saved\n  fixture rerun commands, while still failing closed" in progress
     assert "`bash scripts/public_evidence_comment_check.sh` is the fail-closed marker\n  check for the published issue #1 evidence comment" in progress
     assert "comment id, commit, run id, job id, artifact name, artifact id, artifact\n  digest, and boundary phrase" in progress
     assert "`OPENMAKO_PUBLIC_EVIDENCE_HTML` fixture" in progress
@@ -1021,6 +1023,13 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "X-RateLimit-Reset" in text
     assert "rerun-after-command=" in text
     assert "sleep {seconds_until_reset} && bash scripts/remote_autonomous_learning_snapshot.sh" in text
+    assert "github_api_requires_auth" in text
+    assert "artifact_zip_requires_auth" in text
+    assert "auth-required=OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN" in text
+    assert "rerun-auth-command=OPENMAKO_GITHUB_TOKEN=<token>" in text
+    assert "fixture-rerun-command=" in text
+    assert "GitHub artifact zip download" in text
+    assert "requires authenticated API access" in text
     assert "not-proof=external review; endorsement; stars; reposts; live autonomy" in text
     assert "broad unknown-repository repair; external benchmark standing" in text
     for forbidden in FORBIDDEN_README_CLAIMS:
@@ -1739,8 +1748,8 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-stability-solved=16" in guide
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-cheat-caught=8" in guide
     assert "remote-autonomous-learning-snapshot: artifact-summary-task-proof-files=5" in guide
-    assert "stale, still running, failed, missing, rate limited, missing the named artifact,\nexpired, missing an artifact digest, unreadable as an artifact zip, or missing\nthe expected `last_summary.json` contract fields" in guide
-    assert "`OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` to verify the same contract against a saved\nartifact fixture" in guide
+    assert "stale, still running, failed, missing, rate limited, missing the named artifact,\nexpired, missing an artifact digest, unreadable as an artifact zip, blocked by\nan artifact zip 401 that needs authenticated API access, or missing the expected\n`last_summary.json` contract fields" in guide
+    assert "Set `OPENMAKO_GITHUB_TOKEN`,\n`GITHUB_TOKEN`, or `GH_TOKEN` for live artifact zip reads, or set\n`OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` to verify the same contract against a saved\nartifact fixture" in guide
     assert "Passing it is current public CI artifact evidence only, not\nexternal review, endorsement, stars, reposts, live autonomy, broad\nunknown-repository repair, or external benchmark standing" in guide
     assert (
         "bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json "
