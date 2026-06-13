@@ -50,6 +50,31 @@ payload = {
         "upstream_hidden_pack_reuse": "pending",
         "cross_upstream_no_seed_reuse": "pending",
     },
+    "task_source_provenance": {
+        "schema_version": "autonomous-task-source-provenance/v0.1",
+        "independence_claim": "repo-authored-regression-pack",
+        "external_heldout": False,
+        "source_boundary": (
+            "Selected tasks are repository-authored regression fixtures, "
+            "including upstream-inspired local hidden packs. This is not an "
+            "independent external held-out benchmark, external review, or "
+            "external benchmark standing."
+        ),
+        "segments": {
+            "stage1_trajectory_reuse_matrix": {
+                "source_kind": "repo-authored-e2e-regression",
+                "external_heldout": False,
+            },
+            "upstream_hidden_pack_reuse": {
+                "source_kind": "repo-authored-upstream-inspired-hidden-pack",
+                "external_heldout": False,
+            },
+            "cross_upstream_no_seed_reuse": {
+                "source_kind": "repo-authored-cross-upstream-inspired-regression",
+                "external_heldout": False,
+            },
+        },
+    },
     "segment_elapsed_seconds": {},
     "tests": {
         "stage1_trajectory_reuse_matrix": {
@@ -111,6 +136,7 @@ payload = {
         "external benchmark standing",
         "remote CI proof",
         "external review",
+        "independent external held-out benchmark",
         "endorsement",
         "stars",
         "reposts",
@@ -446,6 +472,29 @@ if cross_upstream_proofs:
         if sum_observed(cross_upstream_proofs, key) != expected:
             errors.append(f"task_proofs.cross_upstream_no_seed_reuse.observed_counts.{key}")
 
+provenance = payload.get("task_source_provenance") or {}
+if provenance.get("schema_version") != "autonomous-task-source-provenance/v0.1":
+    errors.append("task_source_provenance.schema_version")
+if provenance.get("independence_claim") != "repo-authored-regression-pack":
+    errors.append("task_source_provenance.independence_claim")
+if provenance.get("external_heldout") is not False:
+    errors.append("task_source_provenance.external_heldout")
+source_boundary = provenance.get("source_boundary")
+if not isinstance(source_boundary, str) or "not an independent external held-out benchmark" not in source_boundary:
+    errors.append("task_source_provenance.source_boundary")
+provenance_segments = provenance.get("segments") or {}
+required_provenance_segments = {
+    "stage1_trajectory_reuse_matrix": "repo-authored-e2e-regression",
+    "upstream_hidden_pack_reuse": "repo-authored-upstream-inspired-hidden-pack",
+    "cross_upstream_no_seed_reuse": "repo-authored-cross-upstream-inspired-regression",
+}
+for segment, source_kind in required_provenance_segments.items():
+    segment_entry = provenance_segments.get(segment) or {}
+    if segment_entry.get("source_kind") != source_kind:
+        errors.append(f"task_source_provenance.segments.{segment}.source_kind")
+    if segment_entry.get("external_heldout") is not False:
+        errors.append(f"task_source_provenance.segments.{segment}.external_heldout")
+
 not_proof = payload.get("not_proof")
 required_not_proof = {
     "native live autonomy",
@@ -453,6 +502,7 @@ required_not_proof = {
     "external benchmark standing",
     "remote CI proof",
     "external review",
+    "independent external held-out benchmark",
     "endorsement",
     "stars",
     "reposts",
@@ -518,6 +568,8 @@ if mode == "missing_contract_fields":
     payload.get("tests", {}).get("upstream_hidden_pack_reuse", {}).get("expected_contract", {}).pop("cheat_caught", None)
 elif mode == "missing_observed_result":
     payload.get("tests", {}).get("stage1_trajectory_reuse_matrix", {}).pop("observed_pytest", None)
+elif mode == "misstated_task_source_provenance":
+    payload.get("task_source_provenance", {})["external_heldout"] = True
 else:
     raise SystemExit(f"unsupported corrupt summary mode: {mode}")
 path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -609,4 +661,5 @@ fi
 
 echo "autonomous-learning-gate: PASS"
 echo "autonomous-learning-gate: summary=$SUMMARY_JSON"
-echo "autonomous-learning-gate: not-proof=native live autonomy, broad unknown-repository repair, external benchmark standing, remote CI proof, external review, endorsement, stars, reposts"
+echo "autonomous-learning-gate: task-source-provenance=repo-authored-regression-pack external-heldout=false"
+echo "autonomous-learning-gate: not-proof=native live autonomy, broad unknown-repository repair, external benchmark standing, remote CI proof, external review, independent external held-out benchmark, endorsement, stars, reposts"

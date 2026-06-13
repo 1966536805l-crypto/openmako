@@ -126,34 +126,41 @@ Current public proof:
   It uploads
   `.quantagent/autonomous_learning_gate` as the
   `autonomous-learning-gate-summary` artifact so the machine-readable summary,
-  observed pytest counts, and per-segment logs can be inspected for an exact
-  workflow run. The workflow installs `pytest` and `typing_extensions` in the
-  fresh GitHub runner so upstream-style fixture imports match the gate's
-  hidden-pack and cross-upstream no-seed coverage. It is intentionally not
-  attached to broad default push or pull-request CI because it is slower than
-  the focused public gate. A passing manual or path-filtered push run is public
-  CI artifact evidence only, not external review, endorsement, stars, reposts,
-  live autonomy, broad unknown-repository repair proof, or external benchmark
-  standing.
+  observed pytest counts, per-segment logs, task-level proof records, and
+  task-source provenance can be inspected for an exact workflow run. The
+  summary now records `task_source_provenance` as
+  `repo-authored-regression-pack` with `external_heldout=false`, so this gate
+  stays explicitly separated from an independent external held-out benchmark.
+  The workflow installs `pytest` and `typing_extensions` in the fresh GitHub
+  runner so upstream-style fixture imports match the gate's hidden-pack and
+  cross-upstream no-seed coverage. It is intentionally not attached to broad
+  default push or pull-request CI because it is slower than the focused public
+  gate. A passing manual or path-filtered push run is public CI artifact
+  evidence only, not external review, endorsement, stars, reposts, live
+  autonomy, broad unknown-repository repair proof, external benchmark standing,
+  or independent external held-out benchmark evidence.
 - `bash scripts/remote_autonomous_learning_snapshot.sh` is the fail-closed
   re-check tool for the latest autonomous-learning workflow on current
   `openmako/main`. It verifies the latest run SHA, completed/success
   conclusion, the `autonomous-learning-gate-summary` artifact id and digest,
   and the downloaded `last_summary.json` contract fields for the selected
   segments, observed pass counts, hidden task count, stability solved count,
-  cheating caught count, and cross-upstream no-seed hidden-stage2/stability
-  counts. It supports the same `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or
-  `GH_TOKEN` fallback token names as the focused snapshot, plus
-  `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for saved artifact fixtures. When API data
-  or artifact download is unavailable, it prints the remote main SHA, manual
-  Actions URL, local UTC check time, rate-limit reset details, and a copyable
-  rerun command when available before exiting nonzero. Artifact zip 401 now gets
-  a distinct `artifact_zip_requires_auth` boundary snapshot with token and saved
-  fixture rerun commands, while still failing closed; a local HTTP 401
-  regression test asserts the nonzero exit, auth hints, fixture rerun command,
-  and absence of `PASS`. Passing this script is current public CI artifact
-  evidence only, not external review, endorsement, stars, reposts, live
-  autonomy, broad unknown-repository repair, or external benchmark standing.
+  cheating caught count, cross-upstream no-seed hidden-stage2/stability counts,
+  task-proof count, and the task-source provenance boundary
+  `repo-authored-regression-pack` / `external_heldout=false`. It supports the
+  same `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN` fallback token
+  names as the focused snapshot, plus `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for
+  saved artifact fixtures. When API data or artifact download is unavailable,
+  it prints the remote main SHA, manual Actions URL, local UTC check time,
+  rate-limit reset details, and a copyable rerun command when available before
+  exiting nonzero. Artifact zip 401 now gets a distinct
+  `artifact_zip_requires_auth` boundary snapshot with token and saved fixture
+  rerun commands, while still failing closed; a local HTTP 401 regression test
+  asserts the nonzero exit, auth hints, fixture rerun command, and absence of
+  `PASS`. Passing this script is current public CI artifact evidence only, not
+  external review, endorsement, stars, reposts, live autonomy, broad
+  unknown-repository repair, external benchmark standing, or independent
+  external held-out benchmark evidence.
 - `bash scripts/public_evidence_comment_check.sh` is the fail-closed marker
   check for the published issue #1 evidence comment. It verifies the configured
   comment id, commit, run id, job id, artifact name, artifact id, artifact
@@ -173,6 +180,19 @@ Current public proof:
   This is public marker consistency and saved-artifact consistency only, not
   external review, endorsement, stars, reposts, live autonomy, broad
   unknown-repository repair, or external benchmark standing.
+- Latest local autonomous provenance-boundary check on 2026-06-14 passed:
+  `python3 -m pytest -p no:cacheprovider tests/test_public_metadata.py -q`
+  ended with `51 passed`; `bash scripts/autonomous_learning_gate.sh` ended
+  with `autonomous-learning-gate: PASS` and
+  `task-source-provenance=repo-authored-regression-pack external-heldout=false`;
+  `bash scripts/public_review_gate.sh` ended with `public-review-gate: PASS`;
+  and `git diff --check` passed. This is local gate and public-boundary
+  consistency evidence only, not independent external held-out benchmark
+  evidence, external review, endorsement, stars, reposts, live autonomy, or
+  broad unknown-repository repair.
+- Next smallest task: either add a genuinely external held-out benchmark
+  manifest/adapter with source, license, and digest checks, or synchronize
+  `docs/REPRODUCE_V0_1.md` with the new task-source provenance boundary.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:

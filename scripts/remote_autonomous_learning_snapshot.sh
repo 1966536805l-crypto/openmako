@@ -113,7 +113,8 @@ def print_boundary_snapshot(reason: str, response_headers=None, *, include_auth_
     print(
         "remote-autonomous-learning-snapshot: "
         "not-proof=external review; endorsement; stars; reposts; live autonomy; "
-        "broad unknown-repository repair; external benchmark standing"
+        "broad unknown-repository repair; external benchmark standing; "
+        "independent external held-out benchmark"
     )
 
 
@@ -506,12 +507,45 @@ def validate_artifact_summary(payload: dict, archive_text_files: dict[str, str])
             if sum_observed(cross_upstream_proofs, key) != expected:
                 errors.append(f"task_proofs.cross_upstream_no_seed_reuse.observed_counts.{key}")
 
+    provenance = payload.get("task_source_provenance")
+    if not isinstance(provenance, dict):
+        errors.append("task_source_provenance")
+        provenance = {}
+    if provenance.get("schema_version") != "autonomous-task-source-provenance/v0.1":
+        errors.append("task_source_provenance.schema_version")
+    if provenance.get("independence_claim") != "repo-authored-regression-pack":
+        errors.append("task_source_provenance.independence_claim")
+    if provenance.get("external_heldout") is not False:
+        errors.append("task_source_provenance.external_heldout")
+    source_boundary = provenance.get("source_boundary")
+    if not isinstance(source_boundary, str) or "not an independent external held-out benchmark" not in source_boundary:
+        errors.append("task_source_provenance.source_boundary")
+    provenance_segments = provenance.get("segments")
+    if not isinstance(provenance_segments, dict):
+        errors.append("task_source_provenance.segments")
+        provenance_segments = {}
+    required_provenance_segments = {
+        "stage1_trajectory_reuse_matrix": "repo-authored-e2e-regression",
+        "upstream_hidden_pack_reuse": "repo-authored-upstream-inspired-hidden-pack",
+        "cross_upstream_no_seed_reuse": "repo-authored-cross-upstream-inspired-regression",
+    }
+    for segment, source_kind in required_provenance_segments.items():
+        segment_entry = provenance_segments.get(segment)
+        if not isinstance(segment_entry, dict):
+            errors.append(f"task_source_provenance.segments.{segment}")
+            segment_entry = {}
+        if segment_entry.get("source_kind") != source_kind:
+            errors.append(f"task_source_provenance.segments.{segment}.source_kind")
+        if segment_entry.get("external_heldout") is not False:
+            errors.append(f"task_source_provenance.segments.{segment}.external_heldout")
+
     required_not_proof = {
         "native live autonomy",
         "broad unknown-repository repair",
         "external benchmark standing",
         "remote CI proof",
         "external review",
+        "independent external held-out benchmark",
         "endorsement",
         "stars",
         "reposts",
@@ -556,6 +590,16 @@ def validate_artifact_summary(payload: dict, archive_text_files: dict[str, str])
         "artifact-summary-task-proof-files="
         f"{len(upstream_proofs) + len(cross_upstream_proofs)}"
     )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-task-source-provenance="
+        f"{provenance.get('independence_claim')}"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-external-heldout="
+        f"{str(provenance.get('external_heldout')).lower()}"
+    )
 
     if errors:
         print(
@@ -597,7 +641,8 @@ if html_url:
 print(
     "remote-autonomous-learning-snapshot: "
     "not-proof=external review; endorsement; stars; reposts; live autonomy; "
-    "broad unknown-repository repair; external benchmark standing"
+    "broad unknown-repository repair; external benchmark standing; "
+    "independent external held-out benchmark"
 )
 
 if head_sha != remote_sha:

@@ -207,6 +207,34 @@ def _autonomous_task_proofs_fixture() -> dict:
     }
 
 
+def _autonomous_task_source_provenance_fixture() -> dict:
+    return {
+        "schema_version": "autonomous-task-source-provenance/v0.1",
+        "independence_claim": "repo-authored-regression-pack",
+        "external_heldout": False,
+        "source_boundary": (
+            "Selected tasks are repository-authored regression fixtures, "
+            "including upstream-inspired local hidden packs. This is not an "
+            "independent external held-out benchmark, external review, or "
+            "external benchmark standing."
+        ),
+        "segments": {
+            "stage1_trajectory_reuse_matrix": {
+                "source_kind": "repo-authored-e2e-regression",
+                "external_heldout": False,
+            },
+            "upstream_hidden_pack_reuse": {
+                "source_kind": "repo-authored-upstream-inspired-hidden-pack",
+                "external_heldout": False,
+            },
+            "cross_upstream_no_seed_reuse": {
+                "source_kind": "repo-authored-cross-upstream-inspired-regression",
+                "external_heldout": False,
+            },
+        },
+    }
+
+
 def _pyproject_description() -> str:
     text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     match = re.search(r'^description = "([^"]+)"$', text, flags=re.MULTILINE)
@@ -285,10 +313,10 @@ def test_readme_links_public_proof_issue() -> None:
     assert "not external review or endorsement" in readme
     assert "Remote autonomous-learning artifact snapshot" in readme
     assert "bash scripts/remote_autonomous_learning_snapshot.sh" in readme
-    assert "a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, downloaded `last_summary.json` contract fields, and task-level proof records" in readme
+    assert "a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, downloaded `last_summary.json` contract fields, task-level proof records, and task-source provenance showing `repo-authored-regression-pack` with `external_heldout=false`" in readme
     assert "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP" in readme
     assert "artifact zip 401 results print token and saved-fixture rerun commands before exiting nonzero" in readme
-    assert "public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing" in readme
+    assert "public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, external benchmark standing, or independent external held-out benchmark evidence" in readme
     assert "Saved autonomous artifact snapshot" in readme
     assert "bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json autonomous-learning-gate-summary.zip <openmako-main-sha>" in readme
     assert "an explicit fixture wrapper for saved GitHub Actions run metadata, artifact metadata, and the downloaded autonomous-learning artifact zip" in readme
@@ -418,12 +446,16 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert "`.github/workflows/autonomous-learning-gate.yml` exposes the autonomous-learning\n  stress gate as a manual `workflow_dispatch` check and as a path-filtered\n  `push` check" in progress
     assert "The path filter also includes core learning modules,\n  the supplied transcript adapter matrix, `quantagent/evidence_court.py`, and\n  `tests/test_cli_wrappers.py`" in progress
     assert "It uploads\n  `.quantagent/autonomous_learning_gate` as the\n  `autonomous-learning-gate-summary` artifact" in progress
-    assert "attached to broad default push or pull-request CI" in progress
-    assert "A passing manual or path-filtered push run is public\n  CI artifact evidence only, not external review, endorsement, stars, reposts,\n  live autonomy, broad unknown-repository repair proof, or external benchmark\n  standing" in progress
-    assert "the downloaded `last_summary.json` contract fields for the selected\n  segments, observed pass counts, hidden task count, stability solved count,\n  cheating caught count, and cross-upstream no-seed hidden-stage2/stability\n  counts" in progress
-    assert "plus\n  `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for saved artifact fixtures" in progress
-    assert "When API data\n  or artifact download is unavailable" in progress
-    assert "Artifact zip 401 now gets\n  a distinct `artifact_zip_requires_auth` boundary snapshot with token and saved\n  fixture rerun commands, while still failing closed; a local HTTP 401\n  regression test asserts the nonzero exit, auth hints, fixture rerun command,\n  and absence of `PASS`" in progress
+    assert "attached to broad\n  default push or pull-request CI" in progress
+    assert "task-source provenance can be inspected for an exact workflow run" in progress
+    assert "summary now records `task_source_provenance` as\n  `repo-authored-regression-pack` with `external_heldout=false`" in progress
+    assert "A passing manual or path-filtered push run is public CI artifact\n  evidence only, not external review, endorsement, stars, reposts, live\n  autonomy, broad unknown-repository repair proof, external benchmark standing,\n  or independent external held-out benchmark evidence" in progress
+    assert "the downloaded `last_summary.json` contract fields for the selected\n  segments, observed pass counts, hidden task count, stability solved count,\n  cheating caught count, cross-upstream no-seed hidden-stage2/stability counts,\n  task-proof count, and the task-source provenance boundary\n  `repo-authored-regression-pack` / `external_heldout=false`" in progress
+    assert "plus `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for\n  saved artifact fixtures" in progress
+    assert "When API data or artifact download is unavailable" in progress
+    assert "Artifact zip 401 now gets a distinct\n  `artifact_zip_requires_auth` boundary snapshot with token and saved fixture\n  rerun commands, while still failing closed" in progress
+    assert "local HTTP 401 regression test\n  asserts the nonzero exit, auth hints, fixture rerun command, and absence of\n  `PASS`" in progress
+    assert "Passing this script is current public CI artifact evidence only, not\n  external review, endorsement, stars, reposts, live autonomy, broad\n  unknown-repository repair, external benchmark standing, or independent\n  external held-out benchmark evidence" in progress
     assert "`bash scripts/public_evidence_comment_check.sh` is the fail-closed marker\n  check for the published issue #1 evidence comment" in progress
     assert "comment id, commit, run id, job id, artifact name, artifact id, artifact\n  digest, and boundary phrase" in progress
     assert "`OPENMAKO_PUBLIC_EVIDENCE_HTML` fixture" in progress
@@ -525,11 +557,14 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert (
         "high-intensity learning evidence only, not proof of native live autonomy, broad\n"
         "unknown-repository repair, external benchmark standing, remote CI proof,\n"
-        "external review, endorsement, stars, or reposts"
+        "external review, independent external held-out benchmarking, endorsement,\n"
+        "stars, or reposts"
     ) in proof_section
     assert "`.quantagent/autonomous_learning_gate/last_summary.json` by default" in proof_section
     assert "selected tests, per-segment elapsed\nseconds" in proof_section
     assert "per-segment pytest log paths and log tails, observed pass/skip/warning\ncounts" in proof_section
+    assert "`task_source_provenance=repo-authored-regression-pack` with\n`external_heldout=false`" in proof_section
+    assert "cannot be reported as an\nindependent external held-out benchmark" in proof_section
     assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON" in proof_section
     assert "`.github/workflows/autonomous-learning-gate.yml` workflow" in proof_section
     assert "core learning modules, selected gate-test paths, or\nsupplied Evidence Court/transcript proof surfaces" in proof_section
@@ -1002,6 +1037,12 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "artifact-summary-cross-upstream-stability-solved=" in text
     assert "artifact-summary-cross-upstream-cheat-caught=" in text
     assert "artifact-summary-task-proof-files=" in text
+    assert "artifact-summary-task-source-provenance=" in text
+    assert "artifact-summary-external-heldout=" in text
+    assert "task_source_provenance" in text
+    assert "autonomous-task-source-provenance/v0.1" in text
+    assert "repo-authored-regression-pack" in text
+    assert "not an independent external held-out benchmark" in text
     assert "per_page=1" in text
     assert "per_page=100" in text
     assert "latest autonomous-learning run does not match remote main" in text
@@ -1035,6 +1076,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "requires authenticated API access" in text
     assert "not-proof=external review; endorsement; stars; reposts; live autonomy" in text
     assert "broad unknown-repository repair; external benchmark standing" in text
+    assert "independent external held-out benchmark" in text
     for forbidden in FORBIDDEN_README_CLAIMS:
         assert forbidden.lower() not in text.lower()
 
@@ -1132,12 +1174,14 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
             },
         },
         "task_proofs": _autonomous_task_proofs_fixture(),
+        "task_source_provenance": _autonomous_task_source_provenance_fixture(),
         "not_proof": [
             "native live autonomy",
             "broad unknown-repository repair",
             "external benchmark standing",
             "remote CI proof",
             "external review",
+            "independent external held-out benchmark",
             "endorsement",
             "stars",
             "reposts",
@@ -1231,6 +1275,8 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-stability-solved=16" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-cheat-caught=8" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-task-proof-files=5" in result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-summary-task-source-provenance=repo-authored-regression-pack" in result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-summary-external-heldout=false" in result.stdout
     assert "remote-autonomous-learning-snapshot: PASS" in result.stdout
 
     saved_result = subprocess.run(
@@ -1253,6 +1299,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "saved-autonomous-artifact-snapshot: artifact-zip=" in saved_result.stdout
     assert "saved-autonomous-artifact-snapshot: remote-main-sha=1234567890abcdef1234567890abcdef12345678" in saved_result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-task-proof-files=5" in saved_result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-summary-external-heldout=false" in saved_result.stdout
     assert "remote-autonomous-learning-snapshot: PASS" in saved_result.stdout
 
     valid_artifacts = json.loads(artifacts_json.read_text(encoding="utf-8"))
@@ -1303,6 +1350,22 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "requires authenticated API access" in auth_required.stderr
     assert "no GitHub token was provided" in auth_required.stderr
     assert "remote-autonomous-learning-snapshot: PASS" not in auth_required.stdout
+
+    broken_summary = json.loads(json.dumps(artifact_summary))
+    broken_summary["task_source_provenance"]["external_heldout"] = True
+    write_artifact_summary(broken_summary)
+    provenance_mismatch = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert provenance_mismatch.returncode == 1
+    assert "artifact summary contract mismatch" in provenance_mismatch.stderr
+    assert "task_source_provenance.external_heldout" in provenance_mismatch.stderr
 
     broken_summary = dict(artifact_summary)
     broken_summary["tests"] = json.loads(json.dumps(artifact_summary["tests"]))
@@ -2140,6 +2203,7 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
 
     assert result.returncode == 0, result.stderr
     assert "autonomous-learning-gate: summary=" in result.stdout
+    assert "autonomous-learning-gate: task-source-provenance=repo-authored-regression-pack external-heldout=false" in result.stdout
     payload = json.loads(summary.read_text(encoding="utf-8"))
     assert payload["schema_version"] == "autonomous-learning-gate/v0.1"
     assert payload["status"] == "passed"
@@ -2149,6 +2213,7 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
         "cross_upstream_no_seed_reuse": "passed",
     }
     assert payload["artifacts"]["task_proof_dir"].endswith("task_proofs")
+    assert payload["task_source_provenance"] == _autonomous_task_source_provenance_fixture()
     assert payload["tests"]["upstream_hidden_pack_reuse"]["expected_contract"]["approved_learning_solved"] == 10
     assert payload["tests"]["upstream_hidden_pack_reuse"]["expected_contract"]["stability_solved"] == 100
     assert payload["tests"]["upstream_hidden_pack_reuse"]["expected_contract"]["cheat_caught"] == 10
@@ -2180,6 +2245,7 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
         == 8
     )
     assert "remote CI proof" in payload["not_proof"]
+    assert "independent external held-out benchmark" in payload["not_proof"]
 
     corrupt_summary = tmp_path / "corrupt-summary.json"
     corrupt_env = env.copy()
@@ -2203,6 +2269,30 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
     corrupt_payload = json.loads(corrupt_summary.read_text(encoding="utf-8"))
     assert corrupt_payload["status"] == "failed"
     assert corrupt_payload["failure"] == {"segment": "summary_validation", "exit_code": 1}
+
+    corrupt_provenance_summary = tmp_path / "corrupt-provenance-summary.json"
+    corrupt_provenance_env = env.copy()
+    corrupt_provenance_env["OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON"] = str(
+        corrupt_provenance_summary
+    )
+    corrupt_provenance_env[
+        "OPENMAKO_AUTONOMOUS_LEARNING_GATE_TEST_CORRUPT_SUMMARY"
+    ] = "misstated_task_source_provenance"
+    corrupt_provenance = subprocess.run(
+        ["bash", "scripts/autonomous_learning_gate.sh"],
+        cwd=ROOT,
+        env=corrupt_provenance_env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert corrupt_provenance.returncode == 1
+    assert (
+        "autonomous-learning-gate: invalid summary fields="
+        "task_source_provenance.external_heldout"
+    ) in corrupt_provenance.stderr
 
     observed_summary = tmp_path / "observed-summary.json"
     observed_env = env.copy()
