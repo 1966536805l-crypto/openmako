@@ -1652,6 +1652,18 @@ Current public proof:
   with the failed segment and exit code, and the gate validates the summary
   before printing `PASS`; corrupt-summary smoke paths can delete required
   contract fields or observed pytest result fields so validation fails closed.
+- Supplied Codex-style and Claude-style transcript adapters now reject
+  conflicting repeated assistant final-claim messages instead of letting a later
+  assistant message overwrite an earlier supplied final claim. This matches the
+  existing OpenHands and SWE-agent final-message conflict boundary. The focused
+  mixed-final regression failed before the parser change and passed after it;
+  `tests/test_cli_wrappers.py tests/test_public_metadata.py`, the supplied
+  transcript adapter matrix, `git diff --check`, the public review gate, and
+  the full repository pytest suite passed locally before this note was added.
+  This is supplied-record adapter parser hardening only, not native export
+  ingestion, live control, proof that supplied patches were applied outside the
+  supplied record, remote CI proof, external review, endorsement, stars, or
+  reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.

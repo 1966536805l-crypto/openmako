@@ -372,6 +372,10 @@ read, edit/apply-patch, and shell command calls. Unsupported tool calls are
 listed under `adapter_report.unsupported`, and missing command or test evidence
 is still judged by the normal Evidence Court audit. Edit/apply-patch calls may
 include `diff_hunks`, `diff`, `patch`, or `unified_diff` fields.
+Repeated assistant final messages must keep the same supplied final-claim text;
+conflicting final-claim text is rejected with a
+`messages[index].final_claim values must not be mixed` diagnostic instead of
+being overwritten by the later message.
 The root object and tool calls may include supplied `session_id`, `task_id`,
 `parent_id`, `tool_invocation_id`, `tool_call_id`, or `invocation_id` fields;
 the adapter preserves them as `ledger_identity` metadata without treating them
@@ -400,6 +404,10 @@ shell command calls. Unsupported tool calls are listed under
 `adapter_report.unsupported`, and missing command or test evidence is still
 judged by the normal Evidence Court audit. Edit/apply-patch calls may include
 `diff_hunks`, `diff`, `patch`, or `unified_diff` fields.
+Repeated assistant final messages must keep the same supplied final-claim text;
+conflicting final-claim text is rejected with a
+`messages[index].final_claim values must not be mixed` diagnostic instead of
+being overwritten by the later message.
 The root object and tool calls may include supplied `session_id`, `task_id`,
 `parent_id`, `tool_invocation_id`, `tool_call_id`, or `invocation_id` fields;
 the adapter preserves them as `ledger_identity` metadata without treating them

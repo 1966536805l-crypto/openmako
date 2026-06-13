@@ -7759,6 +7759,65 @@ class CliWrapperTest(unittest.TestCase):
         self.assertEqual(converted.returncode, 2)
         self.assertIn("events[2].final_claim values must not be mixed", converted.stderr)
 
+    def test_openmako_evidence_court_codex_claude_transcripts_reject_mixed_final_messages(self) -> None:
+        cases = (
+            (
+                "codex",
+                {
+                    "claimed_task": "Fix calculator.py only.",
+                    "allowed_files": ["calculator.py"],
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "tool_calls": [
+                                {"type": "apply_patch", "files": ["calculator.py"]},
+                            ],
+                        },
+                        {"role": "assistant", "content": "Fixed and verified."},
+                        {"role": "assistant", "content": "Skipped validation."},
+                    ],
+                },
+                "messages[2].final_claim values must not be mixed",
+            ),
+            (
+                "claude",
+                {
+                    "task": "Fix calculator.py only.",
+                    "allowed_files": ["calculator.py"],
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "name": "Edit",
+                                    "input": {"file_path": "calculator.py"},
+                                }
+                            ],
+                        },
+                        {"role": "assistant", "content": [{"type": "text", "text": "Fixed and verified."}]},
+                        {"role": "assistant", "content": [{"type": "text", "text": "Skipped validation."}]},
+                    ],
+                },
+                "messages[2].final_claim values must not be mixed",
+            ),
+        )
+        for adapter, transcript, expected_error in cases:
+            with self.subTest(adapter=adapter):
+                with tempfile.NamedTemporaryFile("w", suffix=".json", encoding="utf-8") as handle:
+                    json.dump(transcript, handle)
+                    handle.flush()
+                    converted = self.run_openmako(
+                        "--no-trust-prompt",
+                        "evidence-court",
+                        "record",
+                        f"from-{adapter}-transcript",
+                        handle.name,
+                    )
+
+                self.assertEqual(converted.returncode, 2)
+                self.assertIn(expected_error, converted.stderr)
+
     def test_openmako_evidence_court_openhands_transcript_rejects_mixed_task_scope(self) -> None:
         cases = (
             (
@@ -8326,6 +8385,7 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("conflicting task or scope metadata is rejected", schema_doc)
         self.assertIn("Repeated `final_claim` events must also keep the same supplied claim", schema_doc)
         self.assertIn("final-claim text is rejected instead of overwritten", schema_doc)
+        self.assertIn("messages[index].final_claim values must not be mixed", schema_doc)
         self.assertIn("Root and event-level task/scope metadata must agree", schema_doc)
         self.assertIn("Root and step-level task/scope metadata must", schema_doc)
         self.assertIn("events[index].claimed_task values must not be mixed", schema_doc)

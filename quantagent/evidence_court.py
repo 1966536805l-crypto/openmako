@@ -981,12 +981,15 @@ def build_audit_record_from_codex_transcript(transcript_path: str | Path) -> dic
             raise ValueError(f"Codex transcript message {message_index} must be an object")
         role = _message_role(message, message_index)
         content = _codex_content_text(message.get("content"), f"messages[{message_index}].content")
+        tool_calls = _codex_tool_calls(message, message_index)
         if role == "user" and content and not record["claimed_task"]:
             record["claimed_task"] = content
-        if role == "assistant" and content:
-            record["final_claim"] = content
+        if role == "assistant" and content and (not tool_calls or _looks_like_success_claim(content)):
+            record["final_claim"] = _merge_final_claim(
+                str(record["final_claim"]), content, label=f"messages[{message_index}].final_claim"
+            )
 
-        for tool_path, tool_call in _codex_tool_calls(message, message_index):
+        for tool_path, tool_call in tool_calls:
             tool_payload = _codex_tool_payload(tool_call, tool_path)
             _add_event_session_id(session_identity, tool_payload, tool_path)
             _add_event_ledger_identity(ledger_identity, tool_payload, tool_path)
@@ -1096,13 +1099,15 @@ def build_audit_record_from_claude_transcript(transcript_path: str | Path) -> di
             raise ValueError(f"Claude transcript message {message_index} must be an object")
         role = _message_role(message, message_index)
         content = _codex_content_text(message.get("content"), f"messages[{message_index}].content")
-        if role == "user" and content and not record["claimed_task"]:
-            record["claimed_task"] = content
-        if role == "assistant" and content:
-            record["final_claim"] = content
-
         tool_calls = _codex_tool_calls(message, message_index)
         tool_calls.extend(_claude_content_tool_uses(message, message_index))
+        if role == "user" and content and not record["claimed_task"]:
+            record["claimed_task"] = content
+        if role == "assistant" and content and (not tool_calls or _looks_like_success_claim(content)):
+            record["final_claim"] = _merge_final_claim(
+                str(record["final_claim"]), content, label=f"messages[{message_index}].final_claim"
+            )
+
         for tool_path, tool_call in tool_calls:
             tool_payload = _codex_tool_payload(tool_call, tool_path)
             _add_event_session_id(session_identity, tool_payload, tool_path)
