@@ -183,12 +183,17 @@ def read_artifact_zip(url: str) -> bytes:
         sys.exit(2)
 
 
-def read_summary_from_artifact_zip(data: bytes) -> dict:
+def read_artifact_bundle_from_zip(data: bytes) -> tuple[dict, dict[str, str]]:
     try:
         with zipfile.ZipFile(BytesIO(data)) as archive:
+            archive_text_files = {}
+            for name in archive.namelist():
+                if name.endswith("/"):
+                    continue
+                archive_text_files[name] = archive.read(name).decode("utf-8", errors="replace")
             candidates = [
                 name
-                for name in archive.namelist()
+                for name in archive_text_files
                 if name.endswith("last_summary.json") and not name.endswith("/")
             ]
             if len(candidates) != 1:
@@ -199,7 +204,7 @@ def read_summary_from_artifact_zip(data: bytes) -> dict:
                 )
                 sys.exit(1)
             summary_name = candidates[0]
-            payload = json.loads(archive.read(summary_name).decode("utf-8"))
+            payload = json.loads(archive_text_files[summary_name])
     except json.JSONDecodeError as exc:
         print(
             f"remote-autonomous-learning-snapshot: artifact summary is not valid JSON: {exc}",
@@ -223,10 +228,10 @@ def read_summary_from_artifact_zip(data: bytes) -> dict:
         print("remote-autonomous-learning-snapshot: artifact summary is not an object", file=sys.stderr)
         sys.exit(1)
     print(f"remote-autonomous-learning-snapshot: artifact-summary={summary_name}")
-    return payload
+    return payload, archive_text_files
 
 
-def validate_artifact_summary(payload: dict) -> None:
+def validate_artifact_summary(payload: dict, archive_text_files: dict[str, str]) -> None:
     errors = []
     def mapping_field(name: str) -> dict:
         value = payload.get(name)
@@ -266,6 +271,32 @@ def validate_artifact_summary(payload: dict) -> None:
         errors.append("tests.cross_upstream_no_seed_reuse")
         cross_upstream = {}
 
+    def validate_pytest_segment_log(segment: str, entry: dict, expected_passed: int) -> None:
+        log_path = entry.get("log_path")
+        if not isinstance(log_path, str) or not log_path.endswith(f"pytest_logs/{segment}.log"):
+            errors.append(f"tests.{segment}.log_path")
+        suffix = f"pytest_logs/{segment}.log"
+        matches = [name for name in archive_text_files if name.endswith(suffix)]
+        if len(matches) != 1:
+            errors.append(f"artifact.pytest_logs.{segment}")
+            return
+        log_name = matches[0]
+        print(f"remote-autonomous-learning-snapshot: artifact-pytest-log={log_name}")
+        log_text = archive_text_files[log_name]
+        log_tail = entry.get("log_tail")
+        if (
+            not isinstance(log_tail, list)
+            or not log_tail
+            or len(log_tail) > 12
+            or any(not isinstance(line, str) for line in log_tail)
+        ):
+            errors.append(f"tests.{segment}.log_tail")
+            return
+        if any(line not in log_text for line in log_tail):
+            errors.append(f"tests.{segment}.log_tail")
+        if f"{expected_passed} passed" not in log_text:
+            errors.append(f"artifact.pytest_logs.{segment}.passed")
+
     stage1_observed = stage1.get("observed_pytest")
     if not isinstance(stage1_observed, dict):
         errors.append("tests.stage1_trajectory_reuse_matrix.observed_pytest")
@@ -276,6 +307,7 @@ def validate_artifact_summary(payload: dict) -> None:
         errors.append("tests.stage1_trajectory_reuse_matrix.observed_pytest.exit_code")
     if stage1_observed.get("passed") != 3:
         errors.append("tests.stage1_trajectory_reuse_matrix.observed_pytest.passed")
+    validate_pytest_segment_log("stage1_trajectory_reuse_matrix", stage1, 3)
 
     upstream_observed = upstream.get("observed_pytest")
     if not isinstance(upstream_observed, dict):
@@ -287,6 +319,7 @@ def validate_artifact_summary(payload: dict) -> None:
         errors.append("tests.upstream_hidden_pack_reuse.observed_pytest.exit_code")
     if upstream_observed.get("passed") != 1:
         errors.append("tests.upstream_hidden_pack_reuse.observed_pytest.passed")
+    validate_pytest_segment_log("upstream_hidden_pack_reuse", upstream, 1)
 
     cross_upstream_observed = cross_upstream.get("observed_pytest")
     if not isinstance(cross_upstream_observed, dict):
@@ -298,6 +331,7 @@ def validate_artifact_summary(payload: dict) -> None:
         errors.append("tests.cross_upstream_no_seed_reuse.observed_pytest.exit_code")
     if cross_upstream_observed.get("passed") != 4:
         errors.append("tests.cross_upstream_no_seed_reuse.observed_pytest.passed")
+    validate_pytest_segment_log("cross_upstream_no_seed_reuse", cross_upstream, 4)
 
     upstream_contract = upstream.get("expected_contract")
     if not isinstance(upstream_contract, dict):
@@ -592,8 +626,8 @@ if artifact_digest.startswith("sha256:"):
 else:
     print("remote-autonomous-learning-snapshot: unsupported artifact digest format", file=sys.stderr)
     sys.exit(1)
-artifact_summary = read_summary_from_artifact_zip(artifact_zip)
-validate_artifact_summary(artifact_summary)
+artifact_summary, artifact_text_files = read_artifact_bundle_from_zip(artifact_zip)
+validate_artifact_summary(artifact_summary, artifact_text_files)
 
 print("remote-autonomous-learning-snapshot: PASS")
 PY

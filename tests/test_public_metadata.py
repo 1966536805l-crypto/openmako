@@ -969,6 +969,8 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "artifact-zip-sha256=" in text
     assert "hashlib.sha256" in text
     assert "artifact zip sha256 does not match artifact digest" in text
+    assert "artifact-pytest-log=" in text
+    assert "artifact.pytest_logs" in text
     assert "manual-url=" in text
     assert "checked-at-utc=" in text
     assert "github_api_rate_limit" in text
@@ -1020,6 +1022,11 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
                     "skipped": 0,
                     "warnings": 0,
                 },
+                "log_path": ".quantagent/autonomous_learning_gate/pytest_logs/stage1_trajectory_reuse_matrix.log",
+                "log_tail": [
+                    "...                                                                      [100%]",
+                    "3 passed in 14.63s",
+                ],
             },
             "upstream_hidden_pack_reuse": {
                 "expected_passed": 1,
@@ -1029,6 +1036,11 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
                     "skipped": 0,
                     "warnings": 0,
                 },
+                "log_path": ".quantagent/autonomous_learning_gate/pytest_logs/upstream_hidden_pack_reuse.log",
+                "log_tail": [
+                    ".                                                                        [100%]",
+                    "1 passed in 167.29s (0:02:47)",
+                ],
                 "expected_contract": {
                     "upstream_family_count": 5,
                     "hidden_task_count": 10,
@@ -1048,6 +1060,11 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
                     "skipped": 0,
                     "warnings": 0,
                 },
+                "log_path": ".quantagent/autonomous_learning_gate/pytest_logs/cross_upstream_no_seed_reuse.log",
+                "log_tail": [
+                    "....                                                                     [100%]",
+                    "4 passed in 48.53s",
+                ],
                 "expected_contract": {
                     "upstream_family_count": 4,
                     "no_seed_stage1_repairs": 4,
@@ -1087,9 +1104,23 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
         ]
     }
 
-    def write_artifact_summary(summary: dict) -> str:
+    def write_artifact_summary(
+        summary: dict,
+        *,
+        omit_log_segment: str | None = None,
+        log_overrides: dict[str, str] | None = None,
+    ) -> str:
         with zipfile.ZipFile(artifact_zip, "w") as archive:
             archive.writestr("last_summary.json", json.dumps(summary))
+            for segment, test_entry in summary.get("tests", {}).items():
+                if segment == omit_log_segment:
+                    continue
+                if log_overrides and segment in log_overrides:
+                    log_text = log_overrides[segment]
+                else:
+                    log_tail = test_entry.get("log_tail") or []
+                    log_text = "\n".join(log_tail) + "\n"
+                archive.writestr(f"pytest_logs/{segment}.log", log_text)
         artifact_zip_sha256 = hashlib.sha256(artifact_zip.read_bytes()).hexdigest()
         updated_payload = json.loads(json.dumps(artifact_payload))
         updated_payload["artifacts"][0]["size_in_bytes"] = artifact_zip.stat().st_size
@@ -1122,6 +1153,18 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert f"remote-autonomous-learning-snapshot: artifact-digest=sha256:{artifact_zip_sha256}" in result.stdout
     assert f"remote-autonomous-learning-snapshot: artifact-zip-sha256={artifact_zip_sha256}" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary=last_summary.json" in result.stdout
+    assert (
+        "remote-autonomous-learning-snapshot: "
+        "artifact-pytest-log=pytest_logs/stage1_trajectory_reuse_matrix.log"
+    ) in result.stdout
+    assert (
+        "remote-autonomous-learning-snapshot: "
+        "artifact-pytest-log=pytest_logs/upstream_hidden_pack_reuse.log"
+    ) in result.stdout
+    assert (
+        "remote-autonomous-learning-snapshot: "
+        "artifact-pytest-log=pytest_logs/cross_upstream_no_seed_reuse.log"
+    ) in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-commit=1234567890abcdef1234567890abcdef12345678" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-hidden-task-count=10" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-stability-solved=100" in result.stdout
@@ -1185,6 +1228,37 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert proof_mismatch.returncode == 1
     assert "artifact summary contract mismatch" in proof_mismatch.stderr
     assert "task_proofs.pandera_scale_no_seed.approved_learning.changed_files" in proof_mismatch.stderr
+
+    write_artifact_summary(artifact_summary, omit_log_segment="cross_upstream_no_seed_reuse")
+    missing_log = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert missing_log.returncode == 1
+    assert "artifact summary contract mismatch" in missing_log.stderr
+    assert "artifact.pytest_logs.cross_upstream_no_seed_reuse" in missing_log.stderr
+
+    write_artifact_summary(
+        artifact_summary,
+        log_overrides={"upstream_hidden_pack_reuse": "log exists but the expected tail is absent\n"},
+    )
+    log_tail_mismatch = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert log_tail_mismatch.returncode == 1
+    assert "artifact summary contract mismatch" in log_tail_mismatch.stderr
+    assert "tests.upstream_hidden_pack_reuse.log_tail" in log_tail_mismatch.stderr
 
     artifact_zip_sha256 = write_artifact_summary(artifact_summary)
     valid_artifacts = json.loads(artifacts_json.read_text(encoding="utf-8"))
