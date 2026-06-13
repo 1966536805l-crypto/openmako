@@ -1546,6 +1546,11 @@ def test_public_evidence_comment_check_script_is_fail_closed_and_marker_aware(tm
     assert script.stat().st_mode & 0o111
     assert "OPENMAKO_PUBLIC_EVIDENCE_COMMENT_URL" in text
     assert "https://github.com/1966536805l-crypto/openmako/issues/1#issuecomment-4694860161" in text
+    assert "ac5a4e6211776dc4f250212ffb48c662534f9b29" in text
+    assert "27472027045" in text
+    assert "81204551119" in text
+    assert "7612385122" in text
+    assert "sha256:9e4ef0e1393e6189f9f61fb1bc09c0cb0e83293679e4cc3774a9c64a72995920" in text
     assert "OPENMAKO_PUBLIC_EVIDENCE_HTML" in text
     assert "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_COMMENT_ID" in text
     assert "OPENMAKO_PUBLIC_EVIDENCE_EXPECTED_COMMIT" in text

@@ -162,6 +162,17 @@ Current public proof:
   record consistency only, not external review, endorsement, stars, reposts,
   live autonomy, broad unknown-repository repair, or external benchmark
   standing.
+- Issue #1 comment `4694860161` now records current-head evidence for commit
+  `ac5a4e6211776dc4f250212ffb48c662534f9b29`: focused run
+  `27472027053` / job `81204551123`, autonomous-learning run `27472027045` /
+  job `81204551119`, artifact `7612385122`, and digest
+  `sha256:9e4ef0e1393e6189f9f61fb1bc09c0cb0e83293679e4cc3774a9c64a72995920`.
+  It also records the current boundary that unauthenticated artifact zip access
+  fails closed at `artifact_zip_requires_auth`, while the same
+  connector-downloaded artifact passed `saved_autonomous_artifact_snapshot.sh`.
+  This is public marker consistency and saved-artifact consistency only, not
+  external review, endorsement, stars, reposts, live autonomy, broad
+  unknown-repository repair, or external benchmark standing.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:
