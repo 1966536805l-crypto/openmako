@@ -173,6 +173,19 @@ artifact fixture. Passing it is current public CI artifact evidence only, not
 external review, endorsement, stars, reposts, live autonomy, broad
 unknown-repository repair, or external benchmark standing.
 
+If the live GitHub API is rate-limited but the run metadata, artifact metadata,
+and artifact zip were saved from the same workflow run, use the fixture-first
+wrapper:
+
+```bash
+bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json autonomous-learning-gate-summary.zip <openmako-main-sha>
+```
+
+This delegates to `remote_autonomous_learning_snapshot.sh` with explicit
+fixture paths. It is saved public CI artifact evidence only, not a substitute
+for external review, endorsement, stars, reposts, live autonomy, broad
+unknown-repository repair, or external benchmark standing.
+
 To re-check that the published public evidence comment still contains the
 recorded remote-run markers and non-proof boundary:
 

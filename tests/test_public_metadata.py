@@ -285,6 +285,11 @@ def test_readme_links_public_proof_issue() -> None:
     assert "a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, downloaded `last_summary.json` contract fields, and task-level proof records" in readme
     assert "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP" in readme
     assert "public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing" in readme
+    assert "Saved autonomous artifact snapshot" in readme
+    assert "bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json autonomous-learning-gate-summary.zip OPENMAKO_MAIN_SHA" in readme
+    assert "an explicit fixture wrapper for saved GitHub Actions run metadata, artifact metadata, and the downloaded autonomous-learning artifact zip" in readme
+    assert "useful when live API reads are rate-limited" in readme
+    assert "saved public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing" in readme
     assert "Public evidence comment check" in readme
     assert "bash scripts/public_evidence_comment_check.sh" in readme
     assert "a fail-closed marker check for the published issue evidence comment" in readme
@@ -934,9 +939,33 @@ def test_remote_focused_ci_snapshot_script_is_fail_closed_and_token_aware() -> N
 def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_aware(tmp_path: Path) -> None:
     script = ROOT / "scripts" / "remote_autonomous_learning_snapshot.sh"
     text = script.read_text(encoding="utf-8")
+    saved_script = ROOT / "scripts" / "saved_autonomous_artifact_snapshot.sh"
+    saved_text = saved_script.read_text(encoding="utf-8")
 
     assert script.exists()
     assert script.stat().st_mode & 0o111
+    assert saved_script.exists()
+    assert saved_script.stat().st_mode & 0o111
+    assert (
+        "Usage: bash scripts/saved_autonomous_artifact_snapshot.sh "
+        "RUNS_JSON ARTIFACTS_JSON ARTIFACT_ZIP [REMOTE_MAIN_SHA]"
+    ) in saved_text
+    assert "OPENMAKO_AUTONOMOUS_RUNS_JSON" in saved_text
+    assert "OPENMAKO_AUTONOMOUS_ARTIFACTS_JSON" in saved_text
+    assert "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP" in saved_text
+    assert "scripts/remote_autonomous_learning_snapshot.sh" in saved_text
+    assert "saved public CI artifact evidence only" in saved_text
+    assert "not-proof=external review; endorsement; stars; reposts; live autonomy" in saved_text
+    missing_args = subprocess.run(
+        ["bash", "scripts/saved_autonomous_artifact_snapshot.sh"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert missing_args.returncode == 64
+    assert "Usage: bash scripts/saved_autonomous_artifact_snapshot.sh" in missing_args.stderr
     assert "OPENMAKO_AUTONOMOUS_WORKFLOW" in text
     assert "autonomous-learning-gate.yml" in text
     assert "OPENMAKO_AUTONOMOUS_ARTIFACT_NAME" in text
@@ -1174,6 +1203,28 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-cheat-caught=8" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-task-proof-files=5" in result.stdout
     assert "remote-autonomous-learning-snapshot: PASS" in result.stdout
+
+    saved_result = subprocess.run(
+        [
+            "bash",
+            "scripts/saved_autonomous_artifact_snapshot.sh",
+            str(runs_json),
+            str(artifacts_json),
+            str(artifact_zip),
+            remote_sha,
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert saved_result.returncode == 0, saved_result.stderr
+    assert "saved-autonomous-artifact-snapshot: runs-json=" in saved_result.stdout
+    assert "saved-autonomous-artifact-snapshot: artifact-zip=" in saved_result.stdout
+    assert "saved-autonomous-artifact-snapshot: remote-main-sha=1234567890abcdef1234567890abcdef12345678" in saved_result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-summary-task-proof-files=5" in saved_result.stdout
+    assert "remote-autonomous-learning-snapshot: PASS" in saved_result.stdout
 
     broken_summary = dict(artifact_summary)
     broken_summary["tests"] = json.loads(json.dumps(artifact_summary["tests"]))
@@ -1628,6 +1679,16 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "stale, still running, failed, missing, rate limited, missing the named artifact,\nexpired, missing an artifact digest, unreadable as an artifact zip, or missing\nthe expected `last_summary.json` contract fields" in guide
     assert "`OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` to verify the same contract against a saved\nartifact fixture" in guide
     assert "Passing it is current public CI artifact evidence only, not\nexternal review, endorsement, stars, reposts, live autonomy, broad\nunknown-repository repair, or external benchmark standing" in guide
+    assert (
+        "bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json "
+        "autonomous-learning-gate-summary.zip <openmako-main-sha>"
+    ) in guide
+    assert "This delegates to `remote_autonomous_learning_snapshot.sh` with explicit\nfixture paths" in guide
+    assert (
+        "It is saved public CI artifact evidence only, not a substitute\n"
+        "for external review, endorsement, stars, reposts, live autonomy, broad\n"
+        "unknown-repository repair, or external benchmark standing"
+    ) in guide
     assert "bash scripts/public_evidence_comment_check.sh" in guide
     assert "public-evidence-comment-check: marker=commit ok" in guide
     assert "public-evidence-comment-check: marker=run-id ok" in guide
