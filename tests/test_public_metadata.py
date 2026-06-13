@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import http.server
 import json
 import os
 import re
 import shlex
+import socketserver
 import subprocess
 import sys
 import tempfile
+import threading
 import zipfile
 from pathlib import Path
 
@@ -420,7 +423,7 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert "the downloaded `last_summary.json` contract fields for the selected\n  segments, observed pass counts, hidden task count, stability solved count,\n  cheating caught count, and cross-upstream no-seed hidden-stage2/stability\n  counts" in progress
     assert "plus\n  `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for saved artifact fixtures" in progress
     assert "When API data\n  or artifact download is unavailable" in progress
-    assert "Artifact zip 401 now gets\n  a distinct `artifact_zip_requires_auth` boundary snapshot with token and saved\n  fixture rerun commands, while still failing closed" in progress
+    assert "Artifact zip 401 now gets\n  a distinct `artifact_zip_requires_auth` boundary snapshot with token and saved\n  fixture rerun commands, while still failing closed; a local HTTP 401\n  regression test asserts the nonzero exit, auth hints, fixture rerun command,\n  and absence of `PASS`" in progress
     assert "`bash scripts/public_evidence_comment_check.sh` is the fail-closed marker\n  check for the published issue #1 evidence comment" in progress
     assert "comment id, commit, run id, job id, artifact name, artifact id, artifact\n  digest, and boundary phrase" in progress
     assert "`OPENMAKO_PUBLIC_EVIDENCE_HTML` fixture" in progress
@@ -1251,6 +1254,55 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "saved-autonomous-artifact-snapshot: remote-main-sha=1234567890abcdef1234567890abcdef12345678" in saved_result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-task-proof-files=5" in saved_result.stdout
     assert "remote-autonomous-learning-snapshot: PASS" in saved_result.stdout
+
+    valid_artifacts = json.loads(artifacts_json.read_text(encoding="utf-8"))
+
+    class ArtifactZipAuthRequiredHandler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            self.send_response(401)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"message":"Requires authentication"}')
+
+        def log_message(self, format: str, *args: object) -> None:
+            return
+
+    class LocalArtifactServer(socketserver.TCPServer):
+        allow_reuse_address = True
+
+    with LocalArtifactServer(("127.0.0.1", 0), ArtifactZipAuthRequiredHandler) as server:
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            auth_required_artifacts = json.loads(json.dumps(valid_artifacts))
+            auth_required_artifacts["artifacts"][0]["archive_download_url"] = (
+                f"http://127.0.0.1:{server.server_address[1]}/artifact.zip"
+            )
+            artifacts_json.write_text(json.dumps(auth_required_artifacts), encoding="utf-8")
+            live_env = env.copy()
+            live_env.pop("OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP")
+            auth_required = subprocess.run(
+                ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+                cwd=ROOT,
+                env=live_env,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+        finally:
+            server.shutdown()
+            thread.join(timeout=2)
+    assert auth_required.returncode == 2
+    assert "remote-autonomous-learning-snapshot: unavailable=artifact_zip_requires_auth" in auth_required.stdout
+    assert "auth-required=OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN" in auth_required.stdout
+    assert "rerun-auth-command=OPENMAKO_GITHUB_TOKEN=<token>" in auth_required.stdout
+    assert "fixture-rerun-command=" in auth_required.stdout
+    assert "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP=autonomous-learning-gate-summary.zip" in auth_required.stdout
+    assert "not-proof=external review; endorsement; stars; reposts; live autonomy" in auth_required.stdout
+    assert "requires authenticated API access" in auth_required.stderr
+    assert "no GitHub token was provided" in auth_required.stderr
+    assert "remote-autonomous-learning-snapshot: PASS" not in auth_required.stdout
 
     broken_summary = dict(artifact_summary)
     broken_summary["tests"] = json.loads(json.dumps(artifact_summary["tests"]))

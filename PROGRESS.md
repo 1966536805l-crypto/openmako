@@ -149,10 +149,11 @@ Current public proof:
   Actions URL, local UTC check time, rate-limit reset details, and a copyable
   rerun command when available before exiting nonzero. Artifact zip 401 now gets
   a distinct `artifact_zip_requires_auth` boundary snapshot with token and saved
-  fixture rerun commands, while still failing closed. Passing this script is
-  current public CI artifact evidence only, not external review, endorsement,
-  stars, reposts, live autonomy, broad unknown-repository repair, or external
-  benchmark standing.
+  fixture rerun commands, while still failing closed; a local HTTP 401
+  regression test asserts the nonzero exit, auth hints, fixture rerun command,
+  and absence of `PASS`. Passing this script is current public CI artifact
+  evidence only, not external review, endorsement, stars, reposts, live
+  autonomy, broad unknown-repository repair, or external benchmark standing.
 - `bash scripts/public_evidence_comment_check.sh` is the fail-closed marker
   check for the published issue #1 evidence comment. It verifies the configured
   comment id, commit, run id, job id, artifact name, artifact id, artifact
