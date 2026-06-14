@@ -164,7 +164,7 @@ class CliWrapperTest(unittest.TestCase):
 
     def run_publish_public_evidence_branch(
         self,
-        remote: Path,
+        remote: Path | str,
         artifact_dir: Path,
     ) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
@@ -412,6 +412,8 @@ class CliWrapperTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             remote = tmp_path / "remote.git"
+            named_remote = tmp_path / "named-remote.git"
+            remote_name = f"openmako-public-evidence-test-{os.getpid()}"
             artifact_dir = tmp_path / "public_review_gate"
             current_commit = self.current_git_commit()
 
@@ -449,6 +451,43 @@ class CliWrapperTest(unittest.TestCase):
 
             self.assertEqual(tampered.returncode, 1)
             self.assertIn("digest mismatch for outputs/audit.json", tampered.stderr)
+
+            subprocess.run(["git", "init", "--bare", "-q", str(named_remote)], check=True)
+            subprocess.run(
+                ["git", "push", str(named_remote), f"{current_commit}:refs/heads/main"],
+                cwd=str(ROOT),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+            subprocess.run(["git", "remote", "add", remote_name, str(named_remote)], cwd=str(ROOT), check=True)
+            try:
+                self.write_public_review_artifact(artifact_dir, current_commit)
+
+                named_publish = self.run_publish_public_evidence_branch(remote_name, artifact_dir)
+
+                self.assertEqual(named_publish.returncode, 0, named_publish.stderr)
+                self.assertIn("publish-public-evidence-branch: PASS", named_publish.stdout)
+                self.assertIn(f"commit={current_commit}", named_publish.stdout)
+
+                named_snapshot = self.run_remote_public_evidence_snapshot(named_remote)
+
+                self.assertEqual(named_snapshot.returncode, 0, named_snapshot.stderr)
+                self.assertIn(
+                    f"remote-public-evidence-snapshot: remote-main-sha={current_commit}",
+                    named_snapshot.stdout,
+                )
+                self.assertIn("remote-public-evidence-snapshot: PASS", named_snapshot.stdout)
+            finally:
+                subprocess.run(
+                    ["git", "remote", "remove", remote_name],
+                    cwd=str(ROOT),
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    check=False,
+                )
 
     def test_fresh_clone_reproduction_passes_with_clean_venv_fixture(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

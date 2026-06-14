@@ -1370,7 +1370,9 @@ def test_public_evidence_branch_scripts_are_fail_closed_and_boundary_aware() -> 
     assert "required output missing" in publish_text
     assert "digest mismatch for" in publish_text
     assert 'git remote get-url "$REMOTE"' in publish_text
-    assert 'REMOTE_URL="$remote_url"' in publish_text
+    assert 'git fetch --depth 1 "$REMOTE" "refs/heads/$BRANCH:$fetch_ref"' in publish_text
+    assert 'git worktree add --detach "$worktree_dir"' in publish_text
+    assert 'git -C "$evidence_dir" push "$push_remote" "HEAD:$BRANCH"' in publish_text
     assert "public-evidence" in publish_text
     assert "GitHub Actions artifact zip contents" in publish_text
     assert "broad unknown-repository repair" in publish_text

@@ -8,11 +8,6 @@ ARTIFACT_DIR="${OPENMAKO_PUBLIC_REVIEW_GATE_ARTIFACT_DIR:-$ROOT_DIR/.quantagent/
 REMOTE="${OPENMAKO_PUBLIC_EVIDENCE_REMOTE:-origin}"
 BRANCH="${OPENMAKO_PUBLIC_EVIDENCE_BRANCH:-public-evidence}"
 GIT_COMMIT="$(git rev-parse HEAD)"
-if remote_url="$(git remote get-url "$REMOTE" 2>/dev/null)"; then
-  REMOTE_URL="$remote_url"
-else
-  REMOTE_URL="$REMOTE"
-fi
 
 if [ ! -f "$ARTIFACT_DIR/summary.json" ]; then
   echo "publish-public-evidence-branch: missing $ARTIFACT_DIR/summary.json" >&2
@@ -54,19 +49,44 @@ for relative in required_outputs:
 PY
 
 tmp_dir="$(mktemp -d)"
+worktree_dir=""
+temp_branch=""
+fetch_ref=""
 cleanup() {
+  if [ -n "$worktree_dir" ]; then
+    git -C "$ROOT_DIR" worktree remove --force "$worktree_dir" >/dev/null 2>&1 || true
+  fi
+  if [ -n "$temp_branch" ]; then
+    git -C "$ROOT_DIR" branch -D "$temp_branch" >/dev/null 2>&1 || true
+  fi
+  if [ -n "$fetch_ref" ]; then
+    git -C "$ROOT_DIR" update-ref -d "$fetch_ref" >/dev/null 2>&1 || true
+  fi
   rm -rf "$tmp_dir"
 }
 trap cleanup EXIT
 
-if git clone --depth 1 --branch "$BRANCH" "$REMOTE_URL" "$tmp_dir/branch" >/dev/null 2>&1; then
-  evidence_dir="$tmp_dir/branch"
+push_remote="origin"
+if git remote get-url "$REMOTE" >/dev/null 2>&1; then
+  push_remote="$REMOTE"
+  worktree_dir="$tmp_dir/branch"
+  fetch_ref="refs/tmp/openmako-public-evidence/$BRANCH"
+  if git fetch --depth 1 "$REMOTE" "refs/heads/$BRANCH:$fetch_ref" >/dev/null 2>&1; then
+    git worktree add --detach "$worktree_dir" "$fetch_ref" >/dev/null
+  else
+    git worktree add --detach "$worktree_dir" HEAD >/dev/null
+    temp_branch="openmako-public-evidence-$GIT_COMMIT"
+    git -C "$worktree_dir" checkout --orphan "$temp_branch" >/dev/null 2>&1
+    git -C "$worktree_dir" rm -rf --ignore-unmatch . >/dev/null 2>&1 || true
+  fi
+  evidence_dir="$worktree_dir"
 else
+  remote_url="$REMOTE"
   mkdir -p "$tmp_dir/branch"
   evidence_dir="$tmp_dir/branch"
   git -C "$evidence_dir" init -q
   git -C "$evidence_dir" checkout --orphan "$BRANCH" >/dev/null 2>&1
-  git -C "$evidence_dir" remote add origin "$REMOTE_URL"
+  git -C "$evidence_dir" remote add origin "$remote_url"
 fi
 
 mkdir -p "$evidence_dir/focused/$GIT_COMMIT"
@@ -114,7 +134,7 @@ if git -C "$evidence_dir" diff --cached --quiet; then
   echo "publish-public-evidence-branch: no changes"
 else
   git -C "$evidence_dir" commit -q -m "Publish focused public evidence for $GIT_COMMIT"
-  git -C "$evidence_dir" push origin "HEAD:$BRANCH" >/dev/null
+  git -C "$evidence_dir" push "$push_remote" "HEAD:$BRANCH" >/dev/null
   echo "publish-public-evidence-branch: pushed branch=$BRANCH commit=$GIT_COMMIT"
 fi
 
