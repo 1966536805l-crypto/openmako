@@ -274,6 +274,10 @@ def test_readme_links_public_proof_issue() -> None:
     assert "CONTRIBUTING.md" in readme
     assert "Attribution boundary" in readme
     assert "docs/UPSTREAM_ATTRIBUTION.md" in readme
+    assert "Fresh-clone reproduction" in readme
+    assert "bash scripts/fresh_clone_reproduction.sh" in readme
+    assert "OPENMAKO_REPRO_LOG" in readme
+    assert "fresh-clone public-gate reproduction evidence only" in readme
     assert "External-source benchmark gate" in readme
     assert "bash scripts/external_source_benchmark_gate.sh" in readme
     assert "OpenClaw vendored-source manifest, MIT license, selected source digest" in readme
@@ -851,6 +855,25 @@ def test_release_readiness_gate_fails_closed_on_missing_license_decision() -> No
         assert "release-readiness-gate: root-license=LICENSE" in passing.stdout
         assert "release-readiness-gate: pyproject-license=present" in passing.stdout
         assert "release-readiness-gate: PASS" in passing.stdout
+
+
+def test_fresh_clone_reproduction_script_is_fail_closed_and_boundary_limited() -> None:
+    script = ROOT / "scripts" / "fresh_clone_reproduction.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert "OPENMAKO_REPRO_CLONE_URL" in text
+    assert "OPENMAKO_REPRO_REF" in text
+    assert "OPENMAKO_REPRO_LOG" in text
+    assert '"$PYTHON_BIN" -m venv' in text
+    assert "python -m pip install -e . pytest" in text
+    assert "bash scripts/release_readiness_gate.sh" in text
+    assert "bash scripts/public_review_gate.sh" in text
+    assert "log-sha256=" in text
+    assert "set -euo pipefail" in text
+    assert "not-proof=external review; endorsement; stars; reposts" in text
+    assert "independent external benchmark standing; live autonomy; broad unknown-repository repair" in text
 
 
 def test_changelog_v01_draft_stays_inside_public_evidence_boundary() -> None:
@@ -2201,6 +2224,10 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "## Fresh Checkout" in guide
     assert "git clone https://github.com/1966536805l-crypto/openmako.git" in guide
     assert "python -m pip install -e . pytest" in guide
+    assert "bash scripts/fresh_clone_reproduction.sh" in guide
+    assert "OPENMAKO_REPRO_LOG=/tmp/openmako-fresh-clone.log" in guide
+    assert "stops on install failure before running the release or public gates" in guide
+    assert "fresh-clone reproduction evidence for the bounded public gate" in guide
     assert "./scripts/public_review_gate.sh" in guide
     assert "<N> passed" in guide
     assert "metadata-test count is intentionally not fixed" in guide
@@ -2214,7 +2241,7 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "external-heldout-benchmark-gate: PASS" in guide
     assert "public-review-gate: checking external-heldout gate fail-closed negatives" in guide
     assert "python -m pytest -p no:cacheprovider tests/test_external_heldout_benchmark_gate.py -q" in guide
-    assert "4 passed" in guide
+    assert "11 passed" in guide
     assert "bash scripts/external_source_benchmark_gate.sh" in guide
     assert "bash scripts/external_heldout_benchmark_gate.sh" in guide
     assert "`external_source=true` and\n`independent_external_heldout=false`" in guide

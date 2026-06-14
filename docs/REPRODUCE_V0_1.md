@@ -25,6 +25,19 @@ python -m pip install --upgrade pip
 python -m pip install -e . pytest
 ```
 
+To reproduce from a throwaway public clone with a venv and a hashable log:
+
+```bash
+OPENMAKO_REPRO_REF=<openmako-main-sha> \
+OPENMAKO_REPRO_LOG=/tmp/openmako-fresh-clone.log \
+bash scripts/fresh_clone_reproduction.sh
+```
+
+This script stops on install failure before running the release or public gates.
+Passing it is fresh-clone reproduction evidence for the bounded public gate, not
+external review, endorsement, stars, reposts, independent external benchmark
+standing, live autonomy, or broad unknown-repository repair.
+
 ## One-Command Public Gate
 
 ```bash
@@ -42,12 +55,12 @@ external-source-benchmark-gate: running selected OpenClaw source and package-lev
 external-source-benchmark-gate: PASS
 public-review-gate: running external-heldout benchmark gate
 external-heldout-benchmark-gate: running MCP Python SDK held-out repair regression
-1 passed
+2 passed
 external-heldout-benchmark-gate: PASS
 public-review-gate: running public metadata boundary tests
 <N> passed
 public-review-gate: checking external-heldout gate fail-closed negatives
-4 passed
+11 passed
 public-review-gate: checking adversarial claim matrix generator
 public-review-gate: running Evidence Court intensity matrix
 316 passed

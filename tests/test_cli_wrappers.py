@@ -131,6 +131,98 @@ class CliWrapperTest(unittest.TestCase):
                 check=False,
             )
 
+    def init_minimal_reproduction_repo(
+        self,
+        target: Path,
+        *,
+        installable: bool = True,
+        gate_marker: Path | None = None,
+    ) -> str:
+        (target / "scripts").mkdir(parents=True)
+        (target / "LICENSE").write_text("MIT\n", encoding="utf-8")
+        if installable:
+            (target / "src" / "fake_openmako").mkdir(parents=True)
+            (target / "src" / "fake_openmako" / "__init__.py").write_text("", encoding="utf-8")
+            (target / "pyproject.toml").write_text(
+                "\n".join(
+                    [
+                        "[build-system]",
+                        'requires = ["setuptools>=61"]',
+                        'build-backend = "setuptools.build_meta"',
+                        "",
+                        "[project]",
+                        'name = "fake-openmako-repro"',
+                        'version = "0.0.0"',
+                        'license = "MIT"',
+                        "",
+                        "[tool.setuptools.packages.find]",
+                        'where = ["src"]',
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+        else:
+            (target / "pyproject.toml").write_text(
+                "[build-system\n",
+                encoding="utf-8",
+            )
+        marker_line = f"printf gate-ran > {gate_marker}\n" if gate_marker is not None else ""
+        for script_name, pass_line in (
+            ("release_readiness_gate.sh", "release-readiness-gate: PASS"),
+            ("public_review_gate.sh", "public-review-gate: PASS"),
+        ):
+            script = target / "scripts" / script_name
+            script.write_text(
+                "#!/usr/bin/env bash\n"
+                "set -euo pipefail\n"
+                f"{marker_line}"
+                f"echo {pass_line}\n",
+                encoding="utf-8",
+            )
+            script.chmod(0o755)
+        subprocess.run(["git", "init", "-q"], cwd=target, check=True)
+        subprocess.run(["git", "add", "."], cwd=target, check=True)
+        subprocess.run(
+            [
+                "git",
+                "-c",
+                "user.email=openmako-test@example.invalid",
+                "-c",
+                "user.name=OpenMako Test",
+                "commit",
+                "-q",
+                "-m",
+                "fixture",
+            ],
+            cwd=target,
+            check=True,
+        )
+        return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=target, text=True).strip()
+
+    def run_fresh_clone_reproduction(
+        self,
+        clone_url: Path,
+        ref: str,
+        workdir: Path,
+        log_path: Path,
+    ) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["OPENMAKO_REPRO_CLONE_URL"] = str(clone_url)
+        env["OPENMAKO_REPRO_REF"] = ref
+        env["OPENMAKO_REPRO_WORKDIR"] = str(workdir)
+        env["OPENMAKO_REPRO_LOG"] = str(log_path)
+        return subprocess.run(
+            ["bash", "scripts/fresh_clone_reproduction.sh"],
+            cwd=str(ROOT),
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=90,
+            check=False,
+        )
+
     def run_desktop_control_proof_card(self) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
         env["PYTHONPATH"] = str(ROOT) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
@@ -245,6 +337,50 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("run-sha=None", result.stdout)
         self.assertIn("status=None conclusion=None", result.stdout)
         self.assertIn("latest focused run does not match remote main", result.stderr)
+
+    def test_fresh_clone_reproduction_passes_with_clean_venv_fixture(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "source"
+            source.mkdir()
+            ref = self.init_minimal_reproduction_repo(source)
+            result = self.run_fresh_clone_reproduction(
+                source,
+                ref,
+                tmp_path / "work",
+                tmp_path / "fresh-clone.log",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn(f"fresh-clone-reproduction: requested-ref={ref}", result.stdout)
+            self.assertIn(f"fresh-clone-reproduction: checkout-sha={ref}", result.stdout)
+            self.assertIn("fresh-clone-reproduction: install=PASS", result.stdout)
+            self.assertIn("fresh-clone-reproduction: release-readiness=PASS", result.stdout)
+            self.assertIn("fresh-clone-reproduction: public-review=PASS", result.stdout)
+            self.assertIn("fresh-clone-reproduction: PASS", result.stdout)
+            self.assertIn("fresh-clone-reproduction: log-sha256=", result.stdout)
+            self.assertIn("not-proof=external review; endorsement; stars; reposts", result.stdout)
+
+    def test_fresh_clone_reproduction_stops_before_gates_when_install_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "source"
+            source.mkdir()
+            marker = tmp_path / "gate-marker"
+            ref = self.init_minimal_reproduction_repo(source, installable=False, gate_marker=marker)
+            result = self.run_fresh_clone_reproduction(
+                source,
+                ref,
+                tmp_path / "work",
+                tmp_path / "fresh-clone-failure.log",
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse(marker.exists(), result.stdout + result.stderr)
+            self.assertIn(f"fresh-clone-reproduction: checkout-sha={ref}", result.stdout)
+            self.assertNotIn("fresh-clone-reproduction: release-readiness=PASS", result.stdout)
+            self.assertNotIn("fresh-clone-reproduction: public-review=PASS", result.stdout)
+            self.assertNotIn("fresh-clone-reproduction: PASS", result.stdout)
 
     def test_desktop_control_proof_card_surfaces_safety_rates_and_boundaries(self) -> None:
         result = self.run_desktop_control_proof_card()
