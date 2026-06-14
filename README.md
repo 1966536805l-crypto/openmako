@@ -43,7 +43,8 @@ Expected high-level signal:
 
 ```text
 public-review-gate: running planner focused public test
-public-review-gate: running learning-effect focused public test
+public-review-gate: running external-source benchmark gate
+external-source-benchmark-gate: PASS
 public-review-gate: running public metadata boundary tests
 public-review-gate: checking adversarial claim matrix generator
 public-review-gate: running Evidence Court intensity matrix
@@ -61,14 +62,16 @@ adapter-matrix: PASS
 public-review-gate: PASS
 ```
 
-What this checks is narrow: the focused learning-effect gate passes, public
-metadata stays inside the v0.1 boundary, Evidence Court fails closed on a
-supplied bad-run record, the local Evidence Court intensity matrix covers
-supplied test-output parser edge cases and 105 full supplied audit-record
-claim-boundary cases, including five multi-finding precedence cases, and
-the adversarial claim matrix generator check prevents checked-in fixture
-metadata from drifting from the compact generator. Supplied transcript adapters
-preserve complete
+What this checks is narrow: the external-source benchmark gate verifies the
+OpenClaw vendored-source manifest, MIT license, selected source digest, one
+OpenClaw selected-source repair regression, and the package-level
+learning-effect regression; public metadata stays inside the v0.1 boundary,
+Evidence Court fails closed on a supplied bad-run record, the local Evidence
+Court intensity matrix covers supplied test-output parser edge cases and 105
+full supplied audit-record claim-boundary cases, including five multi-finding
+precedence cases, and the adversarial claim matrix generator check prevents
+checked-in fixture metadata from drifting from the compact generator. Supplied
+transcript adapters preserve complete
 supplied proof fields while rejecting success claims that have
 missing-test-proof, missing exit-status evidence, missing edited-file evidence,
 missing supplied diff-content evidence, supplied diff-content that only names
@@ -206,8 +209,8 @@ This path is for technical boundary review, not promotion.
 ## Public v0.1 Scope
 
 The current release is a record-auditor and evidence-harness snapshot. It can
-audit supplied Evidence Court records, run the focused learning-effect gate,
-and fail closed when patch scope, test proof, or run evidence is missing.
+audit supplied Evidence Court records, run the external-source public gate, and
+fail closed when patch scope, test proof, or run evidence is missing.
 
 The repository also contains older and experimental implementation paths. Those
 paths are inspectable source, but they are not v0.1 launch claims until each has
@@ -255,19 +258,26 @@ Expected signal:
 
 ## What The Public Gate Checks
 
-The focused public gate exercises a package-level JavaScript repair task:
+The focused public gate now runs an external-source benchmark gate before the
+broader metadata and Evidence Court checks. That gate verifies the vendored
+OpenClaw MIT license, manifest, selected source digest, and then exercises one
+OpenClaw selected-source repair regression plus the package-level JavaScript
+learning-effect repair task:
 
 - `no_learning` must fail the hidden task pack.
 - `approved_learning` must solve the hidden task pack.
 - repeat stability must stay at zero spread.
 - changed files must stay on the exact target source module.
 - protected-test and failure-log cheating must be classified as cheated.
+- the summary must record `external_source=true` and
+  `independent_external_heldout=false`.
 
 Run the same gate locally:
 
 ```bash
 python3 -m pytest -p no:cacheprovider \
   tests/test_agent_planner_contract.py::AgentPlannerContractTest::test_planner_no_seed_repairs_package_level_http_manifest_js_module \
+  tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest::test_openclaw_selected_js_no_seed_repair_changes_only_target_file \
   tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest::test_package_level_http_manifest_js_trajectory_skill_reuses_on_hidden_tasks \
   -q
 ```
@@ -275,7 +285,7 @@ python3 -m pytest -p no:cacheprovider \
 Expected local result on the public snapshot:
 
 ```text
-2 passed
+3 passed
 ```
 
 ## What It Does Not Claim
@@ -306,20 +316,20 @@ python -m pip install -e . pytest
 ./scripts/public_review_gate.sh
 ```
 
-That script runs the focused public gate, metadata boundary checks, the
-supplied Evidence Court bad-run audit, the artifact-provenance fixture, the
-SWTBench patch-artifact fixture, and the supplied transcript adapter matrix.
-To run only the focused learning-effect gate:
+That script runs the planner focused public test, the external-source benchmark
+gate, metadata boundary checks, the supplied Evidence Court bad-run audit, the
+artifact-provenance fixture, the SWTBench patch-artifact fixture, and the
+supplied transcript adapter matrix. To run only the external-source benchmark
+gate:
 
 ```bash
-python -m pytest -p no:cacheprovider \
-  tests/test_agent_planner_contract.py::AgentPlannerContractTest::test_planner_no_seed_repairs_package_level_http_manifest_js_module \
-  tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest::test_package_level_http_manifest_js_trajectory_skill_reuses_on_hidden_tasks \
-  -q
+bash scripts/external_source_benchmark_gate.sh
 ```
 
-This is the same focused gate run by GitHub Actions. It is the current public
-evidence for the v0.1 snapshot.
+This is the same public gate route run by GitHub Actions. It is external-source
+regression evidence for the v0.1 snapshot, not independent external held-out
+benchmark evidence, external benchmark standing, external review, endorsement,
+stars, reposts, native live autonomy, or broad unknown-repository repair proof.
 
 For a slower local autonomous-learning stress check, run:
 
@@ -357,6 +367,7 @@ qagent --help
 | Contributor guide | [`CONTRIBUTING.md`](CONTRIBUTING.md), public-boundary contribution rules |
 | Attribution boundary | [`docs/UPSTREAM_ATTRIBUTION.md`](docs/UPSTREAM_ATTRIBUTION.md), upstream references and vendored-license boundaries |
 | Release readiness gate | `bash scripts/release_readiness_gate.sh`, a fail-closed check for root `LICENSE`/`COPYING` and `pyproject.toml` license metadata; `[NEEDS OWNER DECISION: LICENSE]` is the correct status when no owner-selected license evidence exists |
+| External-source benchmark gate | `bash scripts/external_source_benchmark_gate.sh`, a fail-closed check for the OpenClaw vendored-source manifest, MIT license, selected source digest, one OpenClaw selected-source repair regression, and the package-level JavaScript learning-effect regression; writes `.quantagent/external_source_benchmark_gate/last_summary.json` with `external_source=true` and `independent_external_heldout=false`; external-source regression evidence only, not independent external held-out benchmark evidence, external benchmark standing, external review, endorsement, stars, reposts, native live autonomy, broad unknown-repository repair, or current remote CI proof |
 | Agent trend radar | [`docs/AGENT_TREND_RADAR.md`](docs/AGENT_TREND_RADAR.md), source-linked trend map and non-claim development bets |
 | Reviewer target map | [`docs/REVIEWER_TARGETS.md`](docs/REVIEWER_TARGETS.md), public-source outreach waves for technical review |
 | Wave 1 review requests | [`docs/WAVE1_REVIEW_REQUESTS.md`](docs/WAVE1_REVIEW_REQUESTS.md), copyable non-promotional messages for technical reviewers |
@@ -448,7 +459,7 @@ Useful entry points:
 
 OpenMako includes notes for learning from open-source agent and trading
 projects. These notes are not v0.1 capability claims. The current public
-evidence remains the focused learning-effect gate above.
+evidence remains the external-source public gate above.
 
 For concrete upstream references, vendored files, and license boundaries, see
 [`docs/UPSTREAM_ATTRIBUTION.md`](docs/UPSTREAM_ATTRIBUTION.md).
@@ -463,10 +474,7 @@ Relevant docs:
 Run the public gate before claiming the snapshot is healthy:
 
 ```bash
-python -m pytest -p no:cacheprovider \
-  tests/test_agent_planner_contract.py::AgentPlannerContractTest::test_planner_no_seed_repairs_package_level_http_manifest_js_module \
-  tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest::test_package_level_http_manifest_js_trajectory_skill_reuses_on_hidden_tasks \
-  -q
+bash scripts/public_review_gate.sh
 ```
 
 For broader local work, run the wider test suite only after your environment is

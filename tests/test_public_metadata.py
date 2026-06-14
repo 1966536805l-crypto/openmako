@@ -274,6 +274,12 @@ def test_readme_links_public_proof_issue() -> None:
     assert "CONTRIBUTING.md" in readme
     assert "Attribution boundary" in readme
     assert "docs/UPSTREAM_ATTRIBUTION.md" in readme
+    assert "External-source benchmark gate" in readme
+    assert "bash scripts/external_source_benchmark_gate.sh" in readme
+    assert "OpenClaw vendored-source manifest, MIT license, selected source digest" in readme
+    assert "external_source=true" in readme
+    assert "independent_external_heldout=false" in readme
+    assert "external-source regression evidence only, not independent external held-out benchmark evidence" in readme
     assert "Agent trend radar" in readme
     assert "docs/AGENT_TREND_RADAR.md" in readme
     assert "Reviewer target map" in readme
@@ -521,6 +527,7 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "./scripts/public_review_gate.sh" in proof_section
     assert "bash scripts/public_proof_card.sh" in proof_section
     assert "screenshot-friendly summary" in proof_section
+    assert "public-review-gate: running external-source benchmark gate" in proof_section
     assert "public-review-gate: checking adversarial claim matrix generator" in proof_section
     assert "public-review-gate: running Evidence Court intensity matrix" in proof_section
     assert "public-review-gate: recording Evidence Court bad-run fixture" in proof_section
@@ -537,15 +544,16 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "public-review-gate: PASS" in proof_section
     assert "What this checks is narrow" in proof_section
     assert (
-        "local Evidence Court intensity matrix covers\n"
-        "supplied test-output parser edge cases and 105 full supplied audit-record\n"
-        "claim-boundary cases, including five multi-finding precedence cases"
+        "local Evidence\n"
+        "Court intensity matrix covers supplied test-output parser edge cases and 105\n"
+        "full supplied audit-record claim-boundary cases, including five multi-finding\n"
+        "precedence cases"
     ) in proof_section
     assert (
-        "adversarial claim matrix generator check prevents checked-in fixture\n"
-        "metadata from drifting from the compact generator"
+        "adversarial claim matrix generator check prevents\n"
+        "checked-in fixture metadata from drifting from the compact generator"
     ) in proof_section
-    assert "Supplied transcript adapters\npreserve complete\nsupplied proof fields while rejecting success claims that have\nmissing-test-proof, missing exit-status evidence, missing edited-file evidence,\nmissing supplied diff-content evidence, supplied diff-content that only names\ntest files, or supplied diff-content that covers only a subset of edited source\nfiles, or supplied ordered edit/command evidence where passing validation\noccurs before a later source edit for a claimed source repair" in proof_section
+    assert "Supplied\ntranscript adapters preserve complete\nsupplied proof fields while rejecting success claims that have\nmissing-test-proof, missing exit-status evidence, missing edited-file evidence,\nmissing supplied diff-content evidence, supplied diff-content that only names\ntest files, or supplied diff-content that covers only a subset of edited source\nfiles, or supplied ordered edit/command evidence where passing validation\noccurs before a later source edit for a claimed source repair" in proof_section
     assert "supplied runtime-shadowing and verifier/CI tamper fixtures that classify\npassing success claims as review-risk" in proof_section
     assert "It does not prove broad\nunknown-repository repair, native runtime hardening, native benchmark\ningestion, native CI hardening, or external endorsement." in proof_section
     assert "This is a local script\nresult, not external reviewer approval." in proof_section
@@ -591,9 +599,12 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
         assert forbidden not in proof_section.lower()
     install_section = readme[install_index:evidence_links_index]
     assert (
-        "the\nsupplied Evidence Court bad-run audit, the artifact-provenance fixture, "
-        "the\nSWTBench patch-artifact fixture, and the supplied transcript adapter matrix"
+        "the external-source benchmark\n"
+        "gate, metadata boundary checks, the supplied Evidence Court bad-run audit, the\n"
+        "artifact-provenance fixture, the SWTBench patch-artifact fixture, and the\n"
+        "supplied transcript adapter matrix"
     ) in install_section
+    assert "bash scripts/external_source_benchmark_gate.sh" in install_section
     assert "bash scripts/autonomous_learning_gate.sh" in install_section
     assert (
         "not native live autonomy or broad\n"
@@ -1976,12 +1987,13 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "docs/REPRODUCE_V0_1.md" in packet
     assert "docs/PUBLIC_SHARE_PACKET.md" in packet
     assert "./scripts/public_review_gate.sh" in packet
-    assert "the\nsupplied Evidence Court bad-run audit, the artifact-provenance fixture, the" in packet
-    assert "SWTBench patch-artifact fixture, the config-only repair fixture, runtime" in packet
-    assert "shadowing and verifier/CI tamper fixtures, and the supplied transcript adapter" in packet
-    assert "matrix" in packet
-    assert "tests/test_agent_planner_contract.py::AgentPlannerContractTest" in packet
-    assert "tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest" in packet
+    assert "external-source benchmark\n gate" not in packet
+    assert "external-source benchmark\ngate" in packet
+    assert "bash scripts/external_source_benchmark_gate.sh" in packet
+    assert "external-source-benchmark-gate: PASS" in packet
+    assert "the\nartifact-provenance fixture, the SWTBench patch-artifact fixture" in packet
+    assert "SWTBench patch-artifact fixture, the config-only\nrepair fixture, runtime" in packet
+    assert "shadowing and verifier/CI tamper fixtures, and the\nsupplied transcript adapter matrix" in packet
     assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in packet
     assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in packet
     assert "examples/evidence_court/artifact_provenance.json" in packet
@@ -2039,6 +2051,12 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "metadata-test count is intentionally not fixed" in guide
     assert "25 passed" not in guide
     assert "public-review-gate: PASS" in guide
+    assert "public-review-gate: running external-source benchmark gate" in guide
+    assert "external-source-benchmark-gate: running selected OpenClaw source and package-level regression tests" in guide
+    assert "external-source-benchmark-gate: PASS" in guide
+    assert "bash scripts/external_source_benchmark_gate.sh" in guide
+    assert "`external_source=true` and\n`independent_external_heldout=false`" in guide
+    assert "external-source regression evidence\nonly, not independent external held-out benchmark evidence" in guide
     assert "public-review-gate: checking adversarial claim matrix generator" in guide
     assert "public-review-gate: running Evidence Court intensity matrix" in guide
     assert "316 passed" in guide
@@ -2244,12 +2262,12 @@ def test_public_share_packet_preserves_review_boundary_without_promotion() -> No
     assert "Use this only after a named reviewer has publicly said the boundary is clear." in share_packet
     assert "bash scripts/public_share_ready.sh boundary-clear" in share_packet
     assert "not a broad agent benchmark" in share_packet
-    assert "focused learning-effect gate" in share_packet
+    assert "external-source benchmark gate" in share_packet
     assert "patch-scope discipline" in share_packet
     assert "test-proof evidence" in share_packet
-    assert "Evidence Court audits for supplied records, provenance, and supplied transcript\nadapters" in share_packet
-    assert "runtime-shadowing and verifier/CI tamper review-risk\nfixtures" in share_packet
-    assert "supplied-record/provenance audits, supplied\ntranscript adapter checks, and supplied runtime/verifier/CI tamper-risk checks" in share_packet
+    assert "Evidence Court audits for supplied records, provenance, and supplied\ntranscript adapters" in share_packet
+    assert "runtime-shadowing and verifier/CI tamper\nreview-risk fixtures" in share_packet
+    assert "supplied-record/provenance audits, supplied transcript adapter checks, and\nsupplied runtime/verifier/CI tamper-risk checks" in share_packet
     assert "Evidence Court CLI that audits supplied records" not in share_packet
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in share_packet
     assert "https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0" in share_packet
@@ -2299,7 +2317,9 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
     assert script.stat().st_mode & 0o111
     assert 'export PYTHONPATH="$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}"' in text
     assert "tests/test_agent_planner_contract.py::AgentPlannerContractTest" in text
-    assert "tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest" in text
+    assert "public-review-gate: running external-source benchmark gate" in text
+    assert "OPENMAKO_EXTERNAL_SOURCE_BENCHMARK_SUMMARY_JSON" in text
+    assert "bash scripts/external_source_benchmark_gate.sh" in text
     assert "tests/test_public_metadata.py" in text
     assert "tests/test_evidence_court_intensity_matrix.py" in text
     assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in text
@@ -2325,6 +2345,37 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
     assert "public-review-gate: PASS" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
         assert forbidden not in text.lower()
+
+
+def test_external_source_benchmark_gate_locks_source_boundary_and_summary_contract() -> None:
+    script = ROOT / "scripts" / "external_source_benchmark_gate.sh"
+    text = script.read_text(encoding="utf-8")
+    progress = (ROOT / "PROGRESS.md").read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert "external-source-benchmark-gate/v0.1" in text
+    assert "OPENMAKO_EXTERNAL_SOURCE_BENCHMARK_SUMMARY_JSON" in text
+    assert "third_party/openclaw/MANIFEST.sha256" in text
+    assert "third_party/openclaw/LICENSE" in text
+    assert "MIT License" in text
+    assert "https://github.com/openclaw/openclaw" in text
+    assert "Upstream version: `2026.5.20`" in text
+    assert "test_openclaw_selected_js_no_seed_repair_changes_only_target_file" in text
+    assert "test_package_level_http_manifest_js_trajectory_skill_reuses_on_hidden_tasks" in text
+    assert "external_source" in text
+    assert "independent_external_heldout" in text
+    assert "not_proof" in text
+    assert "current remote CI proof" in text
+    assert "manifest digest mismatch" in text
+    assert "observed_pytest" in text
+    assert "expected_passed" in text
+    assert "external-source-benchmark-gate: PASS" in text
+
+    assert "`bash scripts/external_source_benchmark_gate.sh` to the public review gate" in progress
+    assert "OpenClaw manifest, MIT license, selected\n  source digest" in progress
+    assert "`external_source=true` and `independent_external_heldout=false`" in progress
+    assert "external-source regression evidence only, not independent external held-out\n  benchmark evidence" in progress
 
 
 def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() -> None:
@@ -2787,11 +2838,11 @@ def test_public_proof_card_wraps_gate_without_overclaiming() -> None:
     assert "./scripts/public_review_gate.sh" in text
     assert "openmako-public-proof-card: PASS" in text
     assert (
-        "focused learning-effect gate; public metadata boundary; supplied Evidence Court audit; "
+        "external-source benchmark gate; public metadata boundary; supplied Evidence Court audit; "
         "artifact provenance; SWTBench patch artifact; config-only repair fixture; "
         "runtime-shadowing and verifier/CI tamper fixtures; supplied transcript adapter matrix"
     ) in text
-    assert "not-proof: broad unknown-repository SWE repair; external endorsement; star or repost traction" in text
+    assert "not-proof: independent external held-out benchmark; broad unknown-repository SWE repair; external endorsement; star or repost traction" in text
     assert "https://github.com/1966536805l-crypto/openmako/issues/2" in text
     assert "issues/new?template=external-review-record.yml" in text
     for forbidden in ("please star", "please repost", "10,000", "10000", "大咖"):
@@ -3417,17 +3468,17 @@ def test_wave1_review_requests_are_copyable_without_promotion() -> None:
     assert "bash scripts/public_proof_card.sh" in requests
     assert "openmako-public-proof-card: PASS" in requests
     assert (
-        "scope: focused learning-effect gate; public metadata boundary; supplied Evidence Court audit; "
+        "scope: external-source benchmark gate; public metadata boundary; supplied Evidence Court audit; "
         "artifact provenance; SWTBench patch artifact; config-only repair fixture; "
         "runtime-shadowing and verifier/CI tamper fixtures; supplied transcript adapter matrix"
     ) in requests
-    assert "not-proof: broad unknown-repository SWE repair; external endorsement; star or repost traction" in requests
+    assert "not-proof: independent external held-out benchmark; broad unknown-repository SWE repair; external endorsement; star or repost traction" in requests
     assert "SWE-Bench / SWE-Agent Review Request" in requests
     assert "short notes for asking technical reviewers to check the v0.1 boundary" in requests
     assert "Can you point out where OpenMako v0.1 overclaims its evidence boundary?" in requests
-    assert "Current public proof covers one focused learning-effect gate" in requests
+    assert "Current public proof covers an external-source benchmark gate" in requests
     assert "supplied-record/provenance audits, a config-only\nfalse-positive fixture, runtime-shadowing and verifier/CI tamper review-risk\nfixtures, and a supplied transcript adapter matrix" in requests
-    assert "It does not claim\nSWE-bench-scale repair or native runtime/CI hardening." in requests
+    assert "It does not claim\nindependent external held-out benchmarking, SWE-bench-scale repair, or native\nruntime/CI hardening." in requests
     assert "I'm mainly looking for README lines or proof-command gaps that overclaim." in requests
     assert "Terminal-Bench / Agent-Eval Review Request" in requests
     assert "Can you check OpenMako v0.1's evidence boundary?" in requests
@@ -3472,7 +3523,7 @@ def test_wave1_review_request_script_prints_short_non_promotional_messages() -> 
     assert "agent-runtime" in text
     assert "Can you point out where OpenMako v0.1 overclaims its evidence boundary?" in text
     assert "supplied-record/provenance audits, runtime-shadowing\nand verifier/CI tamper review-risk fixtures, and a supplied transcript adapter\nmatrix" in text
-    assert "SWE-bench-scale repair or native runtime/CI\nhardening" in text
+    assert "independent external held-out benchmarking,\nSWE-bench-scale repair, or native runtime/CI hardening" in text
     assert "Can you check OpenMako v0.1's evidence boundary?" in text
     assert "I'm mainly looking for README lines or proof-command gaps that overclaim." in text
     assert "useful or too noisy from a coding-agent user's view" in text
@@ -3565,7 +3616,8 @@ def test_root_agent_notes_match_public_evidence_boundary() -> None:
     assert notes.startswith("# OpenMako Local Agent Notes")
     assert "OpenMako is a focused evidence harness for coding-agent repair runs." in notes
     assert "not a public capability claim" in notes
-    assert "focused learning-effect gate" in notes
+    assert "external-source public gate" in notes
+    assert "not independent external held-out benchmark\n  evidence" in notes
     assert "tests/test_public_metadata.py" in notes
     for forbidden in FORBIDDEN_ROOT_AGENT_NOTES:
         assert forbidden not in notes

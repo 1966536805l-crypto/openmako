@@ -5,8 +5,9 @@ This file is for local coding-agent behavior inside this repository. It is not a
 Current public position:
 
 - OpenMako is a focused evidence harness for coding-agent repair runs.
-- The public v0.1 proof is the focused learning-effect gate linked from
-  `README.md` and issue #1.
+- The public v0.1 proof is the external-source public gate linked from
+  `README.md` and issue #1. It is not independent external held-out benchmark
+  evidence.
 - Claims about broader agent-runtime, desktop-control, quant, or benchmark
   behavior require current tests and public evidence before they can be used in
   launch copy.
@@ -25,9 +26,8 @@ Core rules:
 Current public quality gate:
 
 ```bash
-python3 -m pytest -p no:cacheprovider \
-  tests/test_agent_planner_contract.py::AgentPlannerContractTest::test_planner_no_seed_repairs_package_level_http_manifest_js_module \
-  tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest::test_package_level_http_manifest_js_trajectory_skill_reuses_on_hidden_tasks \
-  tests/test_public_metadata.py \
-  -q
+bash scripts/public_review_gate.sh
 ```
+
+The public wording lock lives in `tests/test_public_metadata.py`; update that
+test when public-surface evidence boundaries change.

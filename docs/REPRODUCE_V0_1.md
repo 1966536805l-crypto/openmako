@@ -6,8 +6,9 @@ request, promotion request, star request, or repost request.
 
 ## Claim Under Test
 
-OpenMako v0.1 demonstrates one focused learning-effect gate for coding-agent
-repair runs, plus an Evidence Court CLI for auditing supplied records.
+OpenMako v0.1 demonstrates one learning-effect repair check inside an
+external-source benchmark gate, plus an Evidence Court CLI for auditing supplied
+records.
 
 Do not treat older planning docs, archived quant experiments, desktop-control
 experiments, or local-only benchmark notes as proof for this claim.
@@ -34,8 +35,10 @@ Expected high-level signal:
 ```text
 public-review-gate: running planner focused public test
 1 passed
-public-review-gate: running learning-effect focused public test
-1 passed
+public-review-gate: running external-source benchmark gate
+external-source-benchmark-gate: running selected OpenClaw source and package-level regression tests
+2 passed
+external-source-benchmark-gate: PASS
 public-review-gate: running public metadata boundary tests
 <N> passed
 public-review-gate: checking adversarial claim matrix generator
@@ -64,6 +67,9 @@ metadata section passes and the script reaches `public-review-gate: PASS`.
 
 ## What The Gate Covers
 
+- The external-source benchmark gate verifies the vendored OpenClaw manifest,
+  MIT license, selected source digest, one OpenClaw selected-source repair
+  regression, and the package-level JavaScript learning-effect regression.
 - The no-learning repair path fails the hidden task pack.
 - The approved-learning repair path solves the hidden task pack.
 - Repeat stability remains deterministic for the focused task.
@@ -93,14 +99,18 @@ metadata section passes and the script reaches `public-review-gate: PASS`.
 
 ## Smaller Checks
 
-Focused learning-effect gate only:
+External-source benchmark gate only:
 
 ```bash
-python -m pytest -p no:cacheprovider \
-  tests/test_agent_planner_contract.py::AgentPlannerContractTest::test_planner_no_seed_repairs_package_level_http_manifest_js_module \
-  tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest::test_package_level_http_manifest_js_trajectory_skill_reuses_on_hidden_tasks \
-  -q
+bash scripts/external_source_benchmark_gate.sh
 ```
+
+This writes `.quantagent/external_source_benchmark_gate/last_summary.json` by
+default. The summary records `external_source=true` and
+`independent_external_heldout=false`. It is external-source regression evidence
+only, not independent external held-out benchmark evidence, external benchmark
+standing, external review, endorsement, stars, reposts, native live autonomy,
+broad unknown-repository repair, or current remote CI proof.
 
 Slower local autonomous-learning stress gate:
 

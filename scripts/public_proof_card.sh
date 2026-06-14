@@ -16,7 +16,7 @@ echo
 
 echo
 echo "openmako-public-proof-card: PASS"
-echo "scope: focused learning-effect gate; public metadata boundary; supplied Evidence Court audit; artifact provenance; SWTBench patch artifact; config-only repair fixture; runtime-shadowing and verifier/CI tamper fixtures; supplied transcript adapter matrix"
-echo "not-proof: broad unknown-repository SWE repair; external endorsement; star or repost traction"
+echo "scope: external-source benchmark gate; public metadata boundary; supplied Evidence Court audit; artifact provenance; SWTBench patch artifact; config-only repair fixture; runtime-shadowing and verifier/CI tamper fixtures; supplied transcript adapter matrix"
+echo "not-proof: independent external held-out benchmark; broad unknown-repository SWE repair; external endorsement; star or repost traction"
 echo "review-request: https://github.com/1966536805l-crypto/openmako/issues/2"
 echo "record-external-review: https://github.com/1966536805l-crypto/openmako/issues/new?template=external-review-record.yml"

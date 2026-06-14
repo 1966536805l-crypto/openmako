@@ -64,11 +64,11 @@ EOF
       cat <<EOF
 Can you point out where OpenMako v0.1 overclaims its evidence boundary?
 
-Current public proof covers one focused learning-effect gate, patch-scope
+Current public proof covers an external-source benchmark gate, patch-scope
 checks, metadata checks, supplied-record/provenance audits, runtime-shadowing
 and verifier/CI tamper review-risk fixtures, and a supplied transcript adapter
-matrix. It does not claim SWE-bench-scale repair or native runtime/CI
-hardening.
+matrix. It does not claim independent external held-out benchmarking,
+SWE-bench-scale repair, or native runtime/CI hardening.
 
 I'm mainly looking for README lines or proof-command gaps that overclaim.
 EOF

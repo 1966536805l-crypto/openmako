@@ -14,11 +14,11 @@ ask for stars, ask for reposts, or record outreach as evidence.
 
 ## One-Sentence Summary
 
-OpenMako v0.1 is an evidence harness for coding-agent repair runs: it checks a
-focused learning-effect gate, patch-scope discipline, test-proof evidence, and
-Evidence Court audits for supplied records, provenance, and supplied transcript
-adapters, plus supplied runtime-shadowing and verifier/CI tamper review-risk
-fixtures.
+OpenMako v0.1 is an evidence harness for coding-agent repair runs: it checks an
+external-source benchmark gate, patch-scope discipline, test-proof evidence,
+and Evidence Court audits for supplied records, provenance, and supplied
+transcript adapters, plus supplied runtime-shadowing and verifier/CI tamper
+review-risk fixtures.
 
 ## Evidence To Link
 
@@ -36,9 +36,10 @@ It is not evidence of external review, endorsement, stars, or reposts.
 
 ```text
 OpenMako v0.1 is worth reviewing if you care about evidence for coding-agent
-runs. Its public claim is narrow: a focused learning-effect gate, patch-scope
-checks, test-proof checks, supplied-record/provenance audits, supplied
-transcript adapter checks, and supplied runtime/verifier/CI tamper-risk checks.
+runs. Its public claim is narrow: a learning-effect repair check inside an
+external-source benchmark gate, patch-scope checks, test-proof checks,
+supplied-record/provenance audits, supplied transcript adapter checks, and
+supplied runtime/verifier/CI tamper-risk checks.
 
 Reproduce the public proof with:
 ./scripts/public_review_gate.sh

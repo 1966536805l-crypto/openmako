@@ -155,6 +155,17 @@ Current public proof:
   relying only on manual gate runs. This is CI trigger coverage only, not
   release readiness, live autonomy, external review, endorsement, stars,
   reposts, or independent external held-out benchmark evidence.
+- Latest local external-source benchmark gate wiring on 2026-06-14 adds
+  `bash scripts/external_source_benchmark_gate.sh` to the public review gate.
+  The gate verifies the vendored OpenClaw manifest, MIT license, selected
+  source digest, one OpenClaw selected-source repair regression, and the
+  package-level JavaScript learning-effect regression before writing
+  `.quantagent/external_source_benchmark_gate/last_summary.json` with
+  `external_source=true` and `independent_external_heldout=false`. This is
+  external-source regression evidence only, not independent external held-out
+  benchmark evidence, external benchmark standing, external review,
+  endorsement, stars, reposts, native live autonomy, broad unknown-repository
+  repair, or current remote CI proof.
 - `bash scripts/remote_autonomous_learning_snapshot.sh` is the fail-closed
   re-check tool for the latest autonomous-learning workflow on current
   `openmako/main`. It verifies the latest run SHA, completed/success

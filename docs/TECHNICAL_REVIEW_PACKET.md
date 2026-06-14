@@ -8,8 +8,9 @@ promotion request, star request, or repost request.
 
 The current public claim is narrow:
 
-> OpenMako v0.1 demonstrates one focused learning-effect gate for coding-agent
-> repair runs, plus an Evidence Court CLI for auditing supplied records.
+> OpenMako v0.1 demonstrates one learning-effect repair check inside an
+> external-source benchmark gate, plus an Evidence Court CLI for auditing
+> supplied records.
 
 Do not treat older planning docs, local-only benchmark notes, archived quant
 experiments, or agent-written summaries as public capability evidence.
@@ -46,26 +47,23 @@ python -m pip install -e . pytest
 ./scripts/public_review_gate.sh
 ```
 
-That script runs the focused public gate, metadata boundary checks, the
-supplied Evidence Court bad-run audit, the artifact-provenance fixture, the
-SWTBench patch-artifact fixture, the config-only repair fixture, runtime
-shadowing and verifier/CI tamper fixtures, and the supplied transcript adapter
-matrix.
-To run only the focused learning-effect gate:
+That script runs the planner focused public test, the external-source benchmark
+gate, metadata boundary checks, the supplied Evidence Court bad-run audit, the
+artifact-provenance fixture, the SWTBench patch-artifact fixture, the config-only
+repair fixture, runtime shadowing and verifier/CI tamper fixtures, and the
+supplied transcript adapter matrix.
+To run only the external-source benchmark gate:
 
 For exact expected output and smaller checks, see `docs/REPRODUCE_V0_1.md`.
 
 ```bash
-python -m pytest -p no:cacheprovider \
-  tests/test_agent_planner_contract.py::AgentPlannerContractTest::test_planner_no_seed_repairs_package_level_http_manifest_js_module \
-  tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest::test_package_level_http_manifest_js_trajectory_skill_reuses_on_hidden_tasks \
-  -q
+bash scripts/external_source_benchmark_gate.sh
 ```
 
 Expected public snapshot signal:
 
 ```text
-2 passed
+external-source-benchmark-gate: PASS
 ```
 
 ## Reproduce The Evidence Court Demo
