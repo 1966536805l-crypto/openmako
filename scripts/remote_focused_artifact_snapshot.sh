@@ -26,11 +26,13 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.request
 import zipfile
 from datetime import datetime, timezone
+from html import unescape
 from io import BytesIO
 
 
@@ -38,6 +40,8 @@ repo, workflow, artifact_name, remote_sha = sys.argv[1:5]
 runs_fixture = os.environ.get("OPENMAKO_FOCUSED_RUNS_JSON")
 artifacts_fixture = os.environ.get("OPENMAKO_FOCUSED_ARTIFACTS_JSON")
 artifact_zip_fixture = os.environ.get("OPENMAKO_FOCUSED_ARTIFACT_ZIP")
+run_html_fixture = os.environ.get("OPENMAKO_FOCUSED_RUN_HTML")
+run_url_override = os.environ.get("OPENMAKO_FOCUSED_RUN_URL")
 workflow_runs_url = (
     f"https://api.github.com/repos/{repo}/actions/workflows/"
     f"{workflow}/runs?branch=main&per_page=1"
@@ -100,6 +104,140 @@ def print_boundary_snapshot(reason: str, response_headers=None, *, include_auth_
     )
 
 
+def read_html_fixture(path: str) -> str:
+    try:
+        with open(path, encoding="utf-8") as handle:
+            return handle.read()
+    except Exception as exc:
+        print_boundary_snapshot("run_html_fixture_unreadable")
+        print(
+            f"remote-focused-artifact-snapshot: could not read HTML fixture {path}: {exc}",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
+
+def read_text_url(url: str, unavailable_reason: str) -> str:
+    request = urllib.request.Request(
+        url,
+        headers={"User-Agent": "openmako-remote-focused-artifact-html-fallback"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            return response.read().decode("utf-8", errors="replace")
+    except Exception as exc:
+        print_boundary_snapshot(unavailable_reason)
+        print(
+            f"remote-focused-artifact-snapshot: could not read public HTML {url}: {exc}",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
+
+def latest_run_url_from_workflow_page() -> str:
+    workflow_page = unescape(read_text_url(manual_url, "workflow_html_unreadable"))
+    match = re.search(rf"/{re.escape(repo)}/actions/runs/([0-9]+)", workflow_page)
+    if not match:
+        print_boundary_snapshot("workflow_html_missing_run_url")
+        print(
+            "remote-focused-artifact-snapshot: public workflow HTML did not expose a run URL",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+    return f"https://github.com/{repo}/actions/runs/{match.group(1)}"
+
+
+def read_run_html() -> tuple[str, str]:
+    if run_html_fixture:
+        return unescape(read_html_fixture(run_html_fixture)), f"fixture:{run_html_fixture}"
+    run_url = run_url_override or latest_run_url_from_workflow_page()
+    return unescape(read_text_url(run_url, "run_html_unreadable")), run_url
+
+
+def verify_public_html_fallback(reason: str, response_headers=None) -> None:
+    page, source = read_run_html()
+    run_id_match = re.search(r"/actions/runs/([0-9]+)", page)
+    run_id = run_id_match.group(1) if run_id_match else "unknown"
+    success = (
+        'aria-label="completed successfully: "' in page
+        or "completed successfully:" in page
+        or "completed successfully" in page
+    )
+    if remote_sha not in page:
+        print_boundary_snapshot("public_html_missing_remote_sha", response_headers)
+        print(
+            "remote-focused-artifact-snapshot: public HTML does not contain remote main SHA",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    if not success:
+        print_boundary_snapshot("public_html_not_completed_success", response_headers)
+        print(
+            "remote-focused-artifact-snapshot: public HTML does not show completed successfully",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    if artifact_name not in page:
+        print_boundary_snapshot("public_html_missing_artifact_name", response_headers)
+        print(
+            f"remote-focused-artifact-snapshot: public HTML does not contain artifact '{artifact_name}'",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    artifact_id = None
+    artifact_digest = None
+    for row_match in re.finditer(
+        r'<tr[^>]*data-artifact-id="(?P<id>[0-9]+)"(?P<row>.*?)</tr>',
+        page,
+        flags=re.S,
+    ):
+        if artifact_name not in row_match.group("row"):
+            continue
+        artifact_id = row_match.group("id")
+        digest_match = re.search(r"sha256:[0-9a-f]{64}", row_match.group("row"))
+        if digest_match:
+            artifact_digest = digest_match.group(0)
+        break
+    if artifact_id is None:
+        id_match = re.search(r'data-artifact-id="([0-9]+)"', page)
+        artifact_id = id_match.group(1) if id_match else None
+    if artifact_digest is None:
+        digest_match = re.search(r"sha256:[0-9a-f]{64}", page)
+        artifact_digest = digest_match.group(0) if digest_match else None
+    if not artifact_id or not artifact_digest:
+        print_boundary_snapshot("public_html_missing_artifact_id_or_digest", response_headers)
+        print(
+            "remote-focused-artifact-snapshot: public HTML is missing artifact id or digest",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    print(f"remote-focused-artifact-snapshot: repo={repo}")
+    print(f"remote-focused-artifact-snapshot: remote-main-sha={remote_sha}")
+    print(f"remote-focused-artifact-snapshot: run-id={run_id}")
+    print(f"remote-focused-artifact-snapshot: run-sha={remote_sha}")
+    print("remote-focused-artifact-snapshot: status=completed conclusion=success")
+    print("remote-focused-artifact-snapshot: verified-by=public-html")
+    print(f"remote-focused-artifact-snapshot: public-html-source={source}")
+    print(f"remote-focused-artifact-snapshot: api-unavailable={reason}")
+    print(f"remote-focused-artifact-snapshot: artifact-name={artifact_name}")
+    print(f"remote-focused-artifact-snapshot: artifact-id={artifact_id}")
+    print(f"remote-focused-artifact-snapshot: artifact-digest={artifact_digest}")
+    print("remote-focused-artifact-snapshot: artifact-zip-contract=unverified-by-public-html")
+    print(
+        "remote-focused-artifact-snapshot: "
+        "not-proof=artifact zip contents; external review; endorsement; stars; reposts; "
+        "live autonomy; broad unknown-repository repair; external benchmark standing"
+    )
+    print("remote-focused-artifact-snapshot: PASS")
+
+
+if os.environ.get("OPENMAKO_FORCE_PUBLIC_HTML_FALLBACK"):
+    verify_public_html_fallback("forced_public_html_fallback")
+    sys.exit(0)
+
+
 def read_json_url(url: str, unavailable_reason: str) -> dict:
     request = urllib.request.Request(url, headers=headers)
     try:
@@ -108,13 +246,14 @@ def read_json_url(url: str, unavailable_reason: str) -> dict:
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
         if exc.code == 403 and "rate limit" in body.lower():
-            print_boundary_snapshot("github_api_rate_limit", exc.headers)
             print(
                 "remote-focused-artifact-snapshot: GitHub API rate limit; re-check later "
-                "or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN",
+                "or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN; "
+                "trying public HTML fallback",
                 file=sys.stderr,
             )
-            sys.exit(2)
+            verify_public_html_fallback("github_api_rate_limit", exc.headers)
+            sys.exit(0)
         if exc.code == 401:
             print_boundary_snapshot("github_api_requires_auth", exc.headers, include_auth_hint=True)
             print(

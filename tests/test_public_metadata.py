@@ -316,8 +316,15 @@ def test_readme_links_public_proof_issue() -> None:
     assert "bash scripts/remote_focused_ci_snapshot.sh" in readme
     assert "a fail-closed check for the latest focused workflow on current `openmako/main`" in readme
     assert "supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`" in readme
-    assert "if the GitHub API is unavailable it prints the remote SHA, local UTC check time, manual Actions URL, rate-limit reset countdown, and a copyable rerun command when available before exiting nonzero" in readme
+    assert "if the GitHub API is rate-limited it falls back to public run HTML" in readme
+    assert "verified-by=public-html" in readme
+    assert "keeps that separate from authenticated API evidence" in readme
     assert "not external review or endorsement" in readme
+    assert "Remote focused artifact snapshot" in readme
+    assert "bash scripts/remote_focused_artifact_snapshot.sh" in readme
+    assert "if the API is rate-limited it falls back to public run HTML" in readme
+    assert "artifact-zip-contract=unverified-by-public-html" in readme
+    assert "public artifact metadata evidence only, not artifact zip contents" in readme
     assert "Remote autonomous-learning artifact snapshot" in readme
     assert "bash scripts/remote_autonomous_learning_snapshot.sh" in readme
     assert "a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, downloaded `last_summary.json` contract fields, task-level proof records, and task-source provenance showing `repo-authored-regression-pack` with `external_heldout=false`" in readme
@@ -1078,7 +1085,7 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
         assert forbidden not in progress
 
 
-def test_remote_focused_ci_snapshot_script_is_fail_closed_and_token_aware() -> None:
+def test_remote_focused_ci_snapshot_script_is_fail_closed_and_token_aware(tmp_path: Path) -> None:
     script = ROOT / "scripts" / "remote_focused_ci_snapshot.sh"
     text = script.read_text(encoding="utf-8")
 
@@ -1109,8 +1116,48 @@ def test_remote_focused_ci_snapshot_script_is_fail_closed_and_token_aware() -> N
     assert "total_seconds()" in text
     assert "GitHub API rate limit; re-check later" in text
     assert "or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN for authenticated API reads" in text
+    assert "OPENMAKO_FOCUSED_RUN_HTML" in text
+    assert "OPENMAKO_FOCUSED_RUN_URL" in text
+    assert "OPENMAKO_FORCE_PUBLIC_HTML_FALLBACK" in text
+    assert "verified-by=public-html" in text
     for forbidden in FORBIDDEN_README_CLAIMS:
         assert forbidden.lower() not in text.lower()
+
+    remote_sha = "abcdef1234567890abcdef1234567890abcdef12"
+    run_html = tmp_path / "focused-run.html"
+    run_html.write_text(
+        f"""
+        <html>
+          <a href="/1966536805l-crypto/openmako/actions/runs/27508622699">run</a>
+          <svg aria-label="completed successfully: "></svg>
+          <a href="/1966536805l-crypto/openmako/commit/{remote_sha}">{remote_sha[:7]}</a>
+        </html>
+        """,
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env.update(
+        {
+            "OPENMAKO_REMOTE_MAIN_SHA": remote_sha,
+            "OPENMAKO_FORCE_PUBLIC_HTML_FALLBACK": "1",
+            "OPENMAKO_FOCUSED_RUN_HTML": str(run_html),
+        }
+    )
+    result = subprocess.run(
+        ["bash", "scripts/remote_focused_ci_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "remote-focused-ci-snapshot: verified-by=public-html" in result.stdout
+    assert "remote-focused-ci-snapshot: api-unavailable=forced_public_html_fallback" in result.stdout
+    assert "remote-focused-ci-snapshot: status=completed conclusion=success" in result.stdout
+    assert "remote-focused-ci-snapshot: run-sha=abcdef1234567890abcdef1234567890abcdef12" in result.stdout
+    assert "remote-focused-ci-snapshot: PASS" in result.stdout
 
 
 def test_remote_focused_artifact_snapshot_script_is_fail_closed_and_artifact_aware(tmp_path: Path) -> None:
@@ -1126,6 +1173,11 @@ def test_remote_focused_artifact_snapshot_script_is_fail_closed_and_artifact_awa
     assert "artifact summary git commit does not match remote main" in text
     assert "artifact summary output digest is not present in artifact zip" in text
     assert "artifact-required-output-count=" in text
+    assert "OPENMAKO_FOCUSED_RUN_HTML" in text
+    assert "OPENMAKO_FOCUSED_RUN_URL" in text
+    assert "OPENMAKO_FORCE_PUBLIC_HTML_FALLBACK" in text
+    assert "verified-by=public-html" in text
+    assert "artifact-zip-contract=unverified-by-public-html" in text
     assert "not-proof=external review; endorsement; stars; reposts; live autonomy" in text
 
     remote_sha = "abcdef1234567890abcdef1234567890abcdef12"
@@ -1243,6 +1295,51 @@ def test_remote_focused_artifact_snapshot_script_is_fail_closed_and_artifact_awa
     )
     assert missing.returncode == 1
     assert "artifact 'focused-public-review-gate' is missing or ambiguous" in missing.stderr
+
+    run_html = tmp_path / "focused-run.html"
+    run_html.write_text(
+        f"""
+        <html>
+          <a href="/1966536805l-crypto/openmako/actions/runs/{run_id}">run</a>
+          <svg aria-label="completed successfully: "></svg>
+          <a href="/1966536805l-crypto/openmako/commit/{remote_sha}">{remote_sha[:7]}</a>
+          <table>
+            <tr role="row" data-artifact-id="8000000002">
+              <td><span>focused-public-review-gate</span></td>
+              <td><code id="artifact-8000000002-hash">sha256:{artifact_zip_sha256}</code></td>
+            </tr>
+          </table>
+        </html>
+        """,
+        encoding="utf-8",
+    )
+    html_env = os.environ.copy()
+    html_env.update(
+        {
+            "OPENMAKO_REMOTE_MAIN_SHA": remote_sha,
+            "OPENMAKO_FORCE_PUBLIC_HTML_FALLBACK": "1",
+            "OPENMAKO_FOCUSED_RUN_HTML": str(run_html),
+        }
+    )
+    html_result = subprocess.run(
+        ["bash", "scripts/remote_focused_artifact_snapshot.sh"],
+        cwd=ROOT,
+        env=html_env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert html_result.returncode == 0, html_result.stderr
+    assert "remote-focused-artifact-snapshot: verified-by=public-html" in html_result.stdout
+    assert "remote-focused-artifact-snapshot: artifact-name=focused-public-review-gate" in html_result.stdout
+    assert "remote-focused-artifact-snapshot: artifact-id=8000000002" in html_result.stdout
+    assert f"remote-focused-artifact-snapshot: artifact-digest=sha256:{artifact_zip_sha256}" in html_result.stdout
+    assert (
+        "remote-focused-artifact-snapshot: artifact-zip-contract=unverified-by-public-html"
+        in html_result.stdout
+    )
+    assert "remote-focused-artifact-snapshot: PASS" in html_result.stdout
 
 
 def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_aware(tmp_path: Path) -> None:
