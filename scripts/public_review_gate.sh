@@ -103,6 +103,17 @@ echo "public-review-gate: scoring CEABench v0.1 seed packet"
 assert_json_field "$TMP_DIR/ceabench_v01_score.json" status passed
 assert_json_field "$TMP_DIR/ceabench_v01_score.json" schema_version ceabench-score/v0.1
 
+echo "public-review-gate: scoring CEABench v0.1 empirical pilot"
+"$PYTHON_BIN" -m quantagent.cli --no-trust-prompt ceabench pilot --json \
+  --expected-seed-index-sha256 232245a8f7205c93f4a9d290e271cb10907166eb228346990a90a461e6b86512 \
+  --expected-adversarial-matrix-sha256 378b968ae52c914af5e92b0fb35ab277f56c99135ac323d72fe031cb8718c0be \
+  --expected-seed-case-count 7 \
+  --expected-adversarial-case-count 105 \
+  --expected-total-case-count 112 > "$TMP_DIR/ceabench_v01_pilot.json"
+
+assert_json_field "$TMP_DIR/ceabench_v01_pilot.json" status passed
+assert_json_field "$TMP_DIR/ceabench_v01_pilot.json" schema_version ceabench-empirical-pilot/v0.1
+
 echo "public-review-gate: checking external-heldout gate fail-closed negatives"
 "$PYTHON_BIN" -m pytest -p no:cacheprovider \
   tests/test_external_heldout_benchmark_gate.py \
@@ -224,6 +235,7 @@ for path in sorted(outputs_dir.rglob("*")):
 required_outputs = [
     "outputs/audit.json",
     "outputs/artifact_provenance.json",
+    "outputs/ceabench_v01_pilot.json",
     "outputs/ceabench_v01_score.json",
     "outputs/ci_workflow_tamper_success.json",
     "outputs/config_only_repair.json",

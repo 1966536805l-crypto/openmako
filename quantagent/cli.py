@@ -452,6 +452,12 @@ def _evidence_court_ci_failed(verdict: str, fail_on: str) -> bool:
 
 CEABENCH_CASE_SCHEMA_VERSION = "ceabench-case-index/v0.1"
 CEABENCH_SCORE_SCHEMA_VERSION = "ceabench-score/v0.1"
+CEABENCH_PILOT_SCHEMA_VERSION = "ceabench-empirical-pilot/v0.1"
+CEABENCH_ADVERSARIAL_MATRIX_SCHEMA_VERSION = "openmako-adversarial-claim-matrix/v0.1"
+CEABENCH_DEFAULT_SEED_INDEX = Path("benchmarks/ceabench/v0.1/cases.json")
+CEABENCH_DEFAULT_ADVERSARIAL_MATRIX = Path(
+    "tests/fixtures/evidence_court/adversarial_claim_matrix.json"
+)
 CEABENCH_NOT_PROOF = (
     "external review",
     "endorsement",
@@ -461,6 +467,12 @@ CEABENCH_NOT_PROOF = (
     "native product-log ingestion",
     "live autonomy",
     "broad unknown-repository repair",
+)
+CEABENCH_PILOT_NOT_PROOF = CEABENCH_NOT_PROOF + (
+    "independent external benchmark",
+    "human agreement statistics",
+    "model ranking",
+    "native benchmark export ingestion",
 )
 CEABENCH_REQUIRED_FIELDS = (
     "case_id",
@@ -477,17 +489,29 @@ CEABENCH_REQUIRED_FIELDS = (
 
 
 def cmd_ceabench(args: argparse.Namespace) -> int:
-    if args.ceabench_command != "score":
-        print("ceabench error: unsupported command", file=sys.stderr)
-        return 2
-
     try:
-        payload = _score_ceabench_cases(
-            args.case_index,
-            expected_index_sha256=args.expected_index_sha256,
-            expected_case_count=args.expected_case_count,
-            expected_case_ids=tuple(args.expected_case_id or ()),
-        )
+        if args.ceabench_command == "score":
+            payload = _score_ceabench_cases(
+                args.case_index,
+                expected_index_sha256=args.expected_index_sha256,
+                expected_case_count=args.expected_case_count,
+                expected_case_ids=tuple(args.expected_case_id or ()),
+            )
+            renderer = _render_ceabench_score
+        elif args.ceabench_command == "pilot":
+            payload = _score_ceabench_pilot(
+                args.seed_index,
+                args.adversarial_matrix,
+                expected_seed_index_sha256=args.expected_seed_index_sha256,
+                expected_adversarial_matrix_sha256=args.expected_adversarial_matrix_sha256,
+                expected_seed_case_count=args.expected_seed_case_count,
+                expected_adversarial_case_count=args.expected_adversarial_case_count,
+                expected_total_case_count=args.expected_total_case_count,
+            )
+            renderer = _render_ceabench_pilot
+        else:
+            print("ceabench error: unsupported command", file=sys.stderr)
+            return 2
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"ceabench error: {exc}", file=sys.stderr)
         return 2
@@ -495,7 +519,7 @@ def cmd_ceabench(args: argparse.Namespace) -> int:
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
     else:
-        print(_render_ceabench_score(payload), end="")
+        print(renderer(payload), end="")
     return 0 if payload["status"] == "passed" else 1
 
 
@@ -607,6 +631,180 @@ def _score_ceabench_cases(
     }
 
 
+def _score_ceabench_pilot(
+    seed_index: str | Path,
+    adversarial_matrix: str | Path,
+    *,
+    expected_seed_index_sha256: str = "",
+    expected_adversarial_matrix_sha256: str = "",
+    expected_seed_case_count: int | None = None,
+    expected_adversarial_case_count: int | None = None,
+    expected_total_case_count: int | None = None,
+) -> dict[str, Any]:
+    root = Path.cwd().resolve(strict=False)
+    seed_score = _score_ceabench_cases(
+        seed_index,
+        expected_index_sha256=expected_seed_index_sha256,
+        expected_case_count=expected_seed_case_count,
+    )
+    matrix_path = _resolve_input_file_path(root, adversarial_matrix)
+    matrix_hash = _sha256_file(matrix_path)
+    if expected_adversarial_matrix_sha256 and matrix_hash != expected_adversarial_matrix_sha256:
+        raise ValueError(
+            "adversarial matrix sha256 mismatch: "
+            f"expected {expected_adversarial_matrix_sha256}, got {matrix_hash}"
+        )
+
+    matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
+    if not isinstance(matrix, dict):
+        raise ValueError("adversarial matrix must be a JSON object")
+    if matrix.get("schema_version") != CEABENCH_ADVERSARIAL_MATRIX_SCHEMA_VERSION:
+        raise ValueError("adversarial matrix schema_version is unsupported")
+    cases = matrix.get("cases")
+    if not isinstance(cases, list):
+        raise ValueError("adversarial matrix cases must be a JSON list")
+    if expected_adversarial_case_count is not None and len(cases) != expected_adversarial_case_count:
+        raise ValueError(
+            "adversarial matrix case count mismatch: "
+            f"expected {expected_adversarial_case_count}, got {len(cases)}"
+        )
+
+    declared_family_counts = matrix.get("case_family_counts")
+    if not isinstance(declared_family_counts, dict) or not declared_family_counts:
+        raise ValueError("adversarial matrix case_family_counts must be a non-empty object")
+    declared_multi_count = matrix.get("multi_finding_case_count")
+    if not isinstance(declared_multi_count, int):
+        raise ValueError("adversarial matrix multi_finding_case_count must be an integer")
+
+    names: list[str] = []
+    family_counts: dict[str, int] = {}
+    family_summary: dict[str, dict[str, int]] = {}
+    matrix_results: list[dict[str, Any]] = []
+    matrix_mismatches: list[dict[str, Any]] = []
+    multi_finding_case_count = 0
+    with tempfile.TemporaryDirectory(prefix="openmako-ceabench-pilot-") as tmp_name:
+        tmp_dir = Path(tmp_name)
+        for index, case in enumerate(cases):
+            if not isinstance(case, dict):
+                raise ValueError("adversarial matrix entries must be JSON objects")
+            if set(case) != {"expected", "name", "record"}:
+                raise ValueError("adversarial matrix entries must contain expected, name, and record")
+            name = _required_string(case, "name")
+            if name in names:
+                raise ValueError(f"duplicate adversarial matrix case name: {name}")
+            names.append(name)
+            family = name.rsplit("-", 1)[0]
+            family_counts[family] = family_counts.get(family, 0) + 1
+
+            expected = case["expected"]
+            if not isinstance(expected, dict):
+                raise ValueError(f"{name}: expected must be a JSON object")
+            if set(expected) != {"failed_at", "failure_class", "finding_types", "verdict"}:
+                raise ValueError(f"{name}: expected fields do not match the matrix contract")
+            finding_types = expected.get("finding_types")
+            if not isinstance(finding_types, list) or not all(
+                isinstance(value, str) and value for value in finding_types
+            ):
+                raise ValueError(f"{name}: expected finding_types must be a string list")
+            if len(finding_types) > 1:
+                multi_finding_case_count += 1
+            record = case["record"]
+            if not isinstance(record, dict):
+                raise ValueError(f"{name}: record must be a JSON object")
+
+            record_path = tmp_dir / f"{index:03d}-{name}.json"
+            record_path.write_text(json.dumps(record, sort_keys=True), encoding="utf-8")
+            observed = json.loads(dumps_evidence_court_json(build_audit_record_report(record_path)))
+            result = {
+                "case_id": name,
+                "family": family,
+                "expected_verdict": _required_string(expected, "verdict"),
+                "observed_verdict": observed["verdict"],
+                "expected_failure_class": _string_field(expected, "failure_class", allow_empty=True),
+                "observed_failure_class": observed["failure_class"],
+                "expected_failed_at": _string_field(expected, "failed_at", allow_empty=True),
+                "observed_failed_at": observed["failed_at"] or "",
+                "expected_finding_types": list(finding_types),
+                "observed_finding_types": observed["finding_types"],
+            }
+            result["matched"] = (
+                result["expected_verdict"] == result["observed_verdict"]
+                and result["expected_failure_class"] == result["observed_failure_class"]
+                and result["expected_failed_at"] == result["observed_failed_at"]
+                and result["expected_finding_types"] == result["observed_finding_types"]
+            )
+            summary = family_summary.setdefault(family, {"cases": 0, "matched": 0})
+            summary["cases"] += 1
+            if result["matched"]:
+                summary["matched"] += 1
+            else:
+                matrix_mismatches.append(result)
+            matrix_results.append(result)
+
+    if family_counts != declared_family_counts:
+        raise ValueError(
+            "adversarial matrix family counts mismatch: "
+            f"declared={declared_family_counts} observed={family_counts}"
+        )
+    if multi_finding_case_count != declared_multi_count:
+        raise ValueError(
+            "adversarial matrix multi-finding count mismatch: "
+            f"declared={declared_multi_count} observed={multi_finding_case_count}"
+        )
+
+    seed_mismatches = [
+        {"layer": "seed_case_index", **mismatch} for mismatch in seed_score["mismatches"]
+    ]
+    adversarial_mismatches = [
+        {"layer": "adversarial_claim_matrix", **mismatch} for mismatch in matrix_mismatches
+    ]
+    total_cases = seed_score["case_count"] + len(matrix_results)
+    matched_count = seed_score["matched_count"] + sum(
+        1 for result in matrix_results if result["matched"]
+    )
+    if expected_total_case_count is not None and total_cases != expected_total_case_count:
+        raise ValueError(
+            f"total pilot case count mismatch: expected {expected_total_case_count}, got {total_cases}"
+        )
+
+    mismatches = seed_mismatches + adversarial_mismatches
+    return {
+        "schema_version": CEABENCH_PILOT_SCHEMA_VERSION,
+        "status": "passed" if not mismatches else "failed",
+        "pilot_version": "v0.1",
+        "generated_from": {
+            "seed_index_path": seed_score["case_index_path"],
+            "seed_index_sha256": seed_score["case_index_sha256"],
+            "adversarial_matrix_path": _display_path(root, matrix_path),
+            "adversarial_matrix_sha256": matrix_hash,
+        },
+        "source_layers": {
+            "seed_case_index": {
+                "schema_version": CEABENCH_SCORE_SCHEMA_VERSION,
+                "case_count": seed_score["case_count"],
+                "matched_count": seed_score["matched_count"],
+                "mismatch_count": seed_score["mismatch_count"],
+                "metric_summary": seed_score["metric_summary"],
+            },
+            "adversarial_claim_matrix": {
+                "schema_version": CEABENCH_ADVERSARIAL_MATRIX_SCHEMA_VERSION,
+                "case_count": len(matrix_results),
+                "matched_count": len(matrix_results) - len(matrix_mismatches),
+                "mismatch_count": len(matrix_mismatches),
+                "family_counts": family_counts,
+                "family_summary": family_summary,
+                "multi_finding_case_count": multi_finding_case_count,
+            },
+        },
+        "case_count": total_cases,
+        "matched_count": matched_count,
+        "mismatch_count": len(mismatches),
+        "score": matched_count / total_cases if total_cases else 0.0,
+        "mismatches": mismatches,
+        "not_proof": list(CEABENCH_PILOT_NOT_PROOF),
+    }
+
+
 def _required_string(payload: dict[str, Any], field: str) -> str:
     return _string_field(payload, field, allow_empty=False)
 
@@ -666,6 +864,31 @@ def _render_ceabench_score(payload: dict[str, Any]) -> str:
         for mismatch in payload["mismatches"]:
             lines.append(
                 f"- {mismatch['case_id']}: verdict {mismatch['observed_verdict']} "
+                f"failure_class {mismatch['observed_failure_class']}"
+            )
+    return "\n".join(lines) + "\n"
+
+
+def _render_ceabench_pilot(payload: dict[str, Any]) -> str:
+    layers = payload["source_layers"]
+    lines = [
+        "CEABench v0.1 Empirical Pilot",
+        f"status: {payload['status']}",
+        f"matched: {payload['matched_count']}/{payload['case_count']}",
+        f"score: {payload['score']:.3f}",
+        "seed_case_index: "
+        f"{layers['seed_case_index']['matched_count']}/{layers['seed_case_index']['case_count']}",
+        "adversarial_claim_matrix: "
+        f"{layers['adversarial_claim_matrix']['matched_count']}/"
+        f"{layers['adversarial_claim_matrix']['case_count']}",
+        "not_proof: " + "; ".join(payload["not_proof"]),
+    ]
+    if payload["mismatches"]:
+        lines.append("mismatches:")
+        for mismatch in payload["mismatches"]:
+            lines.append(
+                f"- {mismatch['layer']}:{mismatch['case_id']}: "
+                f"verdict {mismatch['observed_verdict']} "
                 f"failure_class {mismatch['observed_failure_class']}"
             )
     return "\n".join(lines) + "\n"
@@ -7988,6 +8211,33 @@ def build_parser() -> argparse.ArgumentParser:
     cp.add_argument("--expected-case-count", type=int, default=None, help="Fail closed unless the case index has this many cases")
     cp.add_argument("--expected-case-id", action="append", default=[], help="Expected case id; repeat to lock the full case-id set")
     cp.add_argument("case_index", help="Path to a CEABench v0.1 case index JSON file")
+    cp.set_defaults(func=cmd_ceabench)
+    cp = ceabench_sub.add_parser("pilot", help="Score the CEABench v0.1 empirical pilot corpus")
+    cp.add_argument("--json", action="store_true", help="Print machine-readable pilot output")
+    cp.add_argument(
+        "--seed-index",
+        default=str(CEABENCH_DEFAULT_SEED_INDEX),
+        help="Path to the CEABench v0.1 seed case index",
+    )
+    cp.add_argument(
+        "--adversarial-matrix",
+        default=str(CEABENCH_DEFAULT_ADVERSARIAL_MATRIX),
+        help="Path to the Evidence Court adversarial claim matrix",
+    )
+    cp.add_argument("--expected-seed-index-sha256", default="", help="Fail closed unless the seed index has this sha256")
+    cp.add_argument(
+        "--expected-adversarial-matrix-sha256",
+        default="",
+        help="Fail closed unless the adversarial claim matrix has this sha256",
+    )
+    cp.add_argument("--expected-seed-case-count", type=int, default=None, help="Fail closed unless the seed index has this many cases")
+    cp.add_argument(
+        "--expected-adversarial-case-count",
+        type=int,
+        default=None,
+        help="Fail closed unless the adversarial claim matrix has this many cases",
+    )
+    cp.add_argument("--expected-total-case-count", type=int, default=None, help="Fail closed unless the combined pilot has this many cases")
     cp.set_defaults(func=cmd_ceabench)
 
     p = sub.add_parser("learning-effect", help="Compare no-learning and approved-learning command outcomes")

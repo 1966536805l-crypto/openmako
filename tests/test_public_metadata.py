@@ -1129,6 +1129,7 @@ def test_remote_focused_artifact_snapshot_script_is_fail_closed_and_artifact_awa
     required_outputs = [
         "outputs/audit.json",
         "outputs/artifact_provenance.json",
+        "outputs/ceabench_v01_pilot.json",
         "outputs/ceabench_v01_score.json",
         "outputs/ci_workflow_tamper_success.json",
         "outputs/config_only_repair.json",
@@ -1204,7 +1205,7 @@ def test_remote_focused_artifact_snapshot_script_is_fail_closed_and_artifact_awa
     assert f"remote-focused-artifact-snapshot: artifact-digest=sha256:{artifact_zip_sha256}" in result.stdout
     assert "remote-focused-artifact-snapshot: artifact-summary=summary.json" in result.stdout
     assert "remote-focused-artifact-snapshot: artifact-summary-commit=abcdef1234567890abcdef1234567890abcdef12" in result.stdout
-    assert "remote-focused-artifact-snapshot: artifact-required-output-count=11" in result.stdout
+    assert "remote-focused-artifact-snapshot: artifact-required-output-count=12" in result.stdout
     assert "remote-focused-artifact-snapshot: PASS" in result.stdout
 
     artifacts_json.write_text(json.dumps({"artifacts": []}), encoding="utf-8")

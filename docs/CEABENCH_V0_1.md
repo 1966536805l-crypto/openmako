@@ -122,6 +122,25 @@ contract. It re-runs Evidence Court for each case instead of trusting expected
 results from the case index. A fuller `ceabench_case_version` wrapper with
 human label, evaluator version, and adjudication notes is [PLANNED].
 
+The current empirical pilot combines the 7-case seed index with the 105-case
+Evidence Court adversarial claim matrix:
+
+```bash
+python3 -m quantagent.cli --no-trust-prompt ceabench pilot --json \
+  --expected-seed-index-sha256 232245a8f7205c93f4a9d290e271cb10907166eb228346990a90a461e6b86512 \
+  --expected-adversarial-matrix-sha256 378b968ae52c914af5e92b0fb35ab277f56c99135ac323d72fe031cb8718c0be \
+  --expected-seed-case-count 7 \
+  --expected-adversarial-case-count 105 \
+  --expected-total-case-count 112
+```
+
+This pilot is useful as a repeatable evaluator regression corpus: it reruns
+Evidence Court over every seed supplied record and every adversarial supplied
+record, then fails closed on hash, case-count, family-count, multi-finding
+count, verdict, failure-class, failed-at, or finding-type mismatches. It is not
+an independent external benchmark, human-agreement study, model ranking, native
+benchmark export ingestion result, or proof of live autonomy.
+
 ## Label Set
 
 CEABench v0.1 labels should be derived from current OpenMako failure classes
@@ -200,6 +219,20 @@ Implemented seed scorer:
 - `scripts/public_review_gate.sh` locks the current case-index sha256, case
   count, and case-id set before accepting the seed scorer output.
 
+Implemented empirical pilot scorer:
+
+- `python3 -m quantagent.cli --no-trust-prompt ceabench pilot --json
+  --expected-seed-index-sha256
+  232245a8f7205c93f4a9d290e271cb10907166eb228346990a90a461e6b86512
+  --expected-adversarial-matrix-sha256
+  378b968ae52c914af5e92b0fb35ab277f56c99135ac323d72fe031cb8718c0be
+  --expected-seed-case-count 7 --expected-adversarial-case-count 105
+  --expected-total-case-count 112`
+- The current pilot has 112 cases: 7 seed case-index rows and 105 supplied or
+  synthetic adversarial claim-matrix rows.
+- The public review gate records the pilot output as a local/CI artifact when
+  the gate passes.
+
 [PLANNED] CEABench v0.1 larger dataset export:
 
 - add `benchmarks/ceabench/v0.1/README.md`
@@ -222,8 +255,9 @@ Implemented seed scorer:
    tamper-risk sensitivity.
 5. Limitations: v0.1 does not prove native product-log ingestion, live agent
    control, broad repair ability, external review, or adoption.
-6. Next experiment: expand the current seed scorer into a versioned dataset
-   package and run at least one baseline evaluator against it.
+6. Next experiment: add human labels or an independent external held-out slice
+   on top of the current 112-case supplied/synthetic pilot, then run at least
+   one baseline evaluator against it.
 
 ## Non-Claims
 
@@ -234,6 +268,8 @@ CEABench v0.1 must not claim:
   SWE-bench logs.
 - CEABench seed scoring proves external leaderboard standing or broad coding
   agent capability.
+- The 112-case empirical pilot proves independent external benchmark standing,
+  human agreement, model ranking, or native benchmark export ingestion.
 - supplied transcript adapters are native product export parsers.
 - preserved telemetry, provenance, ledger identity, or agent-risk metadata
   proves that validation, live control, or self-improvement happened outside
@@ -244,12 +280,17 @@ CEABench v0.1 must not claim:
 
 ## Next Smallest Build Step
 
-Build the dataset export around the native seed scorer:
+Build the next evidence layer around the native pilot scorer:
 
 ```bash
-python3 -m quantagent.cli --no-trust-prompt ceabench score --json benchmarks/ceabench/v0.1/cases.json
+python3 -m quantagent.cli --no-trust-prompt ceabench pilot --json \
+  --expected-seed-index-sha256 232245a8f7205c93f4a9d290e271cb10907166eb228346990a90a461e6b86512 \
+  --expected-adversarial-matrix-sha256 378b968ae52c914af5e92b0fb35ab277f56c99135ac323d72fe031cb8718c0be \
+  --expected-seed-case-count 7 \
+  --expected-adversarial-case-count 105 \
+  --expected-total-case-count 112
 ```
 
-Then add a versioned dataset README, evidence-coverage output, and a baseline
-evaluator. Do not score external coding agents until those boundary tests
-exist.
+Then add human labels or an independent external held-out slice, evidence
+coverage output, and a baseline evaluator. Do not score external coding agents
+until those boundary tests exist.

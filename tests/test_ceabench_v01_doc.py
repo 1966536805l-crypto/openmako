@@ -9,7 +9,9 @@ from quantagent.evidence_court import build_audit_record_report, dumps_evidence_
 ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs" / "CEABENCH_V0_1.md"
 CASE_INDEX = ROOT / "benchmarks" / "ceabench" / "v0.1" / "cases.json"
+ADVERSARIAL_MATRIX = ROOT / "tests" / "fixtures" / "evidence_court" / "adversarial_claim_matrix.json"
 CASE_INDEX_SHA256 = "232245a8f7205c93f4a9d290e271cb10907166eb228346990a90a461e6b86512"
+ADVERSARIAL_MATRIX_SHA256 = "378b968ae52c914af5e92b0fb35ab277f56c99135ac323d72fe031cb8718c0be"
 CASE_IDS = (
     "ceabench-v0.1-scope-violation-001",
     "ceabench-v0.1-missing-test-proof-001",
@@ -30,6 +32,8 @@ def test_ceabench_v01_doc_exists_and_preserves_core_framing() -> None:
     assert "[NEEDS SYSTEMATIC DATA]" in text
     assert "[PLANNED]" in text
     assert "benchmarks/ceabench/v0.1/cases.json" in text
+    assert "ceabench pilot --json" in text
+    assert "112 cases: 7 seed case-index rows and 105 supplied or\n  synthetic adversarial claim-matrix rows" in text
     assert "This is not an external\nbenchmark result" in text
     assert "external review, leaderboard" in text
 
@@ -66,8 +70,10 @@ def test_ceabench_v01_doc_keeps_planned_and_measured_boundaries_separate() -> No
 
     assert "Dataset-level frequencies, confidence intervals, model rankings, and human\nagreement statistics are [NEEDS SYSTEMATIC DATA]." in text
     assert "Implemented seed index:" in text
+    assert "Implemented empirical pilot scorer:" in text
     assert "[PLANNED] CEABench v0.1 larger dataset export:" in text
     assert "not a v0.1 metric yet" in text
+    assert "It is not\nan independent external benchmark, human-agreement study, model ranking, native\nbenchmark export ingestion result, or proof of live autonomy." in text
 
     forbidden_claims = (
         "OpenMako proves native product-log ingestion",
@@ -192,6 +198,118 @@ def test_ceabench_v01_cli_scores_seed_packet_with_locked_identity() -> None:
     assert payload["score"] == 1.0
     assert "native product-log ingestion" in payload["not_proof"]
     assert {case["case_id"] for case in payload["case_results"]} == set(CASE_IDS)
+
+
+def test_ceabench_v01_cli_scores_empirical_pilot_with_locked_identity() -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "quantagent.cli",
+            "--no-trust-prompt",
+            "ceabench",
+            "pilot",
+            "--json",
+            "--expected-seed-index-sha256",
+            CASE_INDEX_SHA256,
+            "--expected-adversarial-matrix-sha256",
+            ADVERSARIAL_MATRIX_SHA256,
+            "--expected-seed-case-count",
+            str(len(CASE_IDS)),
+            "--expected-adversarial-case-count",
+            "105",
+            "--expected-total-case-count",
+            "112",
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    payload = json.loads(result.stdout)
+
+    assert payload["schema_version"] == "ceabench-empirical-pilot/v0.1"
+    assert payload["status"] == "passed"
+    assert payload["generated_from"]["seed_index_sha256"] == CASE_INDEX_SHA256
+    assert payload["generated_from"]["adversarial_matrix_sha256"] == ADVERSARIAL_MATRIX_SHA256
+    assert payload["case_count"] == 112
+    assert payload["matched_count"] == 112
+    assert payload["mismatch_count"] == 0
+    assert payload["score"] == 1.0
+    assert payload["source_layers"]["seed_case_index"]["case_count"] == len(CASE_IDS)
+    matrix_layer = payload["source_layers"]["adversarial_claim_matrix"]
+    assert matrix_layer["case_count"] == 105
+    assert matrix_layer["matched_count"] == 105
+    assert matrix_layer["family_counts"]["missing-diff-content"] == 15
+    assert matrix_layer["multi_finding_case_count"] == 5
+    assert "independent external benchmark" in payload["not_proof"]
+    assert "human agreement statistics" in payload["not_proof"]
+    assert "model ranking" in payload["not_proof"]
+
+
+def test_ceabench_v01_cli_pilot_fails_closed_on_weak_matrix_replacement(tmp_path: Path) -> None:
+    matrix = json.loads(ADVERSARIAL_MATRIX.read_text(encoding="utf-8"))
+    weakened_matrix = json.loads(json.dumps(matrix))
+    target = next(case for case in weakened_matrix["cases"] if case["expected"]["verdict"] != "PASS")
+    target["expected"]["verdict"] = "PASS"
+    weakened_path = tmp_path / "adversarial_claim_matrix.json"
+    weakened_path.write_text(json.dumps(weakened_matrix, indent=2), encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "quantagent.cli",
+            "--no-trust-prompt",
+            "ceabench",
+            "pilot",
+            "--json",
+            "--seed-index",
+            str(CASE_INDEX.relative_to(ROOT)),
+            "--adversarial-matrix",
+            str(weakened_path),
+            "--expected-seed-case-count",
+            str(len(CASE_IDS)),
+            "--expected-adversarial-case-count",
+            "105",
+            "--expected-total-case-count",
+            "112",
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    payload = json.loads(result.stdout)
+    assert payload["status"] == "failed"
+    assert payload["mismatch_count"] == 1
+    assert payload["mismatches"][0]["layer"] == "adversarial_claim_matrix"
+    assert payload["mismatches"][0]["case_id"] == target["name"]
+    assert payload["mismatches"][0]["observed_verdict"] != "PASS"
+
+
+def test_ceabench_v01_cli_pilot_rejects_adversarial_matrix_identity_mismatch() -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "quantagent.cli",
+            "--no-trust-prompt",
+            "ceabench",
+            "pilot",
+            "--expected-adversarial-matrix-sha256",
+            "0" * 64,
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 2
+    assert "adversarial matrix sha256 mismatch" in result.stderr
 
 
 def test_ceabench_v01_cli_fails_closed_on_weak_case_replacement(tmp_path: Path) -> None:
