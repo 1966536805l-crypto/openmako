@@ -227,19 +227,22 @@ Current public proof:
   endorsement, stars, reposts, or release announcement evidence.
 - Latest local retained-failure recurrence check on 2026-06-14 passed:
   `python3 -m pytest -p no:cacheprovider tests/test_skill_learning.py -q`
-  ended with `4 passed`; the focused public-metadata lock
+  ended with `5 passed`; the focused public-metadata lock
   `tests/test_public_metadata.py::test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks`
   passed; and
-  `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON=/tmp/openmako-autonomous-recurrence-summary.json
+  `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON=/tmp/openmako-autonomous-retained-adjustment-summary.json
   bash scripts/autonomous_learning_gate.sh` ended with
   `autonomous-learning-gate: PASS`. The manifest-derived stage1 segment now
   includes
   `tests/test_skill_learning.py::SkillLearningTest::test_detects_repeated_failure_from_retained_registry_without_installing_skill`
-  and showed `4 passed`, so retained registry failure patterns can be detected
-  as repeated current failures under the local autonomous-learning gate. This is
-  local retained-failure recurrence evidence only, not native live autonomy,
-  broad unknown-repository repair proof, independent external held-out
-  benchmark evidence, external review, endorsement, stars, or reposts.
+  and
+  `tests/test_skill_learning.py::SkillLearningTest::test_retained_failure_adjustment_blocks_unchanged_retry`
+  and showed `5 passed`, so retained registry failure patterns can be detected
+  as repeated current failures and converted into a narrow no-unchanged-retry
+  adjustment under the local autonomous-learning gate. This is local
+  retained-failure recurrence and adjustment evidence only, not native live
+  autonomy, broad unknown-repository repair proof, independent external
+  held-out benchmark evidence, external review, endorsement, stars, or reposts.
 - Issue #1 comment `4694860161` records an earlier public evidence marker for
   commit `ac5a4e6211776dc4f250212ffb48c662534f9b29`: focused run
   `27472027053` / job `81204551123`, autonomous-learning run `27472027045` /

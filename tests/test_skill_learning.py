@@ -12,6 +12,7 @@ from quantagent.skill_learning import (
     detect_repeated_failure,
     generate_skill_candidates,
     load_skill_candidates_registry,
+    plan_repeated_failure_adjustment,
     registry_path,
     reject_skill_candidate,
 )
@@ -210,6 +211,97 @@ class SkillLearningTest(unittest.TestCase):
         self.assertNotEqual(different.signature, repeated.signature)
         self.assertFalse(no_failure.repeated)
         self.assertEqual(no_failure.signature, "")
+
+    def test_retained_failure_adjustment_blocks_unchanged_retry(self) -> None:
+        first_failure = [
+            {
+                "kind": "query_start",
+                "query_id": "qa-adjust",
+                "summary": "query started: repair source parser regression",
+                "data": {"task": "repair source parser regression", "mode": "agent"},
+            },
+            {
+                "kind": "post_tool",
+                "query_id": "qa-adjust",
+                "name": "pytest",
+                "ok": False,
+                "step": 1,
+                "summary": "pytest failed because supplied diff-content evidence was dropped",
+                "data": {},
+            },
+        ]
+        repeated_failure = [
+            {
+                "kind": "query_start",
+                "query_id": "qa-adjust-2",
+                "summary": "query started: repair source parser regression",
+                "data": {"task": "repair source parser regression", "mode": "agent"},
+            },
+            {
+                "kind": "post_tool",
+                "query_id": "qa-adjust-2",
+                "name": "pytest",
+                "ok": False,
+                "step": 1,
+                "summary": "pytest failed because supplied diff-content evidence was dropped",
+                "data": {},
+            },
+        ]
+        different_failure = [
+            {
+                "kind": "query_start",
+                "query_id": "qa-adjust-3",
+                "summary": "query started: repair source parser regression",
+                "data": {"task": "repair source parser regression", "mode": "agent"},
+            },
+            {
+                "kind": "post_tool",
+                "query_id": "qa-adjust-3",
+                "name": "pytest",
+                "ok": False,
+                "step": 1,
+                "summary": "pytest failed because runtime cache metadata was missing",
+                "data": {},
+            },
+        ]
+
+        with tempfile.TemporaryDirectory(prefix="skill adjustment ") as tmp:
+            project = Path(tmp)
+            failure_candidate = next(
+                candidate
+                for candidate in generate_skill_candidates(query_events=first_failure)
+                if candidate.name.startswith("avoid-")
+            )
+            append_skill_candidates_registry(project, [approve_skill_candidate(failure_candidate)])
+
+            repeated = plan_repeated_failure_adjustment(
+                project,
+                query_events=repeated_failure,
+                proposed_action="rerun pytest without changing the parser",
+            )
+            different = plan_repeated_failure_adjustment(
+                project,
+                query_events=different_failure,
+                proposed_action="rerun pytest without changing the parser",
+            )
+
+        self.assertTrue(repeated.repeated)
+        self.assertFalse(repeated.retry_unchanged_allowed)
+        self.assertTrue(repeated.requires_changed_action)
+        self.assertTrue(repeated.signature.startswith("failure:"))
+        self.assertEqual(repeated.matched_names, (approve_skill_candidate(failure_candidate).name,))
+        self.assertEqual(repeated.proposed_action, "rerun pytest without changing the parser")
+        self.assertIn("change the repair action before retrying", repeated.next_steps)
+        self.assertTrue(any("diff-content" in line for line in repeated.current_evidence))
+        self.assertTrue(any("diff-content" in line for line in repeated.matched_evidence))
+        self.assertIn("Do not retry the proposed action unchanged", repeated.guidance)
+
+        self.assertFalse(different.repeated)
+        self.assertTrue(different.retry_unchanged_allowed)
+        self.assertFalse(different.requires_changed_action)
+        self.assertEqual(different.proposed_action, "rerun pytest without changing the parser")
+        self.assertEqual(different.matched_evidence, ())
+        self.assertIn("No retained failure pattern matched", different.guidance)
 
 
 if __name__ == "__main__":

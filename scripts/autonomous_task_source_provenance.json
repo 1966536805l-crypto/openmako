@@ -20,9 +20,10 @@
         "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2",
         "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2",
         "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2",
-        "tests/test_skill_learning.py::SkillLearningTest::test_detects_repeated_failure_from_retained_registry_without_installing_skill"
+        "tests/test_skill_learning.py::SkillLearningTest::test_detects_repeated_failure_from_retained_registry_without_installing_skill",
+        "tests/test_skill_learning.py::SkillLearningTest::test_retained_failure_adjustment_blocks_unchanged_retry"
       ],
-      "selected_tests_sha256": "302dfc0a7b78123a28979856fe12d435271801f3a8785ba4aca46db728a11661",
+      "selected_tests_sha256": "932a114a39d3f12371603fbd55ba4e59bdd683227536f14a47d4f8580a8f4b2c",
       "source_kind": "repo-authored-e2e-regression"
     },
     "upstream_hidden_pack_reuse": {

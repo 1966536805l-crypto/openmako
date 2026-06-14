@@ -1221,17 +1221,17 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
                 "selected": task_source_provenance["segments"]["stage1_trajectory_reuse_matrix"][
                     "selected_tests"
                 ],
-                "expected_passed": 4,
+                "expected_passed": 5,
                 "observed_pytest": {
                     "exit_code": 0,
-                    "passed": 4,
+                    "passed": 5,
                     "skipped": 0,
                     "warnings": 0,
                 },
                 "log_path": ".quantagent/autonomous_learning_gate/pytest_logs/stage1_trajectory_reuse_matrix.log",
                 "log_tail": [
                     "...                                                                      [100%]",
-                    "4 passed in 14.63s",
+                    "5 passed in 14.63s",
                 ],
             },
             "upstream_hidden_pack_reuse": {
@@ -1707,7 +1707,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
         log_overrides={
             "stage1_trajectory_reuse_matrix": (
                 "...                                                                      [100%]\n"
-                "4 passed in 14.63s\n"
+                "5 passed in 14.63s\n"
                 "extra final line after the advertised tail\n"
             )
         },
@@ -2510,6 +2510,7 @@ def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() 
         "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2",
         "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2",
         "tests/test_skill_learning.py::SkillLearningTest::test_detects_repeated_failure_from_retained_registry_without_installing_skill",
+        "tests/test_skill_learning.py::SkillLearningTest::test_retained_failure_adjustment_blocks_unchanged_retry",
     ]
     assert provenance["segments"]["upstream_hidden_pack_reuse"]["selected_tests"] == [
         "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating",
@@ -2521,7 +2522,7 @@ def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() 
         "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2",
     ]
     expected_selected_digests = {
-        "stage1_trajectory_reuse_matrix": "302dfc0a7b78123a28979856fe12d435271801f3a8785ba4aca46db728a11661",
+        "stage1_trajectory_reuse_matrix": "932a114a39d3f12371603fbd55ba4e59bdd683227536f14a47d4f8580a8f4b2c",
         "upstream_hidden_pack_reuse": "403c0d82611f585ffe0ca8e1a40057d9c302e7195c6d58daa62fd71e5987f181",
         "cross_upstream_no_seed_reuse": "4f4d5382f5558d4f8f8fc77f510d0199728de201de902f0887d312829029d70a",
     }
@@ -2563,7 +2564,7 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
         "  elif [[ \"$args\" == *test_upstream_function_file_bundle_regression* ]]; then\n"
         "    echo '1 passed in 0.01s'\n"
         "  else\n"
-        "    echo '4 passed in 0.01s'\n"
+        "    echo '5 passed in 0.01s'\n"
         "  fi\n"
         f"  {shlex.quote(sys.executable)} - {shlex.quote(str(proof_fixture))} \"$args\" <<'PY'\n"
         "import json\n"
@@ -2637,7 +2638,7 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
     stage1 = payload["tests"]["stage1_trajectory_reuse_matrix"]
     upstream = payload["tests"]["upstream_hidden_pack_reuse"]
     cross_upstream = payload["tests"]["cross_upstream_no_seed_reuse"]
-    assert stage1["observed_pytest"]["passed"] == 4
+    assert stage1["observed_pytest"]["passed"] == 5
     assert stage1["observed_pytest"]["exit_code"] == 0
     assert upstream["observed_pytest"]["passed"] == 1
     assert upstream["observed_pytest"]["exit_code"] == 0
@@ -2649,7 +2650,7 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
     assert Path(stage1["log_path"]).name == "stage1_trajectory_reuse_matrix.log"
     assert Path(upstream["log_path"]).name == "upstream_hidden_pack_reuse.log"
     assert Path(cross_upstream["log_path"]).name == "cross_upstream_no_seed_reuse.log"
-    assert any("4 passed" in line for line in stage1["log_tail"])
+    assert any("5 passed" in line for line in stage1["log_tail"])
     assert any("1 passed" in line for line in upstream["log_tail"])
     assert any("4 passed" in line for line in cross_upstream["log_tail"])
     assert len(payload["task_proofs"]["upstream_hidden_pack_reuse"]) == 1

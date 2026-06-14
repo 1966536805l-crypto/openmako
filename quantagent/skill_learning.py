@@ -44,6 +44,20 @@ class FailureRecurrence:
     guidance: str = ""
 
 
+@dataclass(frozen=True)
+class RetainedFailureAdjustment:
+    repeated: bool
+    signature: str
+    proposed_action: str
+    retry_unchanged_allowed: bool
+    requires_changed_action: bool
+    current_evidence: tuple[str, ...]
+    matched_names: tuple[str, ...] = ()
+    matched_evidence: tuple[str, ...] = ()
+    next_steps: tuple[str, ...] = ()
+    guidance: str = ""
+
+
 def generate_skill_candidates(
     *,
     query_events: Iterable[Any] = (),
@@ -145,6 +159,54 @@ def detect_repeated_failure(
         guidance=(
             "A retained failure pattern recurred. Reproduce the failing signal, "
             "inspect the stored evidence, add a narrow guard or test, and do not retry the same action unchanged."
+        ),
+    )
+
+
+def plan_repeated_failure_adjustment(
+    project: str | Path,
+    *,
+    query_events: Iterable[Any] = (),
+    trajectory: Iterable[Any] = (),
+    runtime_view: Any | None = None,
+    proposed_action: str = "",
+) -> RetainedFailureAdjustment:
+    recurrence = detect_repeated_failure(
+        project,
+        query_events=query_events,
+        trajectory=trajectory,
+        runtime_view=runtime_view,
+    )
+    action = _compact(proposed_action)
+    if not recurrence.repeated:
+        return RetainedFailureAdjustment(
+            repeated=False,
+            signature=recurrence.signature,
+            proposed_action=action,
+            retry_unchanged_allowed=True,
+            requires_changed_action=False,
+            current_evidence=recurrence.current_evidence,
+            guidance=recurrence.guidance,
+        )
+
+    return RetainedFailureAdjustment(
+        repeated=True,
+        signature=recurrence.signature,
+        proposed_action=action,
+        retry_unchanged_allowed=False,
+        requires_changed_action=True,
+        current_evidence=recurrence.current_evidence,
+        matched_names=recurrence.matched_names,
+        matched_evidence=recurrence.matched_evidence,
+        next_steps=(
+            "reproduce the failing signal",
+            "inspect the retained failure evidence",
+            "add or run a narrow regression guard",
+            "change the repair action before retrying",
+        ),
+        guidance=(
+            "The current failure matches retained evidence. Do not retry the proposed action unchanged; "
+            "change the repair action and bind it to a narrow verifier before retrying."
         ),
     )
 
