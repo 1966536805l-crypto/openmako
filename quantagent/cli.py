@@ -101,6 +101,7 @@ from .eval_harness import append_eval_ledger, build_eval_gap_report, build_eval_
 from .event_log import append_runtime_event, event_log_stats, export_events, read_runtime_events, render_event_log, replay_summary
 from .evidence_court import EVIDENCE_COURT_SCHEMA_VERSION, build_audit_record_from_claude_transcript, build_audit_record_from_codex_transcript, build_audit_record_from_jsonl, build_audit_record_from_openhands_transcript, build_audit_record_from_swe_agent_transcript, build_audit_record_from_swtbench_artifacts, build_audit_record_report, build_bad_run_demo_report, build_missing_tests_demo_report, build_out_of_scope_demo_report, dumps_evidence_court_json, evidence_court_verdict, render_evidence_court_report
 from .evidence_ledger import load_evidence, record_evidence, render_evidence
+from .product_log_ingestion import build_audit_record_from_product_log
 from .embedding_provider import (
     EmbeddingJob,
     LocalHashEmbeddingProvider,
@@ -313,6 +314,18 @@ def cmd_evidence_court(args: argparse.Namespace) -> int:
     if args.evidence_court_command == "record" and args.record_command == "from-codex-transcript":
         try:
             record = build_audit_record_from_codex_transcript(args.transcript)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            print(f"evidence-court error: {exc}", file=sys.stderr)
+            return 2
+        record_json = json.dumps(record, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+        if args.output:
+            Path(args.output).expanduser().resolve(strict=False).write_text(record_json, encoding="utf-8")
+        else:
+            print(record_json, end="")
+        return 0
+    if args.evidence_court_command == "record" and args.record_command == "from-product-log":
+        try:
+            record = build_audit_record_from_product_log(args.product_log)
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             print(f"evidence-court error: {exc}", file=sys.stderr)
             return 2
@@ -5817,6 +5830,13 @@ def build_parser() -> argparse.ArgumentParser:
     rcp.add_argument("--output", default=None, help="Write the generated audit record JSON to this path")
     rcp.add_argument("transcript", help="Path to a supplied Codex-style transcript JSON")
     rcp.set_defaults(func=cmd_evidence_court)
+    rnp = record_sub.add_parser(
+        "from-product-log",
+        help="Convert a native OpenMako product-log repair packet into an audit record JSON",
+    )
+    rnp.add_argument("--output", default=None, help="Write the generated audit record JSON to this path")
+    rnp.add_argument("product_log", help="Path to an openmako-product-log/v0.1 JSON repair packet")
+    rnp.set_defaults(func=cmd_evidence_court)
     rlp = record_sub.add_parser(
         "from-claude-transcript",
         help="Convert a supplied Claude-style transcript JSON into an audit record JSON",

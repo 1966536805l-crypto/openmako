@@ -85,6 +85,11 @@ echo "public-review-gate: checking external-heldout gate fail-closed negatives"
   tests/test_external_heldout_benchmark_gate.py \
   -q
 
+echo "public-review-gate: checking native product-log ingestion"
+"$PYTHON_BIN" -m pytest -p no:cacheprovider \
+  tests/test_product_log_ingestion.py \
+  -q
+
 echo "public-review-gate: checking adversarial claim matrix generator"
 "$PYTHON_BIN" scripts/generate_adversarial_claim_matrix.py --check
 

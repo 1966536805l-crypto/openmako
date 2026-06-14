@@ -25,6 +25,19 @@ Current public proof:
   seed case index, native seed scorer, public gate hook, and regression test.
 - The public v0.1 proof command is `./scripts/public_review_gate.sh`; `README.md`
   defines the narrower claim and non-proof boundaries.
+- Latest local native product-log ingestion check on 2026-06-14 adds
+  `openmako evidence-court record from-product-log` for
+  `openmako-product-log/v0.1` failure-to-fix packets. The converter fails
+  closed unless the packet contains exactly one nonzero before-failure command,
+  an agent diagnosis, source-file diff content covering every edited source
+  file, exactly one zero-exit after-test command, and after-test evidence after
+  the final edit. `tests/test_product_log_ingestion.py` checks a successful
+  failure-to-fix packet plus missing before-failure, missing diagnosis,
+  missing source diff, failing after-test, and stale-validation negatives; the
+  public review gate now runs those checks. This is native product-log packet
+  ingestion and Evidence Court audit-record conversion only, not live autonomy,
+  broad unknown-repository repair, external benchmark standing, external
+  review, endorsement, stars, or reposts.
 - Remote focused CI is live GitHub state, not a durable fact in this file.
   A 2026-06-07 GitHub API snapshot showed `.github/workflows/focused.yml`
   run `27096660497` completed with `conclusion=success` on commit
