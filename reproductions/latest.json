@@ -1,0 +1,16 @@
+{
+  "latest_reproduction_commit": "f04ee50da1143d28aaf6633ab5d059d323b21900",
+  "not_proof": [
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "independent external benchmark standing",
+    "GitHub Actions artifact zip contents",
+    "native live autonomy",
+    "broad unknown-repository repair"
+  ],
+  "schema_version": "openmako-fresh-clone-reproduction-index/v0.1",
+  "summary": "reproductions/f04ee50da1143d28aaf6633ab5d059d323b21900/summary.json",
+  "updated_at_utc": "2026-06-14T22:48:02.380963+00:00"
+}
