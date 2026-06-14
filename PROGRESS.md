@@ -178,11 +178,17 @@ Current public proof:
   `independent_external_benchmark=false`. It now also fails closed unless the
   held-out test writes a task-level repair evidence packet with before-failure
   command output, agent diagnosis, target-function diff, after-test command
-  output, patch scope, final claim, and the non-proof boundary. The public gate
+  output, patch scope, command log, source digests, final claim, and the
+  non-proof boundary. The held-out proof validator cross-checks the raw unified
+  diff target, command-log before/after entries, return codes, approved-learning
+  changed-file scope, and approved-learning out-of-scope emptiness instead of
+  trusting proof self-report fields alone. The public gate
   also runs
   fail-closed negative tests that tamper with the MCP manifest digest, license
-  boundary, attribution boundary, autonomous selected-test overlap, and missing
-  repair evidence packet before the gate can print `PASS`. This is
+  boundary, attribution boundary, autonomous selected-test overlap, missing
+  repair evidence packet, duplicate proof files, forged diff target flags,
+  successful-before-failure claims, nonzero after-test claims, and command-log
+  mismatches before the gate can print `PASS`. This is
   external-source held-out
   regression evidence only, not external benchmark standing, external review,
   endorsement, stars, reposts, native live autonomy, broad unknown-repository

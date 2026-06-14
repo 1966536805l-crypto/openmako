@@ -68,6 +68,121 @@ def _write_fake_passing_selected_test(target_root: Path) -> None:
     )
 
 
+def _write_fake_passing_selected_test_with_task_proofs(
+    target_root: Path,
+    proofs: list[dict],
+) -> None:
+    test_path = target_root / "tests" / "test_upstream_function_file_bundle_regression.py"
+    test_path.parent.mkdir(parents=True, exist_ok=True)
+    proofs_json = json.dumps(proofs, sort_keys=True)
+    test_path.write_text(
+        "import json\n"
+        "import os\n"
+        "import unittest\n"
+        "from pathlib import Path\n\n"
+        f"PROOFS_JSON = {proofs_json!r}\n\n"
+        "class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):\n"
+        "    def test_vendored_mcp_function_level_repair_reuses_without_non_target_drift(self):\n"
+        "        proof_dir = Path(os.environ['OPENMAKO_EXTERNAL_HELDOUT_TASK_PROOF_DIR'])\n"
+        "        proof_dir.mkdir(parents=True, exist_ok=True)\n"
+        "        for index, proof in enumerate(json.loads(PROOFS_JSON)):\n"
+        "            (proof_dir / f'proof_{index}.json').write_text(\n"
+        "                json.dumps(proof, indent=2, sort_keys=True) + '\\n',\n"
+        "                encoding='utf-8',\n"
+        "            )\n"
+        "        self.assertTrue(True)\n",
+        encoding="utf-8",
+    )
+
+
+def _valid_task_proof() -> dict:
+    before_failure = {
+        "command": ["python", "-m", "unittest", "discover", "-s", "tests", "-q"],
+        "cwd": "/tmp/openmako-heldout-before",
+        "returncode": 1,
+        "stderr_tail": ["FAILED (failures=1)"],
+        "stdout_tail": [],
+    }
+    after_test = {
+        "command": ["python", "-m", "unittest", "discover", "-s", "tests", "-q"],
+        "cwd": "/tmp/openmako-heldout-after",
+        "returncode": 0,
+        "stderr_tail": ["OK"],
+        "stdout_tail": [],
+    }
+    unified_diff = [
+        "--- a/mcp/shared/tool_name_validation.py",
+        "+++ b/mcp/shared/tool_name_validation.py",
+        "@@",
+        "-def validate_tool_name(name):",
+        "+def validate_tool_name(name):",
+    ]
+    return {
+        "agent_diagnosis": {
+            "observations": [
+                {"data": {}, "name": "edit", "ok": True, "summary": "changed target function"}
+            ],
+            "ok": True,
+        },
+        "after_test": after_test,
+        "before_failure": before_failure,
+        "broken_source_sha256": "1" * 64,
+        "command_log": [
+            before_failure,
+            {
+                "command": ["run_agent_loop", "--mode", "repair", "--learning-context", "off"],
+                "ok": True,
+                "trajectory_path": "/tmp/openmako-heldout/trajectory.jsonl",
+            },
+            after_test,
+        ],
+        "diff": {
+            "contains_target_function": True,
+            "line_count": len(unified_diff),
+            "unified_diff": unified_diff,
+        },
+        "evidence_boundary": {
+            "not_proof": [
+                "native benchmark ingestion",
+                "live patch proof",
+                "broad unknown-repository repair",
+                "external benchmark standing",
+                "current remote CI proof",
+            ]
+        },
+        "external_source_heldout": True,
+        "final_claim": (
+            "For this vendored MCP held-out repair task, the agent loop changed "
+            "only mcp/shared/tool_name_validation.py and the local package tests passed."
+        ),
+        "function_name": "validate_tool_name",
+        "heldout_from_autonomous_gate": True,
+        "independent_external_benchmark": False,
+        "observed_counts": {
+            "approved_learning_solved": 2,
+            "hidden_stage2_tasks": 2,
+            "no_learning_solved": 0,
+            "stability_solved": 4,
+        },
+        "patch_scope": {
+            "approved_learning_changed_files": [
+                ["mcp/shared/tool_name_validation.py"],
+                ["mcp/shared/tool_name_validation.py"],
+            ],
+            "approved_learning_out_of_scope_files": [[], []],
+            "files_touched": ["mcp/shared/tool_name_validation.py"],
+            "stage1_changed_files": ["mcp/shared/tool_name_validation.py"],
+        },
+        "repaired_source_sha256": "2" * 64,
+        "schema_version": "external-heldout-repair-proof/v0.1",
+        "source_package": "mcp-python-sdk",
+        "source_repository": "https://github.com/modelcontextprotocol/python-sdk",
+        "source_sha256": "3" * 64,
+        "target_path": "mcp/shared/tool_name_validation.py",
+        "task_id": "vendored_mcp_tool_name_validation_function_repair",
+    }
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -149,4 +264,76 @@ def test_external_heldout_gate_fails_closed_when_task_proof_is_missing(tmp_path:
 
     assert result.returncode != 0
     assert "task_proof_count=0" in result.stderr
+    assert "external-heldout-benchmark-gate: PASS" not in result.stdout
+
+
+def test_external_heldout_gate_fails_closed_on_duplicate_task_proofs(tmp_path: Path) -> None:
+    target_root = _copy_minimal_gate_repo(tmp_path)
+    proof = _valid_task_proof()
+    _write_fake_passing_selected_test_with_task_proofs(target_root, [proof, proof])
+
+    result = _run_gate(target_root)
+
+    assert result.returncode != 0
+    assert "task_proof_count=2" in result.stderr
+    assert "external-heldout-benchmark-gate: PASS" not in result.stdout
+
+
+def test_external_heldout_gate_fails_closed_on_forged_diff_target_flag(tmp_path: Path) -> None:
+    target_root = _copy_minimal_gate_repo(tmp_path)
+    proof = _valid_task_proof()
+    proof["diff"]["contains_target_function"] = True
+    proof["diff"]["unified_diff"] = ["--- a/file.py", "+++ b/file.py", "-old", "+new"]
+    proof["diff"]["line_count"] = len(proof["diff"]["unified_diff"])
+    _write_fake_passing_selected_test_with_task_proofs(target_root, [proof])
+
+    result = _run_gate(target_root)
+
+    assert result.returncode != 0
+    assert "task_proof.diff.unified_diff_target" in result.stderr
+    assert "external-heldout-benchmark-gate: PASS" not in result.stdout
+
+
+def test_external_heldout_gate_fails_closed_on_successful_before_failure_claim(tmp_path: Path) -> None:
+    target_root = _copy_minimal_gate_repo(tmp_path)
+    proof = _valid_task_proof()
+    proof["before_failure"]["returncode"] = 0
+    proof["command_log"][0] = proof["before_failure"]
+    _write_fake_passing_selected_test_with_task_proofs(target_root, [proof])
+
+    result = _run_gate(target_root)
+
+    assert result.returncode != 0
+    assert "task_proof.before_failure_returncode" in result.stderr
+    assert "external-heldout-benchmark-gate: PASS" not in result.stdout
+
+
+def test_external_heldout_gate_fails_closed_on_nonzero_after_test_claim(tmp_path: Path) -> None:
+    target_root = _copy_minimal_gate_repo(tmp_path)
+    proof = _valid_task_proof()
+    proof["after_test"]["returncode"] = 1
+    proof["command_log"][-1] = proof["after_test"]
+    _write_fake_passing_selected_test_with_task_proofs(target_root, [proof])
+
+    result = _run_gate(target_root)
+
+    assert result.returncode != 0
+    assert "task_proof.after_test_returncode" in result.stderr
+    assert "external-heldout-benchmark-gate: PASS" not in result.stdout
+
+
+def test_external_heldout_gate_fails_closed_on_command_log_mismatch(tmp_path: Path) -> None:
+    target_root = _copy_minimal_gate_repo(tmp_path)
+    proof = _valid_task_proof()
+    proof["command_log"][0] = {
+        "command": ["python", "-m", "unittest"],
+        "cwd": "/tmp/other",
+        "returncode": 1,
+    }
+    _write_fake_passing_selected_test_with_task_proofs(target_root, [proof])
+
+    result = _run_gate(target_root)
+
+    assert result.returncode != 0
+    assert "task_proof.command_log.before_failure" in result.stderr
     assert "external-heldout-benchmark-gate: PASS" not in result.stdout

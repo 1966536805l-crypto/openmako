@@ -178,6 +178,11 @@ def validate_task_proofs(proofs: list[dict[str, Any]]) -> list[str]:
     if len(proofs) != 1:
         return [f"task_proof_count={len(proofs)}"]
     proof = proofs[0]
+    before_failure = proof.get("before_failure")
+    after_test = proof.get("after_test")
+    patch_scope = proof.get("patch_scope")
+    diff = proof.get("diff")
+    command_log = proof.get("command_log")
     expected_boundary = proof.get("evidence_boundary", {}).get("not_proof", [])
     expected_counts = proof.get("observed_counts", {})
     if proof.get("schema_version") != "external-heldout-repair-proof/v0.1":
@@ -198,20 +203,78 @@ def validate_task_proofs(proofs: list[dict[str, Any]]) -> list[str]:
         invalid.append("task_proof.target_path")
     if proof.get("function_name") != "validate_tool_name":
         invalid.append("task_proof.function_name")
-    if proof.get("before_failure", {}).get("returncode") == 0:
+    for digest_field in ("source_sha256", "broken_source_sha256", "repaired_source_sha256"):
+        if not isinstance(proof.get(digest_field), str) or not re.fullmatch(r"[0-9a-f]{64}", proof[digest_field]):
+            invalid.append(f"task_proof.{digest_field}")
+    if proof.get("broken_source_sha256") == proof.get("repaired_source_sha256"):
+        invalid.append("task_proof.repair_changed_source")
+    if not isinstance(before_failure, dict):
+        invalid.append("task_proof.before_failure")
+        before_failure = {}
+    if not isinstance(after_test, dict):
+        invalid.append("task_proof.after_test")
+        after_test = {}
+    before_returncode = before_failure.get("returncode")
+    after_returncode = after_test.get("returncode")
+    if not isinstance(before_returncode, int) or before_returncode == 0:
         invalid.append("task_proof.before_failure_returncode")
-    if proof.get("after_test", {}).get("returncode") != 0:
+    if not isinstance(after_returncode, int) or after_returncode != 0:
         invalid.append("task_proof.after_test_returncode")
-    if proof.get("patch_scope", {}).get("files_touched") != ["mcp/shared/tool_name_validation.py"]:
+    if not isinstance(before_failure.get("command"), list) or not before_failure.get("command"):
+        invalid.append("task_proof.before_failure.command")
+    if not isinstance(after_test.get("command"), list) or not after_test.get("command"):
+        invalid.append("task_proof.after_test.command")
+    if not isinstance(patch_scope, dict):
+        invalid.append("task_proof.patch_scope")
+        patch_scope = {}
+    if patch_scope.get("files_touched") != ["mcp/shared/tool_name_validation.py"]:
         invalid.append("task_proof.patch_scope.files_touched")
-    if proof.get("patch_scope", {}).get("stage1_changed_files") != ["mcp/shared/tool_name_validation.py"]:
+    if patch_scope.get("stage1_changed_files") != ["mcp/shared/tool_name_validation.py"]:
         invalid.append("task_proof.patch_scope.stage1_changed_files")
-    if proof.get("diff", {}).get("line_count", 0) <= 0:
+    if patch_scope.get("approved_learning_changed_files") != [
+        ["mcp/shared/tool_name_validation.py"],
+        ["mcp/shared/tool_name_validation.py"],
+    ]:
+        invalid.append("task_proof.patch_scope.approved_learning_changed_files")
+    if patch_scope.get("approved_learning_out_of_scope_files") != [[], []]:
+        invalid.append("task_proof.patch_scope.approved_learning_out_of_scope_files")
+    if not isinstance(diff, dict):
+        invalid.append("task_proof.diff")
+        diff = {}
+    unified_diff = diff.get("unified_diff")
+    if not isinstance(unified_diff, list) or not unified_diff or not all(
+        isinstance(line, str) for line in unified_diff
+    ):
+        invalid.append("task_proof.diff.unified_diff")
+        unified_diff = []
+    if not isinstance(diff.get("line_count"), int) or diff.get("line_count", 0) <= 0:
         invalid.append("task_proof.diff.line_count")
-    if proof.get("diff", {}).get("contains_target_function") is not True:
+    if unified_diff and diff.get("line_count") != len(unified_diff):
+        invalid.append("task_proof.diff.line_count_matches_unified_diff")
+    if diff.get("contains_target_function") is not True:
         invalid.append("task_proof.diff.contains_target_function")
+    if not any("validate_tool_name" in line for line in unified_diff):
+        invalid.append("task_proof.diff.unified_diff_target")
     if not proof.get("agent_diagnosis", {}).get("observations"):
         invalid.append("task_proof.agent_diagnosis.observations")
+    if not isinstance(command_log, list) or len(command_log) < 3:
+        invalid.append("task_proof.command_log")
+        command_log = []
+    if command_log:
+        if command_log[0] != before_failure:
+            invalid.append("task_proof.command_log.before_failure")
+        if command_log[-1] != after_test:
+            invalid.append("task_proof.command_log.after_test")
+        agent_entries = [
+            entry for entry in command_log
+            if (
+                isinstance(entry, dict)
+                and isinstance(entry.get("command"), list)
+                and entry["command"][:1] == ["run_agent_loop"]
+            )
+        ]
+        if not agent_entries or not all(entry.get("ok") is True for entry in agent_entries):
+            invalid.append("task_proof.command_log.agent_repair")
     if "vendored MCP held-out repair task" not in str(proof.get("final_claim", "")):
         invalid.append("task_proof.final_claim")
     for boundary in (
