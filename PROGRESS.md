@@ -191,6 +191,21 @@ Current public proof:
   gate pass. Passing this script would be release-readiness hygiene only, not
   legal advice, an owner license decision, external review, endorsement, stars,
   reposts, or release announcement evidence.
+- Latest local retained-failure recurrence check on 2026-06-14 passed:
+  `python3 -m pytest -p no:cacheprovider tests/test_skill_learning.py -q`
+  ended with `4 passed`; the focused public-metadata lock
+  `tests/test_public_metadata.py::test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks`
+  passed; and
+  `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON=/tmp/openmako-autonomous-recurrence-summary.json
+  bash scripts/autonomous_learning_gate.sh` ended with
+  `autonomous-learning-gate: PASS`. The manifest-derived stage1 segment now
+  includes
+  `tests/test_skill_learning.py::SkillLearningTest::test_detects_repeated_failure_from_retained_registry_without_installing_skill`
+  and showed `4 passed`, so retained registry failure patterns can be detected
+  as repeated current failures under the local autonomous-learning gate. This is
+  local retained-failure recurrence evidence only, not native live autonomy,
+  broad unknown-repository repair proof, independent external held-out
+  benchmark evidence, external review, endorsement, stars, or reposts.
 - Issue #1 comment `4694860161` records an earlier public evidence marker for
   commit `ac5a4e6211776dc4f250212ffb48c662534f9b29`: focused run
   `27472027053` / job `81204551123`, autonomous-learning run `27472027045` /
@@ -216,10 +231,10 @@ Current public proof:
   evidence only, not independent external held-out benchmark evidence, external
   review, endorsement, stars, reposts, live autonomy, or broad unknown-repository
   repair.
-- Next smallest task: add a genuinely external held-out benchmark
-  manifest/adapter with source, license, and digest checks, or add another
-  adapter evidence edge case that reduces a specific public-boundary false
-  positive.
+- Next smallest task: add path-filter coverage for `quantagent/skill_learning.py`
+  and `tests/test_skill_learning.py` in the autonomous-learning workflow, or add
+  a genuinely external held-out benchmark manifest/adapter with source,
+  license, and digest checks.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:

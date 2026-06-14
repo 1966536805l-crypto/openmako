@@ -9,6 +9,7 @@ from quantagent.agent_runtime import AgentRuntimeView, RuntimeEvidence, RuntimeP
 from quantagent.skill_learning import (
     append_skill_candidates_registry,
     approve_skill_candidate,
+    detect_repeated_failure,
     generate_skill_candidates,
     load_skill_candidates_registry,
     registry_path,
@@ -131,6 +132,84 @@ class SkillLearningTest(unittest.TestCase):
         self.assertEqual(len(failure_candidates), 1)
         self.assertIn("desktop", failure_candidates[0].trigger)
         self.assertTrue(any("desktop_eval" in line for line in failure_candidates[0].evidence))
+
+    def test_detects_repeated_failure_from_retained_registry_without_installing_skill(self) -> None:
+        first_failure = [
+            {
+                "kind": "query_start",
+                "query_id": "qa-repeat",
+                "summary": "query started: repair parser regression",
+                "data": {"task": "repair parser regression", "mode": "agent"},
+            },
+            {
+                "kind": "post_tool",
+                "query_id": "qa-repeat",
+                "name": "pytest",
+                "ok": False,
+                "step": 1,
+                "summary": "pytest failed because parser dropped diff-content lines",
+                "data": {},
+            },
+        ]
+        repeated_failure = [
+            {
+                "kind": "query_start",
+                "query_id": "qa-repeat-2",
+                "summary": "query started: repair parser regression",
+                "data": {"task": "repair parser regression", "mode": "agent"},
+            },
+            {
+                "kind": "post_tool",
+                "query_id": "qa-repeat-2",
+                "name": "pytest",
+                "ok": False,
+                "step": 1,
+                "summary": "pytest failed because parser dropped diff-content lines",
+                "data": {},
+            },
+        ]
+        different_failure = [
+            {
+                "kind": "query_start",
+                "query_id": "qa-repeat-3",
+                "summary": "query started: repair parser regression",
+                "data": {"task": "repair parser regression", "mode": "agent"},
+            },
+            {
+                "kind": "post_tool",
+                "query_id": "qa-repeat-3",
+                "name": "pytest",
+                "ok": False,
+                "step": 1,
+                "summary": "pytest failed because cache metadata was missing",
+                "data": {},
+            },
+        ]
+
+        with tempfile.TemporaryDirectory(prefix="skill recurrence ") as tmp:
+            project = Path(tmp)
+            failure_candidate = next(
+                candidate
+                for candidate in generate_skill_candidates(query_events=first_failure)
+                if candidate.name.startswith("avoid-")
+            )
+            append_skill_candidates_registry(project, [approve_skill_candidate(failure_candidate)])
+
+            repeated = detect_repeated_failure(project, query_events=repeated_failure)
+            different = detect_repeated_failure(project, query_events=different_failure)
+            no_failure = detect_repeated_failure(project, query_events=[])
+
+        self.assertTrue(repeated.repeated)
+        self.assertTrue(repeated.signature.startswith("failure:"))
+        self.assertEqual(repeated.matched_names, (approve_skill_candidate(failure_candidate).name,))
+        self.assertEqual(repeated.matched_statuses, ("approved",))
+        self.assertTrue(any("diff-content" in line for line in repeated.current_evidence))
+        self.assertTrue(any("diff-content" in line for line in repeated.matched_evidence))
+        self.assertIn("do not retry the same action unchanged", repeated.guidance)
+        self.assertFalse(different.repeated)
+        self.assertNotEqual(different.signature, repeated.signature)
+        self.assertFalse(no_failure.repeated)
+        self.assertEqual(no_failure.signature, "")
 
 
 if __name__ == "__main__":

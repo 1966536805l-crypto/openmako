@@ -33,6 +33,17 @@ class SkillCandidate:
         }
 
 
+@dataclass(frozen=True)
+class FailureRecurrence:
+    repeated: bool
+    signature: str
+    current_evidence: tuple[str, ...]
+    matched_names: tuple[str, ...] = ()
+    matched_statuses: tuple[str, ...] = ()
+    matched_evidence: tuple[str, ...] = ()
+    guidance: str = ""
+
+
 def generate_skill_candidates(
     *,
     query_events: Iterable[Any] = (),
@@ -81,6 +92,61 @@ def append_skill_candidates_registry(project: str | Path, candidates: Iterable[S
             normalized = normalize_skill_candidate(candidate)
             handle.write(json.dumps(normalized.to_dict(), ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n")
     return target
+
+
+def detect_repeated_failure(
+    project: str | Path,
+    *,
+    query_events: Iterable[Any] = (),
+    trajectory: Iterable[Any] = (),
+    runtime_view: Any | None = None,
+) -> FailureRecurrence:
+    current_failures = tuple(
+        candidate
+        for candidate in generate_skill_candidates(
+            query_events=query_events,
+            trajectory=trajectory,
+            runtime_view=runtime_view,
+            max_candidates=8,
+        )
+        if _is_failure_candidate(candidate)
+    )
+    if not current_failures:
+        return FailureRecurrence(
+            repeated=False,
+            signature="",
+            current_evidence=(),
+            guidance="No current failed runtime signal was supplied.",
+        )
+
+    current = current_failures[0]
+    signature = _failure_signature(current)
+    retained = tuple(
+        candidate
+        for candidate in load_skill_candidates_registry(project)
+        if candidate.status != "rejected" and _is_failure_candidate(candidate)
+    )
+    matches = tuple(candidate for candidate in retained if _failure_signature(candidate) == signature)
+    if not matches:
+        return FailureRecurrence(
+            repeated=False,
+            signature=signature,
+            current_evidence=current.evidence,
+            guidance="No retained failure pattern matched the current failure signal.",
+        )
+
+    return FailureRecurrence(
+        repeated=True,
+        signature=signature,
+        current_evidence=current.evidence,
+        matched_names=tuple(candidate.name for candidate in matches),
+        matched_statuses=tuple(candidate.status for candidate in matches),
+        matched_evidence=tuple(line for candidate in matches for line in candidate.evidence),
+        guidance=(
+            "A retained failure pattern recurred. Reproduce the failing signal, "
+            "inspect the stored evidence, add a narrow guard or test, and do not retry the same action unchanged."
+        ),
+    )
 
 
 def load_skill_candidates_registry(project: str | Path) -> tuple[SkillCandidate, ...]:
@@ -245,6 +311,18 @@ def _build_candidate(kind: str, *, task: str, records: list[dict[str, Any]]) -> 
 def _with_status(candidate: SkillCandidate | Mapping[str, Any], status: str) -> SkillCandidate:
     normalized = normalize_skill_candidate(candidate)
     return replace(normalized, status=status)
+
+
+def _is_failure_candidate(candidate: SkillCandidate) -> bool:
+    return candidate.name.startswith("avoid-") or "Avoid the observed failure pattern" in candidate.body
+
+
+def _failure_signature(candidate: SkillCandidate) -> str:
+    failure_lines = [line for line in candidate.evidence if "[failed]" in line]
+    source = " ".join([candidate.trigger, *failure_lines])
+    terms = _terms(source)[:48]
+    digest = hashlib.sha256(" ".join(terms).encode("utf-8")).hexdigest()[:16]
+    return f"failure:{digest}"
 
 
 def _candidate_name(prefix: str, trigger: str, body: str) -> str:
