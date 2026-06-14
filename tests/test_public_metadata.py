@@ -419,9 +419,11 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert '"quantagent/coding_bench.py"' in workflow
     assert '"quantagent/evidence_court.py"' in workflow
     assert '"quantagent/learning_effect_coding_bench.py"' in workflow
+    assert '"quantagent/skill_learning.py"' in workflow
     assert '"quantagent/skill_pipeline.py"' in workflow
     assert '"tests/test_cli_wrappers.py"' in workflow
     assert '"tests/test_learning_effect_e2e.py"' in workflow
+    assert '"tests/test_skill_learning.py"' in workflow
     assert '"tests/test_upstream_function_file_bundle_regression.py"' in workflow
     assert '"tests/test_public_metadata.py"' in workflow
     assert "pull_request:" not in workflow
@@ -437,7 +439,7 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
 
     assert "`.github/workflows/autonomous-learning-gate.yml` exposes the autonomous-learning\n  stress gate as a manual `workflow_dispatch` check and as a path-filtered\n  `push` check" in progress
     assert "for the workflow file, tracked task-source manifest, gate script,\n  remote artifact snapshot script, and selected gate-test paths" in progress
-    assert "The path filter\n  also includes core learning modules, the supplied transcript adapter matrix,\n  `quantagent/evidence_court.py`, and `tests/test_cli_wrappers.py`" in progress
+    assert "The path filter\n  also includes core learning modules, retained-failure skill-learning code\n  and tests, the supplied transcript adapter matrix,\n  `quantagent/evidence_court.py`, and `tests/test_cli_wrappers.py`" in progress
     assert "The gate derives the selected pytest node ids and expected\n  pass counts from `scripts/autonomous_task_source_provenance.json` rather than\n  duplicating that test list inside the shell script" in progress
     assert "fails closed\n  before pytest runs if a manifest segment falls below its expected minimum\n  selected-test count, contains a non-pytest-node id, passes a pytest option,\n  includes whitespace, duplicates a test inside a segment, or duplicates a test\n  across segments" in progress
     assert "It uploads\n  `.quantagent/autonomous_learning_gate` as the\n  `autonomous-learning-gate-summary` artifact" in progress

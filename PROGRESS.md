@@ -119,7 +119,8 @@ Current public proof:
   stress gate as a manual `workflow_dispatch` check and as a path-filtered
   `push` check for the workflow file, tracked task-source manifest, gate script,
   remote artifact snapshot script, and selected gate-test paths. The path filter
-  also includes core learning modules, the supplied transcript adapter matrix,
+  also includes core learning modules, retained-failure skill-learning code
+  and tests, the supplied transcript adapter matrix,
   `quantagent/evidence_court.py`, and `tests/test_cli_wrappers.py` so changes to
   the autonomous-learning machinery or public Evidence Court/transcript proof
   boundary get a current autonomous-learning artifact run instead of only the
@@ -146,6 +147,14 @@ Current public proof:
   evidence only, not external review, endorsement, stars, reposts, live
   autonomy, broad unknown-repository repair proof, external benchmark standing,
   or independent external held-out benchmark evidence.
+- Latest local autonomous workflow path-filter check on 2026-06-14 passed:
+  `.github/workflows/autonomous-learning-gate.yml` now includes
+  `quantagent/skill_learning.py` and `tests/test_skill_learning.py` in its
+  path-filtered push trigger. This means retained-failure learning code and its
+  regression tests trigger the autonomous-learning artifact workflow instead of
+  relying only on manual gate runs. This is CI trigger coverage only, not
+  release readiness, live autonomy, external review, endorsement, stars,
+  reposts, or independent external held-out benchmark evidence.
 - `bash scripts/remote_autonomous_learning_snapshot.sh` is the fail-closed
   re-check tool for the latest autonomous-learning workflow on current
   `openmako/main`. It verifies the latest run SHA, completed/success
@@ -231,10 +240,9 @@ Current public proof:
   evidence only, not independent external held-out benchmark evidence, external
   review, endorsement, stars, reposts, live autonomy, or broad unknown-repository
   repair.
-- Next smallest task: add path-filter coverage for `quantagent/skill_learning.py`
-  and `tests/test_skill_learning.py` in the autonomous-learning workflow, or add
-  a genuinely external held-out benchmark manifest/adapter with source,
-  license, and digest checks.
+- Next smallest task: get an owner license decision and add the root license
+  file plus `pyproject.toml` license metadata, or add a genuinely external
+  held-out benchmark manifest/adapter with source, license, and digest checks.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:
