@@ -132,6 +132,16 @@ class CliWrapperTest(unittest.TestCase):
             )
 
     def write_public_review_artifact(self, artifact_dir: Path, git_commit: str) -> None:
+        invocation = {
+            "schema_version": "public-review-gate-invocation/v0.1",
+            "status": "started",
+            "git_commit": git_commit,
+        }
+        (artifact_dir / "invocation.json").parent.mkdir(parents=True, exist_ok=True)
+        (artifact_dir / "invocation.json").write_text(
+            json.dumps(invocation, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
         required_outputs = [
             "outputs/audit.json",
             "outputs/external_heldout_benchmark_gate/last_summary.json",
@@ -621,7 +631,49 @@ class CliWrapperTest(unittest.TestCase):
             self.assertIn("required-output-count=3", snapshot.stdout)
             self.assertIn("heldout-reproduction-packet=present", snapshot.stdout)
             self.assertIn("heldout-task-proof-count=2", snapshot.stdout)
+            self.assertIn("public-mirror-zip=present", snapshot.stdout)
             self.assertIn("remote-public-evidence-snapshot: PASS", snapshot.stdout)
+
+            evidence_clone = tmp_path / "evidence-clone"
+            subprocess.run(
+                ["git", "clone", "--branch", "public-evidence", str(remote), str(evidence_clone)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+            manifest_path = evidence_clone / "focused" / current_commit / "public_mirror" / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["file_count"] = 0
+            manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            subprocess.run(["git", "add", "."], cwd=evidence_clone, check=True)
+            subprocess.run(
+                [
+                    "git",
+                    "-c",
+                    "user.email=openmako-test@example.invalid",
+                    "-c",
+                    "user.name=OpenMako Test",
+                    "commit",
+                    "-q",
+                    "-m",
+                    "tamper mirror manifest",
+                ],
+                cwd=evidence_clone,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "push", "origin", "HEAD:public-evidence"],
+                cwd=evidence_clone,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+            tampered_mirror = self.run_remote_public_evidence_snapshot(remote)
+
+            self.assertEqual(tampered_mirror.returncode, 1)
+            self.assertIn("public_mirror_file_count_mismatch", tampered_mirror.stdout)
 
             summary_path = artifact_dir / "summary.json"
             summary = json.loads(summary_path.read_text(encoding="utf-8"))

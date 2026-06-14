@@ -97,6 +97,75 @@ cp -R "$ARTIFACT_DIR"/. "$evidence_dir/focused/$GIT_COMMIT/"
 python3 - "$evidence_dir" "$GIT_COMMIT" <<'PY'
 from __future__ import annotations
 
+import hashlib
+import json
+import sys
+import zipfile
+from datetime import datetime, timezone
+from pathlib import Path
+
+root = Path(sys.argv[1])
+git_commit = sys.argv[2]
+focused_dir = root / "focused" / git_commit
+summary_path = focused_dir / "summary.json"
+summary = json.loads(summary_path.read_text(encoding="utf-8"))
+required_outputs = summary.get("required_outputs")
+if not isinstance(required_outputs, list):
+    raise SystemExit("publish-public-evidence-branch: mirror required_outputs malformed")
+mirror_dir = focused_dir / "public_mirror"
+mirror_dir.mkdir(parents=True, exist_ok=True)
+archive_path = mirror_dir / "focused-public-review-gate-public-mirror.zip"
+manifest_path = mirror_dir / "manifest.json"
+files: dict[str, str] = {}
+for path in sorted(focused_dir.rglob("*")):
+    if not path.is_file():
+        continue
+    rel = str(path.relative_to(focused_dir))
+    if rel.startswith("public_mirror/"):
+        continue
+    files[rel] = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+for required in required_outputs:
+    if required not in files:
+        raise SystemExit(f"publish-public-evidence-branch: mirror missing required output {required}")
+if "summary.json" not in files or "invocation.json" not in files:
+    raise SystemExit("publish-public-evidence-branch: mirror missing summary or invocation")
+with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+    for rel in sorted(files):
+        source = focused_dir / rel
+        info = zipfile.ZipInfo(rel)
+        info.date_time = (1980, 1, 1, 0, 0, 0)
+        info.compress_type = zipfile.ZIP_DEFLATED
+        info.external_attr = 0o644 << 16
+        archive.writestr(info, source.read_bytes())
+archive_sha256 = "sha256:" + hashlib.sha256(archive_path.read_bytes()).hexdigest()
+manifest = {
+    "schema_version": "public-evidence-artifact-mirror/v0.1",
+    "status": "passed",
+    "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+    "git_commit": git_commit,
+    "source_summary": "summary.json",
+    "archive_path": "public_mirror/focused-public-review-gate-public-mirror.zip",
+    "archive_sha256": archive_sha256,
+    "file_count": len(files),
+    "files": files,
+    "required_outputs": required_outputs,
+    "not_proof": [
+        "GitHub Actions artifact zip contents",
+        "external review",
+        "endorsement",
+        "stars",
+        "reposts",
+        "native live autonomy",
+        "broad unknown-repository repair",
+        "external benchmark standing",
+    ],
+}
+manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+
+python3 - "$evidence_dir" "$GIT_COMMIT" <<'PY'
+from __future__ import annotations
+
 import json
 import sys
 from datetime import datetime, timezone

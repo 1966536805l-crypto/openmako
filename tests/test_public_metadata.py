@@ -1406,6 +1406,9 @@ def test_public_evidence_branch_scripts_are_fail_closed_and_boundary_aware() -> 
     assert "summary git_commit does not match HEAD" in publish_text
     assert "required output missing" in publish_text
     assert "digest mismatch for" in publish_text
+    assert "public-evidence-artifact-mirror/v0.1" in publish_text
+    assert "focused-public-review-gate-public-mirror.zip" in publish_text
+    assert "mirror missing required output" in publish_text
     assert 'git remote get-url "$REMOTE"' in publish_text
     assert 'git fetch --depth 1 "$REMOTE" "refs/heads/$BRANCH:$fetch_ref"' in publish_text
     assert 'git worktree add --detach "$worktree_dir"' in publish_text
@@ -1423,6 +1426,11 @@ def test_public_evidence_branch_scripts_are_fail_closed_and_boundary_aware() -> 
     assert "heldout_reproduction_packet_raw_evidence_digest_mismatch" in remote_text
     assert "remote-public-evidence-snapshot: heldout-reproduction-packet=present" in remote_text
     assert "remote-public-evidence-snapshot: heldout-task-proof-count=" in remote_text
+    assert "public-evidence-artifact-mirror/v0.1" in remote_text
+    assert "public_mirror_archive_digest_mismatch" in remote_text
+    assert "public_mirror_archive_file_digest_mismatch" in remote_text
+    assert "public_mirror_file_count_mismatch" in remote_text
+    assert "remote-public-evidence-snapshot: public-mirror-zip=present" in remote_text
     assert "public_evidence_branch_missing" in remote_text
     assert "latest_index_commit_mismatch" in remote_text
     assert "remote-public-evidence-snapshot: PASS" in remote_text

@@ -40,6 +40,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
+import zipfile
 from pathlib import Path
 
 root = Path(sys.argv[1]).resolve(strict=False)
@@ -147,6 +148,51 @@ packet_not_proof = packet.get("not_proof")
 if not isinstance(packet_not_proof, list) or "native live autonomy" not in packet_not_proof:
     fail("heldout_reproduction_packet_not_proof_boundary_mismatch")
 
+mirror_manifest_path = summary_path.parent / "public_mirror" / "manifest.json"
+try:
+    mirror_manifest = json.loads(mirror_manifest_path.read_text(encoding="utf-8"))
+except Exception as exc:
+    fail("public_mirror_manifest_invalid_json", str(exc))
+if mirror_manifest.get("schema_version") != "public-evidence-artifact-mirror/v0.1":
+    fail("public_mirror_manifest_schema_mismatch")
+if mirror_manifest.get("status") != "passed":
+    fail("public_mirror_manifest_not_passed")
+if mirror_manifest.get("git_commit") != remote_sha:
+    fail("public_mirror_manifest_commit_mismatch")
+archive_relative = mirror_manifest.get("archive_path")
+if archive_relative != "public_mirror/focused-public-review-gate-public-mirror.zip":
+    fail("public_mirror_archive_path_mismatch")
+archive_path = summary_path.parent / archive_relative
+if not archive_path.is_file():
+    fail("public_mirror_archive_missing", str(archive_relative))
+archive_sha256 = "sha256:" + hashlib.sha256(archive_path.read_bytes()).hexdigest()
+if mirror_manifest.get("archive_sha256") != archive_sha256:
+    fail("public_mirror_archive_digest_mismatch")
+mirror_files = mirror_manifest.get("files")
+if not isinstance(mirror_files, dict) or not mirror_files:
+    fail("public_mirror_files_malformed")
+if mirror_manifest.get("file_count") != len(mirror_files):
+    fail("public_mirror_file_count_mismatch")
+for required in ("summary.json", "invocation.json", *required_outputs):
+    if required not in mirror_files:
+        fail("public_mirror_required_file_missing", required)
+mirror_not_proof = mirror_manifest.get("not_proof")
+if not isinstance(mirror_not_proof, list) or "GitHub Actions artifact zip contents" not in mirror_not_proof:
+    fail("public_mirror_not_proof_boundary_mismatch")
+try:
+    with zipfile.ZipFile(archive_path) as archive:
+        names = sorted(name for name in archive.namelist() if not name.endswith("/"))
+        if names != sorted(mirror_files):
+            fail("public_mirror_archive_file_list_mismatch")
+        for name in names:
+            if name.startswith("/") or ".." in Path(name).parts:
+                fail("public_mirror_archive_unsafe_path", name)
+            digest = "sha256:" + hashlib.sha256(archive.read(name)).hexdigest()
+            if mirror_files.get(name) != digest:
+                fail("public_mirror_archive_file_digest_mismatch", name)
+except zipfile.BadZipFile as exc:
+    fail("public_mirror_archive_invalid_zip", str(exc))
+
 latest = {}
 if latest_path.is_file():
     latest = json.loads(latest_path.read_text(encoding="utf-8"))
@@ -161,6 +207,8 @@ print(f"remote-public-evidence-snapshot: status={summary['status']}")
 print(f"remote-public-evidence-snapshot: required-output-count={len(required_outputs)}")
 print("remote-public-evidence-snapshot: heldout-reproduction-packet=present")
 print(f"remote-public-evidence-snapshot: heldout-task-proof-count={packet['task_proof_count']}")
+print("remote-public-evidence-snapshot: public-mirror-zip=present")
+print(f"remote-public-evidence-snapshot: public-mirror-file-count={mirror_manifest['file_count']}")
 print(f"remote-public-evidence-snapshot: latest-index={'present' if latest else 'missing'}")
 print(
     "remote-public-evidence-snapshot: "
