@@ -99,6 +99,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import sys
 import zipfile
 from datetime import datetime, timezone
@@ -138,19 +139,29 @@ with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as arc
         info.external_attr = 0o644 << 16
         archive.writestr(info, source.read_bytes())
 archive_sha256 = "sha256:" + hashlib.sha256(archive_path.read_bytes()).hexdigest()
+github_actions_artifact = {
+    "name": os.environ.get("OPENMAKO_FOCUSED_ARTIFACT_NAME", "focused-public-review-gate"),
+    "run_id": os.environ.get("OPENMAKO_FOCUSED_RUN_ID", ""),
+    "run_attempt": os.environ.get("OPENMAKO_FOCUSED_RUN_ATTEMPT", ""),
+    "artifact_id": os.environ.get("OPENMAKO_FOCUSED_ARTIFACT_ID", ""),
+    "artifact_digest": os.environ.get("OPENMAKO_FOCUSED_ARTIFACT_DIGEST", ""),
+    "artifact_url": os.environ.get("OPENMAKO_FOCUSED_ARTIFACT_URL", ""),
+}
 manifest = {
-    "schema_version": "public-evidence-artifact-mirror/v0.1",
+    "schema_version": "public-evidence-artifact-mirror/v0.2",
     "status": "passed",
     "generated_at_utc": datetime.now(timezone.utc).isoformat(),
     "git_commit": git_commit,
+    "mirror_scope": "github-actions-upload-directory-content",
     "source_summary": "summary.json",
     "archive_path": "public_mirror/focused-public-review-gate-public-mirror.zip",
     "archive_sha256": archive_sha256,
     "file_count": len(files),
     "files": files,
+    "github_actions_artifact": github_actions_artifact,
     "required_outputs": required_outputs,
     "not_proof": [
-        "GitHub Actions artifact zip contents",
+        "GitHub Actions API artifact zip endpoint byte-for-byte archive",
         "external review",
         "endorsement",
         "stars",
@@ -179,7 +190,7 @@ latest = {
     "focused_summary": f"focused/{git_commit}/summary.json",
     "updated_at_utc": datetime.now(timezone.utc).isoformat(),
     "not_proof": [
-        "GitHub Actions artifact zip contents",
+        "GitHub Actions API artifact zip endpoint byte-for-byte archive",
         "external review",
         "endorsement",
         "stars",

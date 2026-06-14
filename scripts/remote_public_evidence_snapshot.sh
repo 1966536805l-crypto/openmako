@@ -30,7 +30,7 @@ if ! git clone --depth 1 --branch "$BRANCH" "$EVIDENCE_REMOTE" "$tmp_dir/evidenc
   echo "remote-public-evidence-snapshot: branch=$BRANCH"
   echo "remote-public-evidence-snapshot: remote-main-sha=$remote_sha"
   echo "remote-public-evidence-snapshot: unavailable=public_evidence_branch_missing"
-  echo "remote-public-evidence-snapshot: not-proof=GitHub Actions artifact zip contents; external review; endorsement; stars; reposts; native live autonomy; broad unknown-repository repair; external benchmark standing"
+  echo "remote-public-evidence-snapshot: not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; external review; endorsement; stars; reposts; native live autonomy; broad unknown-repository repair; external benchmark standing"
   exit 2
 fi
 
@@ -59,7 +59,7 @@ def fail(reason: str, detail: str = "") -> None:
         print(f"remote-public-evidence-snapshot: detail={detail}")
     print(
         "remote-public-evidence-snapshot: "
-        "not-proof=GitHub Actions artifact zip contents; external review; endorsement; "
+        "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; external review; endorsement; "
         "stars; reposts; native live autonomy; broad unknown-repository repair; "
         "external benchmark standing"
     )
@@ -153,12 +153,14 @@ try:
     mirror_manifest = json.loads(mirror_manifest_path.read_text(encoding="utf-8"))
 except Exception as exc:
     fail("public_mirror_manifest_invalid_json", str(exc))
-if mirror_manifest.get("schema_version") != "public-evidence-artifact-mirror/v0.1":
+if mirror_manifest.get("schema_version") != "public-evidence-artifact-mirror/v0.2":
     fail("public_mirror_manifest_schema_mismatch")
 if mirror_manifest.get("status") != "passed":
     fail("public_mirror_manifest_not_passed")
 if mirror_manifest.get("git_commit") != remote_sha:
     fail("public_mirror_manifest_commit_mismatch")
+if mirror_manifest.get("mirror_scope") != "github-actions-upload-directory-content":
+    fail("public_mirror_scope_mismatch")
 archive_relative = mirror_manifest.get("archive_path")
 if archive_relative != "public_mirror/focused-public-review-gate-public-mirror.zip":
     fail("public_mirror_archive_path_mismatch")
@@ -176,8 +178,11 @@ if mirror_manifest.get("file_count") != len(mirror_files):
 for required in ("summary.json", "invocation.json", *required_outputs):
     if required not in mirror_files:
         fail("public_mirror_required_file_missing", required)
+artifact_meta = mirror_manifest.get("github_actions_artifact")
+if not isinstance(artifact_meta, dict) or artifact_meta.get("name") != "focused-public-review-gate":
+    fail("public_mirror_artifact_metadata_malformed")
 mirror_not_proof = mirror_manifest.get("not_proof")
-if not isinstance(mirror_not_proof, list) or "GitHub Actions artifact zip contents" not in mirror_not_proof:
+if not isinstance(mirror_not_proof, list) or "GitHub Actions API artifact zip endpoint byte-for-byte archive" not in mirror_not_proof:
     fail("public_mirror_not_proof_boundary_mismatch")
 try:
     with zipfile.ZipFile(archive_path) as archive:
@@ -209,10 +214,11 @@ print("remote-public-evidence-snapshot: heldout-reproduction-packet=present")
 print(f"remote-public-evidence-snapshot: heldout-task-proof-count={packet['task_proof_count']}")
 print("remote-public-evidence-snapshot: public-mirror-zip=present")
 print(f"remote-public-evidence-snapshot: public-mirror-file-count={mirror_manifest['file_count']}")
+print("remote-public-evidence-snapshot: public-mirror-scope=github-actions-upload-directory-content")
 print(f"remote-public-evidence-snapshot: latest-index={'present' if latest else 'missing'}")
 print(
     "remote-public-evidence-snapshot: "
-    "not-proof=GitHub Actions artifact zip contents; external review; endorsement; "
+    "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; external review; endorsement; "
     "stars; reposts; native live autonomy; broad unknown-repository repair; "
     "external benchmark standing"
 )

@@ -323,8 +323,9 @@ def test_readme_links_public_proof_issue() -> None:
     assert "Remote focused artifact snapshot" in readme
     assert "bash scripts/remote_focused_artifact_snapshot.sh" in readme
     assert "if the API is rate-limited it falls back to public run HTML" in readme
-    assert "artifact-zip-contract=unverified-by-public-html" in readme
-    assert "public artifact metadata evidence only, not artifact zip contents" in readme
+    assert "artifact-content-mirror=verified-by-public-evidence-branch" in readme
+    assert "public artifact metadata plus mirrored upload-directory content evidence only" in readme
+    assert "not the GitHub Actions API artifact zip endpoint byte-for-byte archive" in readme
     assert "Remote autonomous-learning artifact snapshot" in readme
     assert "bash scripts/remote_autonomous_learning_snapshot.sh" in readme
     assert "a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, downloaded `last_summary.json` contract fields, task-level proof records, and task-source provenance showing `repo-authored-regression-pack` with `external_heldout=false`" in readme
@@ -346,11 +347,11 @@ def test_readme_links_public_proof_issue() -> None:
     assert "public record consistency only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing" in readme
     assert "Public evidence branch publishing" in readme
     assert "bash scripts/publish_public_evidence_branch.sh" in readme
-    assert "validates the gate `summary.json` and required output hashes before publishing `focused/<commit>/...` to the `public-evidence` branch" in readme
+    assert "validates the gate `summary.json` and required output hashes before publishing `focused/<commit>/...` and a deterministic `public_mirror` upload-directory content archive" in readme
     assert "Remote public evidence snapshot" in readme
     assert "bash scripts/remote_public_evidence_snapshot.sh" in readme
-    assert "verifies `focused/<openmako-main-sha>/summary.json`, status, commit binding, required outputs, and output hashes" in readme
-    assert "public git-branch evidence only, not GitHub Actions artifact zip contents, external review, endorsement, stars, reposts, native live autonomy, broad unknown-repository repair, or external benchmark standing" in readme
+    assert "verifies `focused/<openmako-main-sha>/summary.json`, status, commit binding, required outputs, output hashes, and the deterministic `public_mirror` archive/file digests" in readme
+    assert "public git-branch evidence and mirrored upload-directory content only, not the GitHub Actions API artifact zip endpoint byte-for-byte archive, external review, endorsement, stars, reposts, native live autonomy, broad unknown-repository repair, or external benchmark standing" in readme
     assert "Why It Is Worth Checking" in readme
 
 
@@ -1230,7 +1231,10 @@ def test_remote_focused_artifact_snapshot_script_is_fail_closed_and_artifact_awa
     assert "OPENMAKO_FOCUSED_RUN_URL" in text
     assert "OPENMAKO_FORCE_PUBLIC_HTML_FALLBACK" in text
     assert "verified-by=public-html" in text
-    assert "artifact-zip-contract=unverified-by-public-html" in text
+    assert "artifact-content-mirror=verified-by-public-evidence-branch" in text
+    assert "artifact-zip-contract=api-zip-endpoint-unverified-by-public-html" in text
+    assert "public-evidence-artifact-mirror/v0.2" in text
+    assert "public evidence artifact mirror artifact digest mismatch" in text
     assert "not-proof=external review; endorsement; stars; reposts; live autonomy" in text
 
     remote_sha = "abcdef1234567890abcdef1234567890abcdef12"
@@ -1368,11 +1372,83 @@ def test_remote_focused_artifact_snapshot_script_is_fail_closed_and_artifact_awa
         encoding="utf-8",
     )
     html_env = os.environ.copy()
+    public_remote = tmp_path / "public-evidence.git"
+    evidence_work = tmp_path / "public-evidence-work"
+    mirror_root = evidence_work / "focused" / remote_sha
+    mirror_dir = mirror_root / "public_mirror"
+    subprocess.run(["git", "init", "--bare", "-q", str(public_remote)], check=True)
+    subprocess.run(["git", "init", "-q", str(evidence_work)], check=True)
+    subprocess.run(["git", "checkout", "--orphan", "public-evidence"], cwd=evidence_work, check=True)
+    mirror_root.mkdir(parents=True, exist_ok=True)
+    (mirror_root / "invocation.json").write_text(
+        json.dumps({"schema_version": "public-review-gate-invocation/v0.1", "git_commit": remote_sha}),
+        encoding="utf-8",
+    )
+    for name, payload in output_payloads.items():
+        path = mirror_root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(payload)
+    (mirror_root / "summary.json").write_text(json.dumps(summary), encoding="utf-8")
+    files = {
+        "invocation.json": "sha256:" + hashlib.sha256((mirror_root / "invocation.json").read_bytes()).hexdigest(),
+        "summary.json": "sha256:" + hashlib.sha256((mirror_root / "summary.json").read_bytes()).hexdigest(),
+        **output_hashes,
+    }
+    mirror_dir.mkdir(parents=True, exist_ok=True)
+    archive_path = mirror_dir / "focused-public-review-gate-public-mirror.zip"
+    with zipfile.ZipFile(archive_path, "w") as archive:
+        for name in sorted(files):
+            archive.writestr(name, (mirror_root / name).read_bytes())
+    mirror_manifest = {
+        "schema_version": "public-evidence-artifact-mirror/v0.2",
+        "status": "passed",
+        "git_commit": remote_sha,
+        "mirror_scope": "github-actions-upload-directory-content",
+        "archive_path": "public_mirror/focused-public-review-gate-public-mirror.zip",
+        "archive_sha256": "sha256:" + hashlib.sha256(archive_path.read_bytes()).hexdigest(),
+        "file_count": len(files),
+        "files": files,
+        "github_actions_artifact": {
+            "name": "focused-public-review-gate",
+            "run_id": str(run_id),
+            "artifact_id": "8000000002",
+            "artifact_digest": f"sha256:{artifact_zip_sha256}",
+        },
+        "required_outputs": required_outputs,
+        "not_proof": ["GitHub Actions API artifact zip endpoint byte-for-byte archive"],
+    }
+    (mirror_dir / "manifest.json").write_text(json.dumps(mirror_manifest), encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=evidence_work, check=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.email=openmako-test@example.invalid",
+            "-c",
+            "user.name=OpenMako Test",
+            "commit",
+            "-q",
+            "-m",
+            "publish artifact mirror fixture",
+        ],
+        cwd=evidence_work,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "push", str(public_remote), "HEAD:public-evidence"],
+        cwd=evidence_work,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=True,
+    )
     html_env.update(
         {
             "OPENMAKO_REMOTE_MAIN_SHA": remote_sha,
             "OPENMAKO_FORCE_PUBLIC_HTML_FALLBACK": "1",
             "OPENMAKO_FOCUSED_RUN_HTML": str(run_html),
+            "OPENMAKO_PUBLIC_EVIDENCE_REMOTE": str(public_remote),
+            "OPENMAKO_PUBLIC_EVIDENCE_BRANCH": "public-evidence",
         }
     )
     html_result = subprocess.run(
@@ -1389,10 +1465,9 @@ def test_remote_focused_artifact_snapshot_script_is_fail_closed_and_artifact_awa
     assert "remote-focused-artifact-snapshot: artifact-name=focused-public-review-gate" in html_result.stdout
     assert "remote-focused-artifact-snapshot: artifact-id=8000000002" in html_result.stdout
     assert f"remote-focused-artifact-snapshot: artifact-digest=sha256:{artifact_zip_sha256}" in html_result.stdout
-    assert (
-        "remote-focused-artifact-snapshot: artifact-zip-contract=unverified-by-public-html"
-        in html_result.stdout
-    )
+    assert "remote-focused-artifact-snapshot: artifact-content-mirror=verified-by-public-evidence-branch" in html_result.stdout
+    assert "remote-focused-artifact-snapshot: artifact-mirror-file-count=" in html_result.stdout
+    assert "remote-focused-artifact-snapshot: artifact-zip-contract=api-zip-endpoint-unverified-by-public-html" in html_result.stdout
     assert "remote-focused-artifact-snapshot: PASS" in html_result.stdout
 
 
@@ -1410,7 +1485,7 @@ def test_public_evidence_branch_scripts_are_fail_closed_and_boundary_aware() -> 
     assert "summary git_commit does not match HEAD" in publish_text
     assert "required output missing" in publish_text
     assert "digest mismatch for" in publish_text
-    assert "public-evidence-artifact-mirror/v0.1" in publish_text
+    assert "public-evidence-artifact-mirror/v0.2" in publish_text
     assert "focused-public-review-gate-public-mirror.zip" in publish_text
     assert "mirror missing required output" in publish_text
     assert 'git remote get-url "$REMOTE"' in publish_text
@@ -1418,7 +1493,7 @@ def test_public_evidence_branch_scripts_are_fail_closed_and_boundary_aware() -> 
     assert 'git worktree add --detach "$worktree_dir"' in publish_text
     assert 'git -C "$evidence_dir" push "$push_remote" "HEAD:$BRANCH"' in publish_text
     assert "public-evidence" in publish_text
-    assert "GitHub Actions artifact zip contents" in publish_text
+    assert "GitHub Actions API artifact zip endpoint byte-for-byte archive" in publish_text
     assert "broad unknown-repository repair" in publish_text
     assert "external benchmark standing" in publish_text
     assert "public-review-gate-artifact/v0.1" in remote_text
@@ -1430,15 +1505,19 @@ def test_public_evidence_branch_scripts_are_fail_closed_and_boundary_aware() -> 
     assert "heldout_reproduction_packet_raw_evidence_digest_mismatch" in remote_text
     assert "remote-public-evidence-snapshot: heldout-reproduction-packet=present" in remote_text
     assert "remote-public-evidence-snapshot: heldout-task-proof-count=" in remote_text
-    assert "public-evidence-artifact-mirror/v0.1" in remote_text
+    assert "public-evidence-artifact-mirror/v0.2" in remote_text
+    assert "github-actions-upload-directory-content" in publish_text
+    assert "github_actions_artifact" in publish_text
     assert "public_mirror_archive_digest_mismatch" in remote_text
     assert "public_mirror_archive_file_digest_mismatch" in remote_text
     assert "public_mirror_file_count_mismatch" in remote_text
+    assert "public_mirror_artifact_metadata_malformed" in remote_text
     assert "remote-public-evidence-snapshot: public-mirror-zip=present" in remote_text
+    assert "remote-public-evidence-snapshot: public-mirror-scope=github-actions-upload-directory-content" in remote_text
     assert "public_evidence_branch_missing" in remote_text
     assert "latest_index_commit_mismatch" in remote_text
     assert "remote-public-evidence-snapshot: PASS" in remote_text
-    assert "not-proof=GitHub Actions artifact zip contents; external review; endorsement" in remote_text
+    assert "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; external review; endorsement" in remote_text
 
 
 def test_fresh_clone_reproduction_public_evidence_scripts_are_fail_closed() -> None:

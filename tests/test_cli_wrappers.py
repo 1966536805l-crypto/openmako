@@ -703,6 +703,7 @@ class CliWrapperTest(unittest.TestCase):
             self.assertIn("heldout-reproduction-packet=present", snapshot.stdout)
             self.assertIn("heldout-task-proof-count=2", snapshot.stdout)
             self.assertIn("public-mirror-zip=present", snapshot.stdout)
+            self.assertIn("public-mirror-scope=github-actions-upload-directory-content", snapshot.stdout)
             self.assertIn("remote-public-evidence-snapshot: PASS", snapshot.stdout)
 
             evidence_clone = tmp_path / "evidence-clone"
@@ -715,6 +716,9 @@ class CliWrapperTest(unittest.TestCase):
             )
             manifest_path = evidence_clone / "focused" / current_commit / "public_mirror" / "manifest.json"
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self.assertEqual(manifest["schema_version"], "public-evidence-artifact-mirror/v0.2")
+            self.assertEqual(manifest["mirror_scope"], "github-actions-upload-directory-content")
+            self.assertEqual(manifest["github_actions_artifact"]["name"], "focused-public-review-gate")
             manifest["file_count"] = 0
             manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
             subprocess.run(["git", "add", "."], cwd=evidence_clone, check=True)

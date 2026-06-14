@@ -8,6 +8,8 @@ REPO="${OPENMAKO_GITHUB_REPO:-1966536805l-crypto/openmako}"
 REMOTE="${OPENMAKO_REMOTE:-openmako}"
 WORKFLOW="${OPENMAKO_FOCUSED_WORKFLOW:-focused.yml}"
 ARTIFACT_NAME="${OPENMAKO_FOCUSED_ARTIFACT_NAME:-focused-public-review-gate}"
+EVIDENCE_REMOTE="${OPENMAKO_PUBLIC_EVIDENCE_REMOTE:-https://github.com/1966536805l-crypto/openmako.git}"
+EVIDENCE_BRANCH="${OPENMAKO_PUBLIC_EVIDENCE_BRANCH:-public-evidence}"
 
 if [ -n "${OPENMAKO_REMOTE_MAIN_SHA:-}" ]; then
   remote_sha="$OPENMAKO_REMOTE_MAIN_SHA"
@@ -20,7 +22,7 @@ if [ -z "$remote_sha" ]; then
   exit 2
 fi
 
-python3 - "$REPO" "$WORKFLOW" "$ARTIFACT_NAME" "$remote_sha" <<'PY'
+python3 - "$REPO" "$WORKFLOW" "$ARTIFACT_NAME" "$remote_sha" "$EVIDENCE_REMOTE" "$EVIDENCE_BRANCH" <<'PY'
 from __future__ import annotations
 
 import hashlib
@@ -34,9 +36,10 @@ import zipfile
 from datetime import datetime, timezone
 from html import unescape
 from io import BytesIO
+from pathlib import Path
 
 
-repo, workflow, artifact_name, remote_sha = sys.argv[1:5]
+repo, workflow, artifact_name, remote_sha, evidence_remote, evidence_branch = sys.argv[1:7]
 runs_fixture = os.environ.get("OPENMAKO_FOCUSED_RUNS_JSON")
 artifacts_fixture = os.environ.get("OPENMAKO_FOCUSED_ARTIFACTS_JSON")
 artifact_zip_fixture = os.environ.get("OPENMAKO_FOCUSED_ARTIFACT_ZIP")
@@ -154,6 +157,114 @@ def read_run_html() -> tuple[str, str]:
     return unescape(read_text_url(run_url, "run_html_unreadable")), run_url
 
 
+def fail(message: str) -> None:
+    print(f"remote-focused-artifact-snapshot: {message}", file=sys.stderr)
+    sys.exit(1)
+
+
+def verify_public_evidence_mirror(
+    *,
+    run_id: str,
+    artifact_id: str,
+    artifact_digest: str,
+) -> dict:
+    import subprocess
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        evidence_dir = Path(tmp) / "evidence"
+        clone = subprocess.run(
+            [
+                "git",
+                "clone",
+                "--depth",
+                "1",
+                "--branch",
+                evidence_branch,
+                evidence_remote,
+                str(evidence_dir),
+            ],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if clone.returncode != 0:
+            print_boundary_snapshot("public_evidence_mirror_unreadable")
+            print(
+                "remote-focused-artifact-snapshot: could not clone public evidence mirror: "
+                + clone.stderr.strip(),
+                file=sys.stderr,
+            )
+            sys.exit(2)
+        mirror_path = evidence_dir / "focused" / remote_sha / "public_mirror" / "manifest.json"
+        if not mirror_path.is_file():
+            fail("public evidence artifact content mirror is missing")
+        try:
+            mirror = json.loads(mirror_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            fail(f"public evidence artifact mirror manifest is invalid JSON: {exc}")
+        if mirror.get("schema_version") != "public-evidence-artifact-mirror/v0.2":
+            fail("public evidence artifact mirror schema_version mismatch")
+        if mirror.get("status") != "passed":
+            fail("public evidence artifact mirror status mismatch")
+        if mirror.get("git_commit") != remote_sha:
+            fail("public evidence artifact mirror commit mismatch")
+        if mirror.get("mirror_scope") != "github-actions-upload-directory-content":
+            fail("public evidence artifact mirror scope mismatch")
+        files = mirror.get("files")
+        if not isinstance(files, dict) or not files:
+            fail("public evidence artifact mirror files contract is malformed")
+        required_outputs = mirror.get("required_outputs")
+        if not isinstance(required_outputs, list) or not required_outputs:
+            fail("public evidence artifact mirror required_outputs missing")
+        for required in ("summary.json", "invocation.json", *required_outputs):
+            if required not in files:
+                fail(f"public evidence artifact mirror required file missing: {required}")
+        archive_relative = mirror.get("archive_path")
+        if archive_relative != "public_mirror/focused-public-review-gate-public-mirror.zip":
+            fail("public evidence artifact mirror archive path mismatch")
+        archive_path = mirror_path.parent.parent / archive_relative
+        if not archive_path.is_file():
+            fail("public evidence artifact mirror archive missing")
+        archive_sha256 = "sha256:" + hashlib.sha256(archive_path.read_bytes()).hexdigest()
+        if mirror.get("archive_sha256") != archive_sha256:
+            fail("public evidence artifact mirror archive digest mismatch")
+        if mirror.get("file_count") != len(files):
+            fail("public evidence artifact mirror file count mismatch")
+        meta = mirror.get("github_actions_artifact")
+        if not isinstance(meta, dict):
+            fail("public evidence artifact mirror GitHub artifact metadata missing")
+        if meta.get("name") != artifact_name:
+            fail("public evidence artifact mirror artifact name mismatch")
+        if meta.get("run_id") and str(meta.get("run_id")) != str(run_id):
+            fail("public evidence artifact mirror run id mismatch")
+        if meta.get("artifact_id") and str(meta.get("artifact_id")) != str(artifact_id):
+            fail("public evidence artifact mirror artifact id mismatch")
+        if meta.get("artifact_digest") and meta.get("artifact_digest") != artifact_digest:
+            fail("public evidence artifact mirror artifact digest mismatch")
+        not_proof = mirror.get("not_proof")
+        if (
+            not isinstance(not_proof, list)
+            or "GitHub Actions API artifact zip endpoint byte-for-byte archive" not in not_proof
+        ):
+            fail("public evidence artifact mirror boundary mismatch")
+        try:
+            with zipfile.ZipFile(archive_path) as archive:
+                names = sorted(name for name in archive.namelist() if not name.endswith("/"))
+                if names != sorted(files):
+                    fail("public evidence artifact mirror archive file list mismatch")
+                for name in names:
+                    if name.startswith("/") or ".." in Path(name).parts:
+                        fail(f"public evidence artifact mirror archive unsafe path: {name}")
+                    digest = "sha256:" + hashlib.sha256(archive.read(name)).hexdigest()
+                    if files.get(name) != digest:
+                        fail(f"public evidence artifact mirror archive digest mismatch: {name}")
+        except zipfile.BadZipFile as exc:
+            fail(f"public evidence artifact mirror archive is not a zip: {exc}")
+        return mirror
+
+
 def verify_public_html_fallback(reason: str, response_headers=None) -> None:
     page, source = read_run_html()
     run_id_match = re.search(r"/actions/runs/([0-9]+)", page)
@@ -212,6 +323,11 @@ def verify_public_html_fallback(reason: str, response_headers=None) -> None:
             file=sys.stderr,
         )
         sys.exit(1)
+    mirror = verify_public_evidence_mirror(
+        run_id=run_id,
+        artifact_id=artifact_id,
+        artifact_digest=artifact_digest,
+    )
 
     print(f"remote-focused-artifact-snapshot: repo={repo}")
     print(f"remote-focused-artifact-snapshot: remote-main-sha={remote_sha}")
@@ -224,10 +340,13 @@ def verify_public_html_fallback(reason: str, response_headers=None) -> None:
     print(f"remote-focused-artifact-snapshot: artifact-name={artifact_name}")
     print(f"remote-focused-artifact-snapshot: artifact-id={artifact_id}")
     print(f"remote-focused-artifact-snapshot: artifact-digest={artifact_digest}")
-    print("remote-focused-artifact-snapshot: artifact-zip-contract=unverified-by-public-html")
+    print("remote-focused-artifact-snapshot: artifact-content-mirror=verified-by-public-evidence-branch")
+    print(f"remote-focused-artifact-snapshot: artifact-mirror-archive-sha256={mirror['archive_sha256']}")
+    print(f"remote-focused-artifact-snapshot: artifact-mirror-file-count={mirror['file_count']}")
+    print("remote-focused-artifact-snapshot: artifact-zip-contract=api-zip-endpoint-unverified-by-public-html")
     print(
         "remote-focused-artifact-snapshot: "
-        "not-proof=artifact zip contents; external review; endorsement; stars; reposts; "
+        "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; external review; endorsement; stars; reposts; "
         "live autonomy; broad unknown-repository repair; external benchmark standing"
     )
     print("remote-focused-artifact-snapshot: PASS")
@@ -321,11 +440,6 @@ def read_artifact_zip(url: str) -> bytes:
         print_boundary_snapshot("artifact_zip_unreadable")
         print(f"remote-focused-artifact-snapshot: could not read artifact zip: {exc}", file=sys.stderr)
         sys.exit(2)
-
-
-def fail(message: str) -> None:
-    print(f"remote-focused-artifact-snapshot: {message}", file=sys.stderr)
-    sys.exit(1)
 
 
 runs_data = (
