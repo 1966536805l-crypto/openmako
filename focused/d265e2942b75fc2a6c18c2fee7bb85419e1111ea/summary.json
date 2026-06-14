@@ -1,0 +1,53 @@
+{
+  "invocation": {
+    "finished_at_utc": "2026-06-14T21:08:36.000495+00:00",
+    "git_commit": "d265e2942b75fc2a6c18c2fee7bb85419e1111ea",
+    "proof_command": "bash scripts/public_review_gate.sh"
+  },
+  "not_proof": [
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "live autonomy",
+    "broad unknown-repository repair",
+    "external benchmark standing"
+  ],
+  "output_sha256": {
+    "outputs/artifact_provenance.json": "sha256:719dc33f2254c58613b2a3c87f2ed6721dc7b6ac0bf240b2c27bfecabfcd8a45",
+    "outputs/audit.json": "sha256:f59ca35ccaf77639484e849f0271286e668fba12c0c64676fd7679edf2fbbc42",
+    "outputs/ceabench_v01_pilot.json": "sha256:e9f3fa6ee8f701cfeeb2eabb0c6e65d19ad339d1834f9124eb347735d25d420d",
+    "outputs/ceabench_v01_score.json": "sha256:3672700ad1746fea21b217376408a7ab046f176d0efa2a01335d98b2a1aeb198",
+    "outputs/ci_workflow_tamper_success.json": "sha256:e585e4dfcdb490c8a97b4ba5d5fe4bd547b1db03696987920f3cfb4cf3587dad",
+    "outputs/config_only_repair.json": "sha256:0d8d04c05acef3ae17824ab2ba270a9792dc3d2b25afd6c9c7ebd0492ef7523d",
+    "outputs/external_heldout_benchmark_gate/last_summary.json": "sha256:acba9f8f082d3d0c1a900a6b71c0e0d41b766f82f76a962e83fcc899aa09688a",
+    "outputs/external_heldout_benchmark_gate/pytest.log": "sha256:1fb7d4a77eab598d150b8a7e8040435a6093a352668e04111960abeaa39ce6ab",
+    "outputs/external_heldout_benchmark_gate/task_proofs/vendored_mcp_tool_name_validation_function_repair.json": "sha256:8eda1df2d334d15e9f9e2f47f03e7c2dbf4f92e1fc4f1fc7b6266f313915a81f",
+    "outputs/external_heldout_benchmark_gate/task_proofs/vendored_mcp_tool_name_wrapper_seed_repair.json": "sha256:152a059fe57cac41e79533070e1f1aabec4a9a86b983bbf0a3dc0ea644cd3425",
+    "outputs/external_source_benchmark_gate/last_summary.json": "sha256:b722946f3ba546b969a85693fd05b9c754f926bdaf70fd70e737cfe19258eed2",
+    "outputs/external_source_benchmark_gate/pytest.log": "sha256:4700af99b0f650538e2b8bcfb8ebd9cfafb39e28633910a496b1707cf38043bc",
+    "outputs/heldout_reproduction_packet/packet.json": "sha256:6b9559421b72ce96d5ee3020afa3bed3cb811a3281eb3a3ca9ab178ed193473e",
+    "outputs/run.json": "sha256:1aba8b02541f516a4d57efa472dc2da4c8cc3a62726c7921ab88dfed3027acb3",
+    "outputs/runtime_shadowing_risk.json": "sha256:c0db6604e85895ea79d0f0a48a2cd24620e76bf08117594018549de461b9f920",
+    "outputs/swtbench_patch_artifact.json": "sha256:16b7765f98e72dcf32319248be03ffa90faacf84a2c17f04a24d58d486c6dd3d",
+    "outputs/verifier_attack_success.json": "sha256:a08a8e353071adf0d11ee70386e86cf21cb0e383695767ca158ee4b689e1ee42",
+    "outputs/verifier_tamper_risk.json": "sha256:a9c20778c7a59594fac0bdad84c03cdda656e7adce2059d8ae5f008beed18a5f"
+  },
+  "required_outputs": [
+    "outputs/audit.json",
+    "outputs/artifact_provenance.json",
+    "outputs/ceabench_v01_pilot.json",
+    "outputs/ceabench_v01_score.json",
+    "outputs/ci_workflow_tamper_success.json",
+    "outputs/config_only_repair.json",
+    "outputs/external_heldout_benchmark_gate/last_summary.json",
+    "outputs/heldout_reproduction_packet/packet.json",
+    "outputs/external_source_benchmark_gate/last_summary.json",
+    "outputs/runtime_shadowing_risk.json",
+    "outputs/swtbench_patch_artifact.json",
+    "outputs/verifier_attack_success.json",
+    "outputs/verifier_tamper_risk.json"
+  ],
+  "schema_version": "public-review-gate-artifact/v0.1",
+  "status": "passed"
+}
