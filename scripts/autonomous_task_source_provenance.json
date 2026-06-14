@@ -11,6 +11,7 @@
         "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair",
         "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2"
       ],
+      "selected_tests_sha256": "4f4d5382f5558d4f8f8fc77f510d0199728de201de902f0887d312829029d70a",
       "source_kind": "repo-authored-cross-upstream-inspired-regression"
     },
     "stage1_trajectory_reuse_matrix": {
@@ -20,6 +21,7 @@
         "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2",
         "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2"
       ],
+      "selected_tests_sha256": "80374a7024391861fbc4dd8dce08395d7dc18bdb06bde2180e82842c3be23bb5",
       "source_kind": "repo-authored-e2e-regression"
     },
     "upstream_hidden_pack_reuse": {
@@ -27,6 +29,7 @@
       "selected_tests": [
         "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating"
       ],
+      "selected_tests_sha256": "403c0d82611f585ffe0ca8e1a40057d9c302e7195c6d58daa62fd71e5987f181",
       "source_kind": "repo-authored-upstream-inspired-hidden-pack"
     }
   },

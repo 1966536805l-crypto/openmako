@@ -152,6 +152,7 @@ PY
 load_manifest_test_arrays() {
   "$PYTHON_BIN" - "$TASK_SOURCE_MANIFEST" <<'PY'
 import json
+import hashlib
 import re
 import shlex
 import sys
@@ -165,9 +166,14 @@ requested = {
     "CROSS_UPSTREAM_TESTS": ("cross_upstream_no_seed_reuse", 4),
 }
 node_id_re = re.compile(r"^tests/[A-Za-z0-9_./]+\.py::[A-Za-z_][A-Za-z0-9_]*::test_[A-Za-z0-9_]+$")
+
+def selected_tests_sha256(selected):
+    return hashlib.sha256(("\n".join(selected) + "\n").encode("utf-8")).hexdigest()
+
 seen = set()
 for variable, (segment, minimum_count) in requested.items():
-    selected = (segments.get(segment) or {}).get("selected_tests")
+    segment_entry = segments.get(segment) or {}
+    selected = segment_entry.get("selected_tests")
     if (
         not isinstance(selected, list)
         or len(selected) < minimum_count
@@ -184,6 +190,8 @@ for variable, (segment, minimum_count) in requested.items():
     duplicate_across_segments = seen.intersection(selected)
     if duplicate_across_segments:
         raise SystemExit(f"duplicate selected_tests across segments for {segment}")
+    if segment_entry.get("selected_tests_sha256") != selected_tests_sha256(selected):
+        raise SystemExit(f"invalid selected_tests_sha256 for {segment}")
     seen.update(selected)
     print(f"{variable}=(" + " ".join(shlex.quote(item) for item in selected) + ")")
 PY
@@ -518,6 +526,10 @@ required_provenance_segments = {
     "cross_upstream_no_seed_reuse": ("repo-authored-cross-upstream-inspired-regression", 4),
 }
 node_id_re = re.compile(r"^tests/[A-Za-z0-9_./]+\.py::[A-Za-z_][A-Za-z0-9_]*::test_[A-Za-z0-9_]+$")
+
+def selected_tests_sha256(selected):
+    return hashlib.sha256(("\n".join(selected) + "\n").encode("utf-8")).hexdigest()
+
 all_selected_tests = set()
 for segment, (source_kind, minimum_count) in required_provenance_segments.items():
     segment_entry = provenance_segments.get(segment) or {}
@@ -541,6 +553,13 @@ for segment, (source_kind, minimum_count) in required_provenance_segments.items(
     ):
         errors.append(f"task_source_provenance.segments.{segment}.selected_tests")
         selected_tests = []
+    selected_tests_digest = segment_entry.get("selected_tests_sha256")
+    if (
+        not isinstance(selected_tests_digest, str)
+        or not re.fullmatch(r"[0-9a-f]{64}", selected_tests_digest)
+        or selected_tests_digest != selected_tests_sha256(selected_tests)
+    ):
+        errors.append(f"task_source_provenance.segments.{segment}.selected_tests_sha256")
     duplicate_across_segments = all_selected_tests.intersection(selected_tests)
     if duplicate_across_segments:
         errors.append(f"task_source_provenance.segments.{segment}.selected_tests")

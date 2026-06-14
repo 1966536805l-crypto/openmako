@@ -221,6 +221,10 @@ def _autonomous_task_source_manifest_fixture() -> dict:
     }
 
 
+def _selected_tests_sha256(selected: list[str]) -> str:
+    return hashlib.sha256(("\n".join(selected) + "\n").encode("utf-8")).hexdigest()
+
+
 def _pyproject_description() -> str:
     text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     match = re.search(r'^description = "([^"]+)"$', text, flags=re.MULTILINE)
@@ -1040,6 +1044,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "task_source_manifest" in text
     assert "task_source_provenance_manifest.json" in text
     assert "task_source_provenance" in text
+    assert "selected_tests_sha256" in text
     assert "autonomous-task-source-provenance/v0.1" in text
     assert "repo-authored-regression-pack" in text
     assert "not an independent external held-out benchmark" in text
@@ -1476,6 +1481,41 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert (
         "task_source_provenance.segments.stage1_trajectory_reuse_matrix.selected_tests"
         in shortened_manifest.stderr
+    )
+
+    replacement_manifest_payload = json.loads(json.dumps(task_source_provenance))
+    replacement_stage1 = replacement_manifest_payload["segments"]["stage1_trajectory_reuse_matrix"][
+        "selected_tests"
+    ]
+    replacement_stage1[0] = (
+        "tests/test_upstream_function_file_bundle_regression.py::"
+        "UpstreamFunctionFileBundleRegressionTest::"
+        "test_vendored_mcp_function_level_repair_reuses_without_non_target_drift"
+    )
+    replacement_manifest_text = (
+        json.dumps(replacement_manifest_payload, indent=2, sort_keys=True) + "\n"
+    )
+    broken_summary = json.loads(json.dumps(artifact_summary))
+    broken_summary["task_source_provenance"] = replacement_manifest_payload
+    broken_summary["task_source_manifest"]["sha256"] = hashlib.sha256(
+        replacement_manifest_text.encode("utf-8")
+    ).hexdigest()
+    broken_summary["tests"]["stage1_trajectory_reuse_matrix"]["selected"] = replacement_stage1
+    write_artifact_summary(broken_summary, manifest_text=replacement_manifest_text)
+    replacement_manifest = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert replacement_manifest.returncode == 1
+    assert "artifact summary contract mismatch" in replacement_manifest.stderr
+    assert (
+        "task_source_provenance.segments.stage1_trajectory_reuse_matrix.selected_tests_sha256"
+        in replacement_manifest.stderr
     )
 
     broken_summary = dict(artifact_summary)
@@ -2252,6 +2292,7 @@ def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() 
     assert "node_id_re" in text
     assert "minimum_count" in text
     assert "duplicate selected_tests across segments" in text
+    assert "selected_tests_sha256" in text
     assert 'item.startswith("-")' in text
     assert '"${STAGE1_TESTS[@]}"' in text
     assert '"${UPSTREAM_TESTS[@]}"' in text
@@ -2259,6 +2300,8 @@ def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() 
     assert "tests.{segment}.selected" in text
     assert "tests.{segment}.expected_passed" in text
     assert "invalid selected_tests for {segment}" in text
+    assert "invalid selected_tests_sha256 for {segment}" in text
+    assert "task_source_provenance.segments.{segment}.selected_tests_sha256" in text
     assert "test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2" not in text
     assert "test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2" not in text
     assert "test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2" not in text
@@ -2283,6 +2326,17 @@ def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() 
         "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair",
         "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2",
     ]
+    expected_selected_digests = {
+        "stage1_trajectory_reuse_matrix": "80374a7024391861fbc4dd8dce08395d7dc18bdb06bde2180e82842c3be23bb5",
+        "upstream_hidden_pack_reuse": "403c0d82611f585ffe0ca8e1a40057d9c302e7195c6d58daa62fd71e5987f181",
+        "cross_upstream_no_seed_reuse": "4f4d5382f5558d4f8f8fc77f510d0199728de201de902f0887d312829029d70a",
+    }
+    for segment, expected_digest in expected_selected_digests.items():
+        selected = provenance["segments"][segment]["selected_tests"]
+        assert provenance["segments"][segment]["selected_tests_sha256"] == expected_digest
+        assert provenance["segments"][segment]["selected_tests_sha256"] == _selected_tests_sha256(
+            selected
+        )
     assert '"cross_upstream_no_seed_reuse": "pending"' in text
     assert '"upstream_family_count": 5' in text
     assert '"hidden_task_count": 10' in text
@@ -2458,6 +2512,16 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
     duplicate = run_with_manifest(duplicate_manifest, "duplicate-manifest.json")
     assert duplicate.returncode == 1
     assert "duplicate selected_tests across segments for upstream_hidden_pack_reuse" in duplicate.stderr
+
+    replacement_manifest = json.loads(json.dumps(_autonomous_task_source_provenance_fixture()))
+    replacement_manifest["segments"]["stage1_trajectory_reuse_matrix"]["selected_tests"][0] = (
+        "tests/test_upstream_function_file_bundle_regression.py::"
+        "UpstreamFunctionFileBundleRegressionTest::"
+        "test_vendored_mcp_function_level_repair_reuses_without_non_target_drift"
+    )
+    replacement = run_with_manifest(replacement_manifest, "replacement-manifest.json")
+    assert replacement.returncode == 1
+    assert "invalid selected_tests_sha256 for stage1_trajectory_reuse_matrix" in replacement.stderr
 
     corrupt_summary = tmp_path / "corrupt-summary.json"
     corrupt_env = env.copy()
