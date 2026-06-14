@@ -201,6 +201,138 @@ class CliWrapperTest(unittest.TestCase):
             check=False,
         )
 
+    def write_autonomous_learning_artifact(self, summary_dir: Path, git_commit: str) -> None:
+        segments = [
+            "stage1_trajectory_reuse_matrix",
+            "upstream_hidden_pack_reuse",
+            "cross_upstream_no_seed_reuse",
+        ]
+        selected_tests = {
+            "stage1_trajectory_reuse_matrix": [
+                "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_stage1_repair",
+                "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_stage1_extract",
+                "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_stage1_reuse",
+            ],
+            "upstream_hidden_pack_reuse": [
+                "tests/test_upstream_function_file_bundle_regression.py::UpstreamHiddenPackTest::test_hidden_pack_reuse",
+            ],
+            "cross_upstream_no_seed_reuse": [
+                "tests/test_upstream_function_file_bundle_regression.py::CrossUpstreamNoSeedTest::test_alpha_reuse",
+                "tests/test_upstream_function_file_bundle_regression.py::CrossUpstreamNoSeedTest::test_beta_reuse",
+                "tests/test_upstream_function_file_bundle_regression.py::CrossUpstreamNoSeedTest::test_gamma_reuse",
+                "tests/test_upstream_function_file_bundle_regression.py::CrossUpstreamNoSeedTest::test_delta_reuse",
+            ],
+        }
+        (summary_dir / "pytest_logs").mkdir(parents=True, exist_ok=True)
+        (summary_dir / "task_proofs").mkdir(parents=True, exist_ok=True)
+        tests: dict[str, dict[str, object]] = {}
+        for segment in segments:
+            passed = len(selected_tests[segment])
+            log_tail = [
+                f"{'.' * passed} [100%]",
+                f"{passed} passed in 0.01s",
+            ]
+            (summary_dir / "pytest_logs" / f"{segment}.log").write_text(
+                "header\n" + "\n".join(log_tail) + "\n",
+                encoding="utf-8",
+            )
+            tests[segment] = {
+                "selected": selected_tests[segment],
+                "expected_passed": passed,
+                "observed_pytest": {
+                    "exit_code": 0,
+                    "passed": passed,
+                },
+                "log_tail": log_tail,
+            }
+        provenance = {
+            "schema_version": "autonomous-task-source-provenance/v0.1",
+            "independence_claim": "repo-authored-regression-pack",
+            "external_heldout": False,
+            "source_boundary": "repo-authored regression pack, not an independent external held-out benchmark",
+            "segments": {},
+        }
+        manifest_text = json.dumps(provenance, indent=2, sort_keys=True) + "\n"
+        manifest_sha = hashlib.sha256(manifest_text.encode("utf-8")).hexdigest()
+        (summary_dir / "task_source_provenance_manifest.json").write_text(manifest_text, encoding="utf-8")
+        summary = {
+            "schema_version": "autonomous-learning-gate/v0.1",
+            "status": "passed",
+            "invocation": {
+                "git_commit": git_commit,
+                "argv": [],
+            },
+            "segments": {segment: "passed" for segment in segments},
+            "tests": tests,
+            "task_source_manifest": {
+                "path": "scripts/autonomous_task_source_provenance.json",
+                "artifact_path": str(summary_dir / "task_source_provenance_manifest.json"),
+                "sha256": manifest_sha,
+            },
+            "task_source_provenance": provenance,
+            "task_proofs": {
+                "upstream_hidden_pack_reuse": [{"schema_version": "autonomous-task-proof/v0.1"}],
+                "cross_upstream_no_seed_reuse": [
+                    {"schema_version": "autonomous-task-proof/v0.1", "index": index}
+                    for index in range(4)
+                ],
+            },
+            "not_proof": [
+                "native live autonomy",
+                "broad unknown-repository repair",
+                "external benchmark standing",
+                "remote CI proof",
+                "external review",
+                "independent external held-out benchmark",
+                "endorsement",
+                "stars",
+                "reposts",
+            ],
+        }
+        (summary_dir / "last_summary.json").write_text(
+            json.dumps(summary, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+
+    def run_publish_autonomous_public_evidence_branch(
+        self,
+        remote: Path | str,
+        summary_dir: Path,
+    ) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["OPENMAKO_PUBLIC_EVIDENCE_REMOTE"] = str(remote)
+        env["OPENMAKO_PUBLIC_EVIDENCE_BRANCH"] = "public-evidence"
+        env["OPENMAKO_AUTONOMOUS_LEARNING_GATE_DIR"] = str(summary_dir)
+        return subprocess.run(
+            ["bash", "scripts/publish_autonomous_public_evidence_branch.sh"],
+            cwd=str(ROOT),
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+            check=False,
+        )
+
+    def run_remote_autonomous_public_evidence_snapshot(
+        self,
+        remote: Path,
+    ) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["OPENMAKO_REMOTE"] = str(remote)
+        env["OPENMAKO_PUBLIC_EVIDENCE_REMOTE"] = str(remote)
+        env["OPENMAKO_PUBLIC_EVIDENCE_BRANCH"] = "public-evidence"
+        return subprocess.run(
+            ["bash", "scripts/remote_autonomous_public_evidence_snapshot.sh"],
+            cwd=str(ROOT),
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+            check=False,
+        )
+
     def init_minimal_reproduction_repo(
         self,
         target: Path,
@@ -488,6 +620,53 @@ class CliWrapperTest(unittest.TestCase):
                     text=True,
                     check=False,
                 )
+
+    def test_autonomous_public_evidence_branch_publish_and_remote_snapshot_verify_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            remote = tmp_path / "remote.git"
+            summary_dir = tmp_path / "autonomous_learning_gate"
+            current_commit = self.current_git_commit()
+
+            subprocess.run(["git", "init", "--bare", "-q", str(remote)], check=True)
+            subprocess.run(
+                ["git", "push", str(remote), f"{current_commit}:refs/heads/main"],
+                cwd=str(ROOT),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+            self.write_autonomous_learning_artifact(summary_dir, current_commit)
+
+            publish = self.run_publish_autonomous_public_evidence_branch(remote, summary_dir)
+
+            self.assertEqual(publish.returncode, 0, publish.stderr)
+            self.assertIn("publish-autonomous-public-evidence-branch: PASS", publish.stdout)
+            self.assertIn(f"commit={current_commit}", publish.stdout)
+
+            snapshot = self.run_remote_autonomous_public_evidence_snapshot(remote)
+
+            self.assertEqual(snapshot.returncode, 0, snapshot.stderr)
+            self.assertIn(
+                f"remote-autonomous-public-evidence-snapshot: remote-main-sha={current_commit}",
+                snapshot.stdout,
+            )
+            self.assertIn(f"summary=autonomous/{current_commit}/last_summary.json", snapshot.stdout)
+            self.assertIn("selected-test-count=8", snapshot.stdout)
+            self.assertIn("upstream-task-proof-count=1", snapshot.stdout)
+            self.assertIn("cross-upstream-task-proof-count=4", snapshot.stdout)
+            self.assertIn("remote-autonomous-public-evidence-snapshot: PASS", snapshot.stdout)
+
+            summary_path = summary_dir / "last_summary.json"
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            summary["status"] = "failed"
+            summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+            tampered = self.run_publish_autonomous_public_evidence_branch(remote, summary_dir)
+
+            self.assertEqual(tampered.returncode, 1)
+            self.assertIn("summary status is not passed", tampered.stderr)
 
     def test_fresh_clone_reproduction_passes_with_clean_venv_fixture(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

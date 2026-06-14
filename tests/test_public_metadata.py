@@ -456,7 +456,9 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert '".github/workflows/autonomous-learning-gate.yml"' in workflow
     assert '"scripts/autonomous_task_source_provenance.json"' in workflow
     assert '"scripts/autonomous_learning_gate.sh"' in workflow
+    assert '"scripts/publish_autonomous_public_evidence_branch.sh"' in workflow
     assert '"scripts/remote_autonomous_learning_snapshot.sh"' in workflow
+    assert '"scripts/remote_autonomous_public_evidence_snapshot.sh"' in workflow
     assert '"scripts/supplied_transcript_adapter_matrix.sh"' in workflow
     assert '"PROGRESS.md"' in workflow
     assert '"quantagent/agent_loop_core.py"' in workflow
@@ -472,6 +474,8 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert '"tests/test_public_metadata.py"' in workflow
     assert "pull_request:" not in workflow
     assert "timeout-minutes: 20" in workflow
+    assert "permissions:" in workflow
+    assert "contents: write" in workflow
     assert "python -m pip install -e . pytest typing_extensions" in workflow
     assert "bash scripts/autonomous_learning_gate.sh" in workflow
     assert "Upload autonomous-learning summary and logs" in workflow
@@ -480,10 +484,42 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert "name: autonomous-learning-gate-summary" in workflow
     assert "path: .quantagent/autonomous_learning_gate" in workflow
     assert "if-no-files-found: error" in workflow
+    assert "Publish autonomous public evidence branch" in workflow
+    assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_DIR: .quantagent/autonomous_learning_gate" in workflow
+    assert "bash scripts/publish_autonomous_public_evidence_branch.sh" in workflow
 
     assert "`.github/workflows/autonomous-learning-gate.yml` exposes the autonomous-learning\n  stress gate as a manual `workflow_dispatch` check and as a path-filtered\n  `push` check" in progress
     assert "for the workflow file, tracked task-source manifest, gate script,\n  remote artifact snapshot script, `PROGRESS.md`, and selected gate-test paths" in progress
     assert "The path filter also includes core learning modules, retained-failure\n  skill-learning code and tests, the supplied transcript adapter matrix,\n  `quantagent/evidence_court.py`, and `tests/test_cli_wrappers.py`" in progress
+
+
+def test_autonomous_public_evidence_branch_scripts_are_fail_closed_and_boundary_aware() -> None:
+    publish = ROOT / "scripts" / "publish_autonomous_public_evidence_branch.sh"
+    remote = ROOT / "scripts" / "remote_autonomous_public_evidence_snapshot.sh"
+    publish_text = publish.read_text(encoding="utf-8")
+    remote_text = remote.read_text(encoding="utf-8")
+    progress = (ROOT / "PROGRESS.md").read_text(encoding="utf-8")
+
+    assert publish.exists()
+    assert remote.exists()
+    assert publish.stat().st_mode & 0o111
+    assert remote.stat().st_mode & 0o111
+    assert "autonomous-learning-gate/v0.1" in publish_text
+    assert "summary git_commit does not match HEAD" in publish_text
+    assert "summary segments are not all passed" in publish_text
+    assert "pytest log_tail mismatch" in publish_text
+    assert "task source manifest digest mismatch" in publish_text
+    assert "git worktree add --detach" in publish_text
+    assert "Publish autonomous public evidence for" in publish_text
+    assert "native live autonomy" in publish_text
+    assert "independent external held-out benchmark" in publish_text
+    assert "autonomous_summary_commit_mismatch" in remote_text
+    assert "autonomous_summary_segment_not_passed" in remote_text
+    assert "autonomous_task_source_manifest_digest_mismatch" in remote_text
+    assert "autonomous_pytest_log_tail_mismatch" in remote_text
+    assert "autonomous_upstream_task_proof_missing" in remote_text
+    assert "autonomous_cross_upstream_task_proofs_missing" in remote_text
+    assert "remote-autonomous-public-evidence-snapshot: PASS" in remote_text
     assert "The gate derives the selected pytest\n  node ids and expected\n  pass counts from `scripts/autonomous_task_source_provenance.json` rather than\n  duplicating that test list inside the shell script" in progress
     assert "fails closed\n  before pytest runs if a manifest segment falls below its expected minimum\n  selected-test count, contains a non-pytest-node id, passes a pytest option,\n  includes whitespace, duplicates a test inside a segment, or duplicates a test\n  across segments" in progress
     assert "It uploads\n  `.quantagent/autonomous_learning_gate` as the\n  `autonomous-learning-gate-summary` artifact" in progress
