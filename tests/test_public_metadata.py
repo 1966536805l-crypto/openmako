@@ -344,6 +344,13 @@ def test_readme_links_public_proof_issue() -> None:
     assert "verifies the configured commit, run, job, artifact id, artifact digest, and boundary phrase in public HTML" in readme
     assert "OPENMAKO_PUBLIC_EVIDENCE_HTML" in readme
     assert "public record consistency only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing" in readme
+    assert "Public evidence branch publishing" in readme
+    assert "bash scripts/publish_public_evidence_branch.sh" in readme
+    assert "validates the gate `summary.json` and required output hashes before publishing `focused/<commit>/...` to the `public-evidence` branch" in readme
+    assert "Remote public evidence snapshot" in readme
+    assert "bash scripts/remote_public_evidence_snapshot.sh" in readme
+    assert "verifies `focused/<openmako-main-sha>/summary.json`, status, commit binding, required outputs, and output hashes" in readme
+    assert "public git-branch evidence only, not GitHub Actions artifact zip contents, external review, endorsement, stars, reposts, native live autonomy, broad unknown-repository repair, or external benchmark standing" in readme
     assert "Why It Is Worth Checking" in readme
 
 
@@ -358,6 +365,12 @@ def test_focused_workflow_runs_same_public_gate_as_readme() -> None:
     assert "name: focused-public-review-gate" in workflow
     assert "path: .quantagent/public_review_gate" in workflow
     assert "if-no-files-found: error" in workflow
+    assert "permissions:" in workflow
+    assert "contents: write" in workflow
+    assert "Publish focused public evidence branch" in workflow
+    assert "github.event_name == 'push' && github.ref == 'refs/heads/main' && success()" in workflow
+    assert "OPENMAKO_PUBLIC_EVIDENCE_BRANCH: public-evidence" in workflow
+    assert "bash scripts/publish_public_evidence_branch.sh" in workflow
     assert "tests/test_agent_planner_contract.py::AgentPlannerContractTest" not in workflow
     assert "tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest" not in workflow
     assert "python -m pip install -e . pytest" in workflow
@@ -1340,6 +1353,36 @@ def test_remote_focused_artifact_snapshot_script_is_fail_closed_and_artifact_awa
         in html_result.stdout
     )
     assert "remote-focused-artifact-snapshot: PASS" in html_result.stdout
+
+
+def test_public_evidence_branch_scripts_are_fail_closed_and_boundary_aware() -> None:
+    publish = ROOT / "scripts" / "publish_public_evidence_branch.sh"
+    remote = ROOT / "scripts" / "remote_public_evidence_snapshot.sh"
+    publish_text = publish.read_text(encoding="utf-8")
+    remote_text = remote.read_text(encoding="utf-8")
+
+    assert publish.exists()
+    assert remote.exists()
+    assert publish.stat().st_mode & 0o111
+    assert remote.stat().st_mode & 0o111
+    assert "public-review-gate-artifact/v0.1" in publish_text
+    assert "summary git_commit does not match HEAD" in publish_text
+    assert "required output missing" in publish_text
+    assert "digest mismatch for" in publish_text
+    assert 'git remote get-url "$REMOTE"' in publish_text
+    assert 'REMOTE_URL="$remote_url"' in publish_text
+    assert "public-evidence" in publish_text
+    assert "GitHub Actions artifact zip contents" in publish_text
+    assert "broad unknown-repository repair" in publish_text
+    assert "external benchmark standing" in publish_text
+    assert "public-review-gate-artifact/v0.1" in remote_text
+    assert "focused_summary_commit_mismatch" in remote_text
+    assert "focused_summary_required_outputs_missing" in remote_text
+    assert "focused_summary_output_digest_mismatch" in remote_text
+    assert "public_evidence_branch_missing" in remote_text
+    assert "latest_index_commit_mismatch" in remote_text
+    assert "remote-public-evidence-snapshot: PASS" in remote_text
+    assert "not-proof=GitHub Actions artifact zip contents; external review; endorsement" in remote_text
 
 
 def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_aware(tmp_path: Path) -> None:

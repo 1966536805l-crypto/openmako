@@ -12,6 +12,8 @@ jobs:
   focused-evidence:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -39,3 +41,12 @@ jobs:
           name: focused-public-review-gate
           path: .quantagent/public_review_gate
           if-no-files-found: error
+
+      - name: Publish focused public evidence branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+        env:
+          OPENMAKO_PUBLIC_REVIEW_GATE_ARTIFACT_DIR: .quantagent/public_review_gate
+          OPENMAKO_PUBLIC_EVIDENCE_REMOTE: origin
+          OPENMAKO_PUBLIC_EVIDENCE_BRANCH: public-evidence
+        run: |
+          bash scripts/publish_public_evidence_branch.sh

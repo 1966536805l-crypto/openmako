@@ -131,6 +131,76 @@ class CliWrapperTest(unittest.TestCase):
                 check=False,
             )
 
+    def write_public_review_artifact(self, artifact_dir: Path, git_commit: str) -> None:
+        required_outputs = [
+            "outputs/audit.json",
+            "outputs/external_heldout_benchmark_gate/last_summary.json",
+        ]
+        output_sha256: dict[str, str] = {}
+        for relative in required_outputs:
+            path = artifact_dir / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            payload = f"{relative}: {git_commit}\n".encode("utf-8")
+            path.write_bytes(payload)
+            output_sha256[relative] = "sha256:" + hashlib.sha256(payload).hexdigest()
+        summary = {
+            "schema_version": "public-review-gate-artifact/v0.1",
+            "status": "passed",
+            "invocation": {
+                "git_commit": git_commit,
+                "proof_command": "bash scripts/public_review_gate.sh",
+            },
+            "required_outputs": required_outputs,
+            "output_sha256": output_sha256,
+            "not_proof": [
+                "external review",
+                "GitHub Actions artifact zip contents",
+            ],
+        }
+        (artifact_dir / "summary.json").write_text(
+            json.dumps(summary, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+
+    def run_publish_public_evidence_branch(
+        self,
+        remote: Path,
+        artifact_dir: Path,
+    ) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["OPENMAKO_PUBLIC_EVIDENCE_REMOTE"] = str(remote)
+        env["OPENMAKO_PUBLIC_EVIDENCE_BRANCH"] = "public-evidence"
+        env["OPENMAKO_PUBLIC_REVIEW_GATE_ARTIFACT_DIR"] = str(artifact_dir)
+        return subprocess.run(
+            ["bash", "scripts/publish_public_evidence_branch.sh"],
+            cwd=str(ROOT),
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+            check=False,
+        )
+
+    def run_remote_public_evidence_snapshot(
+        self,
+        remote: Path,
+    ) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["OPENMAKO_REMOTE"] = str(remote)
+        env["OPENMAKO_PUBLIC_EVIDENCE_REMOTE"] = str(remote)
+        env["OPENMAKO_PUBLIC_EVIDENCE_BRANCH"] = "public-evidence"
+        return subprocess.run(
+            ["bash", "scripts/remote_public_evidence_snapshot.sh"],
+            cwd=str(ROOT),
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+            check=False,
+        )
+
     def init_minimal_reproduction_repo(
         self,
         target: Path,
@@ -337,6 +407,48 @@ class CliWrapperTest(unittest.TestCase):
         self.assertIn("run-sha=None", result.stdout)
         self.assertIn("status=None conclusion=None", result.stdout)
         self.assertIn("latest focused run does not match remote main", result.stderr)
+
+    def test_public_evidence_branch_publish_and_remote_snapshot_verify_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            remote = tmp_path / "remote.git"
+            artifact_dir = tmp_path / "public_review_gate"
+            current_commit = self.current_git_commit()
+
+            subprocess.run(["git", "init", "--bare", "-q", str(remote)], check=True)
+            subprocess.run(
+                ["git", "push", str(remote), f"{current_commit}:refs/heads/main"],
+                cwd=str(ROOT),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+            self.write_public_review_artifact(artifact_dir, current_commit)
+
+            publish = self.run_publish_public_evidence_branch(remote, artifact_dir)
+
+            self.assertEqual(publish.returncode, 0, publish.stderr)
+            self.assertIn("publish-public-evidence-branch: PASS", publish.stdout)
+            self.assertIn(f"commit={current_commit}", publish.stdout)
+
+            snapshot = self.run_remote_public_evidence_snapshot(remote)
+
+            self.assertEqual(snapshot.returncode, 0, snapshot.stderr)
+            self.assertIn(f"remote-public-evidence-snapshot: remote-main-sha={current_commit}", snapshot.stdout)
+            self.assertIn(f"summary=focused/{current_commit}/summary.json", snapshot.stdout)
+            self.assertIn("required-output-count=2", snapshot.stdout)
+            self.assertIn("remote-public-evidence-snapshot: PASS", snapshot.stdout)
+
+            summary_path = artifact_dir / "summary.json"
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            summary["output_sha256"]["outputs/audit.json"] = "sha256:" + "0" * 64
+            summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+            tampered = self.run_publish_public_evidence_branch(remote, artifact_dir)
+
+            self.assertEqual(tampered.returncode, 1)
+            self.assertIn("digest mismatch for outputs/audit.json", tampered.stderr)
 
     def test_fresh_clone_reproduction_passes_with_clean_venv_fixture(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
