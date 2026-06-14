@@ -11,6 +11,7 @@ on:
       - "scripts/autonomous_learning_gate.sh"
       - "scripts/remote_autonomous_learning_snapshot.sh"
       - "scripts/supplied_transcript_adapter_matrix.sh"
+      - "PROGRESS.md"
       - "quantagent/agent_loop_core.py"
       - "quantagent/coding_bench.py"
       - "quantagent/evidence_court.py"

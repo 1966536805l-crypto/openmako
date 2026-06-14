@@ -118,13 +118,14 @@ Current public proof:
 - `.github/workflows/autonomous-learning-gate.yml` exposes the autonomous-learning
   stress gate as a manual `workflow_dispatch` check and as a path-filtered
   `push` check for the workflow file, tracked task-source manifest, gate script,
-  remote artifact snapshot script, and selected gate-test paths. The path filter
-  also includes core learning modules, retained-failure skill-learning code
-  and tests, the supplied transcript adapter matrix,
+  remote artifact snapshot script, `PROGRESS.md`, and selected gate-test paths.
+  The path filter also includes core learning modules, retained-failure
+  skill-learning code and tests, the supplied transcript adapter matrix,
   `quantagent/evidence_court.py`, and `tests/test_cli_wrappers.py` so changes to
-  the autonomous-learning machinery or public Evidence Court/transcript proof
-  boundary get a current autonomous-learning artifact run instead of only the
-  faster focused gate. The gate derives the selected pytest node ids and expected
+  the autonomous-learning machinery, public status boundary, or public Evidence
+  Court/transcript proof boundary get a current autonomous-learning artifact run
+  instead of only the faster focused gate. The gate derives the selected pytest
+  node ids and expected
   pass counts from `scripts/autonomous_task_source_provenance.json` rather than
   duplicating that test list inside the shell script. It now also fails closed
   before pytest runs if a manifest segment falls below its expected minimum
@@ -149,11 +150,12 @@ Current public proof:
   or independent external held-out benchmark evidence.
 - Latest local autonomous workflow path-filter check on 2026-06-14 passed:
   `.github/workflows/autonomous-learning-gate.yml` now includes
-  `quantagent/skill_learning.py` and `tests/test_skill_learning.py` in its
-  path-filtered push trigger. This means retained-failure learning code and its
-  regression tests trigger the autonomous-learning artifact workflow instead of
-  relying only on manual gate runs. This is CI trigger coverage only, not
-  release readiness, live autonomy, external review, endorsement, stars,
+  `PROGRESS.md`, `quantagent/skill_learning.py`, and
+  `tests/test_skill_learning.py` in its path-filtered push trigger. This means
+  public status-boundary updates, retained-failure learning code, and the
+  related regression tests trigger the autonomous-learning artifact workflow
+  instead of relying only on manual gate runs. This is CI trigger coverage only,
+  not release readiness, live autonomy, external review, endorsement, stars,
   reposts, or independent external held-out benchmark evidence.
 - Latest local external-source benchmark gate wiring on 2026-06-14 adds
   `bash scripts/external_source_benchmark_gate.sh` to the public review gate.
@@ -251,6 +253,22 @@ Current public proof:
   This is public marker consistency and saved-artifact consistency only, not
   external review, endorsement, stars, reposts, live autonomy, broad
   unknown-repository repair, or external benchmark standing.
+- Latest exact-commit remote evidence re-check on 2026-06-14 verified current
+  `openmako/main` at commit
+  `465fc00839545ce586cbd8bbc0956678d69ca0ac`: focused workflow run
+  `27495481560` completed with `conclusion=success`, autonomous-learning
+  workflow run `27495481572` completed with `conclusion=success`, and artifact
+  `7619952926` named `autonomous-learning-gate-summary` had digest
+  `sha256:a88f8cb040d31267673bd45fa898c7382b92e67d12782f73ead43d7c8d818e1d`.
+  The connector-downloaded artifact zip had the same sha256, and
+  `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP=/tmp/autonomous-learning-gate-summary-27495481572.zip
+  bash scripts/remote_autonomous_learning_snapshot.sh` ended with
+  `remote-autonomous-learning-snapshot: PASS`. The artifact summary still
+  records `task-source-provenance=repo-authored-regression-pack` and
+  `external-heldout=false`, so this is exact-run public CI artifact evidence
+  only, not independent external held-out benchmark evidence, external review,
+  endorsement, stars, reposts, live autonomy, or broad unknown-repository
+  repair.
 - Latest local autonomous manifest-boundary check on 2026-06-14 passed:
   `python3 -m pytest -p no:cacheprovider tests/test_public_metadata.py -q`
   ended with `51 passed` and now includes shortened-manifest, pytest-option
@@ -266,8 +284,8 @@ Current public proof:
   review, endorsement, stars, reposts, live autonomy, or broad unknown-repository
   repair.
 - Next smallest task: get an owner license decision and add the root license
-  file plus `pyproject.toml` license metadata, or add a genuinely external
-  held-out benchmark manifest/adapter with source, license, and digest checks.
+  file plus `pyproject.toml` license metadata so `release_readiness_gate.sh`
+  can pass without inventing a license choice.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:
@@ -1787,8 +1805,6 @@ public result.
 
 Next smallest hygiene task:
 
-- Pick the next code-backed target only if it can be reduced to a failing test
-  and public-proof boundary.
-- Next concrete candidate: get an owner license decision and then add the root
-  license file plus `pyproject.toml` license metadata, or add a genuinely
-  external held-out benchmark manifest with source, license, and digest checks.
+- Get an owner license decision and then add the root license file plus
+  `pyproject.toml` license metadata. Do not invent a license choice to make
+  `release_readiness_gate.sh` pass.
