@@ -166,6 +166,17 @@ Current public proof:
   benchmark evidence, external benchmark standing, external review,
   endorsement, stars, reposts, native live autonomy, broad unknown-repository
   repair, or current remote CI proof.
+- Latest local external-heldout benchmark gate wiring on 2026-06-14 adds
+  `bash scripts/external_heldout_benchmark_gate.sh` to the public review gate.
+  The gate verifies the vendored MCP Python SDK manifest, MIT license, selected
+  source digest, upstream attribution boundary, and one function-level source
+  repair regression while checking the selected test does not overlap
+  `scripts/autonomous_task_source_provenance.json`. Its summary records
+  `external_source_heldout=true`, `heldout_from_autonomous_gate=true`, and
+  `independent_external_benchmark=false`. This is external-source held-out
+  regression evidence only, not external benchmark standing, external review,
+  endorsement, stars, reposts, native live autonomy, broad unknown-repository
+  repair, current remote CI proof, or owner license decision.
 - `bash scripts/remote_autonomous_learning_snapshot.sh` is the fail-closed
   re-check tool for the latest autonomous-learning workflow on current
   `openmako/main`. It verifies the latest run SHA, completed/success

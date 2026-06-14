@@ -45,6 +45,8 @@ Expected high-level signal:
 public-review-gate: running planner focused public test
 public-review-gate: running external-source benchmark gate
 external-source-benchmark-gate: PASS
+public-review-gate: running external-heldout benchmark gate
+external-heldout-benchmark-gate: PASS
 public-review-gate: running public metadata boundary tests
 public-review-gate: checking adversarial claim matrix generator
 public-review-gate: running Evidence Court intensity matrix
@@ -65,7 +67,11 @@ public-review-gate: PASS
 What this checks is narrow: the external-source benchmark gate verifies the
 OpenClaw vendored-source manifest, MIT license, selected source digest, one
 OpenClaw selected-source repair regression, and the package-level
-learning-effect regression; public metadata stays inside the v0.1 boundary,
+learning-effect regression; the external-heldout benchmark gate verifies the
+MCP Python SDK vendored-source manifest, MIT license, selected source digest,
+one held-out function-level source repair regression, and that its selected
+test does not overlap the autonomous-learning gate's selected test manifest;
+public metadata stays inside the v0.1 boundary,
 Evidence Court fails closed on a supplied bad-run record, the local Evidence
 Court intensity matrix covers supplied test-output parser edge cases and 105
 full supplied audit-record claim-boundary cases, including five multi-finding
@@ -258,11 +264,11 @@ Expected signal:
 
 ## What The Public Gate Checks
 
-The focused public gate now runs an external-source benchmark gate before the
-broader metadata and Evidence Court checks. That gate verifies the vendored
-OpenClaw MIT license, manifest, selected source digest, and then exercises one
-OpenClaw selected-source repair regression plus the package-level JavaScript
-learning-effect repair task:
+The focused public gate now runs external-source and external-heldout benchmark
+gates before the broader metadata and Evidence Court checks. The
+external-source gate verifies the vendored OpenClaw MIT license, manifest,
+selected source digest, and then exercises one OpenClaw selected-source repair
+regression plus the package-level JavaScript learning-effect repair task:
 
 - `no_learning` must fail the hidden task pack.
 - `approved_learning` must solve the hidden task pack.
@@ -271,6 +277,13 @@ learning-effect repair task:
 - protected-test and failure-log cheating must be classified as cheated.
 - the summary must record `external_source=true` and
   `independent_external_heldout=false`.
+
+The external-heldout benchmark gate verifies the vendored MCP Python SDK MIT
+license, manifest, selected source digest, and upstream attribution boundary,
+then exercises one held-out function-level source repair regression that is not
+listed in `scripts/autonomous_task_source_provenance.json`. Its summary records
+`external_source_heldout=true`, `heldout_from_autonomous_gate=true`, and
+`independent_external_benchmark=false`.
 
 Run the same gate locally:
 
@@ -317,7 +330,7 @@ python -m pip install -e . pytest
 ```
 
 That script runs the planner focused public test, the external-source benchmark
-gate, metadata boundary checks, the supplied Evidence Court bad-run audit, the
+gate, the external-heldout benchmark gate, metadata boundary checks, the supplied Evidence Court bad-run audit, the
 artifact-provenance fixture, the SWTBench patch-artifact fixture, and the
 supplied transcript adapter matrix. To run only the external-source benchmark
 gate:
@@ -326,10 +339,17 @@ gate:
 bash scripts/external_source_benchmark_gate.sh
 ```
 
-This is the same public gate route run by GitHub Actions. It is external-source
-regression evidence for the v0.1 snapshot, not independent external held-out
-benchmark evidence, external benchmark standing, external review, endorsement,
-stars, reposts, native live autonomy, or broad unknown-repository repair proof.
+To run only the external-heldout benchmark gate:
+
+```bash
+bash scripts/external_heldout_benchmark_gate.sh
+```
+
+This is the same public gate route run by GitHub Actions. These are
+external-source and external-heldout regression checks for the v0.1 snapshot,
+not external benchmark standing, external review, endorsement, stars, reposts,
+native live autonomy, broad unknown-repository repair proof, current remote CI
+proof, or an owner license decision.
 
 For a slower local autonomous-learning stress check, run:
 
@@ -368,6 +388,7 @@ qagent --help
 | Attribution boundary | [`docs/UPSTREAM_ATTRIBUTION.md`](docs/UPSTREAM_ATTRIBUTION.md), upstream references and vendored-license boundaries |
 | Release readiness gate | `bash scripts/release_readiness_gate.sh`, a fail-closed check for root `LICENSE`/`COPYING` and `pyproject.toml` license metadata; `[NEEDS OWNER DECISION: LICENSE]` is the correct status when no owner-selected license evidence exists |
 | External-source benchmark gate | `bash scripts/external_source_benchmark_gate.sh`, a fail-closed check for the OpenClaw vendored-source manifest, MIT license, selected source digest, one OpenClaw selected-source repair regression, and the package-level JavaScript learning-effect regression; writes `.quantagent/external_source_benchmark_gate/last_summary.json` with `external_source=true` and `independent_external_heldout=false`; external-source regression evidence only, not independent external held-out benchmark evidence, external benchmark standing, external review, endorsement, stars, reposts, native live autonomy, broad unknown-repository repair, or current remote CI proof |
+| External-heldout benchmark gate | `bash scripts/external_heldout_benchmark_gate.sh`, a fail-closed check for the MCP Python SDK vendored-source manifest, MIT license, selected source digest, upstream attribution boundary, and one function-level source repair regression held out from `scripts/autonomous_task_source_provenance.json`; writes `.quantagent/external_heldout_benchmark_gate/last_summary.json` with `external_source_heldout=true`, `heldout_from_autonomous_gate=true`, and `independent_external_benchmark=false`; external-source held-out regression evidence only, not external benchmark standing, external review, endorsement, stars, reposts, native live autonomy, broad unknown-repository repair, current remote CI proof, or owner license decision |
 | Agent trend radar | [`docs/AGENT_TREND_RADAR.md`](docs/AGENT_TREND_RADAR.md), source-linked trend map and non-claim development bets |
 | Reviewer target map | [`docs/REVIEWER_TARGETS.md`](docs/REVIEWER_TARGETS.md), public-source outreach waves for technical review |
 | Wave 1 review requests | [`docs/WAVE1_REVIEW_REQUESTS.md`](docs/WAVE1_REVIEW_REQUESTS.md), copyable non-promotional messages for technical reviewers |

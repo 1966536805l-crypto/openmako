@@ -55,6 +55,10 @@ echo "public-review-gate: running external-source benchmark gate"
 OPENMAKO_EXTERNAL_SOURCE_BENCHMARK_SUMMARY_JSON="$TMP_DIR/external_source_benchmark_gate/last_summary.json" \
   bash scripts/external_source_benchmark_gate.sh
 
+echo "public-review-gate: running external-heldout benchmark gate"
+OPENMAKO_EXTERNAL_HELDOUT_BENCHMARK_SUMMARY_JSON="$TMP_DIR/external_heldout_benchmark_gate/last_summary.json" \
+  bash scripts/external_heldout_benchmark_gate.sh
+
 echo "public-review-gate: running public metadata boundary tests"
 "$PYTHON_BIN" -m pytest -p no:cacheprovider \
   tests/test_public_metadata.py \

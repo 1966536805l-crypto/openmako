@@ -7,8 +7,9 @@ request, promotion request, star request, or repost request.
 ## Claim Under Test
 
 OpenMako v0.1 demonstrates one learning-effect repair check inside an
-external-source benchmark gate, plus an Evidence Court CLI for auditing supplied
-records.
+external-source benchmark gate, one held-out function-level source repair check
+inside an external-heldout benchmark gate, plus an Evidence Court CLI for
+auditing supplied records.
 
 Do not treat older planning docs, archived quant experiments, desktop-control
 experiments, or local-only benchmark notes as proof for this claim.
@@ -39,6 +40,10 @@ public-review-gate: running external-source benchmark gate
 external-source-benchmark-gate: running selected OpenClaw source and package-level regression tests
 2 passed
 external-source-benchmark-gate: PASS
+public-review-gate: running external-heldout benchmark gate
+external-heldout-benchmark-gate: running MCP Python SDK held-out repair regression
+1 passed
+external-heldout-benchmark-gate: PASS
 public-review-gate: running public metadata boundary tests
 <N> passed
 public-review-gate: checking adversarial claim matrix generator
@@ -70,6 +75,10 @@ metadata section passes and the script reaches `public-review-gate: PASS`.
 - The external-source benchmark gate verifies the vendored OpenClaw manifest,
   MIT license, selected source digest, one OpenClaw selected-source repair
   regression, and the package-level JavaScript learning-effect regression.
+- The external-heldout benchmark gate verifies the vendored MCP Python SDK
+  manifest, MIT license, selected source digest, upstream attribution boundary,
+  one held-out function-level source repair regression, and that its selected
+  test does not overlap the autonomous-learning gate's selected test manifest.
 - The no-learning repair path fails the hidden task pack.
 - The approved-learning repair path solves the hidden task pack.
 - Repeat stability remains deterministic for the focused task.
@@ -111,6 +120,20 @@ default. The summary records `external_source=true` and
 only, not independent external held-out benchmark evidence, external benchmark
 standing, external review, endorsement, stars, reposts, native live autonomy,
 broad unknown-repository repair, or current remote CI proof.
+
+External-heldout benchmark gate only:
+
+```bash
+bash scripts/external_heldout_benchmark_gate.sh
+```
+
+This writes `.quantagent/external_heldout_benchmark_gate/last_summary.json` by
+default. The summary records `external_source_heldout=true`,
+`heldout_from_autonomous_gate=true`, and
+`independent_external_benchmark=false`. It is external-source held-out
+regression evidence only, not external benchmark standing, external review,
+endorsement, stars, reposts, native live autonomy, broad unknown-repository
+repair, current remote CI proof, or owner license decision.
 
 Slower local autonomous-learning stress gate:
 
