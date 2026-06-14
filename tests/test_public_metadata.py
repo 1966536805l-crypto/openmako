@@ -2581,6 +2581,7 @@ def test_external_heldout_benchmark_gate_locks_source_boundary_and_summary_contr
     assert "https://github.com/modelcontextprotocol/python-sdk" in text
     assert "third_party/mcp_python_sdk/src/mcp/shared/tool_name_validation.py" in text
     assert "test_vendored_mcp_function_level_repair_reuses_without_non_target_drift" in text
+    assert "test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift" in text
     assert "external_source_heldout" in text
     assert "heldout_from_autonomous_gate" in text
     assert "independent_external_benchmark" in text
@@ -2617,21 +2618,22 @@ def test_external_heldout_benchmark_gate_locks_source_boundary_and_summary_contr
     assert task_source["external_heldout"] is True
     assert task_source["independence_claim"] == "vendored-external-source-heldout-regression"
     assert task_source["selected_tests"] == [
-        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_function_level_repair_reuses_without_non_target_drift"
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_function_level_repair_reuses_without_non_target_drift",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift",
     ]
     assert task_source["selected_tests_sha256"] == _selected_tests_sha256(
         task_source["selected_tests"]
     )
     assert task_source["selected_test_file"] == {
         "path": "tests/test_upstream_function_file_bundle_regression.py",
-        "sha256": "90a8ac6edd296435ffcf217a2ebd2353683c9d6b8c3aabb2c233b0565cb33fc5",
+        "sha256": "314018517a8df6b6b686004faa020a1d09d8529dd7a326497ba1ed26f2d4ad9e",
     }
 
     assert "`bash scripts/external_heldout_benchmark_gate.sh` to the public review gate" in progress
     assert "MCP Python SDK manifest, MIT license, selected\n  source digest" in progress
     assert "`external_source_heldout=true`, `heldout_from_autonomous_gate=true`, and\n  `independent_external_benchmark=false`" in progress
     assert "external-source held-out\n  regression evidence only, not external benchmark standing" in progress
-    assert "derives that selected\n  test from `scripts/external_heldout_task_source_provenance.json`, which locks\n  the pytest node id, selected-tests sha256, and selected test file sha256" in progress
+    assert "derives those selected\n  tests from `scripts/external_heldout_task_source_provenance.json`, which locks\n  the pytest node ids, selected-tests sha256, and selected test file sha256" in progress
     assert "summary records the held-out task-source manifest path and sha256 plus\n  the manifest payload" in progress
     assert "proof validator cross-checks the raw unified\n  diff target, command-log before/after entries, return codes" in progress
     assert "missing\n  repair evidence packet, duplicate proof files, forged diff target flags,\n  successful-before-failure claims, nonzero after-test claims, and command-log\n  mismatches, and selected test file replacement" in progress

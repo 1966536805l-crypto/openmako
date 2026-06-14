@@ -1846,6 +1846,21 @@ Current public proof:
   ingestion, live control, proof that supplied patches were applied outside the
   supplied record, remote CI proof, external review, endorsement, stars, or
   reposts.
+- The external-heldout benchmark gate now runs two MCP Python SDK vendored
+  function-level repair regressions held out from
+  `scripts/autonomous_task_source_provenance.json` and requires two task-level
+  repair evidence packets before it can print `PASS`. It derives those selected
+  tests from `scripts/external_heldout_task_source_provenance.json`, which locks
+  the pytest node ids, selected-tests sha256, and selected test file sha256.
+  The added seed-backed wrapper repair proof records before-failure command
+  output, agent diagnosis, target-function diff, after-test command output,
+  patch scope, command log, source digests, final claim, and the non-proof
+  boundary. `bash scripts/external_heldout_benchmark_gate.sh` and
+  `python3 -m pytest -p no:cacheprovider tests/test_external_heldout_benchmark_gate.py -q`
+  passed locally before this note was added. This is external-source held-out
+  regression evidence only, not independent external benchmark standing, native
+  live autonomy, broad unknown-repository repair, remote CI proof, external
+  review, endorsement, stars, or reposts.
 
 Do not use stale internal notes, local-only benchmark counts, old full-suite
 logs, or agent-written summaries as public capability claims.
@@ -1855,6 +1870,6 @@ public result.
 
 Next smallest hygiene task:
 
-- Verify and push the owner-selected MIT license hygiene change, then re-check
-  exact-commit CI and move to independent external held-out or live self-repair
-  evidence.
+- Add an independent external held-out or live self-repair evidence slice with a
+  public artifact, rather than adding more supplied-record or wording-only
+  checks.

@@ -70,8 +70,8 @@ OpenClaw vendored-source manifest, MIT license, selected source digest, one
 OpenClaw selected-source repair regression, and the package-level
 learning-effect regression; the external-heldout benchmark gate verifies the
 MCP Python SDK vendored-source manifest, MIT license, selected source digest,
-one held-out function-level source repair regression, and that its selected
-test does not overlap the autonomous-learning gate's selected test manifest;
+two held-out function-level source repair regressions, and that their selected
+tests do not overlap the autonomous-learning gate's selected test manifest;
 the external-heldout fail-closed negatives verify that manifest digest,
 license-boundary, attribution-boundary, and autonomous-manifest-overlap
 tampering stop before the gate can print `PASS`;
@@ -284,8 +284,8 @@ regression plus the package-level JavaScript learning-effect repair task:
 
 The external-heldout benchmark gate verifies the vendored MCP Python SDK MIT
 license, manifest, selected source digest, and upstream attribution boundary,
-then exercises one held-out function-level source repair regression that is not
-listed in `scripts/autonomous_task_source_provenance.json`. Its summary records
+then exercises two held-out function-level source repair regressions that are
+not listed in `scripts/autonomous_task_source_provenance.json`. Its summary records
 `external_source_heldout=true`, `heldout_from_autonomous_gate=true`, and
 `independent_external_benchmark=false`. Its fail-closed negative tests tamper
 the vendored manifest digest, license boundary, attribution boundary, and
@@ -394,7 +394,7 @@ qagent --help
 | Attribution boundary | [`docs/UPSTREAM_ATTRIBUTION.md`](docs/UPSTREAM_ATTRIBUTION.md), upstream references and vendored-license boundaries |
 | Release readiness gate | `bash scripts/release_readiness_gate.sh`, a fail-closed check for root `LICENSE`/`COPYING` and `pyproject.toml` license metadata; the current owner-selected project license is MIT, recorded in `LICENSE` and `pyproject.toml` |
 | External-source benchmark gate | `bash scripts/external_source_benchmark_gate.sh`, a fail-closed check for the OpenClaw vendored-source manifest, MIT license, selected source digest, one OpenClaw selected-source repair regression, and the package-level JavaScript learning-effect regression; writes `.quantagent/external_source_benchmark_gate/last_summary.json` with `external_source=true` and `independent_external_heldout=false`; external-source regression evidence only, not independent external held-out benchmark evidence, external benchmark standing, external review, endorsement, stars, reposts, native live autonomy, broad unknown-repository repair, or current remote CI proof |
-| External-heldout benchmark gate | `bash scripts/external_heldout_benchmark_gate.sh`, a fail-closed check for the MCP Python SDK vendored-source manifest, MIT license, selected source digest, upstream attribution boundary, and one function-level source repair regression held out from `scripts/autonomous_task_source_provenance.json`; writes `.quantagent/external_heldout_benchmark_gate/last_summary.json` with `external_source_heldout=true`, `heldout_from_autonomous_gate=true`, and `independent_external_benchmark=false`; external-source held-out regression evidence only, not external benchmark standing, external review, endorsement, stars, reposts, native live autonomy, broad unknown-repository repair, current remote CI proof, or owner license decision |
+| External-heldout benchmark gate | `bash scripts/external_heldout_benchmark_gate.sh`, a fail-closed check for the MCP Python SDK vendored-source manifest, MIT license, selected source digest, upstream attribution boundary, and two function-level source repair regressions held out from `scripts/autonomous_task_source_provenance.json`; writes `.quantagent/external_heldout_benchmark_gate/last_summary.json` with `external_source_heldout=true`, `heldout_from_autonomous_gate=true`, and `independent_external_benchmark=false`; external-source held-out regression evidence only, not external benchmark standing, external review, endorsement, stars, reposts, native live autonomy, broad unknown-repository repair, current remote CI proof, or owner license decision |
 | Agent trend radar | [`docs/AGENT_TREND_RADAR.md`](docs/AGENT_TREND_RADAR.md), source-linked trend map and non-claim development bets |
 | Reviewer target map | [`docs/REVIEWER_TARGETS.md`](docs/REVIEWER_TARGETS.md), public-source outreach waves for technical review |
 | Wave 1 review requests | [`docs/WAVE1_REVIEW_REQUESTS.md`](docs/WAVE1_REVIEW_REQUESTS.md), copyable non-promotional messages for technical reviewers |

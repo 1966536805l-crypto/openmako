@@ -7,7 +7,7 @@ request, promotion request, star request, or repost request.
 ## Claim Under Test
 
 OpenMako v0.1 demonstrates one learning-effect repair check inside an
-external-source benchmark gate, one held-out function-level source repair check
+external-source benchmark gate, two held-out function-level source repair checks
 inside an external-heldout benchmark gate, plus an Evidence Court CLI for
 auditing supplied records.
 
@@ -79,8 +79,8 @@ metadata section passes and the script reaches `public-review-gate: PASS`.
   regression, and the package-level JavaScript learning-effect regression.
 - The external-heldout benchmark gate verifies the vendored MCP Python SDK
   manifest, MIT license, selected source digest, upstream attribution boundary,
-  one held-out function-level source repair regression, and that its selected
-  test does not overlap the autonomous-learning gate's selected test manifest.
+  two held-out function-level source repair regressions, and that their selected
+  tests do not overlap the autonomous-learning gate's selected test manifest.
 - External-heldout fail-closed negatives verify that manifest digest,
   license-boundary, attribution-boundary, and autonomous-manifest-overlap
   tampering stop before the gate can print `PASS`.

@@ -65,6 +65,8 @@ def _write_fake_passing_selected_test(target_root: Path) -> None:
         "import unittest\n\n"
         "class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):\n"
         "    def test_vendored_mcp_function_level_repair_reuses_without_non_target_drift(self):\n"
+        "        self.assertTrue(True)\n"
+        "    def test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift(self):\n"
         "        self.assertTrue(True)\n",
         encoding="utf-8",
     )
@@ -84,7 +86,7 @@ def _write_fake_passing_selected_test_with_task_proofs(
         "from pathlib import Path\n\n"
         f"PROOFS_JSON = {proofs_json!r}\n\n"
         "class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):\n"
-        "    def test_vendored_mcp_function_level_repair_reuses_without_non_target_drift(self):\n"
+        "    def _write_proofs(self):\n"
         "        proof_dir = Path(os.environ['OPENMAKO_EXTERNAL_HELDOUT_TASK_PROOF_DIR'])\n"
         "        proof_dir.mkdir(parents=True, exist_ok=True)\n"
         "        for index, proof in enumerate(json.loads(PROOFS_JSON)):\n"
@@ -92,6 +94,11 @@ def _write_fake_passing_selected_test_with_task_proofs(
         "                json.dumps(proof, indent=2, sort_keys=True) + '\\n',\n"
         "                encoding='utf-8',\n"
         "            )\n"
+        "    def test_vendored_mcp_function_level_repair_reuses_without_non_target_drift(self):\n"
+        "        self._write_proofs()\n"
+        "        self.assertTrue(True)\n"
+        "    def test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift(self):\n"
+        "        self._write_proofs()\n"
         "        self.assertTrue(True)\n",
         encoding="utf-8",
     )
@@ -183,6 +190,21 @@ def _valid_task_proof() -> dict:
         "target_path": "mcp/shared/tool_name_validation.py",
         "task_id": "vendored_mcp_tool_name_validation_function_repair",
     }
+
+
+def _valid_wrapper_task_proof() -> dict:
+    proof = _valid_task_proof()
+    proof["task_id"] = "vendored_mcp_tool_name_wrapper_seed_repair"
+    proof["function_name"] = "validate_and_warn_tool_name"
+    proof["diff"]["unified_diff"] = [
+        "--- a/mcp/shared/tool_name_validation.py",
+        "+++ b/mcp/shared/tool_name_validation.py",
+        "@@",
+        "-def validate_and_warn_tool_name(name):",
+        "+def validate_and_warn_tool_name(name):",
+    ]
+    proof["diff"]["line_count"] = len(proof["diff"]["unified_diff"])
+    return proof
 
 
 def _sha256(path: Path) -> str:
@@ -292,13 +314,13 @@ def test_external_heldout_gate_fails_closed_on_selected_test_file_replacement(tm
 def test_external_heldout_gate_fails_closed_on_duplicate_task_proofs(tmp_path: Path) -> None:
     target_root = _copy_minimal_gate_repo(tmp_path)
     proof = _valid_task_proof()
-    _write_fake_passing_selected_test_with_task_proofs(target_root, [proof, proof])
+    _write_fake_passing_selected_test_with_task_proofs(target_root, [proof, _valid_wrapper_task_proof(), proof])
     _refresh_task_source_manifest_test_file_digest(target_root)
 
     result = _run_gate(target_root)
 
     assert result.returncode != 0
-    assert "task_proof_count=2" in result.stderr
+    assert "task_proof_count=3" in result.stderr
     assert "external-heldout-benchmark-gate: PASS" not in result.stdout
 
 
@@ -308,13 +330,13 @@ def test_external_heldout_gate_fails_closed_on_forged_diff_target_flag(tmp_path:
     proof["diff"]["contains_target_function"] = True
     proof["diff"]["unified_diff"] = ["--- a/file.py", "+++ b/file.py", "-old", "+new"]
     proof["diff"]["line_count"] = len(proof["diff"]["unified_diff"])
-    _write_fake_passing_selected_test_with_task_proofs(target_root, [proof])
+    _write_fake_passing_selected_test_with_task_proofs(target_root, [proof, _valid_wrapper_task_proof()])
     _refresh_task_source_manifest_test_file_digest(target_root)
 
     result = _run_gate(target_root)
 
     assert result.returncode != 0
-    assert "task_proof.diff.unified_diff_target" in result.stderr
+    assert ".diff.unified_diff_target" in result.stderr
     assert "external-heldout-benchmark-gate: PASS" not in result.stdout
 
 
@@ -323,13 +345,13 @@ def test_external_heldout_gate_fails_closed_on_successful_before_failure_claim(t
     proof = _valid_task_proof()
     proof["before_failure"]["returncode"] = 0
     proof["command_log"][0] = proof["before_failure"]
-    _write_fake_passing_selected_test_with_task_proofs(target_root, [proof])
+    _write_fake_passing_selected_test_with_task_proofs(target_root, [proof, _valid_wrapper_task_proof()])
     _refresh_task_source_manifest_test_file_digest(target_root)
 
     result = _run_gate(target_root)
 
     assert result.returncode != 0
-    assert "task_proof.before_failure_returncode" in result.stderr
+    assert ".before_failure_returncode" in result.stderr
     assert "external-heldout-benchmark-gate: PASS" not in result.stdout
 
 
@@ -338,13 +360,13 @@ def test_external_heldout_gate_fails_closed_on_nonzero_after_test_claim(tmp_path
     proof = _valid_task_proof()
     proof["after_test"]["returncode"] = 1
     proof["command_log"][-1] = proof["after_test"]
-    _write_fake_passing_selected_test_with_task_proofs(target_root, [proof])
+    _write_fake_passing_selected_test_with_task_proofs(target_root, [proof, _valid_wrapper_task_proof()])
     _refresh_task_source_manifest_test_file_digest(target_root)
 
     result = _run_gate(target_root)
 
     assert result.returncode != 0
-    assert "task_proof.after_test_returncode" in result.stderr
+    assert ".after_test_returncode" in result.stderr
     assert "external-heldout-benchmark-gate: PASS" not in result.stdout
 
 
@@ -356,11 +378,11 @@ def test_external_heldout_gate_fails_closed_on_command_log_mismatch(tmp_path: Pa
         "cwd": "/tmp/other",
         "returncode": 1,
     }
-    _write_fake_passing_selected_test_with_task_proofs(target_root, [proof])
+    _write_fake_passing_selected_test_with_task_proofs(target_root, [proof, _valid_wrapper_task_proof()])
     _refresh_task_source_manifest_test_file_digest(target_root)
 
     result = _run_gate(target_root)
 
     assert result.returncode != 0
-    assert "task_proof.command_log.before_failure" in result.stderr
+    assert ".command_log.before_failure" in result.stderr
     assert "external-heldout-benchmark-gate: PASS" not in result.stdout

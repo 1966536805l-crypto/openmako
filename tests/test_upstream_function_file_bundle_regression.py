@@ -260,6 +260,233 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
         self.assertEqual(stability.summary()["errors"], 0)
         self.assertEqual(stability.summary()["invalid"], 0)
 
+    def test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="upstream-mcp-wrapper-seed-bundle-") as tmp:
+            root = Path(tmp)
+            project = root / "learning_project"
+            project.mkdir()
+            actual_source = UPSTREAM_SOURCE.read_text(encoding="utf-8")
+            self.assertIn(_sha256(actual_source), UPSTREAM_MANIFEST.read_text(encoding="utf-8"))
+            repaired_function = _function_source(actual_source, "validate_and_warn_tool_name")
+            broken_source = _replace_function(
+                actual_source,
+                "validate_and_warn_tool_name",
+                "def validate_and_warn_tool_name(name: str) -> bool:\n    return True\n",
+            )
+            seed_project = root / "seed_learning_project"
+            _install_seed_file_function_skill(
+                seed_project,
+                repaired_function,
+                function_name="validate_and_warn_tool_name",
+                trigger="seed-upstream-wrapper-function-1",
+            )
+
+            stage1 = root / "stage1_workspace"
+            _write_workspace(stage1, broken_source, _wrapper_stage1_tests())
+            before_failure = _run_workspace_unittest(stage1)
+            self.assertNotEqual(before_failure["returncode"], 0, before_failure)
+            result = run_agent_loop(
+                stage1,
+                "Fix failing package tests using approved learning contract seed-upstream-wrapper-function-1.",
+                explicit_mode="repair",
+                include_validation=True,
+                learning_context="on",
+                learning_project=seed_project,
+                max_steps=12,
+            )
+            self.assertTrue(result.ok, result.to_dict())
+            implementation = next(item for item in result.observations if item.name == "implement")
+            self.assertEqual(implementation.data["files_touched"], [TARGET_PATH])
+            after_test = _run_workspace_unittest(stage1)
+            self.assertEqual(after_test["returncode"], 0, after_test)
+            repaired_source = (stage1 / TARGET_PATH).read_text(encoding="utf-8")
+            repair_diff = _unified_diff(
+                broken_source,
+                repaired_source,
+                fromfile=f"broken/{TARGET_PATH}",
+                tofile=f"repaired/{TARGET_PATH}",
+            )
+            preservation = _preservation_scan(
+                broken_source,
+                stage1,
+                exclude_function="validate_and_warn_tool_name",
+            )
+
+            proposal = propose_file_bundle_repair_skill_from_trajectory(
+                project,
+                result.trajectory_path,
+                workspace=stage1,
+                name="upstream-mcp-wrapper-seed-function-repair",
+                description="Seed-backed wrapper repair from vendored MCP Python SDK tool_name_validation.py.",
+                triggers=("opaque-upstream-wrapper-seed-contract-1",),
+            )
+            hint = _openmako_repair_hint(proposal.body)
+            self.assertEqual(hint["target"], "file_bundle")
+            self.assertEqual(hint["mode"], "replace_functions")
+            self.assertEqual(hint["functions"], ["validate_and_warn_tool_name"])
+            self.assertNotIn("def validate_tool_name", hint["files"][TARGET_PATH])
+
+            eval_result = run_skill_eval_command(
+                project,
+                f"cd {shlex.quote(str(stage1))} && {shlex.quote(sys.executable)} -m unittest discover -s tests -q",
+                summary="vendored MCP seed-backed wrapper function stage1 repair verifies against package tests",
+                evidence=(result.trajectory_path, str(stage1 / "tests" / "test_tool_name_validation.py"), str(UPSTREAM_SOURCE)),
+                timeout_seconds=30,
+            )
+            self.assertTrue(eval_result.passed, eval_result.to_dict())
+            approve_skill_proposal(
+                project,
+                proposal.proposal_id,
+                eval_result=_with_learning_report(eval_result, _stage1_learning_report(proposal), proposal),
+            )
+
+            task_file = root / "upstream_wrapper_seed_stage2_tasks.json"
+            _write_stage2_task_pack(
+                task_file,
+                broken_source,
+                target_path=TARGET_PATH,
+                task_specs=(
+                    (
+                        "upstream_mcp_tool_name_wrapper_seed_repair_long_name",
+                        _wrapper_stage2_tests(),
+                        "opaque-upstream-wrapper-seed-contract-1",
+                    ),
+                    (
+                        "upstream_mcp_tool_name_wrapper_seed_repair_edge_warning",
+                        _wrapper_stage2_variant_tests(),
+                        "opaque-upstream-wrapper-seed-contract-1",
+                    ),
+                ),
+            )
+            command_prefix = (
+                "{python} -m quantagent.cli --no-trust-prompt agent --project {workspace} "
+                f"--learning-project {shlex.quote(str(project))} --mode repair --json --max-steps 12 "
+            )
+            report = run_learning_effect_coding_bench(
+                project,
+                no_learning_agent_command=command_prefix + "--learning-context off {instruction}",
+                approved_learning_agent_command=command_prefix + "--learning-context on {instruction}",
+                task_file=task_file,
+                keep_workspaces=True,
+            )
+            stability = run_coding_bench_stability(
+                project,
+                agent_command=command_prefix + "--learning-context on {instruction}",
+                task_file=task_file,
+                repeats=2,
+                keep_workspaces=True,
+            )
+            preservations = [
+                _preservation_scan(
+                    broken_source,
+                    result.workspace,
+                    exclude_function="validate_and_warn_tool_name",
+                )
+                for result in report.approved_learning_run.results
+            ]
+            _assert_stability_preserves_function_repair(
+                self,
+                stability,
+                broken_source,
+                target_path=TARGET_PATH,
+                exclude_function="validate_and_warn_tool_name",
+                expected_result_count=4,
+            )
+            _write_external_heldout_repair_proof(
+                "vendored_mcp_tool_name_wrapper_seed_repair",
+                {
+                    "source_package": "mcp-python-sdk",
+                    "source_repository": "https://github.com/modelcontextprotocol/python-sdk",
+                    "external_source_heldout": True,
+                    "heldout_from_autonomous_gate": True,
+                    "independent_external_benchmark": False,
+                    "target_path": TARGET_PATH,
+                    "function_name": "validate_and_warn_tool_name",
+                    "source_sha256": _sha256(actual_source),
+                    "broken_source_sha256": _sha256(broken_source),
+                    "repaired_source_sha256": _sha256(repaired_source),
+                    "before_failure": before_failure,
+                    "agent_diagnosis": {
+                        "ok": result.ok,
+                        "status": result.status,
+                        "summary": result.summary,
+                        "failure_class": result.failure_class,
+                        "trajectory_path": result.trajectory_path,
+                        "observation_count": len(result.observations),
+                        "observations": _agent_observation_proofs(result),
+                    },
+                    "patch_scope": {
+                        "files_touched": implementation.data["files_touched"],
+                        "stage1_changed_files": [TARGET_PATH],
+                        "approved_learning_changed_files": [
+                            list(item.patch_metrics.changed_files)
+                            for item in report.approved_learning_run.results
+                        ],
+                        "approved_learning_out_of_scope_files": [
+                            list(item.patch_metrics.out_of_scope_files)
+                            for item in report.approved_learning_run.results
+                        ],
+                    },
+                    "diff": {
+                        "line_count": len(repair_diff),
+                        "contains_target_function": any("validate_and_warn_tool_name" in line for line in repair_diff),
+                        "unified_diff": repair_diff,
+                    },
+                    "after_test": after_test,
+                    "stage1_eval": eval_result.to_dict(),
+                    "command_log": [
+                        before_failure,
+                        {
+                            "command": ["run_agent_loop", "--mode", "repair", "--learning-context", "on"],
+                            "ok": result.ok,
+                            "trajectory_path": result.trajectory_path,
+                        },
+                        after_test,
+                    ],
+                    "final_claim": (
+                        "For this vendored MCP held-out repair task, the agent loop changed "
+                        "only mcp/shared/tool_name_validation.py and the local package tests passed."
+                    ),
+                    "evidence_boundary": {
+                        "not_proof": [
+                            "native benchmark ingestion",
+                            "live patch proof",
+                            "broad unknown-repository repair",
+                            "external benchmark standing",
+                            "external review",
+                            "endorsement",
+                            "stars",
+                            "reposts",
+                            "current remote CI proof",
+                        ],
+                    },
+                    "observed_counts": {
+                        "approved_learning_solved": report.approved_learning_run.summary()["solved"],
+                        "hidden_stage2_tasks": report.approved_learning_run.summary()["total"],
+                        "no_learning_solved": report.no_learning_run.summary()["solved"],
+                        "stability_solved": stability.summary()["solved"],
+                    },
+                },
+            )
+
+        self.assertEqual(preservation["violations"], [])
+        self.assertEqual(report.learning_effect.status, "pass")
+        self.assertEqual(report.learning_effect.solved, {"no_learning": 0, "approved_learning": 2})
+        self.assertEqual(report.no_learning_run.summary()["solved"], 0)
+        self.assertEqual(report.approved_learning_run.summary()["solved"], 2)
+        for approved_result in report.approved_learning_run.results:
+            self.assertEqual(approved_result.patch_metrics.changed_files, (TARGET_PATH,))
+            self.assertEqual(approved_result.patch_metrics.out_of_scope_files, ())
+            self.assertEqual(approved_result.patch_metrics.workspace_added_files, ())
+            self.assertEqual(approved_result.patch_metrics.workspace_deleted_files, ())
+        self.assertEqual([item["violations"] for item in preservations], [[], []])
+        self.assertEqual(stability.summary()["solved"], 4)
+        self.assertEqual(stability.summary()["success_rate_spread"], 0.0)
+        self.assertEqual(stability.summary()["unstable_task_count"], 0)
+        self.assertEqual(stability.summary()["cheated"], 0)
+        self.assertEqual(stability.summary()["errors"], 0)
+        self.assertEqual(stability.summary()["invalid"], 0)
+
     def test_vendored_pandera_scale_function_repair_reuses_without_non_target_drift(self) -> None:
         with tempfile.TemporaryDirectory(prefix="upstream-pandera-function-bundle-") as tmp:
             root = Path(tmp)
@@ -1733,6 +1960,59 @@ def _stage2_variant_tests() -> str:
         "        self.assertIn(\"'/'\", joined)\n"
         "        self.assertIn(\"':'\", joined)\n"
         "        self.assertIn('Allowed characters', joined)\n"
+    )
+
+
+def _wrapper_stage1_tests() -> str:
+    return (
+        "import unittest\n"
+        "from unittest.mock import patch\n"
+        "from mcp.shared.tool_name_validation import validate_and_warn_tool_name\n\n"
+        "class TestToolNameValidationWrapper(unittest.TestCase):\n"
+        "    def test_valid_name_returns_true_and_reports_empty_warning_list(self):\n"
+        "        with patch('mcp.shared.tool_name_validation.issue_tool_name_warning') as warn:\n"
+        "            self.assertTrue(validate_and_warn_tool_name('desktop.find-click'))\n"
+        "            warn.assert_called_once_with('desktop.find-click', [])\n"
+        "    def test_invalid_name_returns_false_and_reports_warnings(self):\n"
+        "        with patch('mcp.shared.tool_name_validation.issue_tool_name_warning') as warn:\n"
+        "            self.assertFalse(validate_and_warn_tool_name('bad/name'))\n"
+        "            self.assertEqual(warn.call_args[0][0], 'bad/name')\n"
+        "            self.assertTrue(warn.call_args[0][1])\n"
+    )
+
+
+def _wrapper_stage2_tests() -> str:
+    return (
+        "import unittest\n"
+        "from unittest.mock import patch\n"
+        "from mcp.shared.tool_name_validation import validate_and_warn_tool_name\n\n"
+        "class TestToolNameValidationWrapperHidden(unittest.TestCase):\n"
+        "    def test_rejects_too_long_name_and_reports_warning(self):\n"
+        "        long_name = 'x' * 129\n"
+        "        with patch('mcp.shared.tool_name_validation.issue_tool_name_warning') as warn:\n"
+        "            self.assertFalse(validate_and_warn_tool_name(long_name))\n"
+        "            self.assertIn('maximum length', warn.call_args[0][1][0])\n"
+        "    def test_accepts_edge_valid_name_with_empty_warnings(self):\n"
+        "        with patch('mcp.shared.tool_name_validation.issue_tool_name_warning') as warn:\n"
+        "            self.assertTrue(validate_and_warn_tool_name('alpha.beta_gamma-1'))\n"
+        "            warn.assert_called_once_with('alpha.beta_gamma-1', [])\n"
+    )
+
+
+def _wrapper_stage2_variant_tests() -> str:
+    return (
+        "import unittest\n"
+        "from unittest.mock import patch\n"
+        "from mcp.shared.tool_name_validation import validate_and_warn_tool_name\n\n"
+        "class TestToolNameValidationWrapperVariant(unittest.TestCase):\n"
+        "    def test_leading_dash_is_valid_but_warned(self):\n"
+        "        with patch('mcp.shared.tool_name_validation.issue_tool_name_warning') as warn:\n"
+        "            self.assertTrue(validate_and_warn_tool_name('-alpha'))\n"
+        "            self.assertTrue(any('dash' in item for item in warn.call_args[0][1]))\n"
+        "    def test_empty_name_is_invalid_and_warned(self):\n"
+        "        with patch('mcp.shared.tool_name_validation.issue_tool_name_warning') as warn:\n"
+        "            self.assertFalse(validate_and_warn_tool_name(''))\n"
+        "            self.assertIn('cannot be empty', warn.call_args[0][1][0])\n"
     )
 
 

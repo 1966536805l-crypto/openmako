@@ -4,11 +4,12 @@
   "schema_version": "external-heldout-task-source-provenance/v0.1",
   "selected_test_file": {
     "path": "tests/test_upstream_function_file_bundle_regression.py",
-    "sha256": "90a8ac6edd296435ffcf217a2ebd2353683c9d6b8c3aabb2c233b0565cb33fc5"
+    "sha256": "314018517a8df6b6b686004faa020a1d09d8529dd7a326497ba1ed26f2d4ad9e"
   },
   "selected_tests": [
-    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_function_level_repair_reuses_without_non_target_drift"
+    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_function_level_repair_reuses_without_non_target_drift",
+    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift"
   ],
-  "selected_tests_sha256": "386b134864c2d71f6887f30ff17042484f903e625b89faf281549c0ad3aaa42d",
+  "selected_tests_sha256": "11e79c05b4886d752d902ff5acffa1904246b2b7e6144d71d7cb2dd689b3617b",
   "source_boundary": "The selected test is a repository-authored regression over vendored MCP Python SDK source held out from the autonomous-learning gate. This is not native benchmark ingestion, live patch proof, broad unknown-repository repair, external benchmark standing, external review, endorsement, stars, or reposts."
 }

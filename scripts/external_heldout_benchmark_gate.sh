@@ -13,6 +13,7 @@ PYTEST_LOG="$SUMMARY_DIR/pytest.log"
 TASK_PROOF_DIR="$SUMMARY_DIR/task_proofs"
 mkdir -p "$SUMMARY_DIR"
 rm -rf "$TASK_PROOF_DIR"
+rm -f "$PYTEST_LOG"
 mkdir -p "$TASK_PROOF_DIR"
 export OPENMAKO_EXTERNAL_HELDOUT_TASK_PROOF_DIR="$TASK_PROOF_DIR"
 TASK_SOURCE_MANIFEST="${OPENMAKO_EXTERNAL_HELDOUT_TASK_SOURCE_MANIFEST:-scripts/external_heldout_task_source_provenance.json}"
@@ -37,14 +38,17 @@ if payload.get("schema_version") != "external-heldout-task-source-provenance/v0.
 if payload.get("external_heldout") is not True:
     raise SystemExit("external-heldout-benchmark-gate: task source manifest external_heldout is not true")
 selected_tests = payload.get("selected_tests")
-if not isinstance(selected_tests, list) or len(selected_tests) != 1:
+if not isinstance(selected_tests, list) or len(selected_tests) != 2:
     raise SystemExit("external-heldout-benchmark-gate: invalid selected_tests count")
-node_id_re = re.compile(
-    r"^tests/test_upstream_function_file_bundle_regression\.py::"
-    r"UpstreamFunctionFileBundleRegressionTest::"
-    r"test_vendored_mcp_function_level_repair_reuses_without_non_target_drift$"
-)
-if not all(isinstance(item, str) and node_id_re.fullmatch(item) for item in selected_tests):
+allowed_node_ids = {
+    "tests/test_upstream_function_file_bundle_regression.py::"
+    "UpstreamFunctionFileBundleRegressionTest::"
+    "test_vendored_mcp_function_level_repair_reuses_without_non_target_drift",
+    "tests/test_upstream_function_file_bundle_regression.py::"
+    "UpstreamFunctionFileBundleRegressionTest::"
+    "test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift",
+}
+if set(selected_tests) != allowed_node_ids or not all(isinstance(item, str) for item in selected_tests):
     raise SystemExit("external-heldout-benchmark-gate: invalid selected_tests node ids")
 selected_digest = hashlib.sha256(("\n".join(selected_tests) + "\n").encode("utf-8")).hexdigest()
 if payload.get("selected_tests_sha256") != selected_digest:
@@ -238,125 +242,146 @@ def validate_task_proofs(proofs: list[dict[str, Any]]) -> list[str]:
     if STATUS != "passed":
         return []
     invalid: list[str] = []
-    if len(proofs) != 1:
+    expected_tasks = {
+        "vendored_mcp_tool_name_validation_function_repair": {
+            "function_name": "validate_tool_name",
+        },
+        "vendored_mcp_tool_name_wrapper_seed_repair": {
+            "function_name": "validate_and_warn_tool_name",
+        },
+    }
+    if len(proofs) != len(expected_tasks):
         return [f"task_proof_count={len(proofs)}"]
-    proof = proofs[0]
-    before_failure = proof.get("before_failure")
-    after_test = proof.get("after_test")
-    patch_scope = proof.get("patch_scope")
-    diff = proof.get("diff")
-    command_log = proof.get("command_log")
-    expected_boundary = proof.get("evidence_boundary", {}).get("not_proof", [])
-    expected_counts = proof.get("observed_counts", {})
-    if proof.get("schema_version") != "external-heldout-repair-proof/v0.1":
-        invalid.append("task_proof.schema_version")
-    if proof.get("task_id") != "vendored_mcp_tool_name_validation_function_repair":
-        invalid.append("task_proof.task_id")
-    if proof.get("source_package") != "mcp-python-sdk":
-        invalid.append("task_proof.source_package")
-    if proof.get("source_repository") != "https://github.com/modelcontextprotocol/python-sdk":
-        invalid.append("task_proof.source_repository")
-    if proof.get("external_source_heldout") is not True:
-        invalid.append("task_proof.external_source_heldout")
-    if proof.get("heldout_from_autonomous_gate") is not True:
-        invalid.append("task_proof.heldout_from_autonomous_gate")
-    if proof.get("independent_external_benchmark") is not False:
-        invalid.append("task_proof.independent_external_benchmark")
-    if proof.get("target_path") != "mcp/shared/tool_name_validation.py":
-        invalid.append("task_proof.target_path")
-    if proof.get("function_name") != "validate_tool_name":
-        invalid.append("task_proof.function_name")
-    for digest_field in ("source_sha256", "broken_source_sha256", "repaired_source_sha256"):
-        if not isinstance(proof.get(digest_field), str) or not re.fullmatch(r"[0-9a-f]{64}", proof[digest_field]):
-            invalid.append(f"task_proof.{digest_field}")
-    if proof.get("broken_source_sha256") == proof.get("repaired_source_sha256"):
-        invalid.append("task_proof.repair_changed_source")
-    if not isinstance(before_failure, dict):
-        invalid.append("task_proof.before_failure")
-        before_failure = {}
-    if not isinstance(after_test, dict):
-        invalid.append("task_proof.after_test")
-        after_test = {}
-    before_returncode = before_failure.get("returncode")
-    after_returncode = after_test.get("returncode")
-    if not isinstance(before_returncode, int) or before_returncode == 0:
-        invalid.append("task_proof.before_failure_returncode")
-    if not isinstance(after_returncode, int) or after_returncode != 0:
-        invalid.append("task_proof.after_test_returncode")
-    if not isinstance(before_failure.get("command"), list) or not before_failure.get("command"):
-        invalid.append("task_proof.before_failure.command")
-    if not isinstance(after_test.get("command"), list) or not after_test.get("command"):
-        invalid.append("task_proof.after_test.command")
-    if not isinstance(patch_scope, dict):
-        invalid.append("task_proof.patch_scope")
-        patch_scope = {}
-    if patch_scope.get("files_touched") != ["mcp/shared/tool_name_validation.py"]:
-        invalid.append("task_proof.patch_scope.files_touched")
-    if patch_scope.get("stage1_changed_files") != ["mcp/shared/tool_name_validation.py"]:
-        invalid.append("task_proof.patch_scope.stage1_changed_files")
-    if patch_scope.get("approved_learning_changed_files") != [
-        ["mcp/shared/tool_name_validation.py"],
-        ["mcp/shared/tool_name_validation.py"],
-    ]:
-        invalid.append("task_proof.patch_scope.approved_learning_changed_files")
-    if patch_scope.get("approved_learning_out_of_scope_files") != [[], []]:
-        invalid.append("task_proof.patch_scope.approved_learning_out_of_scope_files")
-    if not isinstance(diff, dict):
-        invalid.append("task_proof.diff")
-        diff = {}
-    unified_diff = diff.get("unified_diff")
-    if not isinstance(unified_diff, list) or not unified_diff or not all(
-        isinstance(line, str) for line in unified_diff
-    ):
-        invalid.append("task_proof.diff.unified_diff")
-        unified_diff = []
-    if not isinstance(diff.get("line_count"), int) or diff.get("line_count", 0) <= 0:
-        invalid.append("task_proof.diff.line_count")
-    if unified_diff and diff.get("line_count") != len(unified_diff):
-        invalid.append("task_proof.diff.line_count_matches_unified_diff")
-    if diff.get("contains_target_function") is not True:
-        invalid.append("task_proof.diff.contains_target_function")
-    if not any("validate_tool_name" in line for line in unified_diff):
-        invalid.append("task_proof.diff.unified_diff_target")
-    if not proof.get("agent_diagnosis", {}).get("observations"):
-        invalid.append("task_proof.agent_diagnosis.observations")
-    if not isinstance(command_log, list) or len(command_log) < 3:
-        invalid.append("task_proof.command_log")
-        command_log = []
-    if command_log:
-        if command_log[0] != before_failure:
-            invalid.append("task_proof.command_log.before_failure")
-        if command_log[-1] != after_test:
-            invalid.append("task_proof.command_log.after_test")
-        agent_entries = [
-            entry for entry in command_log
-            if (
-                isinstance(entry, dict)
-                and isinstance(entry.get("command"), list)
-                and entry["command"][:1] == ["run_agent_loop"]
-            )
-        ]
-        if not agent_entries or not all(entry.get("ok") is True for entry in agent_entries):
-            invalid.append("task_proof.command_log.agent_repair")
-    if "vendored MCP held-out repair task" not in str(proof.get("final_claim", "")):
-        invalid.append("task_proof.final_claim")
-    for boundary in (
-        "native benchmark ingestion",
-        "live patch proof",
-        "broad unknown-repository repair",
-        "external benchmark standing",
-        "current remote CI proof",
-    ):
-        if boundary not in expected_boundary:
-            invalid.append(f"task_proof.evidence_boundary.{boundary}")
-    if expected_counts.get("no_learning_solved") != 0:
-        invalid.append("task_proof.observed_counts.no_learning_solved")
-    if expected_counts.get("approved_learning_solved") != 2:
-        invalid.append("task_proof.observed_counts.approved_learning_solved")
-    if expected_counts.get("hidden_stage2_tasks") != 2:
-        invalid.append("task_proof.observed_counts.hidden_stage2_tasks")
-    if expected_counts.get("stability_solved") != 4:
-        invalid.append("task_proof.observed_counts.stability_solved")
+    seen_task_ids: set[str] = set()
+    for proof in proofs:
+        task_id = proof.get("task_id")
+        if not isinstance(task_id, str) or task_id not in expected_tasks:
+            invalid.append("task_proof.task_id")
+            expected = {"function_name": ""}
+        else:
+            if task_id in seen_task_ids:
+                invalid.append(f"task_proof.duplicate_task_id.{task_id}")
+            seen_task_ids.add(task_id)
+            expected = expected_tasks[task_id]
+        before_failure = proof.get("before_failure")
+        after_test = proof.get("after_test")
+        patch_scope = proof.get("patch_scope")
+        diff = proof.get("diff")
+        command_log = proof.get("command_log")
+        expected_boundary = proof.get("evidence_boundary", {}).get("not_proof", [])
+        expected_counts = proof.get("observed_counts", {})
+        prefix = f"task_proof[{task_id}]"
+        if proof.get("schema_version") != "external-heldout-repair-proof/v0.1":
+            invalid.append(f"{prefix}.schema_version")
+        if proof.get("source_package") != "mcp-python-sdk":
+            invalid.append(f"{prefix}.source_package")
+        if proof.get("source_repository") != "https://github.com/modelcontextprotocol/python-sdk":
+            invalid.append(f"{prefix}.source_repository")
+        if proof.get("external_source_heldout") is not True:
+            invalid.append(f"{prefix}.external_source_heldout")
+        if proof.get("heldout_from_autonomous_gate") is not True:
+            invalid.append(f"{prefix}.heldout_from_autonomous_gate")
+        if proof.get("independent_external_benchmark") is not False:
+            invalid.append(f"{prefix}.independent_external_benchmark")
+        if proof.get("target_path") != "mcp/shared/tool_name_validation.py":
+            invalid.append(f"{prefix}.target_path")
+        function_name = expected["function_name"]
+        if proof.get("function_name") != function_name:
+            invalid.append(f"{prefix}.function_name")
+        for digest_field in ("source_sha256", "broken_source_sha256", "repaired_source_sha256"):
+            if not isinstance(proof.get(digest_field), str) or not re.fullmatch(r"[0-9a-f]{64}", proof[digest_field]):
+                invalid.append(f"{prefix}.{digest_field}")
+        if proof.get("broken_source_sha256") == proof.get("repaired_source_sha256"):
+            invalid.append(f"{prefix}.repair_changed_source")
+        if not isinstance(before_failure, dict):
+            invalid.append(f"{prefix}.before_failure")
+            before_failure = {}
+        if not isinstance(after_test, dict):
+            invalid.append(f"{prefix}.after_test")
+            after_test = {}
+        before_returncode = before_failure.get("returncode")
+        after_returncode = after_test.get("returncode")
+        if not isinstance(before_returncode, int) or before_returncode == 0:
+            invalid.append(f"{prefix}.before_failure_returncode")
+        if not isinstance(after_returncode, int) or after_returncode != 0:
+            invalid.append(f"{prefix}.after_test_returncode")
+        if not isinstance(before_failure.get("command"), list) or not before_failure.get("command"):
+            invalid.append(f"{prefix}.before_failure.command")
+        if not isinstance(after_test.get("command"), list) or not after_test.get("command"):
+            invalid.append(f"{prefix}.after_test.command")
+        if not isinstance(patch_scope, dict):
+            invalid.append(f"{prefix}.patch_scope")
+            patch_scope = {}
+        if patch_scope.get("files_touched") != ["mcp/shared/tool_name_validation.py"]:
+            invalid.append(f"{prefix}.patch_scope.files_touched")
+        if patch_scope.get("stage1_changed_files") != ["mcp/shared/tool_name_validation.py"]:
+            invalid.append(f"{prefix}.patch_scope.stage1_changed_files")
+        if patch_scope.get("approved_learning_changed_files") != [
+            ["mcp/shared/tool_name_validation.py"],
+            ["mcp/shared/tool_name_validation.py"],
+        ]:
+            invalid.append(f"{prefix}.patch_scope.approved_learning_changed_files")
+        if patch_scope.get("approved_learning_out_of_scope_files") != [[], []]:
+            invalid.append(f"{prefix}.patch_scope.approved_learning_out_of_scope_files")
+        if not isinstance(diff, dict):
+            invalid.append(f"{prefix}.diff")
+            diff = {}
+        unified_diff = diff.get("unified_diff")
+        if not isinstance(unified_diff, list) or not unified_diff or not all(
+            isinstance(line, str) for line in unified_diff
+        ):
+            invalid.append(f"{prefix}.diff.unified_diff")
+            unified_diff = []
+        if not isinstance(diff.get("line_count"), int) or diff.get("line_count", 0) <= 0:
+            invalid.append(f"{prefix}.diff.line_count")
+        if unified_diff and diff.get("line_count") != len(unified_diff):
+            invalid.append(f"{prefix}.diff.line_count_matches_unified_diff")
+        if diff.get("contains_target_function") is not True:
+            invalid.append(f"{prefix}.diff.contains_target_function")
+        if function_name and not any(function_name in line for line in unified_diff):
+            invalid.append(f"{prefix}.diff.unified_diff_target")
+        if not proof.get("agent_diagnosis", {}).get("observations"):
+            invalid.append(f"{prefix}.agent_diagnosis.observations")
+        if not isinstance(command_log, list) or len(command_log) < 3:
+            invalid.append(f"{prefix}.command_log")
+            command_log = []
+        if command_log:
+            if command_log[0] != before_failure:
+                invalid.append(f"{prefix}.command_log.before_failure")
+            if command_log[-1] != after_test:
+                invalid.append(f"{prefix}.command_log.after_test")
+            agent_entries = [
+                entry for entry in command_log
+                if (
+                    isinstance(entry, dict)
+                    and isinstance(entry.get("command"), list)
+                    and entry["command"][:1] == ["run_agent_loop"]
+                )
+            ]
+            if not agent_entries or not all(entry.get("ok") is True for entry in agent_entries):
+                invalid.append(f"{prefix}.command_log.agent_repair")
+        if "vendored MCP held-out repair task" not in str(proof.get("final_claim", "")):
+            invalid.append(f"{prefix}.final_claim")
+        for boundary in (
+            "native benchmark ingestion",
+            "live patch proof",
+            "broad unknown-repository repair",
+            "external benchmark standing",
+            "current remote CI proof",
+        ):
+            if boundary not in expected_boundary:
+                invalid.append(f"{prefix}.evidence_boundary.{boundary}")
+        if expected_counts.get("no_learning_solved") != 0:
+            invalid.append(f"{prefix}.observed_counts.no_learning_solved")
+        if expected_counts.get("approved_learning_solved") != 2:
+            invalid.append(f"{prefix}.observed_counts.approved_learning_solved")
+        if expected_counts.get("hidden_stage2_tasks") != 2:
+            invalid.append(f"{prefix}.observed_counts.hidden_stage2_tasks")
+        if expected_counts.get("stability_solved") != 4:
+            invalid.append(f"{prefix}.observed_counts.stability_solved")
+    missing_task_ids = sorted(set(expected_tasks) - seen_task_ids)
+    if missing_task_ids:
+        invalid.append(f"task_proof.missing_task_ids={missing_task_ids}")
     return invalid
 
 
@@ -432,11 +457,11 @@ summary = {
 }
 
 invalid: list[str] = []
-if len(SELECTED_TESTS) != 1:
+if len(SELECTED_TESTS) != 2:
     invalid.append("selected_tests_count")
 if not all(test.startswith("tests/test_upstream_function_file_bundle_regression.py::") for test in SELECTED_TESTS):
     invalid.append("selected_test_node_shape")
-if STATUS == "passed" and observed != {"exit_code": 0, "passed": 1, "skipped": 0, "warnings": 0}:
+if STATUS == "passed" and observed != {"exit_code": 0, "passed": len(SELECTED_TESTS), "skipped": 0, "warnings": 0}:
     invalid.append(f"observed_pytest={observed!r}")
 if summary["external_source_heldout"] is not True:
     invalid.append("external_source_heldout")
