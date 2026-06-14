@@ -135,14 +135,61 @@ class CliWrapperTest(unittest.TestCase):
         required_outputs = [
             "outputs/audit.json",
             "outputs/external_heldout_benchmark_gate/last_summary.json",
+            "outputs/heldout_reproduction_packet/packet.json",
+        ]
+        raw_evidence_paths = [
+            "outputs/external_heldout_benchmark_gate/last_summary.json",
+            "outputs/external_heldout_benchmark_gate/pytest.log",
+            (
+                "outputs/external_heldout_benchmark_gate/task_proofs/"
+                "vendored_mcp_tool_name_validation_function_repair.json"
+            ),
+            (
+                "outputs/external_heldout_benchmark_gate/task_proofs/"
+                "vendored_mcp_tool_name_wrapper_seed_repair.json"
+            ),
         ]
         output_sha256: dict[str, str] = {}
-        for relative in required_outputs:
+        for relative in sorted(set(required_outputs + raw_evidence_paths)):
             path = artifact_dir / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             payload = f"{relative}: {git_commit}\n".encode("utf-8")
             path.write_bytes(payload)
             output_sha256[relative] = "sha256:" + hashlib.sha256(payload).hexdigest()
+        raw_evidence_files = {
+            relative: output_sha256[relative]
+            for relative in raw_evidence_paths
+        }
+        packet = {
+            "schema_version": "heldout-reproduction-packet/v0.1",
+            "status": "passed",
+            "invocation": {
+                "git_commit": git_commit,
+                "proof_command": "bash scripts/heldout_reproduction_packet.sh",
+            },
+            "raw_evidence_files": raw_evidence_files,
+            "task_proof_count": 2,
+            "before_failure_count": 2,
+            "after_test_count": 2,
+            "target_diff_count": 2,
+            "labels": {
+                "vendored_mcp_tool_name_validation_function_repair": "supported_repair_claim",
+                "vendored_mcp_tool_name_wrapper_seed_repair": "supported_repair_claim",
+            },
+            "external_source_heldout": True,
+            "heldout_from_autonomous_gate": True,
+            "independent_external_benchmark": False,
+            "not_proof": [
+                "native live autonomy",
+                "broad unknown-repository repair",
+            ],
+        }
+        packet_payload = json.dumps(packet, indent=2, sort_keys=True).encode("utf-8")
+        packet_path = artifact_dir / "outputs/heldout_reproduction_packet/packet.json"
+        packet_path.write_bytes(packet_payload)
+        output_sha256["outputs/heldout_reproduction_packet/packet.json"] = (
+            "sha256:" + hashlib.sha256(packet_payload).hexdigest()
+        )
         summary = {
             "schema_version": "public-review-gate-artifact/v0.1",
             "status": "passed",
@@ -571,7 +618,9 @@ class CliWrapperTest(unittest.TestCase):
             self.assertEqual(snapshot.returncode, 0, snapshot.stderr)
             self.assertIn(f"remote-public-evidence-snapshot: remote-main-sha={current_commit}", snapshot.stdout)
             self.assertIn(f"summary=focused/{current_commit}/summary.json", snapshot.stdout)
-            self.assertIn("required-output-count=2", snapshot.stdout)
+            self.assertIn("required-output-count=3", snapshot.stdout)
+            self.assertIn("heldout-reproduction-packet=present", snapshot.stdout)
+            self.assertIn("heldout-task-proof-count=2", snapshot.stdout)
             self.assertIn("remote-public-evidence-snapshot: PASS", snapshot.stdout)
 
             summary_path = artifact_dir / "summary.json"

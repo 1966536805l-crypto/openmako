@@ -27,6 +27,7 @@ def _copy_minimal_gate_repo(tmp_path: Path) -> Path:
     target_root.mkdir()
     fixed_paths = [
         "scripts/external_heldout_benchmark_gate.sh",
+        "scripts/heldout_reproduction_packet.sh",
         "scripts/autonomous_task_source_provenance.json",
         "scripts/external_heldout_task_source_provenance.json",
         "docs/UPSTREAM_ATTRIBUTION.md",
@@ -50,6 +51,20 @@ def _run_gate(target_root: Path) -> subprocess.CompletedProcess[str]:
     env["OPENMAKO_EXTERNAL_HELDOUT_BENCHMARK_SUMMARY_JSON"] = str(target_root / "summary.json")
     return subprocess.run(
         ["bash", "scripts/external_heldout_benchmark_gate.sh"],
+        cwd=target_root,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+def _run_packet(target_root: Path) -> subprocess.CompletedProcess[str]:
+    env = os.environ.copy()
+    env["OPENMAKO_HELDOUT_REPRODUCTION_SOURCE_SUMMARY_JSON"] = str(target_root / "summary.json")
+    env["OPENMAKO_HELDOUT_REPRODUCTION_PACKET_JSON"] = str(target_root / "packet.json")
+    return subprocess.run(
+        ["bash", "scripts/heldout_reproduction_packet.sh"],
         cwd=target_root,
         env=env,
         text=True,
@@ -386,3 +401,54 @@ def test_external_heldout_gate_fails_closed_on_command_log_mismatch(tmp_path: Pa
     assert result.returncode != 0
     assert ".command_log.before_failure" in result.stderr
     assert "external-heldout-benchmark-gate: PASS" not in result.stdout
+
+
+def test_heldout_reproduction_packet_records_raw_evidence_hashes(tmp_path: Path) -> None:
+    target_root = _copy_minimal_gate_repo(tmp_path)
+    _write_fake_passing_selected_test_with_task_proofs(
+        target_root,
+        [_valid_task_proof(), _valid_wrapper_task_proof()],
+    )
+    _refresh_task_source_manifest_test_file_digest(target_root)
+
+    gate = _run_gate(target_root)
+    packet_result = _run_packet(target_root)
+
+    assert gate.returncode == 0, gate.stderr
+    assert packet_result.returncode == 0, packet_result.stderr
+    assert "heldout-reproduction-packet: PASS" in packet_result.stdout
+    packet = json.loads((target_root / "packet.json").read_text(encoding="utf-8"))
+    assert packet["schema_version"] == "heldout-reproduction-packet/v0.1"
+    assert packet["task_proof_count"] == 2
+    assert packet["before_failure_count"] == 2
+    assert packet["after_test_count"] == 2
+    assert packet["target_diff_count"] == 2
+    assert packet["labels"] == {
+        "vendored_mcp_tool_name_validation_function_repair": "supported_repair_claim",
+        "vendored_mcp_tool_name_wrapper_seed_repair": "supported_repair_claim",
+    }
+    assert packet["raw_evidence_files"]["summary.json"].startswith("sha256:")
+    assert packet["raw_evidence_files"]["pytest.log"].startswith("sha256:")
+    assert packet["raw_evidence_files"]["task_proofs/proof_0.json"].startswith("sha256:")
+    assert packet["raw_evidence_files"]["task_proofs/proof_1.json"].startswith("sha256:")
+    assert packet["independent_external_benchmark"] is False
+    assert "native live autonomy" in packet["not_proof"]
+
+
+def test_heldout_reproduction_packet_fails_closed_on_missing_raw_proof(tmp_path: Path) -> None:
+    target_root = _copy_minimal_gate_repo(tmp_path)
+    _write_fake_passing_selected_test_with_task_proofs(
+        target_root,
+        [_valid_task_proof(), _valid_wrapper_task_proof()],
+    )
+    _refresh_task_source_manifest_test_file_digest(target_root)
+
+    gate = _run_gate(target_root)
+    proof = target_root / "task_proofs" / "proof_0.json"
+    proof.unlink()
+    packet_result = _run_packet(target_root)
+
+    assert gate.returncode == 0, gate.stderr
+    assert packet_result.returncode != 0
+    assert "missing raw evidence file" in packet_result.stderr
+    assert "heldout-reproduction-packet: PASS" not in packet_result.stdout

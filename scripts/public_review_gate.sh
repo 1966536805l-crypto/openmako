@@ -82,6 +82,13 @@ echo "public-review-gate: running external-heldout benchmark gate"
 OPENMAKO_EXTERNAL_HELDOUT_BENCHMARK_SUMMARY_JSON="$TMP_DIR/external_heldout_benchmark_gate/last_summary.json" \
   bash scripts/external_heldout_benchmark_gate.sh
 
+echo "public-review-gate: building held-out reproduction packet"
+OPENMAKO_HELDOUT_REPRODUCTION_SOURCE_SUMMARY_JSON="$TMP_DIR/external_heldout_benchmark_gate/last_summary.json" \
+OPENMAKO_HELDOUT_REPRODUCTION_PACKET_JSON="$TMP_DIR/heldout_reproduction_packet/packet.json" \
+OPENMAKO_HELDOUT_REPRODUCTION_PUBLIC_ROOT="$TMP_DIR" \
+OPENMAKO_HELDOUT_REPRODUCTION_PUBLIC_PREFIX="outputs" \
+  bash scripts/heldout_reproduction_packet.sh
+
 echo "public-review-gate: running public metadata boundary tests"
 "$PYTHON_BIN" -m pytest -p no:cacheprovider \
   tests/test_public_metadata.py \
@@ -240,6 +247,7 @@ required_outputs = [
     "outputs/ci_workflow_tamper_success.json",
     "outputs/config_only_repair.json",
     "outputs/external_heldout_benchmark_gate/last_summary.json",
+    "outputs/heldout_reproduction_packet/packet.json",
     "outputs/external_source_benchmark_gate/last_summary.json",
     "outputs/runtime_shadowing_risk.json",
     "outputs/swtbench_patch_artifact.json",

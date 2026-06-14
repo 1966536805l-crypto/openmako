@@ -1258,6 +1258,7 @@ def test_remote_focused_artifact_snapshot_script_is_fail_closed_and_artifact_awa
         "outputs/ci_workflow_tamper_success.json",
         "outputs/config_only_repair.json",
         "outputs/external_heldout_benchmark_gate/last_summary.json",
+        "outputs/heldout_reproduction_packet/packet.json",
         "outputs/external_source_benchmark_gate/last_summary.json",
         "outputs/runtime_shadowing_risk.json",
         "outputs/swtbench_patch_artifact.json",
@@ -1329,7 +1330,7 @@ def test_remote_focused_artifact_snapshot_script_is_fail_closed_and_artifact_awa
     assert f"remote-focused-artifact-snapshot: artifact-digest=sha256:{artifact_zip_sha256}" in result.stdout
     assert "remote-focused-artifact-snapshot: artifact-summary=summary.json" in result.stdout
     assert "remote-focused-artifact-snapshot: artifact-summary-commit=abcdef1234567890abcdef1234567890abcdef12" in result.stdout
-    assert "remote-focused-artifact-snapshot: artifact-required-output-count=12" in result.stdout
+    assert "remote-focused-artifact-snapshot: artifact-required-output-count=13" in result.stdout
     assert "remote-focused-artifact-snapshot: PASS" in result.stdout
 
     artifacts_json.write_text(json.dumps({"artifacts": []}), encoding="utf-8")
@@ -1417,6 +1418,11 @@ def test_public_evidence_branch_scripts_are_fail_closed_and_boundary_aware() -> 
     assert "focused_summary_commit_mismatch" in remote_text
     assert "focused_summary_required_outputs_missing" in remote_text
     assert "focused_summary_output_digest_mismatch" in remote_text
+    assert "heldout_reproduction_packet_not_required" in remote_text
+    assert "heldout-reproduction-packet/v0.1" in remote_text
+    assert "heldout_reproduction_packet_raw_evidence_digest_mismatch" in remote_text
+    assert "remote-public-evidence-snapshot: heldout-reproduction-packet=present" in remote_text
+    assert "remote-public-evidence-snapshot: heldout-task-proof-count=" in remote_text
     assert "public_evidence_branch_missing" in remote_text
     assert "latest_index_commit_mismatch" in remote_text
     assert "remote-public-evidence-snapshot: PASS" in remote_text
@@ -2692,6 +2698,7 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
     assert "required_outputs" in text
     assert "outputs/external_source_benchmark_gate/last_summary.json" in text
     assert "outputs/external_heldout_benchmark_gate/last_summary.json" in text
+    assert "outputs/heldout_reproduction_packet/packet.json" in text
     assert "public-review-gate artifact missing outputs" in text
     assert "tests/test_agent_planner_contract.py::AgentPlannerContractTest" in text
     assert "public-review-gate: running external-source benchmark gate" in text
@@ -2700,6 +2707,9 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
     assert "public-review-gate: running external-heldout benchmark gate" in text
     assert "OPENMAKO_EXTERNAL_HELDOUT_BENCHMARK_SUMMARY_JSON" in text
     assert "bash scripts/external_heldout_benchmark_gate.sh" in text
+    assert "public-review-gate: building held-out reproduction packet" in text
+    assert "OPENMAKO_HELDOUT_REPRODUCTION_PUBLIC_ROOT" in text
+    assert "bash scripts/heldout_reproduction_packet.sh" in text
     assert "public-review-gate: checking external-heldout gate fail-closed negatives" in text
     assert "tests/test_external_heldout_benchmark_gate.py" in text
     assert "tests/test_public_metadata.py" in text
@@ -2762,13 +2772,17 @@ def test_external_source_benchmark_gate_locks_source_boundary_and_summary_contra
 
 def test_external_heldout_benchmark_gate_locks_source_boundary_and_summary_contract() -> None:
     script = ROOT / "scripts" / "external_heldout_benchmark_gate.sh"
+    packet_script = ROOT / "scripts" / "heldout_reproduction_packet.sh"
     text = script.read_text(encoding="utf-8")
+    packet_text = packet_script.read_text(encoding="utf-8")
     task_source_manifest = ROOT / "scripts" / "external_heldout_task_source_provenance.json"
     task_source = json.loads(task_source_manifest.read_text(encoding="utf-8"))
     progress = (ROOT / "PROGRESS.md").read_text(encoding="utf-8")
 
     assert script.exists()
     assert script.stat().st_mode & 0o111
+    assert packet_script.exists()
+    assert packet_script.stat().st_mode & 0o111
     assert "external-heldout-benchmark-gate/v0.1" in text
     assert "OPENMAKO_EXTERNAL_HELDOUT_TASK_SOURCE_MANIFEST" in text
     assert "scripts/external_heldout_task_source_provenance.json" in text
@@ -2844,6 +2858,12 @@ def test_external_heldout_benchmark_gate_locks_source_boundary_and_summary_contr
     assert "missing\n  repair evidence packet, duplicate proof files, forged diff target flags,\n  successful-before-failure claims, nonzero after-test claims, and command-log\n  mismatches, and selected test file replacement" in progress
     assert "selected test file replacement before the gate can print\n  `PASS`" in progress
     assert "task-level repair evidence packet with before-failure\n  command output, agent diagnosis, target-function diff, after-test command\n  output, patch scope, command log, source digests, final claim, and the\n  non-proof boundary" in progress
+    assert "heldout-reproduction-packet/v0.1" in packet_text
+    assert "source summary git_commit does not match HEAD" in packet_text
+    assert "missing raw evidence file" in packet_text
+    assert "supported_repair_claim" in packet_text
+    assert "OPENMAKO_HELDOUT_REPRODUCTION_PUBLIC_ROOT" in packet_text
+    assert "independent external benchmark standing" in packet_text
 
 
 def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() -> None:

@@ -95,6 +95,58 @@ for relative in required_outputs:
 if missing_outputs:
     fail("focused_summary_required_outputs_missing", ",".join(missing_outputs))
 
+packet_relative = "outputs/heldout_reproduction_packet/packet.json"
+if packet_relative not in required_outputs:
+    fail("heldout_reproduction_packet_not_required")
+packet_path = summary_path.parent / packet_relative
+try:
+    packet = json.loads(packet_path.read_text(encoding="utf-8"))
+except Exception as exc:
+    fail("heldout_reproduction_packet_invalid_json", str(exc))
+if packet.get("schema_version") != "heldout-reproduction-packet/v0.1":
+    fail("heldout_reproduction_packet_schema_mismatch")
+if packet.get("status") != "passed":
+    fail("heldout_reproduction_packet_not_passed")
+packet_invocation = packet.get("invocation")
+if not isinstance(packet_invocation, dict) or packet_invocation.get("git_commit") != remote_sha:
+    fail("heldout_reproduction_packet_commit_mismatch")
+if packet.get("external_source_heldout") is not True:
+    fail("heldout_reproduction_packet_external_source_heldout_mismatch")
+if packet.get("heldout_from_autonomous_gate") is not True:
+    fail("heldout_reproduction_packet_autonomous_holdout_mismatch")
+if packet.get("independent_external_benchmark") is not False:
+    fail("heldout_reproduction_packet_independent_benchmark_boundary_mismatch")
+if packet.get("task_proof_count") != 2:
+    fail("heldout_reproduction_packet_task_proof_count_mismatch")
+if packet.get("before_failure_count") != 2 or packet.get("after_test_count") != 2:
+    fail("heldout_reproduction_packet_before_after_count_mismatch")
+if packet.get("target_diff_count") != 2:
+    fail("heldout_reproduction_packet_diff_count_mismatch")
+labels = packet.get("labels")
+if not isinstance(labels, dict) or sorted(labels.values()) != [
+    "supported_repair_claim",
+    "supported_repair_claim",
+]:
+    fail("heldout_reproduction_packet_labels_mismatch")
+raw_evidence_files = packet.get("raw_evidence_files")
+if not isinstance(raw_evidence_files, dict):
+    fail("heldout_reproduction_packet_raw_evidence_malformed")
+for expected_raw in (
+    "outputs/external_heldout_benchmark_gate/last_summary.json",
+    "outputs/external_heldout_benchmark_gate/pytest.log",
+    "outputs/external_heldout_benchmark_gate/task_proofs/vendored_mcp_tool_name_validation_function_repair.json",
+    "outputs/external_heldout_benchmark_gate/task_proofs/vendored_mcp_tool_name_wrapper_seed_repair.json",
+):
+    raw_path = summary_path.parent / expected_raw
+    if not raw_path.is_file():
+        fail("heldout_reproduction_packet_raw_evidence_missing", expected_raw)
+    raw_digest = "sha256:" + hashlib.sha256(raw_path.read_bytes()).hexdigest()
+    if raw_evidence_files.get(expected_raw) != raw_digest:
+        fail("heldout_reproduction_packet_raw_evidence_digest_mismatch", expected_raw)
+packet_not_proof = packet.get("not_proof")
+if not isinstance(packet_not_proof, list) or "native live autonomy" not in packet_not_proof:
+    fail("heldout_reproduction_packet_not_proof_boundary_mismatch")
+
 latest = {}
 if latest_path.is_file():
     latest = json.loads(latest_path.read_text(encoding="utf-8"))
@@ -107,6 +159,8 @@ print(f"remote-public-evidence-snapshot: remote-main-sha={remote_sha}")
 print(f"remote-public-evidence-snapshot: summary=focused/{remote_sha}/summary.json")
 print(f"remote-public-evidence-snapshot: status={summary['status']}")
 print(f"remote-public-evidence-snapshot: required-output-count={len(required_outputs)}")
+print("remote-public-evidence-snapshot: heldout-reproduction-packet=present")
+print(f"remote-public-evidence-snapshot: heldout-task-proof-count={packet['task_proof_count']}")
 print(f"remote-public-evidence-snapshot: latest-index={'present' if latest else 'missing'}")
 print(
     "remote-public-evidence-snapshot: "
