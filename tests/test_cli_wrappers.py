@@ -258,6 +258,72 @@ class CliWrapperTest(unittest.TestCase):
             check=False,
         )
 
+    def write_fresh_clone_reproduction_log(self, log_path: Path, git_commit: str) -> None:
+        log_path.write_text(
+            "\n".join(
+                [
+                    "fresh-clone-reproduction: clone-url=https://example.invalid/openmako.git",
+                    "fresh-clone-reproduction: workdir=/tmp/openmako-fresh-clone-test",
+                    f"fresh-clone-reproduction: requested-ref={git_commit}",
+                    f"fresh-clone-reproduction: checkout-sha={git_commit}",
+                    "fresh-clone-reproduction: install=PASS",
+                    "fresh-clone-reproduction: release-readiness=PASS",
+                    "fresh-clone-reproduction: public-review=PASS",
+                    "fresh-clone-reproduction: remote-public-evidence=PASS",
+                    "fresh-clone-reproduction: remote-autonomous-public-evidence=PASS",
+                    "fresh-clone-reproduction: PASS",
+                    (
+                        "fresh-clone-reproduction: not-proof=external review; endorsement; "
+                        "stars; reposts; independent external benchmark standing; GitHub "
+                        "Actions artifact zip contents; live autonomy; broad unknown-repository repair"
+                    ),
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+    def run_publish_fresh_clone_reproduction_branch(
+        self,
+        remote: Path | str,
+        log_path: Path,
+        git_commit: str,
+    ) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["OPENMAKO_PUBLIC_EVIDENCE_REMOTE"] = str(remote)
+        env["OPENMAKO_PUBLIC_EVIDENCE_BRANCH"] = "public-evidence"
+        env["OPENMAKO_REPRO_LOG"] = str(log_path)
+        env["OPENMAKO_REPRO_REF"] = git_commit
+        return subprocess.run(
+            ["bash", "scripts/publish_fresh_clone_reproduction_branch.sh"],
+            cwd=str(ROOT),
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+            check=False,
+        )
+
+    def run_remote_fresh_clone_reproduction_snapshot(
+        self,
+        remote: Path,
+    ) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["OPENMAKO_REMOTE"] = str(remote)
+        env["OPENMAKO_PUBLIC_EVIDENCE_REMOTE"] = str(remote)
+        env["OPENMAKO_PUBLIC_EVIDENCE_BRANCH"] = "public-evidence"
+        return subprocess.run(
+            ["bash", "scripts/remote_fresh_clone_reproduction_snapshot.sh"],
+            cwd=str(ROOT),
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+            check=False,
+        )
+
     def write_autonomous_learning_artifact(self, summary_dir: Path, git_commit: str) -> None:
         segments = [
             "stage1_trajectory_reuse_matrix",
@@ -726,6 +792,83 @@ class CliWrapperTest(unittest.TestCase):
                     text=True,
                     check=False,
                 )
+
+    def test_fresh_clone_reproduction_publish_and_remote_snapshot_verify_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            remote = tmp_path / "remote.git"
+            log_path = tmp_path / "fresh-clone.log"
+            current_commit = self.current_git_commit()
+
+            subprocess.run(["git", "init", "--bare", "-q", str(remote)], check=True)
+            subprocess.run(
+                ["git", "push", str(remote), f"{current_commit}:refs/heads/main"],
+                cwd=str(ROOT),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+            self.write_fresh_clone_reproduction_log(log_path, current_commit)
+
+            publish = self.run_publish_fresh_clone_reproduction_branch(remote, log_path, current_commit)
+
+            self.assertEqual(publish.returncode, 0, publish.stderr)
+            self.assertIn("publish-fresh-clone-reproduction-branch: PASS", publish.stdout)
+            self.assertIn(f"commit={current_commit}", publish.stdout)
+
+            snapshot = self.run_remote_fresh_clone_reproduction_snapshot(remote)
+
+            self.assertEqual(snapshot.returncode, 0, snapshot.stderr)
+            self.assertIn(
+                f"remote-fresh-clone-reproduction-snapshot: remote-main-sha={current_commit}",
+                snapshot.stdout,
+            )
+            self.assertIn(f"summary=reproductions/{current_commit}/summary.json", snapshot.stdout)
+            self.assertIn("log-sha256=sha256:", snapshot.stdout)
+            self.assertIn("log-lines=11", snapshot.stdout)
+            self.assertIn("remote-fresh-clone-reproduction-snapshot: PASS", snapshot.stdout)
+
+            evidence_clone = tmp_path / "evidence-clone"
+            subprocess.run(
+                ["git", "clone", "--branch", "public-evidence", str(remote), str(evidence_clone)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+            summary_path = evidence_clone / "reproductions" / current_commit / "summary.json"
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            summary["log_sha256"] = "sha256:" + "0" * 64
+            summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            subprocess.run(["git", "add", "."], cwd=evidence_clone, check=True)
+            subprocess.run(
+                [
+                    "git",
+                    "-c",
+                    "user.email=openmako-test@example.invalid",
+                    "-c",
+                    "user.name=OpenMako Test",
+                    "commit",
+                    "-q",
+                    "-m",
+                    "tamper reproduction summary",
+                ],
+                cwd=evidence_clone,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "push", "origin", "HEAD:public-evidence"],
+                cwd=evidence_clone,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+            tampered = self.run_remote_fresh_clone_reproduction_snapshot(remote)
+
+            self.assertEqual(tampered.returncode, 1)
+            self.assertIn("fresh_clone_reproduction_log_digest_mismatch", tampered.stdout)
 
     def test_autonomous_public_evidence_branch_publish_and_remote_snapshot_verify_contract(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

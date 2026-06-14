@@ -1441,6 +1441,34 @@ def test_public_evidence_branch_scripts_are_fail_closed_and_boundary_aware() -> 
     assert "not-proof=GitHub Actions artifact zip contents; external review; endorsement" in remote_text
 
 
+def test_fresh_clone_reproduction_public_evidence_scripts_are_fail_closed() -> None:
+    publish = ROOT / "scripts" / "publish_fresh_clone_reproduction_branch.sh"
+    remote = ROOT / "scripts" / "remote_fresh_clone_reproduction_snapshot.sh"
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    publish_text = publish.read_text(encoding="utf-8")
+    remote_text = remote.read_text(encoding="utf-8")
+
+    assert publish.exists()
+    assert remote.exists()
+    assert publish.stat().st_mode & 0o111
+    assert remote.stat().st_mode & 0o111
+    assert "fresh-clone-reproduction-public-evidence/v0.1" in publish_text
+    assert "OPENMAKO_REPRO_LOG" in publish_text
+    assert "missing log markers=" in publish_text
+    assert "remote-autonomous-public-evidence=PASS" in publish_text
+    assert "GitHub Actions artifact zip contents" in publish_text
+    assert "Publish fresh clone reproduction for" in publish_text
+    assert "fresh-clone-reproduction-public-evidence/v0.1" in remote_text
+    assert "fresh_clone_reproduction_log_digest_mismatch" in remote_text
+    assert "fresh_clone_reproduction_marker_missing" in remote_text
+    assert "fresh_clone_reproduction_not_proof_boundary_mismatch" in remote_text
+    assert "remote-fresh-clone-reproduction-snapshot: PASS" in remote_text
+    assert "Fresh-clone reproduction publishing" in readme
+    assert "Remote fresh-clone reproduction snapshot" in readme
+    assert "bash scripts/remote_fresh_clone_reproduction_snapshot.sh" in readme
+    assert "fresh-clone reproduction log evidence only" in readme
+
+
 def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_aware(tmp_path: Path) -> None:
     script = ROOT / "scripts" / "remote_autonomous_learning_snapshot.sh"
     text = script.read_text(encoding="utf-8")
