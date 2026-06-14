@@ -1,5 +1,5 @@
 {
-  "latest_reproduction_commit": "d50814708f035d5f6b55053445e7443fb9372a81",
+  "latest_reproduction_commit": "6b9ecbb78398eae5897e3944acaf5776f716f892",
   "not_proof": [
     "external review",
     "endorsement",
@@ -11,6 +11,6 @@
     "broad unknown-repository repair"
   ],
   "schema_version": "openmako-fresh-clone-reproduction-index/v0.1",
-  "summary": "reproductions/d50814708f035d5f6b55053445e7443fb9372a81/summary.json",
-  "updated_at_utc": "2026-06-14T23:21:32.357524+00:00"
+  "summary": "reproductions/6b9ecbb78398eae5897e3944acaf5776f716f892/summary.json",
+  "updated_at_utc": "2026-06-14T23:54:48.969315+00:00"
 }
