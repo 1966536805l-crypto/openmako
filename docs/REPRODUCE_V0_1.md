@@ -33,10 +33,12 @@ OPENMAKO_REPRO_LOG=/tmp/openmako-fresh-clone.log \
 bash scripts/fresh_clone_reproduction.sh
 ```
 
-This script stops on install failure before running the release or public gates.
-Passing it is fresh-clone reproduction evidence for the bounded public gate, not
+This script stops on install failure before running the release, public, or
+remote public-evidence snapshot gates. Passing it is fresh-clone reproduction
+evidence for the bounded public gate and public-evidence branch snapshots, not
 external review, endorsement, stars, reposts, independent external benchmark
-standing, live autonomy, or broad unknown-repository repair.
+standing, GitHub Actions artifact zip contents, live autonomy, or broad
+unknown-repository repair.
 
 ## One-Command Public Gate
 

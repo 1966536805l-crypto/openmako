@@ -430,6 +430,11 @@ class CliWrapperTest(unittest.TestCase):
         for script_name, pass_line in (
             ("release_readiness_gate.sh", "release-readiness-gate: PASS"),
             ("public_review_gate.sh", "public-review-gate: PASS"),
+            ("remote_public_evidence_snapshot.sh", "remote-public-evidence-snapshot: PASS"),
+            (
+                "remote_autonomous_public_evidence_snapshot.sh",
+                "remote-autonomous-public-evidence-snapshot: PASS",
+            ),
         ):
             script = target / "scripts" / script_name
             script.write_text(
@@ -788,9 +793,12 @@ class CliWrapperTest(unittest.TestCase):
             self.assertIn("fresh-clone-reproduction: install=PASS", result.stdout)
             self.assertIn("fresh-clone-reproduction: release-readiness=PASS", result.stdout)
             self.assertIn("fresh-clone-reproduction: public-review=PASS", result.stdout)
+            self.assertIn("fresh-clone-reproduction: remote-public-evidence=PASS", result.stdout)
+            self.assertIn("fresh-clone-reproduction: remote-autonomous-public-evidence=PASS", result.stdout)
             self.assertIn("fresh-clone-reproduction: PASS", result.stdout)
             self.assertIn("fresh-clone-reproduction: log-sha256=", result.stdout)
             self.assertIn("not-proof=external review; endorsement; stars; reposts", result.stdout)
+            self.assertIn("GitHub Actions artifact zip contents", result.stdout)
 
     def test_fresh_clone_reproduction_stops_before_gates_when_install_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

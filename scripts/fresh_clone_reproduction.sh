@@ -20,6 +20,8 @@ CLONE_URL="${OPENMAKO_REPRO_CLONE_URL:-https://github.com/1966536805l-crypto/ope
 REF="${OPENMAKO_REPRO_REF:-}"
 PYTHON_BIN="${OPENMAKO_REPRO_PYTHON:-python3}"
 WORKDIR="${OPENMAKO_REPRO_WORKDIR:-}"
+REPRO_REMOTE="${OPENMAKO_REPRO_REMOTE:-origin}"
+PUBLIC_EVIDENCE_REMOTE="${OPENMAKO_REPRO_PUBLIC_EVIDENCE_REMOTE:-$CLONE_URL}"
 
 if [ -z "$WORKDIR" ]; then
   WORKDIR="$(mktemp -d /tmp/openmako-fresh-clone.XXXXXX)"
@@ -67,5 +69,15 @@ echo "fresh-clone-reproduction: release-readiness=PASS"
 bash scripts/public_review_gate.sh
 echo "fresh-clone-reproduction: public-review=PASS"
 
+OPENMAKO_REMOTE="$REPRO_REMOTE" \
+OPENMAKO_PUBLIC_EVIDENCE_REMOTE="$PUBLIC_EVIDENCE_REMOTE" \
+  bash scripts/remote_public_evidence_snapshot.sh
+echo "fresh-clone-reproduction: remote-public-evidence=PASS"
+
+OPENMAKO_REMOTE="$REPRO_REMOTE" \
+OPENMAKO_PUBLIC_EVIDENCE_REMOTE="$PUBLIC_EVIDENCE_REMOTE" \
+  bash scripts/remote_autonomous_public_evidence_snapshot.sh
+echo "fresh-clone-reproduction: remote-autonomous-public-evidence=PASS"
+
 echo "fresh-clone-reproduction: PASS"
-echo "fresh-clone-reproduction: not-proof=external review; endorsement; stars; reposts; independent external benchmark standing; live autonomy; broad unknown-repository repair"
+echo "fresh-clone-reproduction: not-proof=external review; endorsement; stars; reposts; independent external benchmark standing; GitHub Actions artifact zip contents; live autonomy; broad unknown-repository repair"

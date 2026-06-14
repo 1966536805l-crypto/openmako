@@ -277,7 +277,7 @@ def test_readme_links_public_proof_issue() -> None:
     assert "Fresh-clone reproduction" in readme
     assert "bash scripts/fresh_clone_reproduction.sh" in readme
     assert "OPENMAKO_REPRO_LOG" in readme
-    assert "fresh-clone public-gate reproduction evidence only" in readme
+    assert "fresh-clone public-gate and public-evidence snapshot reproduction only" in readme
     assert "External-source benchmark gate" in readme
     assert "bash scripts/external_source_benchmark_gate.sh" in readme
     assert "OpenClaw vendored-source manifest, MIT license, selected source digest" in readme
@@ -926,10 +926,14 @@ def test_fresh_clone_reproduction_script_is_fail_closed_and_boundary_limited() -
     assert "python -m pip install -e . pytest" in text
     assert "bash scripts/release_readiness_gate.sh" in text
     assert "bash scripts/public_review_gate.sh" in text
+    assert "bash scripts/remote_public_evidence_snapshot.sh" in text
+    assert "bash scripts/remote_autonomous_public_evidence_snapshot.sh" in text
+    assert "remote-public-evidence=PASS" in text
+    assert "remote-autonomous-public-evidence=PASS" in text
     assert "log-sha256=" in text
     assert "set -euo pipefail" in text
     assert "not-proof=external review; endorsement; stars; reposts" in text
-    assert "independent external benchmark standing; live autonomy; broad unknown-repository repair" in text
+    assert "GitHub Actions artifact zip contents; live autonomy; broad unknown-repository repair" in text
 
 
 def test_changelog_v01_draft_stays_inside_public_evidence_boundary() -> None:
@@ -2418,8 +2422,8 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "python -m pip install -e . pytest" in guide
     assert "bash scripts/fresh_clone_reproduction.sh" in guide
     assert "OPENMAKO_REPRO_LOG=/tmp/openmako-fresh-clone.log" in guide
-    assert "stops on install failure before running the release or public gates" in guide
-    assert "fresh-clone reproduction evidence for the bounded public gate" in guide
+    assert "stops on install failure before running the release, public, or" in guide
+    assert "fresh-clone reproduction\nevidence for the bounded public gate and public-evidence branch snapshots" in guide
     assert "./scripts/public_review_gate.sh" in guide
     assert "<N> passed" in guide
     assert "metadata-test count is intentionally not fixed" in guide
