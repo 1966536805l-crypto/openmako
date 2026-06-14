@@ -219,14 +219,12 @@ Current public proof:
   record consistency only, not external review, endorsement, stars, reposts,
   live autonomy, broad unknown-repository repair, or external benchmark
   standing.
-- `bash scripts/release_readiness_gate.sh` is the fail-closed check for the
-  current hard license blocker before future release tagging or announcement.
-  It verifies a root `LICENSE`/`COPYING` file and `pyproject.toml` license
-  metadata. If either is missing, the correct status is
-  `[NEEDS OWNER DECISION: LICENSE]`; do not invent a license choice to make the
-  gate pass. Passing this script would be release-readiness hygiene only, not
-  legal advice, an owner license decision, external review, endorsement, stars,
-  reposts, or release announcement evidence.
+- `bash scripts/release_readiness_gate.sh` is the fail-closed check for root
+  license hygiene before future release tagging or announcement. The owner
+  selected MIT on 2026-06-14, and the repository now records that decision in
+  the root `LICENSE` file plus `pyproject.toml` license metadata. Passing this
+  script is release-readiness hygiene only, not legal advice, external review,
+  endorsement, stars, reposts, or release announcement evidence.
 - Latest local retained-failure recurrence check on 2026-06-14 passed:
   `python3 -m pytest -p no:cacheprovider tests/test_skill_learning.py -q`
   ended with `4 passed`; the focused public-metadata lock
@@ -283,9 +281,9 @@ Current public proof:
   evidence only, not independent external held-out benchmark evidence, external
   review, endorsement, stars, reposts, live autonomy, or broad unknown-repository
   repair.
-- Next smallest task: get an owner license decision and add the root license
-  file plus `pyproject.toml` license metadata so `release_readiness_gate.sh`
-  can pass without inventing a license choice.
+- Next smallest task: after the MIT license hygiene change is verified and
+  pushed, re-check exact-commit CI and then target the next lowest evidence
+  blocker: independent external held-out or live self-repair evidence.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:
@@ -1805,6 +1803,6 @@ public result.
 
 Next smallest hygiene task:
 
-- Get an owner license decision and then add the root license file plus
-  `pyproject.toml` license metadata. Do not invent a license choice to make
-  `release_readiness_gate.sh` pass.
+- Verify and push the owner-selected MIT license hygiene change, then re-check
+  exact-commit CI and move to independent external held-out or live self-repair
+  evidence.

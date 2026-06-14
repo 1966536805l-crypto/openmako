@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "open-mako"
 version = "0.1.0"
 description = "Evidence harness for coding agents: learning-effect, patch-scope, and test-proof checks."
+license = { file = "LICENSE" }
 requires-python = ">=3.9"
 dependencies = []
 

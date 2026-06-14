@@ -781,19 +781,24 @@ def test_release_checklist_keeps_v01_claims_evidence_gated() -> None:
 def test_release_readiness_gate_fails_closed_on_missing_license_decision() -> None:
     script = ROOT / "scripts" / "release_readiness_gate.sh"
     text = script.read_text(encoding="utf-8")
+    license_text = (ROOT / "LICENSE").read_text(encoding="utf-8")
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     progress = (ROOT / "PROGRESS.md").read_text(encoding="utf-8")
 
     assert script.exists()
     assert script.stat().st_mode & 0o111
+    assert "MIT License" in license_text
+    assert "OpenMako contributors" in license_text
+    assert 'license = { file = "LICENSE" }' in pyproject
     assert "release-readiness-gate: START" in text
     assert "root-license=[NEEDS OWNER DECISION: LICENSE]" in text
     assert "pyproject-license=[NEEDS OWNER DECISION: LICENSE]" in text
     assert "not-proof=legal advice; owner license decision; external review; endorsement; release announcement" in text
     assert "bash scripts/release_readiness_gate.sh" in readme
-    assert "[NEEDS OWNER DECISION: LICENSE]" in readme
+    assert "current owner-selected project license is MIT" in readme
     assert "bash scripts/release_readiness_gate.sh" in progress
-    assert "do not invent a license choice" in progress
+    assert "owner\n  selected MIT on 2026-06-14" in progress
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_root = Path(tmp)
