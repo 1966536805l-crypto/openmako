@@ -183,6 +183,14 @@ Current public proof:
   record consistency only, not external review, endorsement, stars, reposts,
   live autonomy, broad unknown-repository repair, or external benchmark
   standing.
+- `bash scripts/release_readiness_gate.sh` is the fail-closed check for the
+  current hard license blocker before future release tagging or announcement.
+  It verifies a root `LICENSE`/`COPYING` file and `pyproject.toml` license
+  metadata. If either is missing, the correct status is
+  `[NEEDS OWNER DECISION: LICENSE]`; do not invent a license choice to make the
+  gate pass. Passing this script would be release-readiness hygiene only, not
+  legal advice, an owner license decision, external review, endorsement, stars,
+  reposts, or release announcement evidence.
 - Issue #1 comment `4694860161` records an earlier public evidence marker for
   commit `ac5a4e6211776dc4f250212ffb48c662534f9b29`: focused run
   `27472027053` / job `81204551123`, autonomous-learning run `27472027045` /
@@ -1733,7 +1741,6 @@ Next smallest hygiene task:
 
 - Pick the next code-backed target only if it can be reduced to a failing test
   and public-proof boundary.
-- Next concrete candidate: rerun the remote autonomous artifact snapshot with a
-  token or saved artifact fixture, then ask five agents to score whether the
-  remaining autonomous-learning gap is artifact access, benchmark coverage, or
-  another adapter evidence edge case.
+- Next concrete candidate: get an owner license decision and then add the root
+  license file plus `pyproject.toml` license metadata, or add a genuinely
+  external held-out benchmark manifest with source, license, and digest checks.

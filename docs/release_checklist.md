@@ -9,6 +9,17 @@ Do not treat this file as proof that a release already happened.
   `.github/workflows/focused.yml`.
 - Evidence Court demo workflow is green on the commit to tag:
   `.github/workflows/evidence-court-demo.yml`.
+- Release readiness hard blockers have been checked:
+
+```bash
+bash scripts/release_readiness_gate.sh
+```
+
+  This gate must pass before tagging or announcing a release. It verifies that
+  the root package has a `LICENSE`/`COPYING` file and `pyproject.toml` license
+  metadata. If either is missing, the correct status is
+  `[NEEDS OWNER DECISION: LICENSE]`; do not invent a license choice to make the
+  gate pass.
 - Local focused gate has been run on the release commit:
 
 ```bash

@@ -728,6 +728,11 @@ def test_release_checklist_keeps_v01_claims_evidence_gated() -> None:
     checklist = (ROOT / "docs" / "release_checklist.md").read_text(encoding="utf-8")
 
     assert "Do not treat this file as proof that a release already happened." in checklist
+    assert "bash scripts/release_readiness_gate.sh" in checklist
+    assert "root package has a `LICENSE`/`COPYING` file" in checklist
+    assert "`pyproject.toml` license\n  metadata" in checklist
+    assert "[NEEDS OWNER DECISION: LICENSE]" in checklist
+    assert "do not invent a license choice" in checklist
     assert "CHANGELOG.md" in checklist
     assert "docs/v0.1_release_notes.md" in checklist
     assert ".github/workflows/focused.yml" in checklist
@@ -746,6 +751,70 @@ def test_release_checklist_keeps_v01_claims_evidence_gated() -> None:
     assert "git push origin v0.1.0" in checklist
     assert "v0.1 audits repository-defined supplied records and supplied transcript\nfixtures only" in checklist
     assert "supplied\nartifact provenance, and supplied transcript adapter proof gaps" in checklist
+
+
+def test_release_readiness_gate_fails_closed_on_missing_license_decision() -> None:
+    script = ROOT / "scripts" / "release_readiness_gate.sh"
+    text = script.read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    progress = (ROOT / "PROGRESS.md").read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert "release-readiness-gate: START" in text
+    assert "root-license=[NEEDS OWNER DECISION: LICENSE]" in text
+    assert "pyproject-license=[NEEDS OWNER DECISION: LICENSE]" in text
+    assert "not-proof=legal advice; owner license decision; external review; endorsement; release announcement" in text
+    assert "bash scripts/release_readiness_gate.sh" in readme
+    assert "[NEEDS OWNER DECISION: LICENSE]" in readme
+    assert "bash scripts/release_readiness_gate.sh" in progress
+    assert "do not invent a license choice" in progress
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_root = Path(tmp)
+        scripts = tmp_root / "scripts"
+        scripts.mkdir()
+        gate = scripts / "release_readiness_gate.sh"
+        gate.write_text(text, encoding="utf-8")
+        gate.chmod(gate.stat().st_mode | 0o111)
+        (tmp_root / "pyproject.toml").write_text(
+            "[project]\nname = \"open-mako-smoke\"\nversion = \"0.0.0\"\n",
+            encoding="utf-8",
+        )
+
+        missing = subprocess.run(
+            ["bash", str(gate)],
+            cwd=tmp_root,
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        assert missing.returncode == 1
+        assert "release-readiness-gate: START" in missing.stdout
+        assert "release-readiness-gate: root-license=[NEEDS OWNER DECISION: LICENSE]" in missing.stderr
+        assert "release-readiness-gate: pyproject-license=[NEEDS OWNER DECISION: LICENSE]" in missing.stderr
+        assert "release-readiness-gate: FAIL" in missing.stderr
+        assert "release-readiness-gate: PASS" not in missing.stdout
+
+        (tmp_root / "LICENSE").write_text("Owner-selected test license placeholder.\n", encoding="utf-8")
+        (tmp_root / "pyproject.toml").write_text(
+            "[project]\n"
+            "name = \"open-mako-smoke\"\n"
+            "version = \"0.0.0\"\n"
+            "license = { text = \"Owner-selected test license placeholder\" }\n",
+            encoding="utf-8",
+        )
+        passing = subprocess.run(
+            ["bash", str(gate)],
+            cwd=tmp_root,
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        assert passing.returncode == 0
+        assert "release-readiness-gate: root-license=LICENSE" in passing.stdout
+        assert "release-readiness-gate: pyproject-license=present" in passing.stdout
+        assert "release-readiness-gate: PASS" in passing.stdout
 
 
 def test_changelog_v01_draft_stays_inside_public_evidence_boundary() -> None:

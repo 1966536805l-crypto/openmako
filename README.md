@@ -356,6 +356,7 @@ qagent --help
 | Reproduction guide | [`docs/REPRODUCE_V0_1.md`](docs/REPRODUCE_V0_1.md), exact local commands and expected public gate signals |
 | Contributor guide | [`CONTRIBUTING.md`](CONTRIBUTING.md), public-boundary contribution rules |
 | Attribution boundary | [`docs/UPSTREAM_ATTRIBUTION.md`](docs/UPSTREAM_ATTRIBUTION.md), upstream references and vendored-license boundaries |
+| Release readiness gate | `bash scripts/release_readiness_gate.sh`, a fail-closed check for root `LICENSE`/`COPYING` and `pyproject.toml` license metadata; `[NEEDS OWNER DECISION: LICENSE]` is the correct status when no owner-selected license evidence exists |
 | Agent trend radar | [`docs/AGENT_TREND_RADAR.md`](docs/AGENT_TREND_RADAR.md), source-linked trend map and non-claim development bets |
 | Reviewer target map | [`docs/REVIEWER_TARGETS.md`](docs/REVIEWER_TARGETS.md), public-source outreach waves for technical review |
 | Wave 1 review requests | [`docs/WAVE1_REVIEW_REQUESTS.md`](docs/WAVE1_REVIEW_REQUESTS.md), copyable non-promotional messages for technical reviewers |
