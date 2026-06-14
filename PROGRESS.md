@@ -117,20 +117,27 @@ Current public proof:
   failure metadata is written for the same local artifact boundary.
 - `.github/workflows/autonomous-learning-gate.yml` exposes the autonomous-learning
   stress gate as a manual `workflow_dispatch` check and as a path-filtered
-  `push` check for the workflow file, gate script, and selected gate-test paths.
-  The path filter also includes core learning modules,
-  the supplied transcript adapter matrix, `quantagent/evidence_court.py`, and
-  `tests/test_cli_wrappers.py` so changes to the autonomous-learning machinery
-  or public Evidence Court/transcript proof boundary get a current
-  autonomous-learning artifact run instead of only the faster focused gate.
-  It uploads
+  `push` check for the workflow file, tracked task-source manifest, gate script,
+  remote artifact snapshot script, and selected gate-test paths. The path filter
+  also includes core learning modules, the supplied transcript adapter matrix,
+  `quantagent/evidence_court.py`, and `tests/test_cli_wrappers.py` so changes to
+  the autonomous-learning machinery or public Evidence Court/transcript proof
+  boundary get a current autonomous-learning artifact run instead of only the
+  faster focused gate. The gate derives the selected pytest node ids and expected
+  pass counts from `scripts/autonomous_task_source_provenance.json` rather than
+  duplicating that test list inside the shell script. It now also fails closed
+  before pytest runs if a manifest segment falls below its expected minimum
+  selected-test count, contains a non-pytest-node id, passes a pytest option,
+  includes whitespace, duplicates a test inside a segment, or duplicates a test
+  across segments. It uploads
   `.quantagent/autonomous_learning_gate` as the
   `autonomous-learning-gate-summary` artifact so the machine-readable summary,
-  observed pytest counts, per-segment logs, task-level proof records, and
-  task-source provenance can be inspected for an exact workflow run. The
-  summary now records `task_source_provenance` as
-  `repo-authored-regression-pack` with `external_heldout=false`, so this gate
-  stays explicitly separated from an independent external held-out benchmark.
+  observed pytest counts, per-segment logs, task-level proof records,
+  artifact-copied task-source manifest, task-source manifest sha256, and
+  task-source provenance can be inspected for an exact workflow run. The summary
+  records `task_source_provenance` as `repo-authored-regression-pack` with
+  `external_heldout=false`, so this gate stays explicitly separated from an
+  independent external held-out benchmark.
   The workflow installs `pytest` and `typing_extensions` in the fresh GitHub
   runner so upstream-style fixture imports match the gate's hidden-pack and
   cross-upstream no-seed coverage. It is intentionally not attached to broad
@@ -143,17 +150,24 @@ Current public proof:
   re-check tool for the latest autonomous-learning workflow on current
   `openmako/main`. It verifies the latest run SHA, completed/success
   conclusion, the `autonomous-learning-gate-summary` artifact id and digest,
-  and the downloaded `last_summary.json` contract fields for the selected
-  segments, observed pass counts, hidden task count, stability solved count,
-  cheating caught count, cross-upstream no-seed hidden-stage2/stability counts,
-  task-proof count, and the task-source provenance boundary
-  `repo-authored-regression-pack` / `external_heldout=false`. It supports the
-  same `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN` fallback token
-  names as the focused snapshot, plus `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for
-  saved artifact fixtures. When API data or artifact download is unavailable,
-  it prints the remote main SHA, manual Actions URL, local UTC check time,
-  rate-limit reset details, and a copyable rerun command when available before
-  exiting nonzero. Artifact zip 401 now gets a distinct
+  the artifact-copied task-source manifest, the manifest sha256, summary versus
+  manifest equality, and the downloaded `last_summary.json` contract fields for
+  the manifest-derived selected segments, observed pass counts, hidden task
+  count, stability solved count, cheating caught count, cross-upstream no-seed
+  hidden-stage2/stability counts, task-proof count, and the task-source
+  provenance boundary `repo-authored-regression-pack` /
+  `external_heldout=false`. It also fails closed when a provenance segment's
+  `selected_tests` no longer matches the summary's selected tests or expected
+  pass count, and applies the same minimum count, pytest-node-id shape,
+  no-option, no-whitespace, and no-duplicate constraints to the
+  artifact-contained manifest so an internally consistent but weakened artifact
+  summary fails closed. It supports the same `OPENMAKO_GITHUB_TOKEN`,
+  `GITHUB_TOKEN`, or `GH_TOKEN` fallback token names as the focused snapshot,
+  plus `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for saved artifact fixtures. When API
+  data or artifact download is unavailable, it prints the remote main SHA, manual
+  Actions URL, local UTC check time, rate-limit reset details, and a copyable
+  rerun command when available before exiting nonzero. Artifact zip 401 now gets
+  a distinct
   `artifact_zip_requires_auth` boundary snapshot with token and saved fixture
   rerun commands, while still failing closed; a local HTTP 401 regression test
   asserts the nonzero exit, auth hints, fixture rerun command, and absence of
@@ -169,8 +183,8 @@ Current public proof:
   record consistency only, not external review, endorsement, stars, reposts,
   live autonomy, broad unknown-repository repair, or external benchmark
   standing.
-- Issue #1 comment `4694860161` now records current-head evidence for commit
-  `ac5a4e6211776dc4f250212ffb48c662534f9b29`: focused run
+- Issue #1 comment `4694860161` records an earlier public evidence marker for
+  commit `ac5a4e6211776dc4f250212ffb48c662534f9b29`: focused run
   `27472027053` / job `81204551123`, autonomous-learning run `27472027045` /
   job `81204551119`, artifact `7612385122`, and digest
   `sha256:9e4ef0e1393e6189f9f61fb1bc09c0cb0e83293679e4cc3774a9c64a72995920`.
@@ -180,19 +194,24 @@ Current public proof:
   This is public marker consistency and saved-artifact consistency only, not
   external review, endorsement, stars, reposts, live autonomy, broad
   unknown-repository repair, or external benchmark standing.
-- Latest local autonomous provenance-boundary check on 2026-06-14 passed:
+- Latest local autonomous manifest-boundary check on 2026-06-14 passed:
   `python3 -m pytest -p no:cacheprovider tests/test_public_metadata.py -q`
-  ended with `51 passed`; `bash scripts/autonomous_learning_gate.sh` ended
-  with `autonomous-learning-gate: PASS` and
-  `task-source-provenance=repo-authored-regression-pack external-heldout=false`;
-  `bash scripts/public_review_gate.sh` ended with `public-review-gate: PASS`;
-  and `git diff --check` passed. This is local gate and public-boundary
-  consistency evidence only, not independent external held-out benchmark
-  evidence, external review, endorsement, stars, reposts, live autonomy, or
-  broad unknown-repository repair.
-- Next smallest task: either add a genuinely external held-out benchmark
-  manifest/adapter with source, license, and digest checks, or synchronize
-  `docs/REPRODUCE_V0_1.md` with the new task-source provenance boundary.
+  ended with `51 passed` and now includes shortened-manifest, pytest-option
+  injection, cross-segment duplicate, and self-consistent weakened artifact
+  summary negative checks; `bash -n scripts/autonomous_learning_gate.sh
+  scripts/remote_autonomous_learning_snapshot.sh` passed; `git diff --check`
+  passed; `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON=/tmp/openmako-autonomous-single-source-summary.json
+  bash scripts/autonomous_learning_gate.sh` ended with `autonomous-learning-gate:
+  PASS` and `task-source-provenance=repo-authored-regression-pack
+  external-heldout=false`; and `bash scripts/public_review_gate.sh` ended with
+  `public-review-gate: PASS`. This is local gate and public-boundary consistency
+  evidence only, not independent external held-out benchmark evidence, external
+  review, endorsement, stars, reposts, live autonomy, or broad unknown-repository
+  repair.
+- Next smallest task: add a genuinely external held-out benchmark
+  manifest/adapter with source, license, and digest checks, or add another
+  adapter evidence edge case that reduces a specific public-boundary false
+  positive.
 - v0.1.0 is published at:
   `https://github.com/1966536805l-crypto/openmako/releases/tag/v0.1.0`.
 - Public evidence is tracked in issue #1:

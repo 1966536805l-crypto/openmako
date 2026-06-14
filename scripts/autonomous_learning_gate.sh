@@ -39,6 +39,10 @@ manifest_path = Path(sys.argv[5])
 manifest_resolved = manifest_path if manifest_path.is_absolute() else Path.cwd() / manifest_path
 manifest_text = manifest_resolved.read_text(encoding="utf-8")
 task_source_provenance = json.loads(manifest_text)
+provenance_segments = task_source_provenance.get("segments", {})
+stage1_selected = provenance_segments.get("stage1_trajectory_reuse_matrix", {}).get("selected_tests", [])
+upstream_selected = provenance_segments.get("upstream_hidden_pack_reuse", {}).get("selected_tests", [])
+cross_upstream_selected = provenance_segments.get("cross_upstream_no_seed_reuse", {}).get("selected_tests", [])
 manifest_sha256 = hashlib.sha256(manifest_text.encode("utf-8")).hexdigest()
 manifest_artifact_path = path.parent / "task_source_provenance_manifest.json"
 manifest_artifact_path.write_text(manifest_text, encoding="utf-8")
@@ -68,12 +72,8 @@ payload = {
     "segment_elapsed_seconds": {},
     "tests": {
         "stage1_trajectory_reuse_matrix": {
-            "selected": [
-                "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2",
-                "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2",
-                "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2",
-            ],
-            "expected_passed": 3,
+            "selected": stage1_selected,
+            "expected_passed": len(stage1_selected),
             "expected_contract": {
                 "stage1_agent_repair": True,
                 "trajectory_extraction": True,
@@ -85,10 +85,8 @@ payload = {
             },
         },
         "upstream_hidden_pack_reuse": {
-            "selected": [
-                "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating",
-            ],
-            "expected_passed": 1,
+            "selected": upstream_selected,
+            "expected_passed": len(upstream_selected),
             "expected_contract": {
                 "upstream_family_count": 5,
                 "hidden_task_count": 10,
@@ -101,13 +99,8 @@ payload = {
             },
         },
         "cross_upstream_no_seed_reuse": {
-            "selected": [
-                "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_scale_no_seed_stage1_extracts_function_repair_without_non_target_drift",
-                "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_bool_predicate_no_seed_stage1_reuses_with_stability",
-                "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair",
-                "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2",
-            ],
-            "expected_passed": 4,
+            "selected": cross_upstream_selected,
+            "expected_passed": len(cross_upstream_selected),
             "expected_contract": {
                 "upstream_family_count": 4,
                 "no_seed_stage1_repairs": 4,
@@ -153,6 +146,46 @@ for segment_dir in sorted(path for path in proof_root.iterdir() if path.is_dir()
     ]
 payload["task_proofs"] = task_proofs
 summary_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
+load_manifest_test_arrays() {
+  "$PYTHON_BIN" - "$TASK_SOURCE_MANIFEST" <<'PY'
+import json
+import re
+import shlex
+import sys
+from pathlib import Path
+
+manifest = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+segments = manifest.get("segments") or {}
+requested = {
+    "STAGE1_TESTS": ("stage1_trajectory_reuse_matrix", 3),
+    "UPSTREAM_TESTS": ("upstream_hidden_pack_reuse", 1),
+    "CROSS_UPSTREAM_TESTS": ("cross_upstream_no_seed_reuse", 4),
+}
+node_id_re = re.compile(r"^tests/[A-Za-z0-9_./]+\.py::[A-Za-z_][A-Za-z0-9_]*::test_[A-Za-z0-9_]+$")
+seen = set()
+for variable, (segment, minimum_count) in requested.items():
+    selected = (segments.get(segment) or {}).get("selected_tests")
+    if (
+        not isinstance(selected, list)
+        or len(selected) < minimum_count
+        or len(selected) != len(set(selected))
+        or any(
+            not isinstance(item, str)
+            or not node_id_re.fullmatch(item)
+            or item.startswith("-")
+            or any(char.isspace() for char in item)
+            for item in selected
+        )
+    ):
+        raise SystemExit(f"invalid selected_tests for {segment}")
+    duplicate_across_segments = seen.intersection(selected)
+    if duplicate_across_segments:
+        raise SystemExit(f"duplicate selected_tests across segments for {segment}")
+    seen.update(selected)
+    print(f"{variable}=(" + " ".join(shlex.quote(item) for item in selected) + ")")
 PY
 }
 
@@ -319,34 +352,6 @@ if isinstance(manifest_artifact_path_value, str):
     except Exception:
         errors.append("task_source_manifest.artifact_path")
 
-expected_stage1_selected = [
-    "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2",
-    "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2",
-    "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2",
-]
-expected_upstream_selected = [
-    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating",
-]
-expected_cross_upstream_selected = [
-    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_scale_no_seed_stage1_extracts_function_repair_without_non_target_drift",
-    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_bool_predicate_no_seed_stage1_reuses_with_stability",
-    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair",
-    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2",
-]
-if stage1.get("selected") != expected_stage1_selected:
-    errors.append("tests.stage1_trajectory_reuse_matrix.selected")
-if stage1.get("expected_passed") != 3:
-    errors.append("tests.stage1_trajectory_reuse_matrix.expected_passed")
-if upstream.get("selected") != expected_upstream_selected:
-    errors.append("tests.upstream_hidden_pack_reuse.selected")
-if upstream.get("expected_passed") != 1:
-    errors.append("tests.upstream_hidden_pack_reuse.expected_passed")
-if cross_upstream.get("selected") != expected_cross_upstream_selected:
-    errors.append("tests.cross_upstream_no_seed_reuse.selected")
-if cross_upstream.get("expected_passed") != 4:
-    errors.append("tests.cross_upstream_no_seed_reuse.expected_passed")
-
-
 def check_observed(segment: str, entry: dict, expected_passed: int) -> None:
     observed = entry.get("observed_pytest") or {}
     if observed.get("exit_code") != 0:
@@ -368,10 +373,6 @@ def check_observed(segment: str, entry: dict, expected_passed: int) -> None:
     if not isinstance(log_tail, list) or not log_tail or len(log_tail) > 12:
         errors.append(f"tests.{segment}.log_tail")
 
-
-check_observed("stage1_trajectory_reuse_matrix", stage1, 3)
-check_observed("upstream_hidden_pack_reuse", upstream, 1)
-check_observed("cross_upstream_no_seed_reuse", cross_upstream, 4)
 
 stage1_contract = stage1.get("expected_contract") or {}
 for key in ("stage1_agent_repair", "trajectory_extraction", "eval_gated_approval", "clean_stage2_reuse"):
@@ -512,19 +513,44 @@ if not isinstance(source_boundary, str) or "not an independent external held-out
     errors.append("task_source_provenance.source_boundary")
 provenance_segments = provenance.get("segments") or {}
 required_provenance_segments = {
-    "stage1_trajectory_reuse_matrix": "repo-authored-e2e-regression",
-    "upstream_hidden_pack_reuse": "repo-authored-upstream-inspired-hidden-pack",
-    "cross_upstream_no_seed_reuse": "repo-authored-cross-upstream-inspired-regression",
+    "stage1_trajectory_reuse_matrix": ("repo-authored-e2e-regression", 3),
+    "upstream_hidden_pack_reuse": ("repo-authored-upstream-inspired-hidden-pack", 1),
+    "cross_upstream_no_seed_reuse": ("repo-authored-cross-upstream-inspired-regression", 4),
 }
-for segment, source_kind in required_provenance_segments.items():
+node_id_re = re.compile(r"^tests/[A-Za-z0-9_./]+\.py::[A-Za-z_][A-Za-z0-9_]*::test_[A-Za-z0-9_]+$")
+all_selected_tests = set()
+for segment, (source_kind, minimum_count) in required_provenance_segments.items():
     segment_entry = provenance_segments.get(segment) or {}
     if segment_entry.get("source_kind") != source_kind:
         errors.append(f"task_source_provenance.segments.{segment}.source_kind")
     if segment_entry.get("external_heldout") is not False:
         errors.append(f"task_source_provenance.segments.{segment}.external_heldout")
     tests_entry = tests.get(segment) or {}
-    if segment_entry.get("selected_tests") != tests_entry.get("selected"):
+    selected_tests = segment_entry.get("selected_tests")
+    if (
+        not isinstance(selected_tests, list)
+        or len(selected_tests) < minimum_count
+        or len(selected_tests) != len(set(selected_tests))
+        or any(
+            not isinstance(item, str)
+            or not node_id_re.fullmatch(item)
+            or item.startswith("-")
+            or any(char.isspace() for char in item)
+            for item in selected_tests
+        )
+    ):
         errors.append(f"task_source_provenance.segments.{segment}.selected_tests")
+        selected_tests = []
+    duplicate_across_segments = all_selected_tests.intersection(selected_tests)
+    if duplicate_across_segments:
+        errors.append(f"task_source_provenance.segments.{segment}.selected_tests")
+    all_selected_tests.update(selected_tests)
+    if selected_tests != tests_entry.get("selected"):
+        errors.append(f"tests.{segment}.selected")
+        errors.append(f"task_source_provenance.segments.{segment}.selected_tests")
+    if tests_entry.get("expected_passed") != len(selected_tests):
+        errors.append(f"tests.{segment}.expected_passed")
+    check_observed(segment, tests_entry, len(selected_tests))
 
 not_proof = payload.get("not_proof")
 required_not_proof = {
@@ -658,29 +684,25 @@ PY
 
 trap 'on_error $?' ERR
 
+eval "$(load_manifest_test_arrays)"
 init_summary
 
 echo "autonomous-learning-gate: running stage1 trajectory reuse matrix"
-run_pytest_segment "stage1_trajectory_reuse_matrix" 3 \
+run_pytest_segment "stage1_trajectory_reuse_matrix" "${#STAGE1_TESTS[@]}" \
   "$PYTHON_BIN" -m pytest -p no:cacheprovider \
-  tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2 \
-  tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2 \
-  tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2 \
+  "${STAGE1_TESTS[@]}" \
   -q
 
 echo "autonomous-learning-gate: running upstream hidden-pack reuse stress test"
-run_pytest_segment "upstream_hidden_pack_reuse" 1 \
+run_pytest_segment "upstream_hidden_pack_reuse" "${#UPSTREAM_TESTS[@]}" \
   "$PYTHON_BIN" -m pytest -p no:cacheprovider \
-  tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating \
+  "${UPSTREAM_TESTS[@]}" \
   -q
 
 echo "autonomous-learning-gate: running cross-upstream no-seed reuse stress tests"
-run_pytest_segment "cross_upstream_no_seed_reuse" 4 \
+run_pytest_segment "cross_upstream_no_seed_reuse" "${#CROSS_UPSTREAM_TESTS[@]}" \
   "$PYTHON_BIN" -m pytest -p no:cacheprovider \
-  tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_scale_no_seed_stage1_extracts_function_repair_without_non_target_drift \
-  tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_bool_predicate_no_seed_stage1_reuses_with_stability \
-  tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair \
-  tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2 \
+  "${CROSS_UPSTREAM_TESTS[@]}" \
   -q
 
 collect_task_proofs

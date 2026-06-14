@@ -125,17 +125,24 @@ unknown-repository repair proof, external benchmark standing, remote CI proof,
 external review, endorsement, stars, or reposts.
 It writes a machine-readable summary to
 `.quantagent/autonomous_learning_gate/last_summary.json` by default. The summary
-records the invoking commit, selected tests, per-segment elapsed seconds, the
-per-segment pytest log paths and log tails, observed pass/skip/warning counts,
-the expected stage1/upstream/cross-upstream learning-effect contract counts,
-and the same not-proof boundary. Set
+records the invoking commit, manifest-derived selected tests, per-segment elapsed
+seconds, the per-segment pytest log paths and log tails, observed
+pass/skip/warning counts, the expected stage1/upstream/cross-upstream
+learning-effect contract counts, the tracked
+`scripts/autonomous_task_source_provenance.json` path and sha256, an artifact
+copy of that manifest, and the same not-proof boundary. Set
 `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to write the summary
 elsewhere.
+The manifest-derived selected tests are constrained to the expected minimum
+segment counts, pytest node-id shape, no pytest options, no whitespace, no
+duplicates inside a segment, and no duplicates across segments, so a shortened or
+injected manifest fails before pytest runs.
 For commit-pinned public artifact capture, use the manual
 `.github/workflows/autonomous-learning-gate.yml` workflow or push a change to
-the workflow, gate script, core learning modules, selected gate-test paths, or
-supplied Evidence Court/transcript proof surfaces. It uploads the summary JSON
-and pytest logs for that workflow run. This is path-filtered public CI artifact
+the workflow, the tracked task-source manifest, gate script, remote snapshot
+script, core learning modules, selected gate-test paths, or supplied Evidence
+Court/transcript proof surfaces. It uploads the summary JSON, manifest copy, and
+pytest logs for that workflow run. This is path-filtered public CI artifact
 evidence only, not broad default push or pull-request CI, external review,
 endorsement, live autonomy, or broad unknown-repository repair proof.
 
@@ -154,6 +161,7 @@ remote-autonomous-learning-snapshot: status=completed conclusion=success
 remote-autonomous-learning-snapshot: artifact-name=autonomous-learning-gate-summary
 remote-autonomous-learning-snapshot: artifact-digest=sha256:...
 remote-autonomous-learning-snapshot: artifact-summary=last_summary.json
+remote-autonomous-learning-snapshot: artifact-task-source-manifest=task_source_provenance_manifest.json
 remote-autonomous-learning-snapshot: artifact-summary-upstream-hidden-task-count=10
 remote-autonomous-learning-snapshot: artifact-summary-upstream-stability-solved=100
 remote-autonomous-learning-snapshot: artifact-summary-upstream-cheat-caught=10
@@ -161,6 +169,10 @@ remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-hidden-stag
 remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-stability-solved=16
 remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-cheat-caught=8
 remote-autonomous-learning-snapshot: artifact-summary-task-proof-files=5
+remote-autonomous-learning-snapshot: artifact-summary-task-source-provenance=repo-authored-regression-pack
+remote-autonomous-learning-snapshot: artifact-summary-task-source-manifest=scripts/autonomous_task_source_provenance.json
+remote-autonomous-learning-snapshot: artifact-summary-task-source-manifest-sha256=...
+remote-autonomous-learning-snapshot: artifact-summary-external-heldout=false
 remote-autonomous-learning-snapshot: PASS
 ```
 
@@ -168,12 +180,20 @@ The command fails closed if the latest autonomous-learning workflow run is
 stale, still running, failed, missing, rate limited, missing the named artifact,
 expired, missing an artifact digest, unreadable as an artifact zip, blocked by
 an artifact zip 401 that needs authenticated API access, or missing the expected
-`last_summary.json` contract fields. Set `OPENMAKO_GITHUB_TOKEN`,
+`last_summary.json` contract fields. It also fails closed if the artifact
+manifest copy is missing, the manifest hash does not match the summary, the
+summary provenance does not match the artifact manifest, or a segment's
+manifest `selected_tests` no longer matches the summary's selected tests and
+observed pass count. The remote artifact snapshot applies the same minimum
+segment count, pytest node-id shape, no-option, no-whitespace, and no-duplicate
+selected-test constraints to the artifact-contained manifest, so a self-consistent
+but weakened artifact summary still fails closed. Set `OPENMAKO_GITHUB_TOKEN`,
 `GITHUB_TOKEN`, or `GH_TOKEN` for live artifact zip reads, or set
 `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` to verify the same contract against a saved
 artifact fixture. Passing it is current public CI artifact evidence only, not
 external review, endorsement, stars, reposts, live autonomy, broad
-unknown-repository repair, or external benchmark standing.
+unknown-repository repair, external benchmark standing, or independent external
+held-out benchmark evidence.
 
 If the live GitHub API is rate-limited but the run metadata, artifact metadata,
 and artifact zip were saved from the same workflow run, use the fixture-first
@@ -189,7 +209,8 @@ including the artifact metadata's `workflow_run` binding when present, but it
 does not prove fixture provenance or current live GitHub API state. It is saved
 public CI artifact evidence only, not a substitute for external review,
 endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or
-external benchmark standing.
+external benchmark standing, and not independent external held-out benchmark
+evidence.
 
 To re-check that the published public evidence comment still contains the
 recorded remote-run markers and non-proof boundary:

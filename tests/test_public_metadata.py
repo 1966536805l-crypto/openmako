@@ -432,16 +432,22 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert "if-no-files-found: error" in workflow
 
     assert "`.github/workflows/autonomous-learning-gate.yml` exposes the autonomous-learning\n  stress gate as a manual `workflow_dispatch` check and as a path-filtered\n  `push` check" in progress
-    assert "The path filter also includes core learning modules,\n  the supplied transcript adapter matrix, `quantagent/evidence_court.py`, and\n  `tests/test_cli_wrappers.py`" in progress
+    assert "for the workflow file, tracked task-source manifest, gate script,\n  remote artifact snapshot script, and selected gate-test paths" in progress
+    assert "The path filter\n  also includes core learning modules, the supplied transcript adapter matrix,\n  `quantagent/evidence_court.py`, and `tests/test_cli_wrappers.py`" in progress
+    assert "The gate derives the selected pytest node ids and expected\n  pass counts from `scripts/autonomous_task_source_provenance.json` rather than\n  duplicating that test list inside the shell script" in progress
+    assert "fails closed\n  before pytest runs if a manifest segment falls below its expected minimum\n  selected-test count, contains a non-pytest-node id, passes a pytest option,\n  includes whitespace, duplicates a test inside a segment, or duplicates a test\n  across segments" in progress
     assert "It uploads\n  `.quantagent/autonomous_learning_gate` as the\n  `autonomous-learning-gate-summary` artifact" in progress
     assert "attached to broad\n  default push or pull-request CI" in progress
     assert "task-source provenance can be inspected for an exact workflow run" in progress
-    assert "summary now records `task_source_provenance` as\n  `repo-authored-regression-pack` with `external_heldout=false`" in progress
+    assert "artifact-copied task-source manifest, task-source manifest sha256, and\n  task-source provenance can be inspected" in progress
+    assert "The summary\n  records `task_source_provenance` as `repo-authored-regression-pack` with\n  `external_heldout=false`" in progress
     assert "A passing manual or path-filtered push run is public CI artifact\n  evidence only, not external review, endorsement, stars, reposts, live\n  autonomy, broad unknown-repository repair proof, external benchmark standing,\n  or independent external held-out benchmark evidence" in progress
-    assert "the downloaded `last_summary.json` contract fields for the selected\n  segments, observed pass counts, hidden task count, stability solved count,\n  cheating caught count, cross-upstream no-seed hidden-stage2/stability counts,\n  task-proof count, and the task-source provenance boundary\n  `repo-authored-regression-pack` / `external_heldout=false`" in progress
-    assert "plus `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for\n  saved artifact fixtures" in progress
-    assert "When API data or artifact download is unavailable" in progress
-    assert "Artifact zip 401 now gets a distinct\n  `artifact_zip_requires_auth` boundary snapshot with token and saved fixture\n  rerun commands, while still failing closed" in progress
+    assert "the artifact-copied task-source manifest, the manifest sha256, summary versus\n  manifest equality, and the downloaded `last_summary.json` contract fields for\n  the manifest-derived selected segments" in progress
+    assert "It also fails closed when a provenance segment's\n  `selected_tests` no longer matches the summary's selected tests or expected\n  pass count" in progress
+    assert "applies the same minimum count, pytest-node-id shape,\n  no-option, no-whitespace, and no-duplicate constraints to the\n  artifact-contained manifest" in progress
+    assert "`GITHUB_TOKEN`, or `GH_TOKEN` fallback token names as the focused snapshot,\n  plus `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for saved artifact fixtures" in progress
+    assert "When API\n  data or artifact download is unavailable" in progress
+    assert "Artifact zip 401 now gets\n  a distinct\n  `artifact_zip_requires_auth` boundary snapshot with token and saved fixture\n  rerun commands, while still failing closed" in progress
     assert "local HTTP 401 regression test\n  asserts the nonzero exit, auth hints, fixture rerun command, and absence of\n  `PASS`" in progress
     assert "Passing this script is current public CI artifact evidence only, not\n  external review, endorsement, stars, reposts, live autonomy, broad\n  unknown-repository repair, external benchmark standing, or independent\n  external held-out benchmark evidence" in progress
     assert "`bash scripts/public_evidence_comment_check.sh` is the fail-closed marker\n  check for the published issue #1 evidence comment" in progress
@@ -934,6 +940,7 @@ def test_progress_file_is_public_boundary_not_internal_scoreboard() -> None:
     assert "machine-readable `patch_shape` bucket" in progress
     assert "`mixed_test_source` for runs that edit both test-like and\n  source-like files" in progress
     assert "does not\n  prove a benchmark score should be higher or lower by itself" in progress
+    assert "shortened-manifest, pytest-option\n  injection, cross-segment duplicate, and self-consistent weakened artifact\n  summary negative checks" in progress
     assert "stale internal notes" in progress
     for forbidden in FORBIDDEN_PUBLIC_PROGRESS_CLAIMS:
         assert forbidden not in progress
@@ -1429,6 +1436,48 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
         in selected_mismatch.stderr
     )
 
+    shortened_manifest_payload = json.loads(json.dumps(task_source_provenance))
+    shortened_stage1 = shortened_manifest_payload["segments"]["stage1_trajectory_reuse_matrix"][
+        "selected_tests"
+    ][:2]
+    shortened_manifest_payload["segments"]["stage1_trajectory_reuse_matrix"][
+        "selected_tests"
+    ] = shortened_stage1
+    shortened_manifest_text = (
+        json.dumps(shortened_manifest_payload, indent=2, sort_keys=True) + "\n"
+    )
+    broken_summary = json.loads(json.dumps(artifact_summary))
+    broken_summary["task_source_provenance"] = shortened_manifest_payload
+    broken_summary["task_source_manifest"]["sha256"] = hashlib.sha256(
+        shortened_manifest_text.encode("utf-8")
+    ).hexdigest()
+    broken_summary["tests"]["stage1_trajectory_reuse_matrix"]["selected"] = shortened_stage1
+    broken_summary["tests"]["stage1_trajectory_reuse_matrix"]["expected_passed"] = 2
+    broken_summary["tests"]["stage1_trajectory_reuse_matrix"]["observed_pytest"]["passed"] = 2
+    broken_summary["tests"]["stage1_trajectory_reuse_matrix"]["observed_pytest"][
+        "expected_passed"
+    ] = 2
+    broken_summary["tests"]["stage1_trajectory_reuse_matrix"]["log_tail"] = [
+        "..                                                                       [100%]",
+        "2 passed in 0.01s",
+    ]
+    write_artifact_summary(broken_summary, manifest_text=shortened_manifest_text)
+    shortened_manifest = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert shortened_manifest.returncode == 1
+    assert "artifact summary contract mismatch" in shortened_manifest.stderr
+    assert (
+        "task_source_provenance.segments.stage1_trajectory_reuse_matrix.selected_tests"
+        in shortened_manifest.stderr
+    )
+
     broken_summary = dict(artifact_summary)
     broken_summary["tests"] = json.loads(json.dumps(artifact_summary["tests"]))
     broken_summary["tests"]["upstream_hidden_pack_reuse"]["expected_contract"].pop("cheat_caught")
@@ -1908,12 +1957,16 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
         "external review, endorsement, stars, or reposts"
     ) in guide
     assert "`.quantagent/autonomous_learning_gate/last_summary.json` by default" in guide
-    assert "invoking commit, selected tests, per-segment elapsed seconds" in guide
-    assert "per-segment pytest log paths and log tails, observed pass/skip/warning counts" in guide
+    assert "invoking commit, manifest-derived selected tests, per-segment elapsed\nseconds" in guide
+    assert "per-segment pytest log paths and log tails, observed\npass/skip/warning counts" in guide
+    assert "the tracked\n`scripts/autonomous_task_source_provenance.json` path and sha256" in guide
+    assert "an artifact\ncopy of that manifest" in guide
+    assert "manifest-derived selected tests are constrained to the expected minimum\nsegment counts, pytest node-id shape, no pytest options, no whitespace, no\nduplicates inside a segment, and no duplicates across segments" in guide
+    assert "shortened or\ninjected manifest fails before pytest runs" in guide
     assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON" in guide
     assert "`.github/workflows/autonomous-learning-gate.yml` workflow" in guide
-    assert "core learning modules, selected gate-test paths, or\nsupplied Evidence Court/transcript proof surfaces" in guide
-    assert "uploads the summary JSON\nand pytest logs" in guide
+    assert "the workflow, the tracked task-source manifest, gate script, remote snapshot\nscript, core learning modules, selected gate-test paths, or supplied Evidence\nCourt/transcript proof surfaces" in guide
+    assert "uploads the summary JSON, manifest copy, and\npytest logs" in guide
     assert (
         "path-filtered public CI artifact\n"
         "evidence only, not broad default push or pull-request CI, external review"
@@ -1923,6 +1976,7 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "remote-autonomous-learning-snapshot: artifact-name=autonomous-learning-gate-summary" in guide
     assert "remote-autonomous-learning-snapshot: artifact-digest=sha256:..." in guide
     assert "remote-autonomous-learning-snapshot: artifact-summary=last_summary.json" in guide
+    assert "remote-autonomous-learning-snapshot: artifact-task-source-manifest=task_source_provenance_manifest.json" in guide
     assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-hidden-task-count=10" in guide
     assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-stability-solved=100" in guide
     assert "remote-autonomous-learning-snapshot: artifact-summary-upstream-cheat-caught=10" in guide
@@ -1930,9 +1984,17 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-stability-solved=16" in guide
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-cheat-caught=8" in guide
     assert "remote-autonomous-learning-snapshot: artifact-summary-task-proof-files=5" in guide
+    assert "remote-autonomous-learning-snapshot: artifact-summary-task-source-provenance=repo-authored-regression-pack" in guide
+    assert "remote-autonomous-learning-snapshot: artifact-summary-task-source-manifest=scripts/autonomous_task_source_provenance.json" in guide
+    assert "remote-autonomous-learning-snapshot: artifact-summary-task-source-manifest-sha256=..." in guide
+    assert "remote-autonomous-learning-snapshot: artifact-summary-external-heldout=false" in guide
     assert "stale, still running, failed, missing, rate limited, missing the named artifact,\nexpired, missing an artifact digest, unreadable as an artifact zip, blocked by\nan artifact zip 401 that needs authenticated API access, or missing the expected\n`last_summary.json` contract fields" in guide
+    assert "fails closed if the artifact\nmanifest copy is missing, the manifest hash does not match the summary, the\nsummary provenance does not match the artifact manifest, or a segment's\nmanifest `selected_tests` no longer matches the summary's selected tests and\nobserved pass count" in guide
+    assert "remote artifact snapshot applies the same minimum\nsegment count, pytest node-id shape, no-option, no-whitespace, and no-duplicate\nselected-test constraints to the artifact-contained manifest" in guide
+    assert "self-consistent\nbut weakened artifact summary still fails closed" in guide
     assert "Set `OPENMAKO_GITHUB_TOKEN`,\n`GITHUB_TOKEN`, or `GH_TOKEN` for live artifact zip reads, or set\n`OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` to verify the same contract against a saved\nartifact fixture" in guide
-    assert "Passing it is current public CI artifact evidence only, not\nexternal review, endorsement, stars, reposts, live autonomy, broad\nunknown-repository repair, or external benchmark standing" in guide
+    assert "Passing it is current public CI artifact evidence only, not\nexternal review, endorsement, stars, reposts, live autonomy, broad\nunknown-repository repair, external benchmark standing" in guide
+    assert "independent external\nheld-out benchmark evidence" in guide
     assert (
         "bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json "
         "autonomous-learning-gate-summary.zip <openmako-main-sha>"
@@ -1944,7 +2006,8 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
         "It is saved\n"
         "public CI artifact evidence only, not a substitute for external review,\n"
         "endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or\n"
-        "external benchmark standing"
+        "external benchmark standing, and not independent external held-out benchmark\n"
+        "evidence"
     ) in guide
     assert "bash scripts/public_evidence_comment_check.sh" in guide
     assert "public-evidence-comment-check: marker=commit ok" in guide
@@ -2156,6 +2219,7 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
 def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() -> None:
     script = ROOT / "scripts" / "autonomous_learning_gate.sh"
     text = script.read_text(encoding="utf-8")
+    provenance = _autonomous_task_source_provenance_fixture()
 
     assert script.exists()
     assert script.stat().st_mode & 0o111
@@ -2181,16 +2245,44 @@ def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() 
     assert "validate_failure_summary" in text
     assert "autonomous-learning-gate: invalid summary fields=" in text
     assert "autonomous-learning-gate: invalid failure summary fields=" in text
-    assert "test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2" in text
-    assert "test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2" in text
-    assert "test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2" in text
+    assert "load_manifest_test_arrays" in text
+    assert "STAGE1_TESTS" in text
+    assert "UPSTREAM_TESTS" in text
+    assert "CROSS_UPSTREAM_TESTS" in text
+    assert "node_id_re" in text
+    assert "minimum_count" in text
+    assert "duplicate selected_tests across segments" in text
+    assert 'item.startswith("-")' in text
+    assert '"${STAGE1_TESTS[@]}"' in text
+    assert '"${UPSTREAM_TESTS[@]}"' in text
+    assert '"${CROSS_UPSTREAM_TESTS[@]}"' in text
+    assert "tests.{segment}.selected" in text
+    assert "tests.{segment}.expected_passed" in text
+    assert "invalid selected_tests for {segment}" in text
+    assert "test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2" not in text
+    assert "test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2" not in text
+    assert "test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2" not in text
     assert "autonomous-learning-gate: running upstream hidden-pack reuse stress test" in text
-    assert "test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating" in text
+    assert "test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating" not in text
     assert "autonomous-learning-gate: running cross-upstream no-seed reuse stress tests" in text
-    assert "test_vendored_pandera_scale_no_seed_stage1_extracts_function_repair_without_non_target_drift" in text
-    assert "test_vendored_pandera_bool_predicate_no_seed_stage1_reuses_with_stability" in text
-    assert "test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair" in text
-    assert "test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2" in text
+    assert "test_vendored_pandera_scale_no_seed_stage1_extracts_function_repair_without_non_target_drift" not in text
+    assert "test_vendored_pandera_bool_predicate_no_seed_stage1_reuses_with_stability" not in text
+    assert "test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair" not in text
+    assert "test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2" not in text
+    assert provenance["segments"]["stage1_trajectory_reuse_matrix"]["selected_tests"] == [
+        "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2",
+        "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2",
+        "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2",
+    ]
+    assert provenance["segments"]["upstream_hidden_pack_reuse"]["selected_tests"] == [
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating",
+    ]
+    assert provenance["segments"]["cross_upstream_no_seed_reuse"]["selected_tests"] == [
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_scale_no_seed_stage1_extracts_function_repair_without_non_target_drift",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_bool_predicate_no_seed_stage1_reuses_with_stability",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2",
+    ]
     assert '"cross_upstream_no_seed_reuse": "pending"' in text
     assert '"upstream_family_count": 5' in text
     assert '"hidden_task_count": 10' in text
@@ -2323,6 +2415,49 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
     )
     assert "remote CI proof" in payload["not_proof"]
     assert "independent external held-out benchmark" in payload["not_proof"]
+
+    def run_with_manifest(manifest_payload: dict, filename: str) -> subprocess.CompletedProcess[str]:
+        manifest_path = tmp_path / filename
+        manifest_path.write_text(
+            json.dumps(manifest_payload, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        invalid_env = env.copy()
+        invalid_env["OPENMAKO_AUTONOMOUS_TASK_SOURCE_MANIFEST"] = str(manifest_path)
+        invalid_env["OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON"] = str(
+            tmp_path / f"{filename}.summary.json"
+        )
+        return subprocess.run(
+            ["bash", "scripts/autonomous_learning_gate.sh"],
+            cwd=ROOT,
+            env=invalid_env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+
+    shortened_manifest = json.loads(json.dumps(_autonomous_task_source_provenance_fixture()))
+    shortened_manifest["segments"]["stage1_trajectory_reuse_matrix"]["selected_tests"] = (
+        shortened_manifest["segments"]["stage1_trajectory_reuse_matrix"]["selected_tests"][:2]
+    )
+    shortened = run_with_manifest(shortened_manifest, "shortened-manifest.json")
+    assert shortened.returncode == 1
+    assert "invalid selected_tests for stage1_trajectory_reuse_matrix" in shortened.stderr
+
+    option_manifest = json.loads(json.dumps(_autonomous_task_source_provenance_fixture()))
+    option_manifest["segments"]["upstream_hidden_pack_reuse"]["selected_tests"] = ["--maxfail=1"]
+    option_injection = run_with_manifest(option_manifest, "option-manifest.json")
+    assert option_injection.returncode == 1
+    assert "invalid selected_tests for upstream_hidden_pack_reuse" in option_injection.stderr
+
+    duplicate_manifest = json.loads(json.dumps(_autonomous_task_source_provenance_fixture()))
+    duplicate_manifest["segments"]["upstream_hidden_pack_reuse"]["selected_tests"] = [
+        duplicate_manifest["segments"]["stage1_trajectory_reuse_matrix"]["selected_tests"][0]
+    ]
+    duplicate = run_with_manifest(duplicate_manifest, "duplicate-manifest.json")
+    assert duplicate.returncode == 1
+    assert "duplicate selected_tests across segments for upstream_hidden_pack_reuse" in duplicate.stderr
 
     corrupt_summary = tmp_path / "corrupt-summary.json"
     corrupt_env = env.copy()
