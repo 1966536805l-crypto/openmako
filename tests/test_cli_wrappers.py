@@ -228,6 +228,12 @@ class CliWrapperTest(unittest.TestCase):
         env["OPENMAKO_PUBLIC_EVIDENCE_REMOTE"] = str(remote)
         env["OPENMAKO_PUBLIC_EVIDENCE_BRANCH"] = "public-evidence"
         env["OPENMAKO_PUBLIC_REVIEW_GATE_ARTIFACT_DIR"] = str(artifact_dir)
+        env["OPENMAKO_FOCUSED_RUN_ID"] = "123456789"
+        env["OPENMAKO_FOCUSED_RUN_ATTEMPT"] = "1"
+        env["OPENMAKO_FOCUSED_ARTIFACT_NAME"] = "focused-public-review-gate"
+        env["OPENMAKO_FOCUSED_ARTIFACT_ID"] = "987654321"
+        env["OPENMAKO_FOCUSED_ARTIFACT_DIGEST"] = "sha256:" + "1" * 64
+        env["OPENMAKO_FOCUSED_ARTIFACT_URL"] = "https://github.com/example/actions/runs/123456789/artifacts/987654321"
         return subprocess.run(
             ["bash", "scripts/publish_public_evidence_branch.sh"],
             cwd=str(ROOT),
@@ -719,6 +725,37 @@ class CliWrapperTest(unittest.TestCase):
             self.assertEqual(manifest["schema_version"], "public-evidence-artifact-mirror/v0.2")
             self.assertEqual(manifest["mirror_scope"], "github-actions-upload-directory-content")
             self.assertEqual(manifest["github_actions_artifact"]["name"], "focused-public-review-gate")
+            self.assertEqual(manifest["github_actions_artifact"]["run_id"], "123456789")
+            self.assertEqual(manifest["github_actions_artifact"]["artifact_id"], "987654321")
+            self.assertEqual(manifest["github_actions_artifact"]["artifact_digest"], "sha256:" + "1" * 64)
+            self.assertTrue(manifest["github_actions_artifact"]["artifact_url"].startswith("https://"))
+
+            missing_digest_env = os.environ.copy()
+            missing_digest_env.update(
+                {
+                    "OPENMAKO_PUBLIC_EVIDENCE_REMOTE": str(remote),
+                    "OPENMAKO_PUBLIC_EVIDENCE_BRANCH": "public-evidence",
+                    "OPENMAKO_PUBLIC_REVIEW_GATE_ARTIFACT_DIR": str(artifact_dir),
+                    "OPENMAKO_FOCUSED_RUN_ID": "123456789",
+                    "OPENMAKO_FOCUSED_RUN_ATTEMPT": "1",
+                    "OPENMAKO_FOCUSED_ARTIFACT_NAME": "focused-public-review-gate",
+                    "OPENMAKO_FOCUSED_ARTIFACT_ID": "987654321",
+                    "OPENMAKO_FOCUSED_ARTIFACT_URL": "https://github.com/example/actions/runs/123456789/artifacts/987654321",
+                }
+            )
+            missing_digest = subprocess.run(
+                ["bash", "scripts/publish_public_evidence_branch.sh"],
+                cwd=str(ROOT),
+                env=missing_digest_env,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=30,
+                check=False,
+            )
+            self.assertEqual(missing_digest.returncode, 1)
+            self.assertIn("focused artifact digest missing", missing_digest.stderr)
+
             manifest["file_count"] = 0
             manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
             subprocess.run(["git", "add", "."], cwd=evidence_clone, check=True)

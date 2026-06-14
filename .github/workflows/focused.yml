@@ -53,7 +53,7 @@ jobs:
           OPENMAKO_FOCUSED_RUN_ATTEMPT: ${{ github.run_attempt }}
           OPENMAKO_FOCUSED_ARTIFACT_NAME: focused-public-review-gate
           OPENMAKO_FOCUSED_ARTIFACT_ID: ${{ steps.upload-focused-artifact.outputs.artifact-id }}
-          OPENMAKO_FOCUSED_ARTIFACT_DIGEST: ${{ steps.upload-focused-artifact.outputs.digest }}
+          OPENMAKO_FOCUSED_ARTIFACT_DIGEST: ${{ steps.upload-focused-artifact.outputs.artifact-digest }}
           OPENMAKO_FOCUSED_ARTIFACT_URL: ${{ steps.upload-focused-artifact.outputs.artifact-url }}
         run: |
           bash scripts/publish_public_evidence_branch.sh

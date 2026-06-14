@@ -1222,19 +1222,25 @@ def test_remote_focused_artifact_snapshot_script_is_fail_closed_and_artifact_awa
     assert script.stat().st_mode & 0o111
     assert "OPENMAKO_FOCUSED_ARTIFACT_NAME" in text
     assert "focused-public-review-gate" in text
+    assert "OPENMAKO_FOCUSED_ARTIFACT_ZIP_HTTP_STATUS" in text
     assert "OPENMAKO_FOCUSED_ARTIFACT_ZIP" in text
     assert "artifact zip sha256 does not match artifact digest" in text
+    assert "artifact zip download requires authenticated API access" in text
+    assert "verifying public evidence mirror instead" in text
     assert "artifact summary git commit does not match remote main" in text
     assert "artifact summary output digest is not present in artifact zip" in text
     assert "artifact-required-output-count=" in text
+    assert "github-api-metadata+public-evidence-branch" in text
     assert "OPENMAKO_FOCUSED_RUN_HTML" in text
     assert "OPENMAKO_FOCUSED_RUN_URL" in text
     assert "OPENMAKO_FORCE_PUBLIC_HTML_FALLBACK" in text
     assert "verified-by=public-html" in text
     assert "artifact-content-mirror=verified-by-public-evidence-branch" in text
+    assert "artifact-zip-contract=api-zip-endpoint-unverified-by-github-api" in text
     assert "artifact-zip-contract=api-zip-endpoint-unverified-by-public-html" in text
     assert "public-evidence-artifact-mirror/v0.2" in text
     assert "public evidence artifact mirror artifact digest mismatch" in text
+    assert "public evidence artifact mirror artifact digest missing or malformed" in text
     assert "not-proof=external review; endorsement; stars; reposts; live autonomy" in text
 
     remote_sha = "abcdef1234567890abcdef1234567890abcdef12"
@@ -1470,6 +1476,91 @@ def test_remote_focused_artifact_snapshot_script_is_fail_closed_and_artifact_awa
     assert "remote-focused-artifact-snapshot: artifact-zip-contract=api-zip-endpoint-unverified-by-public-html" in html_result.stdout
     assert "remote-focused-artifact-snapshot: PASS" in html_result.stdout
 
+    artifacts_json.write_text(
+        json.dumps(
+            {
+                "artifacts": [
+                    {
+                        "id": 8000000002,
+                        "name": "focused-public-review-gate",
+                        "expired": False,
+                        "digest": f"sha256:{artifact_zip_sha256}",
+                        "archive_download_url": "https://api.github.com/repos/1966536805l-crypto/openmako/actions/artifacts/8000000002/zip",
+                        "workflow_run": {
+                            "id": run_id,
+                            "head_sha": remote_sha,
+                        },
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    zip_401_env = os.environ.copy()
+    zip_401_env.update(
+        {
+            "OPENMAKO_REMOTE_MAIN_SHA": remote_sha,
+            "OPENMAKO_FOCUSED_RUNS_JSON": str(runs_json),
+            "OPENMAKO_FOCUSED_ARTIFACTS_JSON": str(artifacts_json),
+            "OPENMAKO_FOCUSED_ARTIFACT_ZIP_HTTP_STATUS": "401",
+            "OPENMAKO_PUBLIC_EVIDENCE_REMOTE": str(public_remote),
+            "OPENMAKO_PUBLIC_EVIDENCE_BRANCH": "public-evidence",
+        }
+    )
+    zip_401_result = subprocess.run(
+        ["bash", "scripts/remote_focused_artifact_snapshot.sh"],
+        cwd=ROOT,
+        env=zip_401_env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert zip_401_result.returncode == 0, zip_401_result.stderr
+    assert "remote-focused-artifact-snapshot: verified-by=github-api-metadata+public-evidence-branch" in zip_401_result.stdout
+    assert "remote-focused-artifact-snapshot: artifact-zip-unavailable=artifact_zip_requires_auth" in zip_401_result.stdout
+    assert "remote-focused-artifact-snapshot: artifact-content-mirror=verified-by-public-evidence-branch" in zip_401_result.stdout
+    assert "remote-focused-artifact-snapshot: artifact-zip-contract=api-zip-endpoint-unverified-by-github-api" in zip_401_result.stdout
+    assert "remote-focused-artifact-snapshot: PASS" in zip_401_result.stdout
+
+    mirror_manifest["github_actions_artifact"]["artifact_digest"] = "sha256:" + "2" * 64
+    (mirror_dir / "manifest.json").write_text(json.dumps(mirror_manifest), encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=evidence_work, check=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.email=openmako-test@example.invalid",
+            "-c",
+            "user.name=OpenMako Test",
+            "commit",
+            "-q",
+            "-m",
+            "tamper artifact mirror digest",
+        ],
+        cwd=evidence_work,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "push", "--force", str(public_remote), "HEAD:public-evidence"],
+        cwd=evidence_work,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=True,
+    )
+    mismatch_result = subprocess.run(
+        ["bash", "scripts/remote_focused_artifact_snapshot.sh"],
+        cwd=ROOT,
+        env=zip_401_env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert mismatch_result.returncode == 1
+    assert "public evidence artifact mirror artifact digest mismatch" in mismatch_result.stderr
+
 
 def test_public_evidence_branch_scripts_are_fail_closed_and_boundary_aware() -> None:
     publish = ROOT / "scripts" / "publish_public_evidence_branch.sh"
@@ -1496,6 +1587,11 @@ def test_public_evidence_branch_scripts_are_fail_closed_and_boundary_aware() -> 
     assert "GitHub Actions API artifact zip endpoint byte-for-byte archive" in publish_text
     assert "broad unknown-repository repair" in publish_text
     assert "external benchmark standing" in publish_text
+    assert "focused artifact digest missing/malformed" in publish_text
+    assert "focused artifact id malformed" in publish_text
+    workflow_text = (ROOT / ".github" / "workflows" / "focused.yml").read_text(encoding="utf-8")
+    assert "outputs.artifact-digest" in workflow_text
+    assert "outputs.digest" not in workflow_text
     assert "public-review-gate-artifact/v0.1" in remote_text
     assert "focused_summary_commit_mismatch" in remote_text
     assert "focused_summary_required_outputs_missing" in remote_text
@@ -1512,6 +1608,7 @@ def test_public_evidence_branch_scripts_are_fail_closed_and_boundary_aware() -> 
     assert "public_mirror_archive_file_digest_mismatch" in remote_text
     assert "public_mirror_file_count_mismatch" in remote_text
     assert "public_mirror_artifact_metadata_malformed" in remote_text
+    assert "public_mirror_artifact_digest_missing_or_malformed" in remote_text
     assert "remote-public-evidence-snapshot: public-mirror-zip=present" in remote_text
     assert "remote-public-evidence-snapshot: public-mirror-scope=github-actions-upload-directory-content" in remote_text
     assert "public_evidence_branch_missing" in remote_text

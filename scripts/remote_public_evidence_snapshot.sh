@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sys
 import zipfile
 from pathlib import Path
@@ -64,6 +65,9 @@ def fail(reason: str, detail: str = "") -> None:
         "external benchmark standing"
     )
     raise SystemExit(1)
+
+def is_sha256_digest(value: object) -> bool:
+    return isinstance(value, str) and re.fullmatch(r"sha256:[0-9a-f]{64}", value) is not None
 
 if not summary_path.is_file():
     fail("focused_summary_missing", str(summary_path.relative_to(root)))
@@ -181,6 +185,12 @@ for required in ("summary.json", "invocation.json", *required_outputs):
 artifact_meta = mirror_manifest.get("github_actions_artifact")
 if not isinstance(artifact_meta, dict) or artifact_meta.get("name") != "focused-public-review-gate":
     fail("public_mirror_artifact_metadata_malformed")
+if not str(artifact_meta.get("run_id") or "").isdigit():
+    fail("public_mirror_artifact_run_id_missing_or_malformed")
+if not str(artifact_meta.get("artifact_id") or "").isdigit():
+    fail("public_mirror_artifact_id_missing_or_malformed")
+if not is_sha256_digest(artifact_meta.get("artifact_digest")):
+    fail("public_mirror_artifact_digest_missing_or_malformed")
 mirror_not_proof = mirror_manifest.get("not_proof")
 if not isinstance(mirror_not_proof, list) or "GitHub Actions API artifact zip endpoint byte-for-byte archive" not in mirror_not_proof:
     fail("public_mirror_not_proof_boundary_mismatch")

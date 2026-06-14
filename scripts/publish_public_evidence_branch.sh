@@ -100,6 +100,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import sys
 import zipfile
 from datetime import datetime, timezone
@@ -139,13 +140,41 @@ with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as arc
         info.external_attr = 0o644 << 16
         archive.writestr(info, source.read_bytes())
 archive_sha256 = "sha256:" + hashlib.sha256(archive_path.read_bytes()).hexdigest()
+
+def required_env(name: str, label: str) -> str:
+    value = os.environ.get(name, "").strip()
+    if not value:
+        raise SystemExit(f"publish-public-evidence-branch: focused artifact {label} missing")
+    return value
+
+artifact_name = required_env("OPENMAKO_FOCUSED_ARTIFACT_NAME", "name")
+run_id = required_env("OPENMAKO_FOCUSED_RUN_ID", "run id")
+run_attempt = required_env("OPENMAKO_FOCUSED_RUN_ATTEMPT", "run attempt")
+artifact_id = required_env("OPENMAKO_FOCUSED_ARTIFACT_ID", "id")
+artifact_digest = required_env("OPENMAKO_FOCUSED_ARTIFACT_DIGEST", "digest")
+artifact_url = required_env("OPENMAKO_FOCUSED_ARTIFACT_URL", "url")
+if artifact_name != "focused-public-review-gate":
+    raise SystemExit("publish-public-evidence-branch: focused artifact name mismatch")
+if not run_id.isdigit():
+    raise SystemExit("publish-public-evidence-branch: focused artifact run id malformed")
+if not run_attempt.isdigit():
+    raise SystemExit("publish-public-evidence-branch: focused artifact run attempt malformed")
+if not artifact_id.isdigit():
+    raise SystemExit("publish-public-evidence-branch: focused artifact id malformed")
+artifact_digest = artifact_digest.lower()
+if re.fullmatch(r"[0-9a-f]{64}", artifact_digest):
+    artifact_digest = "sha256:" + artifact_digest
+if not re.fullmatch(r"sha256:[0-9a-f]{64}", artifact_digest):
+    raise SystemExit("publish-public-evidence-branch: focused artifact digest missing/malformed")
+if not artifact_url.startswith("https://"):
+    raise SystemExit("publish-public-evidence-branch: focused artifact url malformed")
 github_actions_artifact = {
-    "name": os.environ.get("OPENMAKO_FOCUSED_ARTIFACT_NAME", "focused-public-review-gate"),
-    "run_id": os.environ.get("OPENMAKO_FOCUSED_RUN_ID", ""),
-    "run_attempt": os.environ.get("OPENMAKO_FOCUSED_RUN_ATTEMPT", ""),
-    "artifact_id": os.environ.get("OPENMAKO_FOCUSED_ARTIFACT_ID", ""),
-    "artifact_digest": os.environ.get("OPENMAKO_FOCUSED_ARTIFACT_DIGEST", ""),
-    "artifact_url": os.environ.get("OPENMAKO_FOCUSED_ARTIFACT_URL", ""),
+    "name": artifact_name,
+    "run_id": run_id,
+    "run_attempt": run_attempt,
+    "artifact_id": artifact_id,
+    "artifact_digest": artifact_digest,
+    "artifact_url": artifact_url,
 }
 manifest = {
     "schema_version": "public-evidence-artifact-mirror/v0.2",

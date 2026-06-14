@@ -43,6 +43,7 @@ repo, workflow, artifact_name, remote_sha, evidence_remote, evidence_branch = sy
 runs_fixture = os.environ.get("OPENMAKO_FOCUSED_RUNS_JSON")
 artifacts_fixture = os.environ.get("OPENMAKO_FOCUSED_ARTIFACTS_JSON")
 artifact_zip_fixture = os.environ.get("OPENMAKO_FOCUSED_ARTIFACT_ZIP")
+artifact_zip_http_status_fixture = os.environ.get("OPENMAKO_FOCUSED_ARTIFACT_ZIP_HTTP_STATUS")
 run_html_fixture = os.environ.get("OPENMAKO_FOCUSED_RUN_HTML")
 run_url_override = os.environ.get("OPENMAKO_FOCUSED_RUN_URL")
 workflow_runs_url = (
@@ -162,6 +163,10 @@ def fail(message: str) -> None:
     sys.exit(1)
 
 
+def is_sha256_digest(value: object) -> bool:
+    return isinstance(value, str) and re.fullmatch(r"sha256:[0-9a-f]{64}", value) is not None
+
+
 def verify_public_evidence_mirror(
     *,
     run_id: str,
@@ -237,11 +242,17 @@ def verify_public_evidence_mirror(
             fail("public evidence artifact mirror GitHub artifact metadata missing")
         if meta.get("name") != artifact_name:
             fail("public evidence artifact mirror artifact name mismatch")
-        if meta.get("run_id") and str(meta.get("run_id")) != str(run_id):
+        if not str(meta.get("run_id") or "").isdigit():
+            fail("public evidence artifact mirror run id missing or malformed")
+        if str(meta.get("run_id")) != str(run_id):
             fail("public evidence artifact mirror run id mismatch")
-        if meta.get("artifact_id") and str(meta.get("artifact_id")) != str(artifact_id):
+        if not str(meta.get("artifact_id") or "").isdigit():
+            fail("public evidence artifact mirror artifact id missing or malformed")
+        if str(meta.get("artifact_id")) != str(artifact_id):
             fail("public evidence artifact mirror artifact id mismatch")
-        if meta.get("artifact_digest") and meta.get("artifact_digest") != artifact_digest:
+        if not is_sha256_digest(meta.get("artifact_digest")):
+            fail("public evidence artifact mirror artifact digest missing or malformed")
+        if meta.get("artifact_digest") != artifact_digest:
             fail("public evidence artifact mirror artifact digest mismatch")
         not_proof = mirror.get("not_proof")
         if (
@@ -399,11 +410,23 @@ def read_json_fixture(path: str, unavailable_reason: str) -> dict:
         sys.exit(2)
 
 
-def read_artifact_zip(url: str) -> bytes:
+def read_artifact_zip(url: str) -> tuple[bytes | None, str]:
+    if artifact_zip_http_status_fixture:
+        if artifact_zip_http_status_fixture == "401":
+            return None, "artifact_zip_requires_auth"
+        if artifact_zip_http_status_fixture == "403-rate-limit":
+            return None, "github_api_rate_limit"
+        print_boundary_snapshot("artifact_zip_status_fixture_unsupported")
+        print(
+            "remote-focused-artifact-snapshot: unsupported OPENMAKO_FOCUSED_ARTIFACT_ZIP_HTTP_STATUS="
+            f"{artifact_zip_http_status_fixture}",
+            file=sys.stderr,
+        )
+        sys.exit(2)
     if artifact_zip_fixture:
         try:
             with open(artifact_zip_fixture, "rb") as handle:
-                return handle.read()
+                return handle.read(), ""
         except Exception as exc:
             print_boundary_snapshot("artifact_zip_fixture_unreadable")
             print(
@@ -416,23 +439,23 @@ def read_artifact_zip(url: str) -> bytes:
     request = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
-            return response.read()
+            return response.read(), ""
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
         if exc.code == 403 and "rate limit" in body.lower():
-            print_boundary_snapshot("github_api_rate_limit", exc.headers)
             print(
-                "remote-focused-artifact-snapshot: GitHub API rate limit while reading artifact zip",
+                "remote-focused-artifact-snapshot: GitHub API rate limit while reading artifact zip; "
+                "verifying public evidence mirror instead",
                 file=sys.stderr,
             )
-            sys.exit(2)
+            return None, "github_api_rate_limit"
         if exc.code == 401:
-            print_boundary_snapshot("artifact_zip_requires_auth", exc.headers, include_auth_hint=True)
             print(
-                "remote-focused-artifact-snapshot: artifact zip download requires authenticated API access",
+                "remote-focused-artifact-snapshot: artifact zip download requires authenticated API access; "
+                "verifying public evidence mirror instead",
                 file=sys.stderr,
             )
-            sys.exit(2)
+            return None, "artifact_zip_requires_auth"
         print_boundary_snapshot(f"artifact_zip_api_error_{exc.code}")
         print(f"remote-focused-artifact-snapshot: artifact zip error {exc.code}: {body}", file=sys.stderr)
         sys.exit(2)
@@ -484,7 +507,7 @@ artifact = matches[0]
 if artifact.get("expired"):
     fail(f"artifact '{artifact_name}' is expired")
 artifact_digest = artifact.get("digest")
-if not isinstance(artifact_digest, str) or not artifact_digest.startswith("sha256:"):
+if not is_sha256_digest(artifact_digest):
     fail(f"artifact '{artifact_name}' digest is missing")
 binding = artifact.get("workflow_run")
 if isinstance(binding, dict):
@@ -496,7 +519,33 @@ artifact_url = artifact.get("archive_download_url")
 if not isinstance(artifact_url, str) or not artifact_url:
     fail(f"artifact '{artifact_name}' archive_download_url is missing")
 
-zip_data = read_artifact_zip(artifact_url)
+artifact_id = str(artifact.get("id") or "")
+if not artifact_id.isdigit():
+    fail(f"artifact '{artifact_name}' id is missing")
+
+zip_data, zip_unavailable_reason = read_artifact_zip(artifact_url)
+if zip_data is None:
+    mirror = verify_public_evidence_mirror(
+        run_id=str(run_id),
+        artifact_id=artifact_id,
+        artifact_digest=artifact_digest,
+    )
+    print(f"remote-focused-artifact-snapshot: artifact-name={artifact_name}")
+    print(f"remote-focused-artifact-snapshot: artifact-id={artifact_id}")
+    print(f"remote-focused-artifact-snapshot: artifact-digest={artifact_digest}")
+    print(f"remote-focused-artifact-snapshot: verified-by=github-api-metadata+public-evidence-branch")
+    print(f"remote-focused-artifact-snapshot: artifact-zip-unavailable={zip_unavailable_reason}")
+    print("remote-focused-artifact-snapshot: artifact-content-mirror=verified-by-public-evidence-branch")
+    print(f"remote-focused-artifact-snapshot: artifact-mirror-archive-sha256={mirror['archive_sha256']}")
+    print(f"remote-focused-artifact-snapshot: artifact-mirror-file-count={mirror['file_count']}")
+    print("remote-focused-artifact-snapshot: artifact-zip-contract=api-zip-endpoint-unverified-by-github-api")
+    print(
+        "remote-focused-artifact-snapshot: "
+        "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; external review; endorsement; stars; reposts; "
+        "live autonomy; broad unknown-repository repair; external benchmark standing"
+    )
+    print("remote-focused-artifact-snapshot: PASS")
+    sys.exit(0)
 zip_sha256 = hashlib.sha256(zip_data).hexdigest()
 if artifact_digest != "sha256:" + zip_sha256:
     fail("artifact zip sha256 does not match artifact digest")
