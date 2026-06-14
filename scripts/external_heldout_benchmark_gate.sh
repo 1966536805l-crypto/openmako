@@ -10,7 +10,11 @@ export PYTHONPATH="$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}"
 SUMMARY_JSON="${OPENMAKO_EXTERNAL_HELDOUT_BENCHMARK_SUMMARY_JSON:-.quantagent/external_heldout_benchmark_gate/last_summary.json}"
 SUMMARY_DIR="$(dirname -- "$SUMMARY_JSON")"
 PYTEST_LOG="$SUMMARY_DIR/pytest.log"
+TASK_PROOF_DIR="$SUMMARY_DIR/task_proofs"
 mkdir -p "$SUMMARY_DIR"
+rm -rf "$TASK_PROOF_DIR"
+mkdir -p "$TASK_PROOF_DIR"
+export OPENMAKO_EXTERNAL_HELDOUT_TASK_PROOF_DIR="$TASK_PROOF_DIR"
 
 SELECTED_TESTS=(
   "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_function_level_repair_reuses_without_non_target_drift"
@@ -24,7 +28,7 @@ fi
 write_summary() {
   local status="$1"
   local pytest_exit="$2"
-  "$PYTHON_BIN" - "$SUMMARY_JSON" "$PYTEST_LOG" "$GIT_COMMIT" "$status" "$pytest_exit" "${SELECTED_TESTS[@]}" <<'PY'
+  "$PYTHON_BIN" - "$SUMMARY_JSON" "$PYTEST_LOG" "$TASK_PROOF_DIR" "$GIT_COMMIT" "$status" "$pytest_exit" "${SELECTED_TESTS[@]}" <<'PY'
 from __future__ import annotations
 
 import hashlib
@@ -40,10 +44,12 @@ summary_arg = Path(sys.argv[1])
 SUMMARY_JSON = summary_arg if summary_arg.is_absolute() else ROOT / summary_arg
 pytest_log_arg = Path(sys.argv[2])
 PYTEST_LOG = pytest_log_arg if pytest_log_arg.is_absolute() else ROOT / pytest_log_arg
-GIT_COMMIT = sys.argv[3]
-STATUS = sys.argv[4]
-PYTEST_EXIT = int(sys.argv[5])
-SELECTED_TESTS = sys.argv[6:]
+task_proof_arg = Path(sys.argv[3])
+TASK_PROOF_DIR = task_proof_arg if task_proof_arg.is_absolute() else ROOT / task_proof_arg
+GIT_COMMIT = sys.argv[4]
+STATUS = sys.argv[5]
+PYTEST_EXIT = int(sys.argv[6])
+SELECTED_TESTS = sys.argv[7:]
 
 MANIFEST = ROOT / "third_party" / "mcp_python_sdk" / "MANIFEST.sha256"
 LICENSE = ROOT / "third_party" / "mcp_python_sdk" / "LICENSE"
@@ -152,6 +158,82 @@ def autonomous_selected_tests() -> set[str]:
     return selected
 
 
+def read_task_proofs() -> list[dict[str, Any]]:
+    if not TASK_PROOF_DIR.exists():
+        return []
+    proofs: list[dict[str, Any]] = []
+    for proof_path in sorted(TASK_PROOF_DIR.rglob("*.json")):
+        proof = json.loads(proof_path.read_text(encoding="utf-8"))
+        if not isinstance(proof, dict):
+            raise SystemExit(f"external-heldout-benchmark-gate: task proof is not an object: {proof_path}")
+        proof["proof_path"] = display_path(proof_path)
+        proofs.append(proof)
+    return proofs
+
+
+def validate_task_proofs(proofs: list[dict[str, Any]]) -> list[str]:
+    if STATUS != "passed":
+        return []
+    invalid: list[str] = []
+    if len(proofs) != 1:
+        return [f"task_proof_count={len(proofs)}"]
+    proof = proofs[0]
+    expected_boundary = proof.get("evidence_boundary", {}).get("not_proof", [])
+    expected_counts = proof.get("observed_counts", {})
+    if proof.get("schema_version") != "external-heldout-repair-proof/v0.1":
+        invalid.append("task_proof.schema_version")
+    if proof.get("task_id") != "vendored_mcp_tool_name_validation_function_repair":
+        invalid.append("task_proof.task_id")
+    if proof.get("source_package") != "mcp-python-sdk":
+        invalid.append("task_proof.source_package")
+    if proof.get("source_repository") != "https://github.com/modelcontextprotocol/python-sdk":
+        invalid.append("task_proof.source_repository")
+    if proof.get("external_source_heldout") is not True:
+        invalid.append("task_proof.external_source_heldout")
+    if proof.get("heldout_from_autonomous_gate") is not True:
+        invalid.append("task_proof.heldout_from_autonomous_gate")
+    if proof.get("independent_external_benchmark") is not False:
+        invalid.append("task_proof.independent_external_benchmark")
+    if proof.get("target_path") != "mcp/shared/tool_name_validation.py":
+        invalid.append("task_proof.target_path")
+    if proof.get("function_name") != "validate_tool_name":
+        invalid.append("task_proof.function_name")
+    if proof.get("before_failure", {}).get("returncode") == 0:
+        invalid.append("task_proof.before_failure_returncode")
+    if proof.get("after_test", {}).get("returncode") != 0:
+        invalid.append("task_proof.after_test_returncode")
+    if proof.get("patch_scope", {}).get("files_touched") != ["mcp/shared/tool_name_validation.py"]:
+        invalid.append("task_proof.patch_scope.files_touched")
+    if proof.get("patch_scope", {}).get("stage1_changed_files") != ["mcp/shared/tool_name_validation.py"]:
+        invalid.append("task_proof.patch_scope.stage1_changed_files")
+    if proof.get("diff", {}).get("line_count", 0) <= 0:
+        invalid.append("task_proof.diff.line_count")
+    if proof.get("diff", {}).get("contains_target_function") is not True:
+        invalid.append("task_proof.diff.contains_target_function")
+    if not proof.get("agent_diagnosis", {}).get("observations"):
+        invalid.append("task_proof.agent_diagnosis.observations")
+    if "vendored MCP held-out repair task" not in str(proof.get("final_claim", "")):
+        invalid.append("task_proof.final_claim")
+    for boundary in (
+        "native benchmark ingestion",
+        "live patch proof",
+        "broad unknown-repository repair",
+        "external benchmark standing",
+        "current remote CI proof",
+    ):
+        if boundary not in expected_boundary:
+            invalid.append(f"task_proof.evidence_boundary.{boundary}")
+    if expected_counts.get("no_learning_solved") != 0:
+        invalid.append("task_proof.observed_counts.no_learning_solved")
+    if expected_counts.get("approved_learning_solved") != 2:
+        invalid.append("task_proof.observed_counts.approved_learning_solved")
+    if expected_counts.get("hidden_stage2_tasks") != 2:
+        invalid.append("task_proof.observed_counts.hidden_stage2_tasks")
+    if expected_counts.get("stability_solved") != 4:
+        invalid.append("task_proof.observed_counts.stability_solved")
+    return invalid
+
+
 manifest_entries = read_manifest()
 missing_required = [path for path in REQUIRED_SOURCE_PATHS if path not in manifest_entries]
 if missing_required:
@@ -172,6 +254,7 @@ if overlap:
     raise SystemExit(f"external-heldout-benchmark-gate: selected tests overlap autonomous provenance: {overlap}")
 
 observed = parse_pytest_log()
+task_proofs = read_task_proofs()
 summary = {
     "schema_version": "external-heldout-benchmark-gate/v0.1",
     "status": STATUS,
@@ -179,6 +262,7 @@ summary = {
     "invocation": {
         "git_commit": GIT_COMMIT,
         "summary_json": display_path(SUMMARY_JSON),
+        "task_proof_dir": display_path(TASK_PROOF_DIR),
     },
     "source": {
         "package": "mcp-python-sdk",
@@ -206,6 +290,8 @@ summary = {
     "observed_pytest": observed,
     "log_path": display_path(PYTEST_LOG),
     "log_tail": log_tail(),
+    "expected_task_proof_count": len(SELECTED_TESTS),
+    "task_proofs": task_proofs,
     "external_source": True,
     "external_source_heldout": True,
     "heldout_from_autonomous_gate": True,
@@ -228,6 +314,7 @@ if summary["independent_external_benchmark"] is not False:
     invalid.append("independent_external_benchmark_boundary")
 if "external benchmark standing" not in summary["not_proof"]:
     invalid.append("not_proof_boundary")
+invalid.extend(validate_task_proofs(task_proofs))
 
 SUMMARY_JSON.parent.mkdir(parents=True, exist_ok=True)
 SUMMARY_JSON.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -243,6 +330,7 @@ if STATUS != "running":
     print(f"external-heldout-benchmark-gate: source-manifest-sha256={summary['source']['manifest_sha256']}")
     print(f"external-heldout-benchmark-gate: selected-tests={len(SELECTED_TESTS)}")
     print(f"external-heldout-benchmark-gate: observed-passed={observed['passed']}")
+    print(f"external-heldout-benchmark-gate: task-proof-files={len(task_proofs)}")
     print(f"external-heldout-benchmark-gate: external-source-heldout={str(summary['external_source_heldout']).lower()}")
     print(f"external-heldout-benchmark-gate: heldout-from-autonomous-gate={str(summary['heldout_from_autonomous_gate']).lower()}")
     print(f"external-heldout-benchmark-gate: summary={summary['invocation']['summary_json']}")

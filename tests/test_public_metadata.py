@@ -2434,19 +2434,29 @@ def test_external_heldout_benchmark_gate_locks_source_boundary_and_summary_contr
     assert "manifest digest mismatch" in text
     assert "observed_pytest" in text
     assert "expected_passed" in text
+    assert "OPENMAKO_EXTERNAL_HELDOUT_TASK_PROOF_DIR" in text
+    assert "external-heldout-repair-proof/v0.1" in text
+    assert "task-proof-files=" in text
+    assert "before_failure_returncode" in text
+    assert "after_test_returncode" in text
+    assert "diff.contains_target_function" in text
+    assert "native benchmark ingestion" in text
+    assert "live patch proof" in text
     assert "external-heldout-benchmark-gate: PASS" in text
     negative_tests = (ROOT / "tests" / "test_external_heldout_benchmark_gate.py").read_text(encoding="utf-8")
     assert "test_external_heldout_gate_fails_closed_on_manifest_digest_mismatch" in negative_tests
     assert "test_external_heldout_gate_fails_closed_on_license_boundary_mismatch" in negative_tests
     assert "test_external_heldout_gate_fails_closed_on_missing_attribution_boundary" in negative_tests
     assert "test_external_heldout_gate_fails_closed_on_autonomous_manifest_overlap" in negative_tests
+    assert "test_external_heldout_gate_fails_closed_when_task_proof_is_missing" in negative_tests
     assert "external-heldout-benchmark-gate: PASS\" not in result.stdout" in negative_tests
 
     assert "`bash scripts/external_heldout_benchmark_gate.sh` to the public review gate" in progress
     assert "MCP Python SDK manifest, MIT license, selected\n  source digest" in progress
     assert "`external_source_heldout=true`, `heldout_from_autonomous_gate=true`, and\n  `independent_external_benchmark=false`" in progress
     assert "external-source held-out\n  regression evidence only, not external benchmark standing" in progress
-    assert "fail-closed negative tests that tamper with the MCP manifest digest, license\n  boundary, attribution boundary, and autonomous selected-test overlap" in progress
+    assert "fail-closed negative tests that tamper with the MCP manifest digest, license\n  boundary, attribution boundary, autonomous selected-test overlap, and missing\n  repair evidence packet before the gate can print `PASS`" in progress
+    assert "task-level repair evidence packet with before-failure\n  command output, agent diagnosis, target-function diff, after-test command\n  output, patch scope, final claim, and the non-proof boundary" in progress
 
 
 def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() -> None:

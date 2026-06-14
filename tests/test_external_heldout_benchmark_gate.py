@@ -56,6 +56,18 @@ def _run_gate(target_root: Path) -> subprocess.CompletedProcess[str]:
     )
 
 
+def _write_fake_passing_selected_test(target_root: Path) -> None:
+    test_path = target_root / "tests" / "test_upstream_function_file_bundle_regression.py"
+    test_path.parent.mkdir(parents=True, exist_ok=True)
+    test_path.write_text(
+        "import unittest\n\n"
+        "class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):\n"
+        "    def test_vendored_mcp_function_level_repair_reuses_without_non_target_drift(self):\n"
+        "        self.assertTrue(True)\n",
+        encoding="utf-8",
+    )
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -126,4 +138,15 @@ def test_external_heldout_gate_fails_closed_on_autonomous_manifest_overlap(tmp_p
 
     assert result.returncode != 0
     assert "selected tests overlap autonomous provenance" in result.stderr
+    assert "external-heldout-benchmark-gate: PASS" not in result.stdout
+
+
+def test_external_heldout_gate_fails_closed_when_task_proof_is_missing(tmp_path: Path) -> None:
+    target_root = _copy_minimal_gate_repo(tmp_path)
+    _write_fake_passing_selected_test(target_root)
+
+    result = _run_gate(target_root)
+
+    assert result.returncode != 0
+    assert "task_proof_count=0" in result.stderr
     assert "external-heldout-benchmark-gate: PASS" not in result.stdout

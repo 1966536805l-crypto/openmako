@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import ast
+import difflib
 import hashlib
 import json
 import os
 import shlex
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -65,6 +67,8 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
 
             stage1 = root / "stage1_workspace"
             _write_workspace(stage1, broken_source, _stage1_tests())
+            before_failure = _run_workspace_unittest(stage1)
+            self.assertNotEqual(before_failure["returncode"], 0, before_failure)
             result = run_agent_loop(
                 stage1,
                 "Fix the failing package tests without editing tests.",
@@ -76,6 +80,15 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
             self.assertTrue(result.ok, result.to_dict())
             implementation = next(item for item in result.observations if item.name == "implement")
             self.assertEqual(implementation.data["files_touched"], [TARGET_PATH])
+            after_test = _run_workspace_unittest(stage1)
+            self.assertEqual(after_test["returncode"], 0, after_test)
+            repaired_source = (stage1 / TARGET_PATH).read_text(encoding="utf-8")
+            repair_diff = _unified_diff(
+                broken_source,
+                repaired_source,
+                fromfile=f"broken/{TARGET_PATH}",
+                tofile=f"repaired/{TARGET_PATH}",
+            )
 
             proposal = propose_file_bundle_repair_skill_from_trajectory(
                 project,
@@ -152,6 +165,82 @@ class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):
                 target_path=TARGET_PATH,
                 exclude_function="validate_tool_name",
                 expected_result_count=4,
+            )
+            _write_external_heldout_repair_proof(
+                "vendored_mcp_tool_name_validation_function_repair",
+                {
+                    "source_package": "mcp-python-sdk",
+                    "source_repository": "https://github.com/modelcontextprotocol/python-sdk",
+                    "external_source_heldout": True,
+                    "heldout_from_autonomous_gate": True,
+                    "independent_external_benchmark": False,
+                    "target_path": TARGET_PATH,
+                    "function_name": "validate_tool_name",
+                    "source_sha256": _sha256(actual_source),
+                    "broken_source_sha256": _sha256(broken_source),
+                    "repaired_source_sha256": _sha256(repaired_source),
+                    "before_failure": before_failure,
+                    "agent_diagnosis": {
+                        "ok": result.ok,
+                        "status": result.status,
+                        "summary": result.summary,
+                        "failure_class": result.failure_class,
+                        "trajectory_path": result.trajectory_path,
+                        "observation_count": len(result.observations),
+                        "observations": _agent_observation_proofs(result),
+                    },
+                    "patch_scope": {
+                        "files_touched": implementation.data["files_touched"],
+                        "stage1_changed_files": [TARGET_PATH],
+                        "approved_learning_changed_files": [
+                            list(item.patch_metrics.changed_files)
+                            for item in report.approved_learning_run.results
+                        ],
+                        "approved_learning_out_of_scope_files": [
+                            list(item.patch_metrics.out_of_scope_files)
+                            for item in report.approved_learning_run.results
+                        ],
+                    },
+                    "diff": {
+                        "line_count": len(repair_diff),
+                        "contains_target_function": any("validate_tool_name" in line for line in repair_diff),
+                        "unified_diff": repair_diff,
+                    },
+                    "after_test": after_test,
+                    "stage1_eval": eval_result.to_dict(),
+                    "command_log": [
+                        before_failure,
+                        {
+                            "command": ["run_agent_loop", "--mode", "repair", "--learning-context", "off"],
+                            "ok": result.ok,
+                            "trajectory_path": result.trajectory_path,
+                        },
+                        after_test,
+                    ],
+                    "final_claim": (
+                        "For this vendored MCP held-out repair task, the agent loop changed "
+                        "only mcp/shared/tool_name_validation.py and the local package tests passed."
+                    ),
+                    "evidence_boundary": {
+                        "not_proof": [
+                            "native benchmark ingestion",
+                            "live patch proof",
+                            "broad unknown-repository repair",
+                            "external benchmark standing",
+                            "external review",
+                            "endorsement",
+                            "stars",
+                            "reposts",
+                            "current remote CI proof",
+                        ],
+                    },
+                    "observed_counts": {
+                        "approved_learning_solved": report.approved_learning_run.summary()["solved"],
+                        "hidden_stage2_tasks": report.approved_learning_run.summary()["total"],
+                        "no_learning_solved": report.no_learning_run.summary()["solved"],
+                        "stability_solved": stability.summary()["solved"],
+                    },
+                },
             )
 
         self.assertEqual(report.learning_effect.status, "pass")
@@ -1474,6 +1563,23 @@ def _write_task_proof(segment: str, name: str, payload: dict[str, Any]) -> None:
     )
 
 
+def _write_external_heldout_repair_proof(name: str, payload: dict[str, Any]) -> None:
+    proof_root = os.environ.get("OPENMAKO_EXTERNAL_HELDOUT_TASK_PROOF_DIR")
+    if not proof_root:
+        return
+    proof_dir = Path(proof_root)
+    proof_dir.mkdir(parents=True, exist_ok=True)
+    proof = {
+        "schema_version": "external-heldout-repair-proof/v0.1",
+        "task_id": name,
+        **payload,
+    }
+    (proof_dir / f"{name}.json").write_text(
+        json.dumps(proof, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
 def _result_proofs(results: Any) -> list[dict[str, Any]]:
     records = []
     for result in results:
@@ -1488,6 +1594,52 @@ def _result_proofs(results: Any) -> list[dict[str, Any]]:
                 "task_id": result.task_id,
                 "workspace_added_files": list(patch_metrics.workspace_added_files),
                 "workspace_deleted_files": list(patch_metrics.workspace_deleted_files),
+            }
+        )
+    return records
+
+
+def _run_workspace_unittest(workspace: Path) -> dict[str, Any]:
+    command = [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-q"]
+    result = subprocess.run(
+        command,
+        cwd=workspace,
+        text=True,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    return {
+        "command": command,
+        "cwd": str(workspace),
+        "returncode": result.returncode,
+        "stdout_tail": result.stdout.splitlines()[-20:],
+        "stderr_tail": result.stderr.splitlines()[-20:],
+    }
+
+
+def _unified_diff(before: str, after: str, *, fromfile: str, tofile: str) -> list[str]:
+    return list(
+        difflib.unified_diff(
+            before.splitlines(),
+            after.splitlines(),
+            fromfile=fromfile,
+            tofile=tofile,
+            lineterm="",
+        )
+    )
+
+
+def _agent_observation_proofs(result: Any) -> list[dict[str, Any]]:
+    records = []
+    for observation in result.observations:
+        payload = observation.to_dict()
+        records.append(
+            {
+                "name": payload["name"],
+                "ok": payload["ok"],
+                "summary": payload["summary"],
+                "data": payload.get("data", {}),
             }
         )
     return records

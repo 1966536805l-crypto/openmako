@@ -175,13 +175,19 @@ Current public proof:
   repair regression while checking the selected test does not overlap
   `scripts/autonomous_task_source_provenance.json`. Its summary records
   `external_source_heldout=true`, `heldout_from_autonomous_gate=true`, and
-  `independent_external_benchmark=false`. The public gate also runs
+  `independent_external_benchmark=false`. It now also fails closed unless the
+  held-out test writes a task-level repair evidence packet with before-failure
+  command output, agent diagnosis, target-function diff, after-test command
+  output, patch scope, final claim, and the non-proof boundary. The public gate
+  also runs
   fail-closed negative tests that tamper with the MCP manifest digest, license
-  boundary, attribution boundary, and autonomous selected-test overlap before
-  the gate can print `PASS`. This is external-source held-out
+  boundary, attribution boundary, autonomous selected-test overlap, and missing
+  repair evidence packet before the gate can print `PASS`. This is
+  external-source held-out
   regression evidence only, not external benchmark standing, external review,
   endorsement, stars, reposts, native live autonomy, broad unknown-repository
-  repair, current remote CI proof, or owner license decision.
+  repair, native benchmark ingestion, live patch proof, current remote CI proof,
+  or owner license decision.
 - `bash scripts/remote_autonomous_learning_snapshot.sh` is the fail-closed
   re-check tool for the latest autonomous-learning workflow on current
   `openmako/main`. It verifies the latest run SHA, completed/success
