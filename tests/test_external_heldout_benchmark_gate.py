@@ -28,7 +28,9 @@ def _copy_minimal_gate_repo(tmp_path: Path) -> Path:
     fixed_paths = [
         "scripts/external_heldout_benchmark_gate.sh",
         "scripts/autonomous_task_source_provenance.json",
+        "scripts/external_heldout_task_source_provenance.json",
         "docs/UPSTREAM_ATTRIBUTION.md",
+        "tests/test_upstream_function_file_bundle_regression.py",
         "third_party/mcp_python_sdk/MANIFEST.sha256",
     ]
     for rel_path in fixed_paths:
@@ -204,6 +206,14 @@ def _refresh_manifest_digest(target_root: Path, rel_path: str) -> None:
     manifest.write_text("\n".join(updated) + "\n", encoding="utf-8")
 
 
+def _refresh_task_source_manifest_test_file_digest(target_root: Path) -> None:
+    manifest = target_root / "scripts/external_heldout_task_source_provenance.json"
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    test_path = target_root / payload["selected_test_file"]["path"]
+    payload["selected_test_file"]["sha256"] = _sha256(test_path)
+    manifest.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
 def test_external_heldout_gate_fails_closed_on_manifest_digest_mismatch(tmp_path: Path) -> None:
     target_root = _copy_minimal_gate_repo(tmp_path)
     source = target_root / "third_party/mcp_python_sdk/src/mcp/shared/tool_name_validation.py"
@@ -259,6 +269,7 @@ def test_external_heldout_gate_fails_closed_on_autonomous_manifest_overlap(tmp_p
 def test_external_heldout_gate_fails_closed_when_task_proof_is_missing(tmp_path: Path) -> None:
     target_root = _copy_minimal_gate_repo(tmp_path)
     _write_fake_passing_selected_test(target_root)
+    _refresh_task_source_manifest_test_file_digest(target_root)
 
     result = _run_gate(target_root)
 
@@ -267,10 +278,22 @@ def test_external_heldout_gate_fails_closed_when_task_proof_is_missing(tmp_path:
     assert "external-heldout-benchmark-gate: PASS" not in result.stdout
 
 
+def test_external_heldout_gate_fails_closed_on_selected_test_file_replacement(tmp_path: Path) -> None:
+    target_root = _copy_minimal_gate_repo(tmp_path)
+    _write_fake_passing_selected_test(target_root)
+
+    result = _run_gate(target_root)
+
+    assert result.returncode != 0
+    assert "selected test file sha256 mismatch" in result.stderr
+    assert "external-heldout-benchmark-gate: PASS" not in result.stdout
+
+
 def test_external_heldout_gate_fails_closed_on_duplicate_task_proofs(tmp_path: Path) -> None:
     target_root = _copy_minimal_gate_repo(tmp_path)
     proof = _valid_task_proof()
     _write_fake_passing_selected_test_with_task_proofs(target_root, [proof, proof])
+    _refresh_task_source_manifest_test_file_digest(target_root)
 
     result = _run_gate(target_root)
 
@@ -286,6 +309,7 @@ def test_external_heldout_gate_fails_closed_on_forged_diff_target_flag(tmp_path:
     proof["diff"]["unified_diff"] = ["--- a/file.py", "+++ b/file.py", "-old", "+new"]
     proof["diff"]["line_count"] = len(proof["diff"]["unified_diff"])
     _write_fake_passing_selected_test_with_task_proofs(target_root, [proof])
+    _refresh_task_source_manifest_test_file_digest(target_root)
 
     result = _run_gate(target_root)
 
@@ -300,6 +324,7 @@ def test_external_heldout_gate_fails_closed_on_successful_before_failure_claim(t
     proof["before_failure"]["returncode"] = 0
     proof["command_log"][0] = proof["before_failure"]
     _write_fake_passing_selected_test_with_task_proofs(target_root, [proof])
+    _refresh_task_source_manifest_test_file_digest(target_root)
 
     result = _run_gate(target_root)
 
@@ -314,6 +339,7 @@ def test_external_heldout_gate_fails_closed_on_nonzero_after_test_claim(tmp_path
     proof["after_test"]["returncode"] = 1
     proof["command_log"][-1] = proof["after_test"]
     _write_fake_passing_selected_test_with_task_proofs(target_root, [proof])
+    _refresh_task_source_manifest_test_file_digest(target_root)
 
     result = _run_gate(target_root)
 
@@ -331,6 +357,7 @@ def test_external_heldout_gate_fails_closed_on_command_log_mismatch(tmp_path: Pa
         "returncode": 1,
     }
     _write_fake_passing_selected_test_with_task_proofs(target_root, [proof])
+    _refresh_task_source_manifest_test_file_digest(target_root)
 
     result = _run_gate(target_root)
 

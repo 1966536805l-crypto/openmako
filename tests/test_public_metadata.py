@@ -2412,11 +2412,21 @@ def test_external_source_benchmark_gate_locks_source_boundary_and_summary_contra
 def test_external_heldout_benchmark_gate_locks_source_boundary_and_summary_contract() -> None:
     script = ROOT / "scripts" / "external_heldout_benchmark_gate.sh"
     text = script.read_text(encoding="utf-8")
+    task_source_manifest = ROOT / "scripts" / "external_heldout_task_source_provenance.json"
+    task_source = json.loads(task_source_manifest.read_text(encoding="utf-8"))
     progress = (ROOT / "PROGRESS.md").read_text(encoding="utf-8")
 
     assert script.exists()
     assert script.stat().st_mode & 0o111
     assert "external-heldout-benchmark-gate/v0.1" in text
+    assert "OPENMAKO_EXTERNAL_HELDOUT_TASK_SOURCE_MANIFEST" in text
+    assert "scripts/external_heldout_task_source_provenance.json" in text
+    assert "external-heldout-task-source-provenance/v0.1" in text
+    assert "selected_tests_sha256" in text
+    assert "selected_test_file" in text
+    assert "selected test file sha256 mismatch" in text
+    assert "task_source_manifest" in text
+    assert "task_source_provenance" in text
     assert "OPENMAKO_EXTERNAL_HELDOUT_BENCHMARK_SUMMARY_JSON" in text
     assert "third_party/mcp_python_sdk/MANIFEST.sha256" in text
     assert "third_party/mcp_python_sdk/LICENSE" in text
@@ -2454,14 +2464,32 @@ def test_external_heldout_benchmark_gate_locks_source_boundary_and_summary_contr
     assert "test_external_heldout_gate_fails_closed_on_successful_before_failure_claim" in negative_tests
     assert "test_external_heldout_gate_fails_closed_on_nonzero_after_test_claim" in negative_tests
     assert "test_external_heldout_gate_fails_closed_on_command_log_mismatch" in negative_tests
+    assert "test_external_heldout_gate_fails_closed_on_selected_test_file_replacement" in negative_tests
     assert "external-heldout-benchmark-gate: PASS\" not in result.stdout" in negative_tests
+
+    assert task_source["schema_version"] == "external-heldout-task-source-provenance/v0.1"
+    assert task_source["external_heldout"] is True
+    assert task_source["independence_claim"] == "vendored-external-source-heldout-regression"
+    assert task_source["selected_tests"] == [
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_function_level_repair_reuses_without_non_target_drift"
+    ]
+    assert task_source["selected_tests_sha256"] == _selected_tests_sha256(
+        task_source["selected_tests"]
+    )
+    assert task_source["selected_test_file"] == {
+        "path": "tests/test_upstream_function_file_bundle_regression.py",
+        "sha256": "90a8ac6edd296435ffcf217a2ebd2353683c9d6b8c3aabb2c233b0565cb33fc5",
+    }
 
     assert "`bash scripts/external_heldout_benchmark_gate.sh` to the public review gate" in progress
     assert "MCP Python SDK manifest, MIT license, selected\n  source digest" in progress
     assert "`external_source_heldout=true`, `heldout_from_autonomous_gate=true`, and\n  `independent_external_benchmark=false`" in progress
     assert "external-source held-out\n  regression evidence only, not external benchmark standing" in progress
+    assert "derives that selected\n  test from `scripts/external_heldout_task_source_provenance.json`, which locks\n  the pytest node id, selected-tests sha256, and selected test file sha256" in progress
+    assert "summary records the held-out task-source manifest path and sha256 plus\n  the manifest payload" in progress
     assert "proof validator cross-checks the raw unified\n  diff target, command-log before/after entries, return codes" in progress
-    assert "missing\n  repair evidence packet, duplicate proof files, forged diff target flags,\n  successful-before-failure claims, nonzero after-test claims, and command-log\n  mismatches before the gate can print `PASS`" in progress
+    assert "missing\n  repair evidence packet, duplicate proof files, forged diff target flags,\n  successful-before-failure claims, nonzero after-test claims, and command-log\n  mismatches, and selected test file replacement" in progress
+    assert "selected test file replacement before the gate can print\n  `PASS`" in progress
     assert "task-level repair evidence packet with before-failure\n  command output, agent diagnosis, target-function diff, after-test command\n  output, patch scope, command log, source digests, final claim, and the\n  non-proof boundary" in progress
 
 

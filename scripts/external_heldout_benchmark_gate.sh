@@ -15,10 +15,64 @@ mkdir -p "$SUMMARY_DIR"
 rm -rf "$TASK_PROOF_DIR"
 mkdir -p "$TASK_PROOF_DIR"
 export OPENMAKO_EXTERNAL_HELDOUT_TASK_PROOF_DIR="$TASK_PROOF_DIR"
+TASK_SOURCE_MANIFEST="${OPENMAKO_EXTERNAL_HELDOUT_TASK_SOURCE_MANIFEST:-scripts/external_heldout_task_source_provenance.json}"
 
-SELECTED_TESTS=(
-  "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_function_level_repair_reuses_without_non_target_drift"
+load_selected_tests() {
+  "$PYTHON_BIN" - "$TASK_SOURCE_MANIFEST" <<'PY'
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path.cwd()
+manifest_arg = Path(sys.argv[1])
+manifest_path = manifest_arg if manifest_arg.is_absolute() else ROOT / manifest_arg
+manifest_text = manifest_path.read_text(encoding="utf-8")
+payload = json.loads(manifest_text)
+if payload.get("schema_version") != "external-heldout-task-source-provenance/v0.1":
+    raise SystemExit("external-heldout-benchmark-gate: invalid task source manifest schema_version")
+if payload.get("external_heldout") is not True:
+    raise SystemExit("external-heldout-benchmark-gate: task source manifest external_heldout is not true")
+selected_tests = payload.get("selected_tests")
+if not isinstance(selected_tests, list) or len(selected_tests) != 1:
+    raise SystemExit("external-heldout-benchmark-gate: invalid selected_tests count")
+node_id_re = re.compile(
+    r"^tests/test_upstream_function_file_bundle_regression\.py::"
+    r"UpstreamFunctionFileBundleRegressionTest::"
+    r"test_vendored_mcp_function_level_repair_reuses_without_non_target_drift$"
 )
+if not all(isinstance(item, str) and node_id_re.fullmatch(item) for item in selected_tests):
+    raise SystemExit("external-heldout-benchmark-gate: invalid selected_tests node ids")
+selected_digest = hashlib.sha256(("\n".join(selected_tests) + "\n").encode("utf-8")).hexdigest()
+if payload.get("selected_tests_sha256") != selected_digest:
+    raise SystemExit("external-heldout-benchmark-gate: invalid selected_tests_sha256")
+test_file = payload.get("selected_test_file")
+if not isinstance(test_file, dict):
+    raise SystemExit("external-heldout-benchmark-gate: missing selected_test_file")
+test_path = test_file.get("path")
+expected_test_digest = test_file.get("sha256")
+if test_path != "tests/test_upstream_function_file_bundle_regression.py":
+    raise SystemExit("external-heldout-benchmark-gate: invalid selected_test_file path")
+if not isinstance(expected_test_digest, str) or not re.fullmatch(r"[0-9a-f]{64}", expected_test_digest):
+    raise SystemExit("external-heldout-benchmark-gate: invalid selected_test_file sha256")
+actual_test_digest = hashlib.sha256((ROOT / test_path).read_bytes()).hexdigest()
+if actual_test_digest != expected_test_digest:
+    raise SystemExit(
+        "external-heldout-benchmark-gate: selected test file sha256 mismatch: "
+        f"expected {expected_test_digest}, got {actual_test_digest}"
+    )
+for item in selected_tests:
+    print(item)
+PY
+}
+
+SELECTED_TESTS=()
+while IFS= read -r selected_test; do
+  SELECTED_TESTS+=("$selected_test")
+done < <(load_selected_tests)
 
 GIT_COMMIT="unknown"
 if git rev-parse HEAD >/dev/null 2>&1; then
@@ -28,7 +82,7 @@ fi
 write_summary() {
   local status="$1"
   local pytest_exit="$2"
-  "$PYTHON_BIN" - "$SUMMARY_JSON" "$PYTEST_LOG" "$TASK_PROOF_DIR" "$GIT_COMMIT" "$status" "$pytest_exit" "${SELECTED_TESTS[@]}" <<'PY'
+  "$PYTHON_BIN" - "$SUMMARY_JSON" "$PYTEST_LOG" "$TASK_PROOF_DIR" "$GIT_COMMIT" "$status" "$pytest_exit" "$TASK_SOURCE_MANIFEST" "${SELECTED_TESTS[@]}" <<'PY'
 from __future__ import annotations
 
 import hashlib
@@ -49,7 +103,9 @@ TASK_PROOF_DIR = task_proof_arg if task_proof_arg.is_absolute() else ROOT / task
 GIT_COMMIT = sys.argv[4]
 STATUS = sys.argv[5]
 PYTEST_EXIT = int(sys.argv[6])
-SELECTED_TESTS = sys.argv[7:]
+TASK_SOURCE_MANIFEST_ARG = Path(sys.argv[7])
+TASK_SOURCE_MANIFEST = TASK_SOURCE_MANIFEST_ARG if TASK_SOURCE_MANIFEST_ARG.is_absolute() else ROOT / TASK_SOURCE_MANIFEST_ARG
+SELECTED_TESTS = sys.argv[8:]
 
 MANIFEST = ROOT / "third_party" / "mcp_python_sdk" / "MANIFEST.sha256"
 LICENSE = ROOT / "third_party" / "mcp_python_sdk" / "LICENSE"
@@ -106,6 +162,13 @@ def read_manifest() -> dict[str, str]:
             )
         entries[rel_path] = expected
     return entries
+
+
+def read_task_source_manifest() -> tuple[dict[str, Any], str]:
+    text = TASK_SOURCE_MANIFEST.read_text(encoding="utf-8")
+    payload = json.loads(text)
+    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return payload, digest
 
 
 def parse_pytest_log() -> dict[str, Any]:
@@ -298,6 +361,7 @@ def validate_task_proofs(proofs: list[dict[str, Any]]) -> list[str]:
 
 
 manifest_entries = read_manifest()
+task_source_manifest, task_source_manifest_sha256 = read_task_source_manifest()
 missing_required = [path for path in REQUIRED_SOURCE_PATHS if path not in manifest_entries]
 if missing_required:
     raise SystemExit(f"external-heldout-benchmark-gate: required manifest paths missing: {missing_required}")
@@ -349,6 +413,11 @@ summary = {
         },
     },
     "selected_tests": SELECTED_TESTS,
+    "task_source_manifest": {
+        "path": display_path(TASK_SOURCE_MANIFEST),
+        "sha256": task_source_manifest_sha256,
+    },
+    "task_source_provenance": task_source_manifest,
     "expected_passed": len(SELECTED_TESTS),
     "observed_pytest": observed,
     "log_path": display_path(PYTEST_LOG),

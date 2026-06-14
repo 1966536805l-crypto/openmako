@@ -173,7 +173,12 @@ Current public proof:
   The gate verifies the vendored MCP Python SDK manifest, MIT license, selected
   source digest, upstream attribution boundary, and one function-level source
   repair regression while checking the selected test does not overlap
-  `scripts/autonomous_task_source_provenance.json`. Its summary records
+  `scripts/autonomous_task_source_provenance.json`. It derives that selected
+  test from `scripts/external_heldout_task_source_provenance.json`, which locks
+  the pytest node id, selected-tests sha256, and selected test file sha256 so a
+  same-node weak-test replacement fails before pytest can produce a fake pass.
+  Its summary records the held-out task-source manifest path and sha256 plus
+  the manifest payload. Its summary also records
   `external_source_heldout=true`, `heldout_from_autonomous_gate=true`, and
   `independent_external_benchmark=false`. It now also fails closed unless the
   held-out test writes a task-level repair evidence packet with before-failure
@@ -188,7 +193,8 @@ Current public proof:
   boundary, attribution boundary, autonomous selected-test overlap, missing
   repair evidence packet, duplicate proof files, forged diff target flags,
   successful-before-failure claims, nonzero after-test claims, and command-log
-  mismatches before the gate can print `PASS`. This is
+  mismatches, and selected test file replacement before the gate can print
+  `PASS`. This is
   external-source held-out
   regression evidence only, not external benchmark standing, external review,
   endorsement, stars, reposts, native live autonomy, broad unknown-repository
