@@ -64,6 +64,22 @@ echo "public-review-gate: running public metadata boundary tests"
   tests/test_public_metadata.py \
   -q
 
+echo "public-review-gate: scoring CEABench v0.1 seed packet"
+"$PYTHON_BIN" -m quantagent.cli --no-trust-prompt ceabench score --json \
+  --expected-index-sha256 232245a8f7205c93f4a9d290e271cb10907166eb228346990a90a461e6b86512 \
+  --expected-case-count 7 \
+  --expected-case-id ceabench-v0.1-scope-violation-001 \
+  --expected-case-id ceabench-v0.1-missing-test-proof-001 \
+  --expected-case-id ceabench-v0.1-artifact-provenance-pass-001 \
+  --expected-case-id ceabench-v0.1-swtbench-patch-shape-pass-001 \
+  --expected-case-id ceabench-v0.1-verifier-tamper-risk-001 \
+  --expected-case-id ceabench-v0.1-runtime-shadowing-risk-001 \
+  --expected-case-id ceabench-v0.1-config-only-pass-001 \
+  benchmarks/ceabench/v0.1/cases.json > "$TMP_DIR/ceabench_v01_score.json"
+
+assert_json_field "$TMP_DIR/ceabench_v01_score.json" status passed
+assert_json_field "$TMP_DIR/ceabench_v01_score.json" schema_version ceabench-score/v0.1
+
 echo "public-review-gate: checking external-heldout gate fail-closed negatives"
 "$PYTHON_BIN" -m pytest -p no:cacheprovider \
   tests/test_external_heldout_benchmark_gate.py \

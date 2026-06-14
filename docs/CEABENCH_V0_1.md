@@ -1,9 +1,9 @@
 # CEABench v0.1 Research Layer
 
-Status: research framing, seed benchmark case index, and benchmark design on
-top of implemented OpenMako artifacts. This is not a benchmark result,
-external review, leaderboard, or claim that OpenMako ingests native product
-logs.
+Status: research framing, seed benchmark case index, and native seed-packet
+scoring on top of implemented OpenMako artifacts. This is not an external
+benchmark result, external review, leaderboard, or claim that OpenMako ingests
+native product logs.
 
 ## Core Framing
 
@@ -105,12 +105,22 @@ The benchmark unit is a claim-evidence case:
 }
 ```
 
-The v0.1 case schema can reuse the OpenMako Evidence Court record shape. The
+The v0.1 case schema reuses the OpenMako Evidence Court record shape. The
 current seed case index is `benchmarks/ceabench/v0.1/cases.json`; each row
 points at an existing supplied record and stores the expected Evidence Court
-verdict, failure class, failed-at boundary, and patch-shape bucket. A fuller
-`ceabench_case_version` wrapper with human label, evaluator version, and
-adjudication notes is [PLANNED].
+verdict, failure class, failed-at boundary, and patch-shape bucket. The native
+scorer is:
+
+```bash
+python3 -m quantagent.cli --no-trust-prompt ceabench score --json \
+  benchmarks/ceabench/v0.1/cases.json
+```
+
+The scorer fails closed when the case index hash, case count, locked case-id
+set, or repository-relative source-record paths do not match the requested
+contract. It re-runs Evidence Court for each case instead of trusting expected
+results from the case index. A fuller `ceabench_case_version` wrapper with
+human label, evaluator version, and adjudication notes is [PLANNED].
 
 ## Label Set
 
@@ -183,11 +193,18 @@ Implemented seed index:
   listed supplied record and checks the expected verdict, failure class,
   failed-at boundary, and patch-shape bucket.
 
+Implemented seed scorer:
+
+- `python3 -m quantagent.cli --no-trust-prompt ceabench score --json
+  benchmarks/ceabench/v0.1/cases.json`
+- `scripts/public_review_gate.sh` locks the current case-index sha256, case
+  count, and case-id set before accepting the seed scorer output.
+
 [PLANNED] CEABench v0.1 larger dataset export:
 
 - add `benchmarks/ceabench/v0.1/README.md`
-- add a scorer that reports verdict, failure class, evidence coverage vector,
-  and metric summary
+- add evidence coverage vector details beyond the current verdict, failure
+  class, patch shape, source-record hashes, and metric summary
 - keep cases synthetic or supplied-record based unless native export
   permissions and provenance are explicit
 
@@ -205,7 +222,7 @@ Implemented seed index:
    tamper-risk sensitivity.
 5. Limitations: v0.1 does not prove native product-log ingestion, live agent
    control, broad repair ability, external review, or adoption.
-6. Next experiment: expand the current seed case index into a versioned dataset
+6. Next experiment: expand the current seed scorer into a versioned dataset
    package and run at least one baseline evaluator against it.
 
 ## Non-Claims
@@ -215,6 +232,8 @@ CEABench v0.1 must not claim:
 - OpenMako is a general coding-agent benchmark runner.
 - OpenMako ingests native Claude Code, Codex, Cursor, OpenHands, SWE-agent, or
   SWE-bench logs.
+- CEABench seed scoring proves external leaderboard standing or broad coding
+  agent capability.
 - supplied transcript adapters are native product export parsers.
 - preserved telemetry, provenance, ledger identity, or agent-risk metadata
   proves that validation, live control, or self-improvement happened outside
@@ -225,11 +244,12 @@ CEABench v0.1 must not claim:
 
 ## Next Smallest Build Step
 
-Build the dataset export:
+Build the dataset export around the native seed scorer:
 
 ```bash
-python3 -m quantagent.cli --no-trust-prompt evidence-court audit --json examples/evidence_court/missing_tests.json
+python3 -m quantagent.cli --no-trust-prompt ceabench score --json benchmarks/ceabench/v0.1/cases.json
 ```
 
-Then expand the seed case index into a scorer-backed dataset package. Do not
-score external coding agents until the scorer and boundary tests exist.
+Then add a versioned dataset README, evidence-coverage output, and a baseline
+evaluator. Do not score external coding agents until those boundary tests
+exist.

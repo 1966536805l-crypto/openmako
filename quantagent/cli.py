@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib
 import json
 import math
@@ -434,6 +435,227 @@ def cmd_evidence_court(args: argparse.Namespace) -> int:
 
 def _evidence_court_ci_failed(verdict: str, fail_on: str) -> bool:
     return verdict == "FAIL" or (fail_on == "suspicious" and verdict == "SUSPICIOUS")
+
+
+CEABENCH_CASE_SCHEMA_VERSION = "ceabench-case-index/v0.1"
+CEABENCH_SCORE_SCHEMA_VERSION = "ceabench-score/v0.1"
+CEABENCH_NOT_PROOF = (
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "leaderboard standing",
+    "native product-log ingestion",
+    "live autonomy",
+    "broad unknown-repository repair",
+)
+CEABENCH_REQUIRED_FIELDS = (
+    "case_id",
+    "schema_version",
+    "split",
+    "source_record_path",
+    "metric_family",
+    "expected_verdict",
+    "expected_failure_class",
+    "expected_failed_at",
+    "expected_patch_shape",
+    "claim_boundary",
+)
+
+
+def cmd_ceabench(args: argparse.Namespace) -> int:
+    if args.ceabench_command != "score":
+        print("ceabench error: unsupported command", file=sys.stderr)
+        return 2
+
+    try:
+        payload = _score_ceabench_cases(
+            args.case_index,
+            expected_index_sha256=args.expected_index_sha256,
+            expected_case_count=args.expected_case_count,
+            expected_case_ids=tuple(args.expected_case_id or ()),
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        print(f"ceabench error: {exc}", file=sys.stderr)
+        return 2
+
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
+    else:
+        print(_render_ceabench_score(payload), end="")
+    return 0 if payload["status"] == "passed" else 1
+
+
+def _score_ceabench_cases(
+    case_index: str | Path,
+    *,
+    expected_index_sha256: str = "",
+    expected_case_count: int | None = None,
+    expected_case_ids: tuple[str, ...] = (),
+) -> dict[str, Any]:
+    root = Path.cwd().resolve(strict=False)
+    index_path = _resolve_input_file_path(root, case_index)
+    index_hash = _sha256_file(index_path)
+    if expected_index_sha256 and index_hash != expected_index_sha256:
+        raise ValueError(
+            f"case index sha256 mismatch: expected {expected_index_sha256}, got {index_hash}"
+        )
+
+    cases = json.loads(index_path.read_text(encoding="utf-8"))
+    if not isinstance(cases, list):
+        raise ValueError("case index must be a JSON list")
+    if expected_case_count is not None and len(cases) != expected_case_count:
+        raise ValueError(f"case count mismatch: expected {expected_case_count}, got {len(cases)}")
+
+    case_ids: list[str] = []
+    results: list[dict[str, Any]] = []
+    metric_summary: dict[str, dict[str, int]] = {}
+    mismatches: list[dict[str, Any]] = []
+    for case in cases:
+        if not isinstance(case, dict):
+            raise ValueError("case index entries must be JSON objects")
+        missing_fields = [field for field in CEABENCH_REQUIRED_FIELDS if field not in case]
+        if missing_fields:
+            raise ValueError(f"case entry missing fields: {', '.join(missing_fields)}")
+
+        case_id = _required_string(case, "case_id")
+        if case_id in case_ids:
+            raise ValueError(f"duplicate case_id: {case_id}")
+        case_ids.append(case_id)
+        if _required_string(case, "schema_version") != CEABENCH_CASE_SCHEMA_VERSION:
+            raise ValueError(f"{case_id}: unsupported schema_version")
+        if _required_string(case, "split") != "seed":
+            raise ValueError(f"{case_id}: unsupported split")
+
+        source_record = _resolve_repo_relative_path(
+            root,
+            _required_string(case, "source_record_path"),
+            field_name=f"{case_id}.source_record_path",
+        )
+        if not source_record.exists():
+            raise ValueError(f"{case_id}: source record not found: {case['source_record_path']}")
+
+        report = build_audit_record_report(source_record)
+        observed = json.loads(dumps_evidence_court_json(report))
+        result = {
+            "case_id": case_id,
+            "metric_family": _required_string(case, "metric_family"),
+            "claim_boundary": _required_string(case, "claim_boundary"),
+            "source_record_path": _required_string(case, "source_record_path"),
+            "source_record_sha256": _sha256_file(source_record),
+            "expected_verdict": _required_string(case, "expected_verdict"),
+            "observed_verdict": observed["verdict"],
+            "expected_failure_class": _string_field(case, "expected_failure_class", allow_empty=True),
+            "observed_failure_class": observed["failure_class"],
+            "expected_failed_at": _string_field(case, "expected_failed_at", allow_empty=True),
+            "observed_failed_at": observed["failed_at"] or "",
+            "expected_patch_shape": _required_string(case, "expected_patch_shape"),
+            "observed_patch_shape": observed["patch_shape"]["bucket"],
+        }
+        result["matched"] = (
+            result["expected_verdict"] == result["observed_verdict"]
+            and result["expected_failure_class"] == result["observed_failure_class"]
+            and result["expected_failed_at"] == result["observed_failed_at"]
+            and result["expected_patch_shape"] == result["observed_patch_shape"]
+        )
+        if not result["matched"]:
+            mismatches.append(result)
+        metric = metric_summary.setdefault(result["metric_family"], {"cases": 0, "matched": 0})
+        metric["cases"] += 1
+        if result["matched"]:
+            metric["matched"] += 1
+        results.append(result)
+
+    if expected_case_ids:
+        expected_set = set(expected_case_ids)
+        actual_set = set(case_ids)
+        if actual_set != expected_set:
+            missing = sorted(expected_set - actual_set)
+            unexpected = sorted(actual_set - expected_set)
+            raise ValueError(
+                "case id set mismatch: "
+                f"missing={missing or []} unexpected={unexpected or []}"
+            )
+
+    matched_count = sum(1 for result in results if result["matched"])
+    return {
+        "schema_version": CEABENCH_SCORE_SCHEMA_VERSION,
+        "status": "passed" if not mismatches else "failed",
+        "case_index_path": _display_path(root, index_path),
+        "case_index_sha256": index_hash,
+        "case_count": len(results),
+        "matched_count": matched_count,
+        "mismatch_count": len(mismatches),
+        "score": matched_count / len(results) if results else 0.0,
+        "metric_summary": metric_summary,
+        "case_results": results,
+        "mismatches": mismatches,
+        "not_proof": list(CEABENCH_NOT_PROOF),
+    }
+
+
+def _required_string(payload: dict[str, Any], field: str) -> str:
+    return _string_field(payload, field, allow_empty=False)
+
+
+def _string_field(payload: dict[str, Any], field: str, *, allow_empty: bool) -> str:
+    value = payload.get(field)
+    if not isinstance(value, str) or (not allow_empty and not value):
+        adjective = "a string" if allow_empty else "a non-empty string"
+        raise ValueError(f"{field} must be {adjective}")
+    return value
+
+
+def _resolve_repo_relative_path(root: Path, value: str | Path, *, field_name: str) -> Path:
+    raw = Path(value)
+    if raw.is_absolute() or ".." in raw.parts:
+        raise ValueError(f"{field_name} must be a repository-relative path")
+    resolved = (root / raw).resolve(strict=False)
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"{field_name} escapes repository root") from exc
+    return resolved
+
+
+def _resolve_input_file_path(root: Path, value: str | Path) -> Path:
+    raw = Path(value)
+    return raw.expanduser().resolve(strict=False) if raw.is_absolute() else (root / raw).resolve(strict=False)
+
+
+def _display_path(root: Path, path: Path) -> str:
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
+
+def _sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _render_ceabench_score(payload: dict[str, Any]) -> str:
+    lines = [
+        "CEABench v0.1 Score",
+        f"status: {payload['status']}",
+        f"case_index: {payload['case_index_path']}",
+        f"case_index_sha256: {payload['case_index_sha256']}",
+        f"matched: {payload['matched_count']}/{payload['case_count']}",
+        f"score: {payload['score']:.3f}",
+        "not_proof: " + "; ".join(payload["not_proof"]),
+    ]
+    if payload["mismatches"]:
+        lines.append("mismatches:")
+        for mismatch in payload["mismatches"]:
+            lines.append(
+                f"- {mismatch['case_id']}: verdict {mismatch['observed_verdict']} "
+                f"failure_class {mismatch['observed_failure_class']}"
+            )
+    return "\n".join(lines) + "\n"
 
 
 def cmd_hooks(args: argparse.Namespace) -> int:
@@ -7738,6 +7960,16 @@ def build_parser() -> argparse.ArgumentParser:
     bp.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
     bp.set_defaults(func=cmd_coding_bench)
 
+    p = sub.add_parser("ceabench", help="Score CEABench claim-evidence case packets")
+    ceabench_sub = p.add_subparsers(dest="ceabench_command", required=True)
+    cp = ceabench_sub.add_parser("score", help="Score a CEABench v0.1 case index through Evidence Court")
+    cp.add_argument("--json", action="store_true", help="Print machine-readable score output")
+    cp.add_argument("--expected-index-sha256", default="", help="Fail closed unless the case index has this sha256")
+    cp.add_argument("--expected-case-count", type=int, default=None, help="Fail closed unless the case index has this many cases")
+    cp.add_argument("--expected-case-id", action="append", default=[], help="Expected case id; repeat to lock the full case-id set")
+    cp.add_argument("case_index", help="Path to a CEABench v0.1 case index JSON file")
+    cp.set_defaults(func=cmd_ceabench)
+
     p = sub.add_parser("learning-effect", help="Compare no-learning and approved-learning command outcomes")
     add_project(p)
     p.add_argument("--json", action="store_true")
@@ -8121,6 +8353,7 @@ def main(argv: list[str] | None = None) -> int:
         "eval",
         "code-eval",
         "coding-bench",
+        "ceabench",
         "learning-effect",
         "swarm",
         "arbitrate",

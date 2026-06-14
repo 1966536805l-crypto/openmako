@@ -10,11 +10,19 @@ Current public proof:
   on top. A seed case index is available at
   `benchmarks/ceabench/v0.1/cases.json` and is checked by
   `tests/test_ceabench_v01_doc.py` against current Evidence Court outputs.
-  This is research framing and seed dataset design only; it is not a benchmark
-  result, external review, leaderboard, native product-log ingestion, or
-  adoption evidence. The local `CEABench/` research workspace is ignored; the
-  tracked public surface is the framing doc, seed case index, and regression
-  test.
+  The native CLI scorer
+  `python3 -m quantagent.cli --no-trust-prompt ceabench score --json
+  benchmarks/ceabench/v0.1/cases.json` now re-runs Evidence Court over each
+  seed case, reports matched verdict/failure/patch-shape results, and fails
+  closed when the case index sha256, case count, case-id set, or
+  repository-relative source-record paths do not match the requested contract.
+  `scripts/public_review_gate.sh` runs that scorer with the locked seed packet
+  identity. This is research framing, seed dataset design, and native
+  seed-packet scoring only; it is not an external benchmark result, external
+  review, leaderboard, native product-log ingestion, live autonomy, broad
+  unknown-repository repair, or adoption evidence. The local `CEABench/`
+  research workspace is ignored; the tracked public surface is the framing doc,
+  seed case index, native seed scorer, public gate hook, and regression test.
 - The public v0.1 proof command is `./scripts/public_review_gate.sh`; `README.md`
   defines the narrower claim and non-proof boundaries.
 - Remote focused CI is live GitHub state, not a durable fact in this file.
