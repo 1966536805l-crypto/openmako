@@ -46,6 +46,8 @@ external-heldout-benchmark-gate: running MCP Python SDK held-out repair regressi
 external-heldout-benchmark-gate: PASS
 public-review-gate: running public metadata boundary tests
 <N> passed
+public-review-gate: checking external-heldout gate fail-closed negatives
+4 passed
 public-review-gate: checking adversarial claim matrix generator
 public-review-gate: running Evidence Court intensity matrix
 316 passed
@@ -79,6 +81,9 @@ metadata section passes and the script reaches `public-review-gate: PASS`.
   manifest, MIT license, selected source digest, upstream attribution boundary,
   one held-out function-level source repair regression, and that its selected
   test does not overlap the autonomous-learning gate's selected test manifest.
+- External-heldout fail-closed negatives verify that manifest digest,
+  license-boundary, attribution-boundary, and autonomous-manifest-overlap
+  tampering stop before the gate can print `PASS`.
 - The no-learning repair path fails the hidden task pack.
 - The approved-learning repair path solves the hidden task pack.
 - Repeat stability remains deterministic for the focused task.
@@ -134,6 +139,18 @@ default. The summary records `external_source_heldout=true`,
 regression evidence only, not external benchmark standing, external review,
 endorsement, stars, reposts, native live autonomy, broad unknown-repository
 repair, current remote CI proof, or owner license decision.
+
+External-heldout fail-closed negatives only:
+
+```bash
+python -m pytest -p no:cacheprovider tests/test_external_heldout_benchmark_gate.py -q
+```
+
+Expected local result on the public snapshot:
+
+```text
+4 passed
+```
 
 Slower local autonomous-learning stress gate:
 

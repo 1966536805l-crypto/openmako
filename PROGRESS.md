@@ -173,7 +173,10 @@ Current public proof:
   repair regression while checking the selected test does not overlap
   `scripts/autonomous_task_source_provenance.json`. Its summary records
   `external_source_heldout=true`, `heldout_from_autonomous_gate=true`, and
-  `independent_external_benchmark=false`. This is external-source held-out
+  `independent_external_benchmark=false`. The public gate also runs
+  fail-closed negative tests that tamper with the MCP manifest digest, license
+  boundary, attribution boundary, and autonomous selected-test overlap before
+  the gate can print `PASS`. This is external-source held-out
   regression evidence only, not external benchmark standing, external review,
   endorsement, stars, reposts, native live autonomy, broad unknown-repository
   repair, current remote CI proof, or owner license decision.

@@ -48,6 +48,7 @@ external-source-benchmark-gate: PASS
 public-review-gate: running external-heldout benchmark gate
 external-heldout-benchmark-gate: PASS
 public-review-gate: running public metadata boundary tests
+public-review-gate: checking external-heldout gate fail-closed negatives
 public-review-gate: checking adversarial claim matrix generator
 public-review-gate: running Evidence Court intensity matrix
 public-review-gate: recording Evidence Court bad-run fixture
@@ -71,6 +72,9 @@ learning-effect regression; the external-heldout benchmark gate verifies the
 MCP Python SDK vendored-source manifest, MIT license, selected source digest,
 one held-out function-level source repair regression, and that its selected
 test does not overlap the autonomous-learning gate's selected test manifest;
+the external-heldout fail-closed negatives verify that manifest digest,
+license-boundary, attribution-boundary, and autonomous-manifest-overlap
+tampering stop before the gate can print `PASS`;
 public metadata stays inside the v0.1 boundary,
 Evidence Court fails closed on a supplied bad-run record, the local Evidence
 Court intensity matrix covers supplied test-output parser edge cases and 105
@@ -283,7 +287,9 @@ license, manifest, selected source digest, and upstream attribution boundary,
 then exercises one held-out function-level source repair regression that is not
 listed in `scripts/autonomous_task_source_provenance.json`. Its summary records
 `external_source_heldout=true`, `heldout_from_autonomous_gate=true`, and
-`independent_external_benchmark=false`.
+`independent_external_benchmark=false`. Its fail-closed negative tests tamper
+the vendored manifest digest, license boundary, attribution boundary, and
+autonomous selected-test manifest overlap.
 
 Run the same gate locally:
 
