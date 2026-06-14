@@ -25,6 +25,16 @@ Current public proof:
   seed case index, native seed scorer, public gate hook, and regression test.
 - The public v0.1 proof command is `./scripts/public_review_gate.sh`; `README.md`
   defines the narrower claim and non-proof boundaries.
+- The focused public gate now writes a commit-bound artifact bundle under
+  `.quantagent/public_review_gate` when `scripts/public_review_gate.sh` passes:
+  `invocation.json`, `summary.json`, and hashed machine outputs copied from the
+  gate's temporary work directory. `.github/workflows/focused.yml` uploads that
+  bundle as `focused-public-review-gate`, and
+  `bash scripts/remote_focused_artifact_snapshot.sh` is the fail-closed remote
+  checker for the latest focused workflow artifact on current `openmako/main`.
+  Passing the remote artifact checker is public CI artifact evidence only, not
+  external review, endorsement, stars, reposts, live autonomy, broad
+  unknown-repository repair, or external benchmark standing.
 - Latest local native product-log ingestion check on 2026-06-14 adds
   `openmako evidence-court record from-product-log` for
   `openmako-product-log/v0.1` failure-to-fix packets. The converter fails

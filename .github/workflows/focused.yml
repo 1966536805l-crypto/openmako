@@ -27,5 +27,15 @@ jobs:
           python -m pip install -e . pytest
 
       - name: Run focused OpenMako evidence gate
+        env:
+          OPENMAKO_PUBLIC_REVIEW_GATE_ARTIFACT_DIR: .quantagent/public_review_gate
         run: |
           bash scripts/public_review_gate.sh
+
+      - name: Upload focused public gate artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: focused-public-review-gate
+          path: .quantagent/public_review_gate
+          if-no-files-found: error

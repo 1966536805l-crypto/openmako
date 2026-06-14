@@ -7,11 +7,34 @@ cd "$ROOT_DIR"
 PYTHON_BIN="${PYTHON:-python3}"
 export PYTHONPATH="$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}"
 TMP_DIR="$(mktemp -d)"
+ARTIFACT_DIR="${OPENMAKO_PUBLIC_REVIEW_GATE_ARTIFACT_DIR:-$ROOT_DIR/.quantagent/public_review_gate}"
+GIT_COMMIT="$(git rev-parse HEAD 2>/dev/null || printf unknown)"
 
 cleanup() {
   rm -rf "$TMP_DIR"
 }
 trap cleanup EXIT
+
+rm -rf "$ARTIFACT_DIR/outputs"
+mkdir -p "$ARTIFACT_DIR/outputs"
+
+"$PYTHON_BIN" - "$ARTIFACT_DIR/invocation.json" "$GIT_COMMIT" <<'PY'
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+path = Path(sys.argv[1])
+path.parent.mkdir(parents=True, exist_ok=True)
+payload = {
+    "schema_version": "public-review-gate-invocation/v0.1",
+    "status": "started",
+    "git_commit": sys.argv[2],
+    "started_at_utc": datetime.now(timezone.utc).isoformat(),
+    "proof_command": "bash scripts/public_review_gate.sh",
+}
+path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
 
 assert_json_field() {
   local audit="$1"
@@ -176,5 +199,68 @@ assert_json_field "$TMP_DIR/ci_workflow_tamper_success.json" verifier_tamper_ris
 
 echo "public-review-gate: running supplied transcript adapter matrix"
 bash scripts/supplied_transcript_adapter_matrix.sh
+
+rm -rf "$ARTIFACT_DIR/outputs"
+mkdir -p "$ARTIFACT_DIR/outputs"
+cp -R "$TMP_DIR"/. "$ARTIFACT_DIR/outputs/"
+
+"$PYTHON_BIN" - "$ARTIFACT_DIR" "$GIT_COMMIT" <<'PY'
+import hashlib
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+artifact_dir = Path(sys.argv[1])
+git_commit = sys.argv[2]
+outputs_dir = artifact_dir / "outputs"
+output_hashes = {}
+for path in sorted(outputs_dir.rglob("*")):
+    if path.is_file():
+        output_hashes[str(path.relative_to(artifact_dir))] = "sha256:" + hashlib.sha256(
+            path.read_bytes()
+        ).hexdigest()
+
+required_outputs = [
+    "outputs/audit.json",
+    "outputs/artifact_provenance.json",
+    "outputs/ceabench_v01_score.json",
+    "outputs/ci_workflow_tamper_success.json",
+    "outputs/config_only_repair.json",
+    "outputs/external_heldout_benchmark_gate/last_summary.json",
+    "outputs/external_source_benchmark_gate/last_summary.json",
+    "outputs/runtime_shadowing_risk.json",
+    "outputs/swtbench_patch_artifact.json",
+    "outputs/verifier_attack_success.json",
+    "outputs/verifier_tamper_risk.json",
+]
+payload = {
+    "schema_version": "public-review-gate-artifact/v0.1",
+    "status": "passed",
+    "invocation": {
+        "git_commit": git_commit,
+        "proof_command": "bash scripts/public_review_gate.sh",
+        "finished_at_utc": datetime.now(timezone.utc).isoformat(),
+    },
+    "required_outputs": required_outputs,
+    "output_sha256": output_hashes,
+    "not_proof": [
+        "external review",
+        "endorsement",
+        "stars",
+        "reposts",
+        "live autonomy",
+        "broad unknown-repository repair",
+        "external benchmark standing",
+    ],
+}
+missing = [name for name in required_outputs if name not in output_hashes]
+if missing:
+    raise SystemExit("public-review-gate artifact missing outputs: " + ", ".join(missing))
+(artifact_dir / "summary.json").write_text(
+    json.dumps(payload, indent=2, sort_keys=True) + "\n",
+    encoding="utf-8",
+)
+PY
 
 echo "public-review-gate: PASS"

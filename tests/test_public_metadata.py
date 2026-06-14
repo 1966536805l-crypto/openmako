@@ -340,7 +340,13 @@ def test_focused_workflow_runs_same_public_gate_as_readme() -> None:
     workflow = (ROOT / ".github" / "workflows" / "focused.yml").read_text(encoding="utf-8")
 
     assert "Run focused OpenMako evidence gate" in workflow
+    assert "OPENMAKO_PUBLIC_REVIEW_GATE_ARTIFACT_DIR: .quantagent/public_review_gate" in workflow
     assert "bash scripts/public_review_gate.sh" in workflow
+    assert "Upload focused public gate artifact" in workflow
+    assert "actions/upload-artifact@v7" in workflow
+    assert "name: focused-public-review-gate" in workflow
+    assert "path: .quantagent/public_review_gate" in workflow
+    assert "if-no-files-found: error" in workflow
     assert "tests/test_agent_planner_contract.py::AgentPlannerContractTest" not in workflow
     assert "tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest" not in workflow
     assert "python -m pip install -e . pytest" in workflow
@@ -1082,6 +1088,137 @@ def test_remote_focused_ci_snapshot_script_is_fail_closed_and_token_aware() -> N
     assert "or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN for authenticated API reads" in text
     for forbidden in FORBIDDEN_README_CLAIMS:
         assert forbidden.lower() not in text.lower()
+
+
+def test_remote_focused_artifact_snapshot_script_is_fail_closed_and_artifact_aware(tmp_path: Path) -> None:
+    script = ROOT / "scripts" / "remote_focused_artifact_snapshot.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert "OPENMAKO_FOCUSED_ARTIFACT_NAME" in text
+    assert "focused-public-review-gate" in text
+    assert "OPENMAKO_FOCUSED_ARTIFACT_ZIP" in text
+    assert "artifact zip sha256 does not match artifact digest" in text
+    assert "artifact summary git commit does not match remote main" in text
+    assert "artifact summary output digest is not present in artifact zip" in text
+    assert "artifact-required-output-count=" in text
+    assert "not-proof=external review; endorsement; stars; reposts; live autonomy" in text
+
+    remote_sha = "abcdef1234567890abcdef1234567890abcdef12"
+    run_id = 27503343782
+    runs_json = tmp_path / "runs.json"
+    artifacts_json = tmp_path / "artifacts.json"
+    artifact_zip = tmp_path / "focused-public-review-gate.zip"
+    runs_json.write_text(
+        json.dumps(
+            {
+                "workflow_runs": [
+                    {
+                        "id": run_id,
+                        "head_sha": remote_sha,
+                        "status": "completed",
+                        "conclusion": "success",
+                        "html_url": "https://github.com/1966536805l-crypto/openmako/actions/runs/27503343782",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    required_outputs = [
+        "outputs/audit.json",
+        "outputs/artifact_provenance.json",
+        "outputs/ceabench_v01_score.json",
+        "outputs/ci_workflow_tamper_success.json",
+        "outputs/config_only_repair.json",
+        "outputs/external_heldout_benchmark_gate/last_summary.json",
+        "outputs/external_source_benchmark_gate/last_summary.json",
+        "outputs/runtime_shadowing_risk.json",
+        "outputs/swtbench_patch_artifact.json",
+        "outputs/verifier_attack_success.json",
+        "outputs/verifier_tamper_risk.json",
+    ]
+    output_payloads = {name: f"{name}: ok\n".encode("utf-8") for name in required_outputs}
+    output_hashes = {
+        name: "sha256:" + hashlib.sha256(payload).hexdigest()
+        for name, payload in output_payloads.items()
+    }
+    summary = {
+        "schema_version": "public-review-gate-artifact/v0.1",
+        "status": "passed",
+        "invocation": {
+            "git_commit": remote_sha,
+            "proof_command": "bash scripts/public_review_gate.sh",
+        },
+        "required_outputs": required_outputs,
+        "output_sha256": output_hashes,
+    }
+    with zipfile.ZipFile(artifact_zip, "w") as archive:
+        archive.writestr("summary.json", json.dumps(summary))
+        for name, payload in output_payloads.items():
+            archive.writestr(name, payload)
+    artifact_zip_sha256 = hashlib.sha256(artifact_zip.read_bytes()).hexdigest()
+    artifacts_json.write_text(
+        json.dumps(
+            {
+                "artifacts": [
+                    {
+                        "id": 8000000001,
+                        "name": "focused-public-review-gate",
+                        "expired": False,
+                        "digest": f"sha256:{artifact_zip_sha256}",
+                        "archive_download_url": "https://api.github.com/repos/1966536805l-crypto/openmako/actions/artifacts/8000000001/zip",
+                        "workflow_run": {
+                            "id": run_id,
+                            "head_sha": remote_sha,
+                        },
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env.update(
+        {
+            "OPENMAKO_REMOTE_MAIN_SHA": remote_sha,
+            "OPENMAKO_FOCUSED_RUNS_JSON": str(runs_json),
+            "OPENMAKO_FOCUSED_ARTIFACTS_JSON": str(artifacts_json),
+            "OPENMAKO_FOCUSED_ARTIFACT_ZIP": str(artifact_zip),
+        }
+    )
+    result = subprocess.run(
+        ["bash", "scripts/remote_focused_artifact_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "remote-focused-artifact-snapshot: run-sha=abcdef1234567890abcdef1234567890abcdef12" in result.stdout
+    assert "remote-focused-artifact-snapshot: artifact-name=focused-public-review-gate" in result.stdout
+    assert "remote-focused-artifact-snapshot: artifact-id=8000000001" in result.stdout
+    assert f"remote-focused-artifact-snapshot: artifact-digest=sha256:{artifact_zip_sha256}" in result.stdout
+    assert "remote-focused-artifact-snapshot: artifact-summary=summary.json" in result.stdout
+    assert "remote-focused-artifact-snapshot: artifact-summary-commit=abcdef1234567890abcdef1234567890abcdef12" in result.stdout
+    assert "remote-focused-artifact-snapshot: artifact-required-output-count=11" in result.stdout
+    assert "remote-focused-artifact-snapshot: PASS" in result.stdout
+
+    artifacts_json.write_text(json.dumps({"artifacts": []}), encoding="utf-8")
+    missing = subprocess.run(
+        ["bash", "scripts/remote_focused_artifact_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert missing.returncode == 1
+    assert "artifact 'focused-public-review-gate' is missing or ambiguous" in missing.stderr
 
 
 def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_aware(tmp_path: Path) -> None:
@@ -2342,6 +2479,14 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
     assert script.exists()
     assert script.stat().st_mode & 0o111
     assert 'export PYTHONPATH="$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}"' in text
+    assert "OPENMAKO_PUBLIC_REVIEW_GATE_ARTIFACT_DIR" in text
+    assert "public-review-gate-artifact/v0.1" in text
+    assert "public-review-gate-invocation/v0.1" in text
+    assert "output_sha256" in text
+    assert "required_outputs" in text
+    assert "outputs/external_source_benchmark_gate/last_summary.json" in text
+    assert "outputs/external_heldout_benchmark_gate/last_summary.json" in text
+    assert "public-review-gate artifact missing outputs" in text
     assert "tests/test_agent_planner_contract.py::AgentPlannerContractTest" in text
     assert "public-review-gate: running external-source benchmark gate" in text
     assert "OPENMAKO_EXTERNAL_SOURCE_BENCHMARK_SUMMARY_JSON" in text
