@@ -117,9 +117,8 @@ runs repository tests for stage1 repair, trajectory extraction, eval-gated
 learning approval, clean stage2 reuse, upstream hidden-pack reuse,
 cross-upstream no-seed reuse, and cheating rejection. It is local
 high-intensity learning evidence only, not proof of native live autonomy, broad
-unknown-repository repair, external benchmark standing, remote CI proof,
-external review, independent external held-out benchmarking, endorsement,
-stars, or reposts.
+unknown-repository repair, external benchmark standing, third-party benchmark
+standing, remote CI proof, external review, endorsement, stars, or reposts.
 It writes a machine-readable run summary to
 `.quantagent/autonomous_learning_gate/last_summary.json` by default. That
 summary records the invoking commit, selected tests, per-segment elapsed
@@ -128,10 +127,12 @@ counts, expected stage1/upstream/cross-upstream learning-effect contract
 counts, cross-upstream cheat caught count, and task-level upstream proof JSON
 records for solved/failed/cheated/stability result sets. It also records
 `task_source_provenance=repo-authored-regression-pack` with
-`external_heldout=false`, so the stress gate cannot be reported as an
-independent external held-out benchmark. The summary carries the same
-not-proof boundary; set `OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to
-write it elsewhere.
+`external_heldout=false`, plus a linked repo-defined independent external
+held-out packet under `linked_independent_external_heldout/last_summary.json`.
+The stress gate's own task source still cannot be reported as an independent
+external held-out benchmark, and the linked packet is not third-party benchmark
+standing. The summary carries the same not-proof boundary; set
+`OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to write it elsewhere.
 For commit-pinned public artifact capture, run the manual
 `.github/workflows/autonomous-learning-gate.yml` workflow or push a change to
 the workflow, gate script, core learning modules, selected gate-test paths, or
@@ -159,7 +160,7 @@ or inconsistent, the command fails closed. Passing via the mirror is public CI
 artifact and public-mirror evidence only, not the GitHub Actions API artifact
 zip endpoint byte-for-byte archive, external review, endorsement, stars,
 reposts, live autonomy, broad unknown-repository repair, external benchmark
-standing, or independent external held-out benchmark evidence.
+standing, or third-party benchmark standing.
 If GitHub API access is rate-limited but you already saved the run metadata,
 artifact metadata, and downloaded artifact zip for the same run, verify that
 saved evidence bundle with:
@@ -411,7 +412,7 @@ qagent --help
 | Remote public evidence snapshot | `bash scripts/remote_public_evidence_snapshot.sh`, a fail-closed unauthenticated git clone check for the `public-evidence` branch; verifies `focused/<openmako-main-sha>/summary.json`, status, commit binding, required outputs, output hashes, and the deterministic `public_mirror` archive/file digests; public git-branch evidence and mirrored upload-directory content only, not the GitHub Actions API artifact zip endpoint byte-for-byte archive, external review, endorsement, stars, reposts, native live autonomy, broad unknown-repository repair, or external benchmark standing |
 | Fresh-clone reproduction publishing | `OPENMAKO_REPRO_LOG=/tmp/openmako-fresh-clone.log bash scripts/publish_fresh_clone_reproduction_branch.sh`, a fail-closed publisher for a passing `scripts/fresh_clone_reproduction.sh` log; validates exact-ref, checkout, install, release, public, focused public-evidence, and autonomous public-evidence PASS markers before publishing `reproductions/<commit>/...` to the `public-evidence` branch; fresh-clone reproduction log evidence only, not external review, endorsement, stars, reposts, independent external benchmark standing, GitHub Actions artifact zip contents, native live autonomy, or broad unknown-repository repair |
 | Remote fresh-clone reproduction snapshot | `bash scripts/remote_fresh_clone_reproduction_snapshot.sh`, a fail-closed unauthenticated git clone check for the published fresh-clone reproduction log; verifies commit binding, marker coverage, log line count, and log SHA-256 on the `public-evidence` branch; public reproduction-log evidence only, not external review, endorsement, stars, reposts, independent external benchmark standing, GitHub Actions artifact zip contents, native live autonomy, or broad unknown-repository repair |
-| Remote autonomous-learning artifact snapshot | `bash scripts/remote_autonomous_learning_snapshot.sh`, a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, downloaded or public-mirrored `last_summary.json` contract fields, task-level proof records, and task-source provenance showing `repo-authored-regression-pack` with `external_heldout=false`; supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`, `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for local artifact fixtures, and a commit-bound `public-evidence` autonomous artifact-content mirror when API or artifact ZIP reads are unavailable; mirror fallback prints `artifact-content-mirror=verified-by-public-evidence-branch` and `artifact-zip-contract=api-zip-endpoint-unverified-by-public-evidence-branch`; public CI artifact and public-mirror evidence only, not the GitHub Actions API artifact zip endpoint byte-for-byte archive, external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, external benchmark standing, or independent external held-out benchmark evidence |
+| Remote autonomous-learning artifact snapshot | `bash scripts/remote_autonomous_learning_snapshot.sh`, a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, downloaded or public-mirrored `last_summary.json` contract fields, task-level proof records, task-source provenance showing `repo-authored-regression-pack` with `external_heldout=false`, and the linked repo-defined independent external-heldout packet summary when present in the artifact mirror; supports `OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN`, `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` for local artifact fixtures, and a commit-bound `public-evidence` autonomous artifact-content mirror when API or artifact ZIP reads are unavailable; mirror fallback prints `artifact-content-mirror=verified-by-public-evidence-branch` and `artifact-zip-contract=api-zip-endpoint-unverified-by-public-evidence-branch`; public CI artifact, public-mirror, and repo-defined independent held-out packet evidence only, not the GitHub Actions API artifact zip endpoint byte-for-byte archive, external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, external benchmark standing, or third-party benchmark standing |
 | Saved autonomous artifact snapshot | `bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json autonomous-learning-gate-summary.zip <openmako-main-sha>`, an explicit fixture wrapper for saved GitHub Actions run metadata, artifact metadata, and the downloaded autonomous-learning artifact zip; useful when live API reads are rate-limited; checks the same artifact contract against saved inputs but does not prove fixture provenance or current live GitHub API state; saved public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing |
 | Public evidence comment check | `bash scripts/public_evidence_comment_check.sh`, a fail-closed marker check for the published issue evidence comment; defaults to issue #1 comment `4694860161` and verifies the configured commit, run, job, artifact id, artifact digest, and boundary phrase in public HTML, with `OPENMAKO_PUBLIC_EVIDENCE_HTML` available for local fixtures; public record consistency only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or external benchmark standing |
 | Screenshot-friendly proof card | [`scripts/public_proof_card.sh`](scripts/public_proof_card.sh), runs the public gate then prints scope and non-proof boundaries |

@@ -249,7 +249,8 @@ extraction, eval-gated learning approval, clean stage2 reuse, upstream
 hidden-pack reuse, cross-upstream no-seed reuse, and cheating rejection. It is
 local high-intensity learning evidence only, not native live autonomy, broad
 unknown-repository repair proof, external benchmark standing, remote CI proof,
-external review, endorsement, stars, or reposts.
+third-party benchmark standing, external review, endorsement, stars, or
+reposts.
 It writes a machine-readable summary to
 `.quantagent/autonomous_learning_gate/last_summary.json` by default. The summary
 records the invoking commit, manifest-derived selected tests, per-segment elapsed
@@ -257,9 +258,11 @@ seconds, the per-segment pytest log paths and log tails, observed
 pass/skip/warning counts, the expected stage1/upstream/cross-upstream
 learning-effect contract counts, the tracked
 `scripts/autonomous_task_source_provenance.json` path and sha256, an artifact
-copy of that manifest, and the same not-proof boundary. Set
-`OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to write the summary
-elsewhere.
+copy of that manifest, a linked repo-defined independent external-heldout packet
+summary, and the same not-proof boundary. The autonomous gate's own task source
+remains `repo-authored-regression-pack` with `external_heldout=false`; the
+linked independent packet is not third-party benchmark standing. Set
+`OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON` to write the summary elsewhere.
 The manifest-derived selected tests are constrained to the expected minimum
 segment counts, pytest node-id shape, no pytest options, no whitespace, no
 duplicates inside a segment, and no duplicates across segments, so a shortened or
@@ -321,8 +324,7 @@ against a saved artifact fixture. Passing via the public mirror is public CI
 artifact and public-mirror evidence only, not the GitHub Actions API artifact
 zip endpoint byte-for-byte archive, external review, endorsement, stars,
 reposts, live autonomy, broad unknown-repository repair, external benchmark
-standing, or independent external
-held-out benchmark evidence.
+standing, or third-party benchmark standing.
 
 If the live GitHub API is rate-limited but the run metadata, artifact metadata,
 and artifact zip were saved from the same workflow run, use the fixture-first
@@ -338,8 +340,7 @@ including the artifact metadata's `workflow_run` binding when present, but it
 does not prove fixture provenance or current live GitHub API state. It is saved
 public CI artifact evidence only, not a substitute for external review,
 endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or
-external benchmark standing, and not independent external held-out benchmark
-evidence.
+external benchmark standing, and not third-party benchmark standing.
 
 To re-check that the published public evidence comment still contains the
 recorded remote-run markers and non-proof boundary:

@@ -30,7 +30,7 @@ if ! git clone --depth 1 --branch "$BRANCH" "$EVIDENCE_REMOTE" "$tmp_dir/evidenc
   echo "remote-autonomous-public-evidence-snapshot: branch=$BRANCH"
   echo "remote-autonomous-public-evidence-snapshot: remote-main-sha=$remote_sha"
   echo "remote-autonomous-public-evidence-snapshot: unavailable=public_evidence_branch_missing"
-  echo "remote-autonomous-public-evidence-snapshot: not-proof=GitHub Actions artifact zip contents; external review; endorsement; stars; reposts; native live autonomy; broad unknown-repository repair; external benchmark standing; independent external held-out benchmark"
+  echo "remote-autonomous-public-evidence-snapshot: not-proof=GitHub Actions artifact zip contents; external review; endorsement; stars; reposts; native live autonomy; broad unknown-repository repair; external benchmark standing; third-party benchmark standing"
   exit 2
 fi
 
@@ -64,7 +64,7 @@ def fail(reason: str, detail: str = "") -> None:
         "remote-autonomous-public-evidence-snapshot: "
         "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; external review; endorsement; "
         "stars; reposts; native live autonomy; broad unknown-repository repair; "
-        "external benchmark standing; independent external held-out benchmark"
+        "external benchmark standing; third-party benchmark standing"
     )
     raise SystemExit(1)
 
@@ -96,6 +96,8 @@ def verify_public_mirror() -> dict:
             fail("autonomous_public_mirror_required_file_missing", required)
     if "linked_external_heldout/last_summary.json" not in files:
         fail("autonomous_public_mirror_linked_external_heldout_missing")
+    if "linked_independent_external_heldout/last_summary.json" not in files:
+        fail("autonomous_public_mirror_linked_independent_external_heldout_missing")
     pytest_logs = [name for name in files if name.startswith("pytest_logs/") and name.endswith(".log")]
     if len(pytest_logs) < 3:
         fail("autonomous_public_mirror_pytest_logs_missing")
@@ -130,7 +132,7 @@ def verify_public_mirror() -> dict:
     if (
         not isinstance(not_proof, list)
         or "GitHub Actions API artifact zip endpoint byte-for-byte archive" not in not_proof
-        or "independent external held-out benchmark" not in not_proof
+        or "third-party benchmark standing" not in not_proof
     ):
         fail("autonomous_public_mirror_boundary_mismatch")
     try:
@@ -237,6 +239,41 @@ if linked.get("independent_external_benchmark") is not False or linked_summary.g
     fail("autonomous_linked_external_heldout_benchmark_boundary_mismatch")
 if linked.get("task_proof_count") != 2 or len(linked_summary.get("task_proofs") or []) != 2:
     fail("autonomous_linked_external_heldout_task_proof_count_mismatch")
+independent = summary.get("linked_independent_external_heldout")
+if not isinstance(independent, dict):
+    fail("autonomous_summary_linked_independent_external_heldout_missing")
+if independent.get("schema_version") != "autonomous-linked-independent-external-heldout/v0.1":
+    fail("autonomous_summary_linked_independent_external_heldout_schema_mismatch")
+if independent.get("status") != "passed":
+    fail("autonomous_summary_linked_independent_external_heldout_not_passed")
+if independent.get("summary_path") != "linked_independent_external_heldout/last_summary.json":
+    fail("autonomous_summary_linked_independent_external_heldout_path_mismatch")
+independent_summary_path = summary_path.parent / "linked_independent_external_heldout" / "last_summary.json"
+if not independent_summary_path.is_file():
+    fail("autonomous_linked_independent_external_heldout_summary_missing")
+independent_summary_text = independent_summary_path.read_text(encoding="utf-8")
+if hashlib.sha256(independent_summary_text.encode("utf-8")).hexdigest() != independent.get("summary_sha256"):
+    fail("autonomous_linked_independent_external_heldout_summary_digest_mismatch")
+try:
+    independent_summary = json.loads(independent_summary_text)
+except Exception as exc:
+    fail("autonomous_linked_independent_external_heldout_summary_invalid_json", str(exc))
+if independent_summary.get("schema_version") != "independent-external-heldout-benchmark-gate/v0.1":
+    fail("autonomous_linked_independent_external_heldout_summary_schema_mismatch")
+if independent_summary.get("status") != "passed":
+    fail("autonomous_linked_independent_external_heldout_summary_not_passed")
+if independent_summary.get("independent_external_heldout_benchmark") is not True or independent.get("independent_external_heldout_benchmark") is not True:
+    fail("autonomous_linked_independent_external_heldout_flag_mismatch")
+if independent_summary.get("third_party_benchmark_standing") is not False or independent.get("third_party_benchmark_standing") is not False:
+    fail("autonomous_linked_independent_external_heldout_standing_boundary_mismatch")
+if independent.get("benchmark_id") != "openmako-independent-external-heldout-v0.1":
+    fail("autonomous_linked_independent_external_heldout_benchmark_mismatch")
+if independent.get("case_count") != 2:
+    fail("autonomous_linked_independent_external_heldout_case_count_mismatch")
+if independent.get("task_proof_count") != 2 or len(independent_summary.get("case_results") or []) != 2:
+    fail("autonomous_linked_independent_external_heldout_task_proof_count_mismatch")
+if independent.get("repo_defined_benchmark_packet") is not True:
+    fail("autonomous_linked_independent_external_heldout_repo_packet_mismatch")
 node_id_re = re.compile(r"^tests/[A-Za-z0-9_./]+\.py::[A-Za-z_][A-Za-z0-9_]*::test_[A-Za-z0-9_]+$")
 all_selected: set[str] = set()
 def selected_tests_sha256(selected: list[str]) -> str:
@@ -303,9 +340,9 @@ required_not_proof = {
     "native live autonomy",
     "broad unknown-repository repair",
     "external benchmark standing",
+    "third-party benchmark standing",
     "remote CI proof",
     "external review",
-    "independent external held-out benchmark",
     "endorsement",
     "stars",
     "reposts",
@@ -339,12 +376,21 @@ print(
     "remote-autonomous-public-evidence-snapshot: "
     f"linked-external-heldout-independent-benchmark={str(linked['independent_external_benchmark']).lower()}"
 )
+print("remote-autonomous-public-evidence-snapshot: linked-independent-external-heldout=true")
+print(
+    "remote-autonomous-public-evidence-snapshot: "
+    f"linked-independent-external-heldout-task-proof-count={independent['task_proof_count']}"
+)
+print(
+    "remote-autonomous-public-evidence-snapshot: "
+    f"linked-independent-external-heldout-third-party-standing={str(independent['third_party_benchmark_standing']).lower()}"
+)
 print(f"remote-autonomous-public-evidence-snapshot: latest-index={'present' if latest else 'missing'}")
 print(
     "remote-autonomous-public-evidence-snapshot: "
     "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; external review; endorsement; "
     "stars; reposts; native live autonomy; broad unknown-repository repair; "
-    "external benchmark standing; independent external held-out benchmark"
+    "external benchmark standing; third-party benchmark standing"
 )
 print("remote-autonomous-public-evidence-snapshot: PASS")
 PY

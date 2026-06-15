@@ -335,11 +335,11 @@ def test_readme_links_public_proof_issue() -> None:
     assert "not the GitHub Actions API artifact zip endpoint byte-for-byte archive" in readme
     assert "Remote autonomous-learning artifact snapshot" in readme
     assert "bash scripts/remote_autonomous_learning_snapshot.sh" in readme
-    assert "a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, downloaded or public-mirrored `last_summary.json` contract fields, task-level proof records, and task-source provenance showing `repo-authored-regression-pack` with `external_heldout=false`" in readme
+    assert "a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, downloaded or public-mirrored `last_summary.json` contract fields, task-level proof records, task-source provenance showing `repo-authored-regression-pack` with `external_heldout=false`, and the linked repo-defined independent external-heldout packet summary when present in the artifact mirror" in readme
     assert "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP" in readme
     assert "API-unavailable or artifact zip 401 results try the commit-bound\n`public-evidence` autonomous artifact-content mirror" in readme
     assert "not the GitHub Actions API artifact zip endpoint byte-for-byte archive" in readme
-    assert "public CI\nartifact and public-mirror evidence only, not the GitHub Actions API artifact\nzip endpoint byte-for-byte archive, external review, endorsement, stars,\nreposts, live autonomy, broad unknown-repository repair, external benchmark\nstanding, or independent external held-out benchmark evidence" in readme
+    assert "public CI artifact, public-mirror, and repo-defined independent held-out packet evidence only, not the GitHub Actions API artifact zip endpoint byte-for-byte archive, external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, external benchmark standing, or third-party benchmark standing" in readme
     assert "Saved autonomous artifact snapshot" in readme
     assert "bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json autonomous-learning-gate-summary.zip <openmako-main-sha>" in readme
     assert "an explicit fixture wrapper for saved GitHub Actions run metadata, artifact metadata, and the downloaded autonomous-learning artifact zip" in readme
@@ -528,7 +528,8 @@ def test_autonomous_public_evidence_branch_scripts_are_fail_closed_and_boundary_
     assert "git worktree add --detach" in publish_text
     assert "Publish autonomous public evidence for" in publish_text
     assert "native live autonomy" in publish_text
-    assert "independent external held-out benchmark" in publish_text
+    assert "linked independent external-heldout evidence missing" in publish_text
+    assert "third-party benchmark standing" in publish_text
     assert "autonomous_summary_commit_mismatch" in remote_text
     assert "autonomous_summary_segment_not_passed" in remote_text
     assert "autonomous_task_source_manifest_digest_mismatch" in remote_text
@@ -665,15 +666,16 @@ def test_readme_exposes_reviewer_entry_points_before_scope_claims() -> None:
     assert "autonomous-learning-gate: PASS" in proof_section
     assert (
         "high-intensity learning evidence only, not proof of native live autonomy, broad\n"
-        "unknown-repository repair, external benchmark standing, remote CI proof,\n"
-        "external review, independent external held-out benchmarking, endorsement,\n"
-        "stars, or reposts"
+        "unknown-repository repair, external benchmark standing, third-party benchmark\n"
+        "standing, remote CI proof, external review, endorsement, stars, or reposts"
     ) in proof_section
     assert "`.quantagent/autonomous_learning_gate/last_summary.json` by default" in proof_section
     assert "selected tests, per-segment elapsed\nseconds" in proof_section
     assert "per-segment pytest log paths and log tails, observed pass/skip/warning\ncounts" in proof_section
     assert "`task_source_provenance=repo-authored-regression-pack` with\n`external_heldout=false`" in proof_section
-    assert "cannot be reported as an\nindependent external held-out benchmark" in proof_section
+    assert "linked repo-defined independent external\nheld-out packet" in proof_section
+    assert "linked packet is not third-party benchmark\nstanding" in proof_section
+    assert "cannot be reported as an independent\nexternal held-out benchmark" in proof_section
     assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON" in proof_section
     assert "`.github/workflows/autonomous-learning-gate.yml` workflow" in proof_section
     assert "core learning modules, selected gate-test paths, or\nsupplied Evidence Court/transcript proof surfaces" in proof_section
@@ -1891,9 +1893,9 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
             "native live autonomy",
             "broad unknown-repository repair",
             "external benchmark standing",
+            "third-party benchmark standing",
             "remote CI proof",
             "external review",
-            "independent external held-out benchmark",
             "endorsement",
             "stars",
             "reposts",
@@ -1961,6 +1963,94 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
         "independent_external_benchmark": False,
         "not_proof": linked_external_heldout_summary["not_proof"],
     }
+    linked_independent_external_heldout_summary = {
+        "schema_version": "independent-external-heldout-benchmark-gate/v0.1",
+        "status": "passed",
+        "benchmark": {
+            "path": "benchmarks/independent_external_heldout/v0.1/cases.json",
+            "sha256": "sha256:" + "3" * 64,
+            "benchmark_id": "openmako-independent-external-heldout-v0.1",
+            "case_count": 2,
+            "case_ids": [
+                "vendored_mcp_tool_name_validation_function_repair",
+                "vendored_mcp_tool_name_wrapper_seed_repair",
+            ],
+        },
+        "external_source": {
+            "package": "mcp-python-sdk",
+            "repository": "https://github.com/modelcontextprotocol/python-sdk",
+            "license": "MIT",
+            "manifest_path": "third_party/mcp_python_sdk/MANIFEST.sha256",
+            "manifest_sha256": "8ca78f36a6ffea447eb924136c0ede1002a018f1fe1597c51a630283d295f45a",
+        },
+        "selected_tests": linked_external_heldout_summary["selected_tests"],
+        "observed_pytest": linked_external_heldout_summary["observed_pytest"],
+        "case_results": [
+            {
+                "task_id": "vendored_mcp_tool_name_validation_function_repair",
+                "label": "supported_repair_claim",
+                "before_failure_returncode": 1,
+                "after_test_returncode": 0,
+                "target_diff": True,
+            },
+            {
+                "task_id": "vendored_mcp_tool_name_wrapper_seed_repair",
+                "label": "supported_repair_claim",
+                "before_failure_returncode": 1,
+                "after_test_returncode": 0,
+                "target_diff": True,
+            },
+        ],
+        "raw_evidence_files": {
+            "summary.json": "sha256:" + "4" * 64,
+            "pytest.log": "sha256:" + "5" * 64,
+            "task_proofs/proof_0.json": "sha256:" + "6" * 64,
+            "task_proofs/proof_1.json": "sha256:" + "7" * 64,
+        },
+        "external_source_heldout": True,
+        "heldout_from_autonomous_gate": True,
+        "independent_from_autonomous_task_manifest": True,
+        "repo_defined_benchmark_packet": True,
+        "independent_external_heldout_benchmark": True,
+        "third_party_benchmark_standing": False,
+        "not_proof": [
+            "third-party benchmark standing",
+            "external review",
+            "endorsement",
+            "stars",
+            "reposts",
+            "native live autonomy",
+            "broad unknown-repository repair",
+            "GitHub Actions artifact zip contents",
+        ],
+    }
+    independent_text = (
+        json.dumps(linked_independent_external_heldout_summary, indent=2, sort_keys=True)
+        + "\n"
+    )
+    artifact_summary["linked_independent_external_heldout"] = {
+        "schema_version": "autonomous-linked-independent-external-heldout/v0.1",
+        "status": "passed",
+        "summary_path": "linked_independent_external_heldout/last_summary.json",
+        "summary_sha256": hashlib.sha256(independent_text.encode("utf-8")).hexdigest(),
+        "benchmark_id": linked_independent_external_heldout_summary["benchmark"]["benchmark_id"],
+        "benchmark_sha256": linked_independent_external_heldout_summary["benchmark"]["sha256"],
+        "case_count": 2,
+        "source_package": "mcp-python-sdk",
+        "source_license": "MIT",
+        "source_manifest_sha256": linked_independent_external_heldout_summary["external_source"]["manifest_sha256"],
+        "selected_tests": linked_independent_external_heldout_summary["selected_tests"],
+        "observed_pytest": linked_independent_external_heldout_summary["observed_pytest"],
+        "task_proof_count": 2,
+        "raw_evidence_file_count": 4,
+        "external_source_heldout": True,
+        "heldout_from_autonomous_gate": True,
+        "independent_from_autonomous_task_manifest": True,
+        "repo_defined_benchmark_packet": True,
+        "independent_external_heldout_benchmark": True,
+        "third_party_benchmark_standing": False,
+        "not_proof": linked_independent_external_heldout_summary["not_proof"],
+    }
     artifact_payload = {
         "artifacts": [
             {
@@ -1990,6 +2080,10 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
         with zipfile.ZipFile(artifact_zip, "w") as archive:
             archive.writestr("last_summary.json", json.dumps(summary))
             archive.writestr("linked_external_heldout/last_summary.json", linked_text)
+            archive.writestr(
+                "linked_independent_external_heldout/last_summary.json",
+                independent_text,
+            )
             archive.writestr(
                 "task_source_provenance_manifest.json",
                 manifest_text
@@ -2155,7 +2249,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
                 "native live autonomy",
                 "broad unknown-repository repair",
                 "external benchmark standing",
-                "independent external held-out benchmark",
+                "third-party benchmark standing",
             ],
         }
         (mirror_dir / "manifest.json").write_text(
@@ -2926,13 +3020,16 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert (
         "not native live autonomy, broad\n"
         "unknown-repository repair proof, external benchmark standing, remote CI proof,\n"
-        "external review, endorsement, stars, or reposts"
+        "third-party benchmark standing, external review, endorsement, stars, or\n"
+        "reposts"
     ) in guide
     assert "`.quantagent/autonomous_learning_gate/last_summary.json` by default" in guide
     assert "invoking commit, manifest-derived selected tests, per-segment elapsed\nseconds" in guide
     assert "per-segment pytest log paths and log tails, observed\npass/skip/warning counts" in guide
     assert "the tracked\n`scripts/autonomous_task_source_provenance.json` path and sha256" in guide
     assert "an artifact\ncopy of that manifest" in guide
+    assert "linked repo-defined independent external-heldout packet\nsummary" in guide
+    assert "linked independent packet is not third-party benchmark standing" in guide
     assert "manifest-derived selected tests are constrained to the expected minimum\nsegment counts, pytest node-id shape, no pytest options, no whitespace, no\nduplicates inside a segment, and no duplicates across segments" in guide
     assert "shortened or\ninjected manifest fails before pytest runs" in guide
     assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON" in guide
@@ -2966,7 +3063,7 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "so a self-consistent but weakened artifact summary still fails closed" in guide
     assert "Set\n`OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN` for live artifact zip\nreads, or set `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` to verify the same contract\nagainst a saved artifact fixture" in guide
     assert "Passing via the public mirror is public CI\nartifact and public-mirror evidence only, not the GitHub Actions API artifact\nzip endpoint byte-for-byte archive, external review, endorsement, stars,\nreposts, live autonomy, broad unknown-repository repair, external benchmark\nstanding" in guide
-    assert "independent external\nheld-out benchmark evidence" in guide
+    assert "third-party benchmark standing" in guide
     assert (
         "bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json "
         "autonomous-learning-gate-summary.zip <openmako-main-sha>"
@@ -2978,8 +3075,7 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
         "It is saved\n"
         "public CI artifact evidence only, not a substitute for external review,\n"
         "endorsement, stars, reposts, live autonomy, broad unknown-repository repair, or\n"
-        "external benchmark standing, and not independent external held-out benchmark\n"
-        "evidence"
+        "external benchmark standing, and not third-party benchmark standing"
     ) in guide
     assert "bash scripts/public_evidence_comment_check.sh" in guide
     assert "public-evidence-comment-check: marker=commit ok" in guide
@@ -3617,7 +3713,14 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
         == 8
     )
     assert "remote CI proof" in payload["not_proof"]
-    assert "independent external held-out benchmark" in payload["not_proof"]
+    assert "third-party benchmark standing" in payload["not_proof"]
+    assert payload["linked_independent_external_heldout"]["status"] == "passed"
+    assert payload["linked_independent_external_heldout"][
+        "independent_external_heldout_benchmark"
+    ] is True
+    assert payload["linked_independent_external_heldout"][
+        "third_party_benchmark_standing"
+    ] is False
 
     def run_with_manifest(manifest_payload: dict, filename: str) -> subprocess.CompletedProcess[str]:
         manifest_path = tmp_path / filename

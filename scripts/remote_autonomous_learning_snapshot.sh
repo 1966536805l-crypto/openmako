@@ -124,7 +124,7 @@ def print_boundary_snapshot(reason: str, response_headers=None, *, include_auth_
         "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; "
         "external review; endorsement; stars; reposts; live autonomy; "
         "broad unknown-repository repair; external benchmark standing; "
-        "independent external held-out benchmark"
+        "third-party benchmark standing"
     )
 
 
@@ -649,9 +649,9 @@ def validate_artifact_summary(payload: dict, archive_text_files: dict[str, str])
         "native live autonomy",
         "broad unknown-repository repair",
         "external benchmark standing",
+        "third-party benchmark standing",
         "remote CI proof",
         "external review",
-        "independent external held-out benchmark",
         "endorsement",
         "stars",
         "reposts",
@@ -946,7 +946,7 @@ def verify_public_evidence_mirror(
         if (
             not isinstance(not_proof, list)
             or "GitHub Actions API artifact zip endpoint byte-for-byte archive" not in not_proof
-            or "independent external held-out benchmark" not in not_proof
+            or "third-party benchmark standing" not in not_proof
         ):
             fail_public_mirror("public evidence autonomous artifact mirror boundary mismatch")
         try:
@@ -979,7 +979,7 @@ def verify_public_evidence_mirror(
         "remote-autonomous-learning-snapshot: "
         "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; external review; endorsement; stars; reposts; "
         "live autonomy; broad unknown-repository repair; external benchmark standing; "
-        "independent external held-out benchmark"
+        "third-party benchmark standing"
     )
     print("remote-autonomous-learning-snapshot: PASS")
 
@@ -1138,7 +1138,7 @@ print(
     "remote-autonomous-learning-snapshot: "
     "not-proof=external review; endorsement; stars; reposts; live autonomy; "
     "broad unknown-repository repair; external benchmark standing; "
-    "independent external held-out benchmark"
+    "third-party benchmark standing"
 )
 print("remote-autonomous-learning-snapshot: PASS")
 PY

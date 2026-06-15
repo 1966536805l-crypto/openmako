@@ -544,9 +544,9 @@ class CliWrapperTest(unittest.TestCase):
                 "native live autonomy",
                 "broad unknown-repository repair",
                 "external benchmark standing",
+                "third-party benchmark standing",
                 "remote CI proof",
                 "external review",
-                "independent external held-out benchmark",
                 "endorsement",
                 "stars",
                 "reposts",
@@ -616,6 +616,94 @@ class CliWrapperTest(unittest.TestCase):
             "heldout_from_autonomous_gate": True,
             "independent_external_benchmark": False,
             "not_proof": linked_summary["not_proof"],
+        }
+        independent_dir = summary_dir / "linked_independent_external_heldout"
+        independent_dir.mkdir(parents=True, exist_ok=True)
+        independent_summary = {
+            "schema_version": "independent-external-heldout-benchmark-gate/v0.1",
+            "status": "passed",
+            "benchmark": {
+                "path": "benchmarks/independent_external_heldout/v0.1/cases.json",
+                "sha256": "sha256:" + "3" * 64,
+                "benchmark_id": "openmako-independent-external-heldout-v0.1",
+                "case_count": 2,
+                "case_ids": [
+                    "vendored_mcp_tool_name_validation_function_repair",
+                    "vendored_mcp_tool_name_wrapper_seed_repair",
+                ],
+            },
+            "external_source": {
+                "package": "mcp-python-sdk",
+                "repository": "https://github.com/modelcontextprotocol/python-sdk",
+                "license": "MIT",
+                "manifest_path": "third_party/mcp_python_sdk/MANIFEST.sha256",
+                "manifest_sha256": "8ca78f36a6ffea447eb924136c0ede1002a018f1fe1597c51a630283d295f45a",
+            },
+            "selected_tests": linked_summary["selected_tests"],
+            "observed_pytest": linked_summary["observed_pytest"],
+            "case_results": [
+                {
+                    "task_id": "vendored_mcp_tool_name_validation_function_repair",
+                    "label": "supported_repair_claim",
+                    "before_failure_returncode": 1,
+                    "after_test_returncode": 0,
+                    "target_diff": True,
+                },
+                {
+                    "task_id": "vendored_mcp_tool_name_wrapper_seed_repair",
+                    "label": "supported_repair_claim",
+                    "before_failure_returncode": 1,
+                    "after_test_returncode": 0,
+                    "target_diff": True,
+                },
+            ],
+            "raw_evidence_files": {
+                "summary.json": "sha256:" + "4" * 64,
+                "pytest.log": "sha256:" + "5" * 64,
+                "task_proofs/proof_0.json": "sha256:" + "6" * 64,
+                "task_proofs/proof_1.json": "sha256:" + "7" * 64,
+            },
+            "external_source_heldout": True,
+            "heldout_from_autonomous_gate": True,
+            "independent_from_autonomous_task_manifest": True,
+            "repo_defined_benchmark_packet": True,
+            "independent_external_heldout_benchmark": True,
+            "third_party_benchmark_standing": False,
+            "not_proof": [
+                "third-party benchmark standing",
+                "external review",
+                "endorsement",
+                "stars",
+                "reposts",
+                "native live autonomy",
+                "broad unknown-repository repair",
+                "GitHub Actions artifact zip contents",
+            ],
+        }
+        independent_text = json.dumps(independent_summary, indent=2, sort_keys=True) + "\n"
+        (independent_dir / "last_summary.json").write_text(independent_text, encoding="utf-8")
+        summary["linked_independent_external_heldout"] = {
+            "schema_version": "autonomous-linked-independent-external-heldout/v0.1",
+            "status": "passed",
+            "summary_path": "linked_independent_external_heldout/last_summary.json",
+            "summary_sha256": hashlib.sha256(independent_text.encode("utf-8")).hexdigest(),
+            "benchmark_id": independent_summary["benchmark"]["benchmark_id"],
+            "benchmark_sha256": independent_summary["benchmark"]["sha256"],
+            "case_count": 2,
+            "source_package": "mcp-python-sdk",
+            "source_license": "MIT",
+            "source_manifest_sha256": independent_summary["external_source"]["manifest_sha256"],
+            "selected_tests": independent_summary["selected_tests"],
+            "observed_pytest": independent_summary["observed_pytest"],
+            "task_proof_count": 2,
+            "raw_evidence_file_count": 4,
+            "external_source_heldout": True,
+            "heldout_from_autonomous_gate": True,
+            "independent_from_autonomous_task_manifest": True,
+            "repo_defined_benchmark_packet": True,
+            "independent_external_heldout_benchmark": True,
+            "third_party_benchmark_standing": False,
+            "not_proof": independent_summary["not_proof"],
         }
         (summary_dir / "last_summary.json").write_text(
             json.dumps(summary, indent=2, sort_keys=True) + "\n",
@@ -1248,6 +1336,12 @@ class CliWrapperTest(unittest.TestCase):
             self.assertIn("artifact-digest=sha256:" + "2" * 64, snapshot.stdout)
             self.assertIn("upstream-task-proof-count=1", snapshot.stdout)
             self.assertIn("cross-upstream-task-proof-count=4", snapshot.stdout)
+            self.assertIn("linked-independent-external-heldout=true", snapshot.stdout)
+            self.assertIn("linked-independent-external-heldout-task-proof-count=2", snapshot.stdout)
+            self.assertIn(
+                "linked-independent-external-heldout-third-party-standing=false",
+                snapshot.stdout,
+            )
             self.assertIn("remote-autonomous-public-evidence-snapshot: PASS", snapshot.stdout)
 
             evidence_clone = tmp_path / "evidence-clone"
@@ -1267,6 +1361,7 @@ class CliWrapperTest(unittest.TestCase):
             self.assertEqual(manifest["github_actions_artifact"]["artifact_digest"], "sha256:" + "2" * 64)
             self.assertIn("last_summary.json", manifest["files"])
             self.assertIn("task_source_provenance_manifest.json", manifest["files"])
+            self.assertIn("linked_independent_external_heldout/last_summary.json", manifest["files"])
             manifest["github_actions_artifact"]["artifact_digest"] = "sha256:bad"
             manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
             subprocess.run(
