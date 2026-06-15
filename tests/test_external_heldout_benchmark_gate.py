@@ -141,6 +141,65 @@ def _write_fake_passing_selected_test_with_task_proofs(
     )
 
 
+def _write_semantic_lock_shaped_fake_passing_selected_test_with_task_proofs(
+    target_root: Path,
+    proofs: list[dict],
+) -> None:
+    test_path = target_root / "tests" / "test_upstream_function_file_bundle_regression.py"
+    test_path.parent.mkdir(parents=True, exist_ok=True)
+    proofs_json = json.dumps(proofs, sort_keys=True)
+    test_path.write_text(
+        "import json\n"
+        "import os\n"
+        "import unittest\n"
+        "from pathlib import Path\n\n"
+        f"PROOFS_JSON = {proofs_json!r}\n\n"
+        "class UpstreamFunctionFileBundleRegressionTest(unittest.TestCase):\n"
+        "    def _write_proofs(self):\n"
+        "        proof_dir = Path(os.environ['OPENMAKO_EXTERNAL_HELDOUT_TASK_PROOF_DIR'])\n"
+        "        proof_dir.mkdir(parents=True, exist_ok=True)\n"
+        "        for index, proof in enumerate(json.loads(PROOFS_JSON)):\n"
+        "            (proof_dir / f'proof_{index}.json').write_text(\n"
+        "                json.dumps(proof, indent=2, sort_keys=True) + '\\n',\n"
+        "                encoding='utf-8',\n"
+        "            )\n"
+        "    def test_vendored_mcp_function_level_repair_reuses_without_non_target_drift(self):\n"
+        "        if os.environ.get('OPENMAKO_UNREACHABLE_SEMANTIC_LOCK_CALLS') == '1':\n"
+        "            run_agent_loop(learning_context=\"off\")\n"
+        "            propose_file_bundle_repair_skill_from_trajectory()\n"
+        "            run_skill_eval_command()\n"
+        "            approve_skill_proposal()\n"
+        "            run_learning_effect_coding_bench()\n"
+        "            run_coding_bench_stability()\n"
+        "            _assert_stability_preserves_function_repair()\n"
+        "            _write_external_heldout_repair_proof()\n"
+        "            'approved_learning_changed_files'\n"
+        "            'approved_learning_out_of_scope_files'\n"
+        "            'opaque-upstream-function-contract-1'\n"
+        "            'validate_tool_name'\n"
+        "        self._write_proofs()\n"
+        "        self.assertTrue(True)\n"
+        "    def test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift(self):\n"
+        "        if os.environ.get('OPENMAKO_UNREACHABLE_SEMANTIC_LOCK_CALLS') == '1':\n"
+        "            _install_seed_file_function_skill()\n"
+        "            run_agent_loop(learning_context=\"on\")\n"
+        "            propose_file_bundle_repair_skill_from_trajectory()\n"
+        "            run_skill_eval_command()\n"
+        "            approve_skill_proposal()\n"
+        "            run_learning_effect_coding_bench()\n"
+        "            run_coding_bench_stability()\n"
+        "            _assert_stability_preserves_function_repair()\n"
+        "            _write_external_heldout_repair_proof()\n"
+        "            'approved_learning_changed_files'\n"
+        "            'approved_learning_out_of_scope_files'\n"
+        "            'seed-upstream-wrapper-function-1'\n"
+        "            'validate_and_warn_tool_name'\n"
+        "        self._write_proofs()\n"
+        "        self.assertTrue(True)\n",
+        encoding="utf-8",
+    )
+
+
 def _valid_task_proof() -> dict:
     before_failure = {
         "command": ["python", "-m", "unittest", "discover", "-s", "tests", "-q"],
@@ -509,7 +568,7 @@ def test_independent_external_heldout_benchmark_gate_records_frozen_packet(
     tmp_path: Path,
 ) -> None:
     target_root = _copy_minimal_gate_repo(tmp_path)
-    _write_fake_passing_selected_test_with_task_proofs(
+    _write_semantic_lock_shaped_fake_passing_selected_test_with_task_proofs(
         target_root,
         [_valid_task_proof(), _valid_wrapper_task_proof()],
     )
@@ -532,6 +591,13 @@ def test_independent_external_heldout_benchmark_gate_records_frozen_packet(
     assert summary["independent_from_autonomous_task_manifest"] is True
     assert summary["repo_defined_benchmark_packet"] is True
     assert summary["third_party_benchmark_standing"] is False
+    assert summary["selected_test_semantic_lock"]["schema_version"] == (
+        "openmako-selected-test-semantic-lock/v0.1"
+    )
+    assert [
+        item["required_call_count"]
+        for item in summary["selected_test_semantic_lock"]["checked_methods"]
+    ] == [8, 9]
     assert summary["observed_pytest"] == {
         "exit_code": 0,
         "passed": 2,
@@ -547,11 +613,43 @@ def test_independent_external_heldout_benchmark_gate_records_frozen_packet(
     assert "third-party benchmark standing" in summary["not_proof"]
 
 
+def test_independent_external_heldout_benchmark_gate_rebuilds_stale_local_inputs(
+    tmp_path: Path,
+) -> None:
+    target_root = _copy_minimal_gate_repo(tmp_path)
+    _write_semantic_lock_shaped_fake_passing_selected_test_with_task_proofs(
+        target_root,
+        [_valid_task_proof(), _valid_wrapper_task_proof()],
+    )
+    _refresh_task_source_manifest_test_file_digest(target_root)
+    _refresh_independent_benchmark_test_file_digest(target_root)
+    stale = {
+        "schema_version": "stale/v0",
+        "status": "passed",
+        "invocation": {"git_commit": "0" * 40},
+    }
+    (target_root / "summary.json").write_text(
+        json.dumps(stale, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (target_root / "packet.json").write_text(
+        json.dumps(stale, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    independent = _run_independent_benchmark_gate(target_root)
+
+    assert independent.returncode == 0, independent.stderr
+    assert "running source held-out gate" in independent.stdout
+    assert "building held-out reproduction packet" in independent.stdout
+    assert "independent-external-heldout-benchmark-gate: PASS" in independent.stdout
+
+
 def test_independent_external_heldout_benchmark_gate_fails_on_weakened_case_definition(
     tmp_path: Path,
 ) -> None:
     target_root = _copy_minimal_gate_repo(tmp_path)
-    _write_fake_passing_selected_test_with_task_proofs(
+    _write_semantic_lock_shaped_fake_passing_selected_test_with_task_proofs(
         target_root,
         [_valid_task_proof(), _valid_wrapper_task_proof()],
     )
@@ -577,7 +675,7 @@ def test_independent_external_heldout_benchmark_gate_fails_on_selected_test_repl
     tmp_path: Path,
 ) -> None:
     target_root = _copy_minimal_gate_repo(tmp_path)
-    _write_fake_passing_selected_test_with_task_proofs(
+    _write_semantic_lock_shaped_fake_passing_selected_test_with_task_proofs(
         target_root,
         [_valid_task_proof(), _valid_wrapper_task_proof()],
     )
@@ -598,5 +696,27 @@ def test_independent_external_heldout_benchmark_gate_fails_on_selected_test_repl
     assert gate.returncode == 0, gate.stderr
     assert packet_result.returncode == 0, packet_result.stderr
     assert independent.returncode != 0
-    assert "source summary selected_tests mismatch" in independent.stderr
+    assert "selected_test_semantic_lock.expected_node_ids mismatch" in independent.stderr
+    assert "independent-external-heldout-benchmark-gate: PASS" not in independent.stdout
+
+
+def test_independent_external_heldout_benchmark_gate_fails_on_semantically_weakened_selected_test(
+    tmp_path: Path,
+) -> None:
+    target_root = _copy_minimal_gate_repo(tmp_path)
+    _write_fake_passing_selected_test_with_task_proofs(
+        target_root,
+        [_valid_task_proof(), _valid_wrapper_task_proof()],
+    )
+    _refresh_task_source_manifest_test_file_digest(target_root)
+    _refresh_independent_benchmark_test_file_digest(target_root)
+
+    gate = _run_gate(target_root)
+    packet_result = _run_packet(target_root)
+    independent = _run_independent_benchmark_gate(target_root)
+
+    assert gate.returncode == 0, gate.stderr
+    assert packet_result.returncode == 0, packet_result.stderr
+    assert independent.returncode != 0
+    assert "selected test semantic lock missing required calls" in independent.stderr
     assert "independent-external-heldout-benchmark-gate: PASS" not in independent.stdout

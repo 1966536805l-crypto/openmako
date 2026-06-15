@@ -16,13 +16,42 @@ GIT_COMMIT="$(git rev-parse HEAD 2>/dev/null || printf unknown)"
 
 mkdir -p "$SUMMARY_DIR"
 
-if [ ! -f "$SOURCE_SUMMARY_JSON" ]; then
+json_commit_matches_current() {
+  local path="$1"
+  [ -f "$path" ] || return 1
+  "$PYTHON_BIN" - "$path" "$GIT_COMMIT" <<'PY'
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+commit = sys.argv[2]
+try:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+except Exception:
+    raise SystemExit(1)
+if payload.get("status") != "passed":
+    raise SystemExit(1)
+if payload.get("invocation", {}).get("git_commit") != commit:
+    raise SystemExit(1)
+PY
+}
+
+SOURCE_SUMMARY_REBUILT=0
+if ! json_commit_matches_current "$SOURCE_SUMMARY_JSON"; then
   echo "independent-external-heldout-benchmark-gate: running source held-out gate"
   OPENMAKO_EXTERNAL_HELDOUT_BENCHMARK_SUMMARY_JSON="$SOURCE_SUMMARY_JSON" \
     bash scripts/external_heldout_benchmark_gate.sh
+  SOURCE_SUMMARY_REBUILT=1
 fi
 
-if [ ! -f "$PACKET_JSON" ]; then
+if [ "$SOURCE_SUMMARY_REBUILT" = "1" ]; then
+  rm -f "$PACKET_JSON"
+fi
+
+if ! json_commit_matches_current "$PACKET_JSON"; then
   echo "independent-external-heldout-benchmark-gate: building held-out reproduction packet"
   OPENMAKO_HELDOUT_REPRODUCTION_SOURCE_SUMMARY_JSON="$SOURCE_SUMMARY_JSON" \
   OPENMAKO_HELDOUT_REPRODUCTION_PACKET_JSON="$PACKET_JSON" \
@@ -33,6 +62,7 @@ fi
 from __future__ import annotations
 
 import hashlib
+import ast
 import json
 import re
 import sys
@@ -95,6 +125,107 @@ def require_sha(value: Any, field: str) -> str:
     return value
 
 
+def call_names(node: ast.AST) -> set[str]:
+    names: set[str] = set()
+    for child in ast.walk(node):
+        if isinstance(child, ast.Call):
+            func = child.func
+            if isinstance(func, ast.Name):
+                names.add(func.id)
+            elif isinstance(func, ast.Attribute):
+                names.add(func.attr)
+    return names
+
+
+def validate_selected_test_semantic_lock(
+    benchmark: dict[str, Any],
+    selected_test_path: Path,
+    expected_tests: list[str],
+) -> dict[str, Any]:
+    lock = require_dict(
+        benchmark.get("selected_test_semantic_lock"),
+        "selected_test_semantic_lock",
+    )
+    if lock.get("schema_version") != "openmako-selected-test-semantic-lock/v0.1":
+        fail("selected_test_semantic_lock.schema_version mismatch")
+    if lock.get("expected_node_ids") != expected_tests:
+        fail("selected_test_semantic_lock.expected_node_ids mismatch")
+    method_locks = require_dict(lock.get("method_locks"), "selected_test_semantic_lock.method_locks")
+    selected_methods = [node_id.rsplit("::", 1)[-1] for node_id in expected_tests]
+    if set(method_locks) != set(selected_methods):
+        fail("selected_test_semantic_lock.method_locks mismatch")
+
+    source = selected_test_path.read_text(encoding="utf-8")
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as exc:
+        fail(f"selected test semantic lock parse failed: {exc}")
+    classes = {
+        node.name: node
+        for node in tree.body
+        if isinstance(node, ast.ClassDef)
+    }
+    test_class = classes.get("UpstreamFunctionFileBundleRegressionTest")
+    if test_class is None:
+        fail("selected test semantic lock missing UpstreamFunctionFileBundleRegressionTest")
+    methods = {
+        node.name: node
+        for node in test_class.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+
+    checked: list[dict[str, Any]] = []
+    for method_name in selected_methods:
+        method = methods.get(method_name)
+        if method is None:
+            fail(f"selected test semantic lock missing method: {method_name}")
+        method_lock = require_dict(
+            method_locks.get(method_name),
+            f"selected_test_semantic_lock.method_locks.{method_name}",
+        )
+        required_calls = method_lock.get("required_calls")
+        if not isinstance(required_calls, list) or not required_calls:
+            fail(f"selected test semantic lock missing required_calls: {method_name}")
+        if any(not isinstance(item, str) or not item for item in required_calls):
+            fail(f"selected test semantic lock malformed required_calls: {method_name}")
+        required_fragments = method_lock.get("required_source_fragments")
+        if not isinstance(required_fragments, list) or not required_fragments:
+            fail(f"selected test semantic lock missing required_source_fragments: {method_name}")
+        if any(not isinstance(item, str) or not item for item in required_fragments):
+            fail(f"selected test semantic lock malformed required_source_fragments: {method_name}")
+        observed_calls = call_names(method)
+        missing_calls = sorted(set(required_calls) - observed_calls)
+        if missing_calls:
+            fail(
+                "selected test semantic lock missing required calls "
+                f"for {method_name}: {', '.join(missing_calls)}"
+            )
+        method_source = ast.get_source_segment(source, method) or ""
+        missing_fragments = [
+            fragment for fragment in required_fragments if fragment not in method_source
+        ]
+        if missing_fragments:
+            fail(
+                "selected test semantic lock missing source fragments "
+                f"for {method_name}: {', '.join(missing_fragments)}"
+            )
+        checked.append(
+            {
+                "method": method_name,
+                "required_call_count": len(required_calls),
+                "required_source_fragment_count": len(required_fragments),
+            }
+        )
+
+    return {
+        "schema_version": lock["schema_version"],
+        "expected_node_ids_sha256": hashlib.sha256(
+            ("\n".join(lock["expected_node_ids"]) + "\n").encode()
+        ).hexdigest(),
+        "checked_methods": checked,
+    }
+
+
 benchmark = read_json(BENCHMARK_JSON, "benchmark definition")
 source_summary = read_json(SOURCE_SUMMARY_JSON, "source summary")
 packet = read_json(PACKET_JSON, "held-out reproduction packet")
@@ -153,6 +284,11 @@ if selected_test_file.get("path") != "tests/test_upstream_function_file_bundle_r
 expected_test_sha = require_sha(selected_test_file.get("sha256"), "selected_test_file.sha256")
 if sha256_file(ROOT / selected_test_file["path"]) != expected_test_sha:
     fail("selected test file sha256 mismatch")
+semantic_lock_summary = validate_selected_test_semantic_lock(
+    benchmark,
+    ROOT / selected_test_file["path"],
+    expected_tests,
+)
 
 external_source = require_dict(benchmark.get("external_source"), "external_source")
 if external_source.get("package") != "mcp-python-sdk":
@@ -309,6 +445,7 @@ summary = {
     "case_results": sorted(case_results, key=lambda item: item["task_id"]),
     "selected_tests": expected_tests,
     "selected_tests_sha256": selected_tests_digest,
+    "selected_test_semantic_lock": semantic_lock_summary,
     "observed_pytest": observed,
     "raw_evidence_files": raw_files,
     "external_source": external_source,
@@ -329,6 +466,7 @@ print(f"independent-external-heldout-benchmark-gate: benchmark={display_path(BEN
 print(f"independent-external-heldout-benchmark-gate: benchmark-sha256={summary['benchmark']['sha256']}")
 print(f"independent-external-heldout-benchmark-gate: case-count={len(cases)}")
 print(f"independent-external-heldout-benchmark-gate: observed-passed={observed['passed']}")
+print("independent-external-heldout-benchmark-gate: selected-test-semantic-lock=passed")
 print("independent-external-heldout-benchmark-gate: independent-from-autonomous-task-manifest=true")
 print("independent-external-heldout-benchmark-gate: repo-defined-benchmark-packet=true")
 print("independent-external-heldout-benchmark-gate: third-party-benchmark-standing=false")

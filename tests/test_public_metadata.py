@@ -3569,6 +3569,49 @@ def test_external_heldout_benchmark_gate_locks_source_boundary_and_summary_contr
     assert "independent external benchmark standing" in packet_text
 
 
+def test_independent_external_heldout_benchmark_gate_locks_selected_test_semantics() -> None:
+    script = ROOT / "scripts" / "independent_external_heldout_benchmark_gate.sh"
+    benchmark_path = ROOT / "benchmarks" / "independent_external_heldout" / "v0.1" / "cases.json"
+    negative_tests = (ROOT / "tests" / "test_external_heldout_benchmark_gate.py").read_text(
+        encoding="utf-8"
+    )
+    text = script.read_text(encoding="utf-8")
+    benchmark = json.loads(benchmark_path.read_text(encoding="utf-8"))
+    semantic_lock = benchmark["selected_test_semantic_lock"]
+
+    assert "validate_selected_test_semantic_lock" in text
+    assert "ast.parse" in text
+    assert "call_names" in text
+    assert "json_commit_matches_current" in text
+    assert "SOURCE_SUMMARY_REBUILT" in text
+    assert "selected test semantic lock missing required calls" in text
+    assert "selected-test-semantic-lock=passed" in text
+    assert semantic_lock["schema_version"] == "openmako-selected-test-semantic-lock/v0.1"
+    assert semantic_lock["expected_node_ids"] == [
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_function_level_repair_reuses_without_non_target_drift",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift",
+    ]
+    method_locks = semantic_lock["method_locks"]
+    assert set(method_locks) == {
+        "test_vendored_mcp_function_level_repair_reuses_without_non_target_drift",
+        "test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift",
+    }
+    assert "run_agent_loop" in method_locks[
+        "test_vendored_mcp_function_level_repair_reuses_without_non_target_drift"
+    ]["required_calls"]
+    assert "_install_seed_file_function_skill" in method_locks[
+        "test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift"
+    ]["required_calls"]
+    assert (
+        "test_independent_external_heldout_benchmark_gate_fails_on_semantically_weakened_selected_test"
+        in negative_tests
+    )
+    assert (
+        "test_independent_external_heldout_benchmark_gate_rebuilds_stale_local_inputs"
+        in negative_tests
+    )
+
+
 def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() -> None:
     script = ROOT / "scripts" / "autonomous_learning_gate.sh"
     text = script.read_text(encoding="utf-8")

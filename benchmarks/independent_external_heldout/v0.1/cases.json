@@ -56,6 +56,54 @@
     "path": "tests/test_upstream_function_file_bundle_regression.py",
     "sha256": "314018517a8df6b6b686004faa020a1d09d8529dd7a326497ba1ed26f2d4ad9e"
   },
+  "selected_test_semantic_lock": {
+    "expected_node_ids": [
+      "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_function_level_repair_reuses_without_non_target_drift",
+      "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift"
+    ],
+    "method_locks": {
+      "test_vendored_mcp_function_level_repair_reuses_without_non_target_drift": {
+        "required_calls": [
+          "_assert_stability_preserves_function_repair",
+          "_write_external_heldout_repair_proof",
+          "approve_skill_proposal",
+          "propose_file_bundle_repair_skill_from_trajectory",
+          "run_agent_loop",
+          "run_coding_bench_stability",
+          "run_learning_effect_coding_bench",
+          "run_skill_eval_command"
+        ],
+        "required_source_fragments": [
+          "approved_learning_changed_files",
+          "approved_learning_out_of_scope_files",
+          "learning_context=\"off\"",
+          "opaque-upstream-function-contract-1",
+          "validate_tool_name"
+        ]
+      },
+      "test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift": {
+        "required_calls": [
+          "_assert_stability_preserves_function_repair",
+          "_install_seed_file_function_skill",
+          "_write_external_heldout_repair_proof",
+          "approve_skill_proposal",
+          "propose_file_bundle_repair_skill_from_trajectory",
+          "run_agent_loop",
+          "run_coding_bench_stability",
+          "run_learning_effect_coding_bench",
+          "run_skill_eval_command"
+        ],
+        "required_source_fragments": [
+          "approved_learning_changed_files",
+          "approved_learning_out_of_scope_files",
+          "learning_context=\"on\"",
+          "seed-upstream-wrapper-function-1",
+          "validate_and_warn_tool_name"
+        ]
+      }
+    },
+    "schema_version": "openmako-selected-test-semantic-lock/v0.1"
+  },
   "selected_tests_sha256": "11e79c05b4886d752d902ff5acffa1904246b2b7e6144d71d7cb2dd689b3617b",
   "source_boundary": "This is an OpenMako-defined external-source held-out benchmark packet over frozen MCP Python SDK source. It is independent from the autonomous-learning task manifest and carries raw repair evidence, but it is not third-party benchmark standing, external review, endorsement, stars, reposts, native live autonomy, or broad unknown-repository repair proof."
 }
