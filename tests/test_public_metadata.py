@@ -1748,6 +1748,8 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "artifact fixture workflow_run head_sha does not match run sha" in text
     assert "artifact-digest=" in text
     assert "artifact-zip-sha256=" in text
+    assert "artifact-zip-contract=verified-by-saved-fixture" in text
+    assert "artifact-zip-contract=verified-by-github-api" in text
     assert "verified-by=public-evidence-branch" in text
     assert "artifact-content-mirror=verified-by-public-evidence-branch" in text
     assert "artifact-zip-contract=api-zip-endpoint-unverified-by-public-evidence-branch" in text
@@ -1971,6 +1973,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "remote-autonomous-learning-snapshot: artifact-id=7600712280" in result.stdout
     assert f"remote-autonomous-learning-snapshot: artifact-digest=sha256:{artifact_zip_sha256}" in result.stdout
     assert f"remote-autonomous-learning-snapshot: artifact-zip-sha256={artifact_zip_sha256}" in result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-zip-contract=verified-by-saved-fixture" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary=last_summary.json" in result.stdout
     assert (
         "remote-autonomous-learning-snapshot: "
@@ -2006,6 +2009,14 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
         f"{task_source_manifest['sha256']}"
     ) in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-external-heldout=false" in result.stdout
+    assert (
+        "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive"
+        not in result.stdout
+    )
+    assert (
+        "remote-autonomous-learning-snapshot: "
+        "not-proof=external review; endorsement; stars; reposts; live autonomy"
+    ) in result.stdout
     assert "remote-autonomous-learning-snapshot: PASS" in result.stdout
 
     saved_result = subprocess.run(
@@ -2029,6 +2040,11 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "saved-autonomous-artifact-snapshot: remote-main-sha=1234567890abcdef1234567890abcdef12345678" in saved_result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-task-proof-files=5" in saved_result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-external-heldout=false" in saved_result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-zip-contract=verified-by-saved-fixture" in saved_result.stdout
+    assert (
+        "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive"
+        not in saved_result.stdout
+    )
     assert "remote-autonomous-learning-snapshot: PASS" in saved_result.stdout
 
     valid_artifacts = json.loads(artifacts_json.read_text(encoding="utf-8"))

@@ -901,13 +901,6 @@ print(f"remote-autonomous-learning-snapshot: run-sha={head_sha}")
 print(f"remote-autonomous-learning-snapshot: status={status} conclusion={conclusion}")
 if html_url:
     print(f"remote-autonomous-learning-snapshot: url={html_url}")
-print(
-    "remote-autonomous-learning-snapshot: "
-    "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; "
-    "external review; endorsement; stars; reposts; live autonomy; "
-    "broad unknown-repository repair; external benchmark standing; "
-    "independent external held-out benchmark"
-)
 
 if head_sha != remote_sha:
     print(
@@ -1007,6 +1000,10 @@ if artifact_zip is None:
     sys.exit(0)
 artifact_zip_sha256 = hashlib.sha256(artifact_zip).hexdigest()
 print(f"remote-autonomous-learning-snapshot: artifact-zip-sha256={artifact_zip_sha256}")
+if artifact_zip_fixture:
+    print("remote-autonomous-learning-snapshot: artifact-zip-contract=verified-by-saved-fixture")
+else:
+    print("remote-autonomous-learning-snapshot: artifact-zip-contract=verified-by-github-api")
 if artifact_digest.startswith("sha256:"):
     expected_artifact_sha256 = artifact_digest.removeprefix("sha256:")
     if artifact_zip_sha256 != expected_artifact_sha256:
@@ -1021,5 +1018,11 @@ else:
 artifact_summary, artifact_text_files = read_artifact_bundle_from_zip(artifact_zip)
 validate_artifact_summary(artifact_summary, artifact_text_files)
 
+print(
+    "remote-autonomous-learning-snapshot: "
+    "not-proof=external review; endorsement; stars; reposts; live autonomy; "
+    "broad unknown-repository repair; external benchmark standing; "
+    "independent external held-out benchmark"
+)
 print("remote-autonomous-learning-snapshot: PASS")
 PY
