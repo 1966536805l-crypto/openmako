@@ -1,0 +1,98 @@
+{
+  "benchmark": {
+    "benchmark_id": "openmako-independent-external-heldout-v0.1",
+    "case_count": 2,
+    "case_ids": [
+      "mcp-python-sdk-tool-name-validation-function-repair",
+      "mcp-python-sdk-tool-name-wrapper-seed-repair"
+    ],
+    "path": "benchmarks/independent_external_heldout/v0.1/cases.json",
+    "sha256": "sha256:411ed9ae37b6e60ce3a1efc470964c43ef83df07ba744960182b0332d423ea22"
+  },
+  "case_results": [
+    {
+      "after_test_returncode": 0,
+      "before_failure_returncode": 1,
+      "label": "supported_repair_claim",
+      "target_diff": true,
+      "task_id": "vendored_mcp_tool_name_validation_function_repair"
+    },
+    {
+      "after_test_returncode": 0,
+      "before_failure_returncode": 1,
+      "label": "supported_repair_claim",
+      "target_diff": true,
+      "task_id": "vendored_mcp_tool_name_wrapper_seed_repair"
+    }
+  ],
+  "external_source": {
+    "license": "MIT",
+    "manifest_path": "third_party/mcp_python_sdk/MANIFEST.sha256",
+    "manifest_sha256": "8ca78f36a6ffea447eb924136c0ede1002a018f1fe1597c51a630283d295f45a",
+    "package": "mcp-python-sdk",
+    "repository": "https://github.com/modelcontextprotocol/python-sdk",
+    "selected_source_files": {
+      "third_party/mcp_python_sdk/LICENSE": {
+        "sha256": "5e13dbbc1d120fc2a03cecde7c91424ae2d7de11b63d58ded2f4431e261ee50d"
+      },
+      "third_party/mcp_python_sdk/src/mcp/shared/tool_name_validation.py": {
+        "sha256": "99312f833b0cb246b2ca294b68890fee521a0388def1c9e48fdc5821cea1b60a"
+      }
+    }
+  },
+  "external_source_heldout": true,
+  "generated_at_utc": "2026-06-15T09:28:25.839183+00:00",
+  "heldout_from_autonomous_gate": true,
+  "heldout_reproduction_packet": {
+    "path": ".quantagent/autonomous_learning_gate/linked_independent_external_heldout/heldout_reproduction_packet/packet.json",
+    "sha256": "sha256:2af528bc9a10661f1f18cdcb354d50a266901172d133f3cbe8d865431504187b"
+  },
+  "independence_scope": {
+    "external_source_heldout": true,
+    "heldout_from_autonomous_gate": true,
+    "independent_from_autonomous_task_manifest": true,
+    "repo_defined_benchmark_packet": true,
+    "third_party_benchmark_standing": false
+  },
+  "independent_external_heldout_benchmark": true,
+  "independent_from_autonomous_task_manifest": true,
+  "invocation": {
+    "git_commit": "47ccf7fde019a405266f2df87d3d3c4e3076f8ef",
+    "proof_command": "bash scripts/independent_external_heldout_benchmark_gate.sh"
+  },
+  "not_proof": [
+    "third-party benchmark standing",
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "native live autonomy",
+    "broad unknown-repository repair",
+    "GitHub Actions artifact zip contents"
+  ],
+  "observed_pytest": {
+    "exit_code": 0,
+    "passed": 2,
+    "skipped": 0,
+    "warnings": 0
+  },
+  "raw_evidence_files": {
+    ".quantagent/autonomous_learning_gate/linked_external_heldout/last_summary.json": "sha256:abc27a449e23d80583e166de5233236a0dd0465b089345ebdc45b8be506a97c4",
+    ".quantagent/autonomous_learning_gate/linked_external_heldout/pytest.log": "sha256:71aa6a98c0e188122707ca69133b9f74e541f65e0767a96c61b23d9a70e95931",
+    ".quantagent/autonomous_learning_gate/linked_external_heldout/task_proofs/vendored_mcp_tool_name_validation_function_repair.json": "sha256:27e87ff934122b6b7635e199bf6d03e64bb83ba36c6c3ee396a58605953a547b",
+    ".quantagent/autonomous_learning_gate/linked_external_heldout/task_proofs/vendored_mcp_tool_name_wrapper_seed_repair.json": "sha256:bb6547c75fdfc5c3a4ee219dfe4b04be403a4305a91d98a84e6f30f63b6d25dd"
+  },
+  "repo_defined_benchmark_packet": true,
+  "schema_version": "independent-external-heldout-benchmark-gate/v0.1",
+  "selected_tests": [
+    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_function_level_repair_reuses_without_non_target_drift",
+    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift"
+  ],
+  "selected_tests_sha256": "11e79c05b4886d752d902ff5acffa1904246b2b7e6144d71d7cb2dd689b3617b",
+  "source_summary": {
+    "path": ".quantagent/autonomous_learning_gate/linked_external_heldout/last_summary.json",
+    "sha256": "sha256:abc27a449e23d80583e166de5233236a0dd0465b089345ebdc45b8be506a97c4"
+  },
+  "status": "passed",
+  "third_party_benchmark_standing": false
+}
