@@ -137,6 +137,10 @@ echo "public-review-gate: checking native product-log ingestion"
   tests/test_product_log_ingestion.py \
   -q
 
+echo "public-review-gate: running native live repair gate"
+OPENMAKO_NATIVE_LIVE_REPAIR_GATE_DIR="$TMP_DIR/native_live_repair_gate" \
+  bash scripts/native_live_repair_gate.sh
+
 echo "public-review-gate: checking adversarial claim matrix generator"
 "$PYTHON_BIN" scripts/generate_adversarial_claim_matrix.py --check
 
@@ -256,6 +260,7 @@ required_outputs = [
     "outputs/heldout_reproduction_packet/packet.json",
     "outputs/independent_external_heldout_benchmark/last_summary.json",
     "outputs/external_source_benchmark_gate/last_summary.json",
+    "outputs/native_live_repair_gate/last_summary.json",
     "outputs/runtime_shadowing_risk.json",
     "outputs/swtbench_patch_artifact.json",
     "outputs/verifier_attack_success.json",

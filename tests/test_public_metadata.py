@@ -435,6 +435,11 @@ def test_readme_links_public_proof_issue() -> None:
     assert "heldout_from_autonomous_gate=true" in readme
     assert "independent_external_benchmark=false" in readme
     assert "external-source held-out regression evidence only, not external benchmark standing" in readme
+    assert "Native live repair gate" in readme
+    assert "bash scripts/native_live_repair_gate.sh" in readme
+    assert "records a failing unit test, runs OpenMako's native `run_agent_loop`" in readme
+    assert "native local failure-to-fix evidence only, not external review" in readme
+    assert "third-party benchmark standing, broad unknown-repository repair" in readme
     assert "Agent trend radar" in readme
     assert "docs/AGENT_TREND_RADAR.md" in readme
     assert "Reviewer target map" in readme
@@ -3514,6 +3519,7 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
     assert "outputs/external_source_benchmark_gate/last_summary.json" in text
     assert "outputs/external_heldout_benchmark_gate/last_summary.json" in text
     assert "outputs/heldout_reproduction_packet/packet.json" in text
+    assert "outputs/native_live_repair_gate/last_summary.json" in text
     assert "public-review-gate artifact missing outputs" in text
     assert "tests/test_agent_planner_contract.py::AgentPlannerContractTest" in text
     assert "public-review-gate: running external-source benchmark gate" in text
@@ -3545,6 +3551,9 @@ def test_public_review_gate_script_wraps_reviewer_proof_commands() -> None:
     assert 'assert_json_field "$TMP_DIR/config_only_repair.json" patch_shape.bucket config_only' in text
     assert 'assert_json_field "$TMP_DIR/config_only_repair.json" failure_class ""' in text
     assert "public-review-gate: checking adversarial claim matrix generator" in text
+    assert "public-review-gate: running native live repair gate" in text
+    assert "OPENMAKO_NATIVE_LIVE_REPAIR_GATE_DIR" in text
+    assert "bash scripts/native_live_repair_gate.sh" in text
     assert "scripts/generate_adversarial_claim_matrix.py --check" in text
     assert "public-review-gate: running Evidence Court intensity matrix" in text
     assert "public-review-gate: running supplied transcript adapter matrix" in text
