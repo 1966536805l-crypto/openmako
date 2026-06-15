@@ -1,6 +1,6 @@
 {
-  "latest_artifact_zip_proof_commit": "0c5741ed52447ca18876ec3e730ef361025650db",
-  "manifest": "artifact_zip_proofs/0c5741ed52447ca18876ec3e730ef361025650db/manifest.json",
+  "latest_artifact_zip_proof_commit": "1ed29fb0697558b16bd0423dba242323cdb29290",
+  "manifest": "artifact_zip_proofs/1ed29fb0697558b16bd0423dba242323cdb29290/manifest.json",
   "not_proof": [
     "unauthenticated GitHub Actions API artifact zip download",
     "external review",
@@ -13,5 +13,5 @@
     "independent external held-out benchmark"
   ],
   "schema_version": "openmako-artifact-zip-proof-index/v0.1",
-  "updated_at_utc": "2026-06-15T04:55:56.485157+00:00"
+  "updated_at_utc": "2026-06-15T05:26:49.245110+00:00"
 }
