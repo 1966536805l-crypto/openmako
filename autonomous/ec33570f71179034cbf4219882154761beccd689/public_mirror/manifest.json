@@ -1,0 +1,42 @@
+{
+  "archive_path": "public_mirror/autonomous-learning-gate-public-mirror.zip",
+  "archive_sha256": "sha256:72b405f9dbd3ec210de6780027b13cd065f131737d4a482e9c15427fdcf40fda",
+  "file_count": 10,
+  "files": {
+    "last_summary.json": "sha256:fec540df255c107ebae33a5ae47d37d2b7e3a3e7e62757e5f702e8a5b1abaf3f",
+    "pytest_logs/cross_upstream_no_seed_reuse.log": "sha256:7ace8a17b0fd0adb8e59bc4a7ea8d2aedb2c809d63611350e4b098fb9f5a547b",
+    "pytest_logs/stage1_trajectory_reuse_matrix.log": "sha256:f47dd27c4ac9cefddc4cd137aec031c343fcfd2b4ea0e9fcd2fa1db81e36dbf1",
+    "pytest_logs/upstream_hidden_pack_reuse.log": "sha256:42357d9f5196c848a0e66ee6ecacc4e3e27f63cc4c0b801e2635959789b91ca9",
+    "task_proofs/cross_upstream_no_seed_reuse/aider_random_color_no_seed.json": "sha256:904b042426bf090f4713bb0634228de8173de7cbd54be9af57df8ae5f76ace02",
+    "task_proofs/cross_upstream_no_seed_reuse/great_expectations_result_format_no_seed.json": "sha256:aacad01b4bdc57d39e958e39ed524df8d433cc19c6ab43daa396a2c81539d26b",
+    "task_proofs/cross_upstream_no_seed_reuse/pandera_bool_no_seed.json": "sha256:19a7e9a526e7d59197ffc1c4ca68bf4dba40699a0f9be750fbc62a31a8381eb7",
+    "task_proofs/cross_upstream_no_seed_reuse/pandera_scale_no_seed.json": "sha256:f32e8558fb36d21c75d6b59a1ddcf97153b96c67e2b28d9f0f95131397caeff0",
+    "task_proofs/upstream_hidden_pack_reuse/combined_upstream_hidden_pack.json": "sha256:bf023f7c1d1e8df0c379bd2f2918ecbc8ec41eb0a8ff041acaced18363e61912",
+    "task_source_provenance_manifest.json": "sha256:2734069dc84cf731a75e8d24aeee76d633fc8311b916e46fcaf77c1b270be9d1"
+  },
+  "generated_at_utc": "2026-06-15T01:39:53.268148+00:00",
+  "git_commit": "ec33570f71179034cbf4219882154761beccd689",
+  "github_actions_artifact": {
+    "artifact_digest": "sha256:3d7a0f1225b6546eff15fc7fb9d071ef2e887a53d3671e55acc028263b9df777",
+    "artifact_id": "7627356565",
+    "artifact_url": "https://github.com/1966536805l-crypto/openmako/actions/runs/27518903201/artifacts/7627356565",
+    "name": "autonomous-learning-gate-summary",
+    "run_attempt": "1",
+    "run_id": "27518903201"
+  },
+  "mirror_scope": "github-actions-upload-directory-content",
+  "not_proof": [
+    "GitHub Actions API artifact zip endpoint byte-for-byte archive",
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "native live autonomy",
+    "broad unknown-repository repair",
+    "external benchmark standing",
+    "independent external held-out benchmark"
+  ],
+  "schema_version": "autonomous-public-evidence-artifact-mirror/v0.1",
+  "source_summary": "last_summary.json",
+  "status": "passed"
+}
