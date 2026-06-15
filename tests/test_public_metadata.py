@@ -328,10 +328,11 @@ def test_readme_links_public_proof_issue() -> None:
     assert "not the GitHub Actions API artifact zip endpoint byte-for-byte archive" in readme
     assert "Remote autonomous-learning artifact snapshot" in readme
     assert "bash scripts/remote_autonomous_learning_snapshot.sh" in readme
-    assert "a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, downloaded `last_summary.json` contract fields, task-level proof records, and task-source provenance showing `repo-authored-regression-pack` with `external_heldout=false`" in readme
+    assert "a fail-closed check for the latest autonomous-learning workflow on current `openmako/main` plus the `autonomous-learning-gate-summary` artifact id, digest, downloaded or public-mirrored `last_summary.json` contract fields, task-level proof records, and task-source provenance showing `repo-authored-regression-pack` with `external_heldout=false`" in readme
     assert "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP" in readme
-    assert "artifact zip 401 results print token and saved-fixture rerun commands before exiting nonzero" in readme
-    assert "public CI artifact evidence only, not external review, endorsement, stars, reposts, live autonomy, broad unknown-repository repair, external benchmark standing, or independent external held-out benchmark evidence" in readme
+    assert "API-unavailable or artifact zip 401 results try the commit-bound\n`public-evidence` autonomous artifact-content mirror" in readme
+    assert "not the GitHub Actions API artifact zip endpoint byte-for-byte archive" in readme
+    assert "public CI\nartifact and public-mirror evidence only, not the GitHub Actions API artifact\nzip endpoint byte-for-byte archive, external review, endorsement, stars,\nreposts, live autonomy, broad unknown-repository repair, external benchmark\nstanding, or independent external held-out benchmark evidence" in readme
     assert "Saved autonomous artifact snapshot" in readme
     assert "bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json autonomous-learning-gate-summary.zip <openmako-main-sha>" in readme
     assert "an explicit fixture wrapper for saved GitHub Actions run metadata, artifact metadata, and the downloaded autonomous-learning artifact zip" in readme
@@ -480,6 +481,7 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert "python -m pip install -e . pytest typing_extensions" in workflow
     assert "bash scripts/autonomous_learning_gate.sh" in workflow
     assert "Upload autonomous-learning summary and logs" in workflow
+    assert "id: upload-autonomous-artifact" in workflow
     assert "if: always()" in workflow
     assert "actions/upload-artifact@v7" in workflow
     assert "name: autonomous-learning-gate-summary" in workflow
@@ -487,6 +489,9 @@ def test_autonomous_learning_gate_workflow_uploads_summary_artifacts() -> None:
     assert "if-no-files-found: error" in workflow
     assert "Publish autonomous public evidence branch" in workflow
     assert "OPENMAKO_AUTONOMOUS_LEARNING_GATE_DIR: .quantagent/autonomous_learning_gate" in workflow
+    assert "OPENMAKO_AUTONOMOUS_ARTIFACT_ID: ${{ steps.upload-autonomous-artifact.outputs.artifact-id }}" in workflow
+    assert "OPENMAKO_AUTONOMOUS_ARTIFACT_DIGEST: ${{ steps.upload-autonomous-artifact.outputs.artifact-digest }}" in workflow
+    assert "OPENMAKO_AUTONOMOUS_ARTIFACT_URL: ${{ steps.upload-autonomous-artifact.outputs.artifact-url }}" in workflow
     assert "bash scripts/publish_autonomous_public_evidence_branch.sh" in workflow
 
     assert "`.github/workflows/autonomous-learning-gate.yml` exposes the autonomous-learning\n  stress gate as a manual `workflow_dispatch` check and as a path-filtered\n  `push` check" in progress
@@ -510,6 +515,9 @@ def test_autonomous_public_evidence_branch_scripts_are_fail_closed_and_boundary_
     assert "summary segments are not all passed" in publish_text
     assert "pytest log_tail mismatch" in publish_text
     assert "task source manifest digest mismatch" in publish_text
+    assert "autonomous-public-evidence-artifact-mirror/v0.1" in publish_text
+    assert "autonomous-learning-gate-public-mirror.zip" in publish_text
+    assert "autonomous artifact digest missing/malformed" in publish_text
     assert "git worktree add --detach" in publish_text
     assert "Publish autonomous public evidence for" in publish_text
     assert "native live autonomy" in publish_text
@@ -520,6 +528,13 @@ def test_autonomous_public_evidence_branch_scripts_are_fail_closed_and_boundary_
     assert "autonomous_pytest_log_tail_mismatch" in remote_text
     assert "autonomous_upstream_task_proof_missing" in remote_text
     assert "autonomous_cross_upstream_task_proofs_missing" in remote_text
+    assert "autonomous_public_mirror_archive_digest_mismatch" in remote_text
+    assert "autonomous_public_mirror_archive_file_digest_mismatch" in remote_text
+    assert "autonomous_public_mirror_file_count_mismatch" in remote_text
+    assert "autonomous_public_mirror_artifact_metadata_malformed" in remote_text
+    assert "autonomous_public_mirror_artifact_digest_missing_or_malformed" in remote_text
+    assert "remote-autonomous-public-evidence-snapshot: public-mirror-zip=present" in remote_text
+    assert "remote-autonomous-public-evidence-snapshot: public-mirror-scope=github-actions-upload-directory-content" in remote_text
     assert "remote-autonomous-public-evidence-snapshot: PASS" in remote_text
     assert "The gate derives the selected pytest\n  node ids and expected\n  pass counts from `scripts/autonomous_task_source_provenance.json` rather than\n  duplicating that test list inside the shell script" in progress
     assert "fails closed\n  before pytest runs if a manifest segment falls below its expected minimum\n  selected-test count, contains a non-pytest-node id, passes a pytest option,\n  includes whitespace, duplicates a test inside a segment, or duplicates a test\n  across segments" in progress
@@ -1682,6 +1697,9 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "OPENMAKO_AUTONOMOUS_RUNS_JSON" in text
     assert "OPENMAKO_AUTONOMOUS_ARTIFACTS_JSON" in text
     assert "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP" in text
+    assert "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP_HTTP_STATUS" in text
+    assert "OPENMAKO_PUBLIC_EVIDENCE_REMOTE" in text
+    assert "OPENMAKO_PUBLIC_EVIDENCE_BRANCH" in text
     assert "OPENMAKO_GITHUB_TOKEN" in text
     assert "GITHUB_TOKEN" in text
     assert "GH_TOKEN" in text
@@ -1720,6 +1738,10 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "artifact fixture workflow_run head_sha does not match run sha" in text
     assert "artifact-digest=" in text
     assert "artifact-zip-sha256=" in text
+    assert "verified-by=public-evidence-branch" in text
+    assert "artifact-content-mirror=verified-by-public-evidence-branch" in text
+    assert "artifact-zip-contract=api-zip-endpoint-unverified-by-public-evidence-branch" in text
+    assert "autonomous-public-evidence-artifact-mirror/v0.1" in text
     assert "hashlib.sha256" in text
     assert "artifact zip sha256 does not match artifact digest" in text
     assert "artifact-pytest-log=" in text
@@ -1740,7 +1762,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "fixture-rerun-command=" in text
     assert "GitHub artifact zip download" in text
     assert "requires authenticated API access" in text
-    assert "not-proof=external review; endorsement; stars; reposts; live autonomy" in text
+    assert "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; external review; endorsement" in text
     assert "broad unknown-repository repair; external benchmark standing" in text
     assert "independent external held-out benchmark" in text
     for forbidden in FORBIDDEN_README_CLAIMS:
@@ -2001,6 +2023,107 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
 
     valid_artifacts = json.loads(artifacts_json.read_text(encoding="utf-8"))
 
+    def write_autonomous_public_evidence_mirror(remote: Path, *, artifact_digest: str) -> None:
+        worktree = tmp_path / "public-evidence-worktree"
+        subprocess.run(["git", "init", "--bare", "-q", str(remote)], check=True)
+        subprocess.run(["git", "init", "-q", str(worktree)], check=True)
+        mirror_root = worktree / "autonomous" / remote_sha
+        mirror_dir = mirror_root / "public_mirror"
+        mirror_dir.mkdir(parents=True)
+        archive_path = mirror_dir / "autonomous-learning-gate-public-mirror.zip"
+        archive_path.write_bytes(artifact_zip.read_bytes())
+        files: dict[str, str] = {}
+        with zipfile.ZipFile(artifact_zip) as archive:
+            for name in sorted(item for item in archive.namelist() if not item.endswith("/")):
+                files[name] = "sha256:" + hashlib.sha256(archive.read(name)).hexdigest()
+        manifest = {
+            "schema_version": "autonomous-public-evidence-artifact-mirror/v0.1",
+            "status": "passed",
+            "git_commit": remote_sha,
+            "mirror_scope": "github-actions-upload-directory-content",
+            "source_summary": "last_summary.json",
+            "archive_path": "public_mirror/autonomous-learning-gate-public-mirror.zip",
+            "archive_sha256": "sha256:" + hashlib.sha256(archive_path.read_bytes()).hexdigest(),
+            "file_count": len(files),
+            "files": files,
+            "github_actions_artifact": {
+                "name": "autonomous-learning-gate-summary",
+                "run_id": "27437928257",
+                "run_attempt": "1",
+                "artifact_id": "7600712280",
+                "artifact_digest": artifact_digest,
+                "artifact_url": (
+                    "https://github.com/1966536805l-crypto/openmako/actions/runs/"
+                    "27437928257/artifacts/7600712280"
+                ),
+            },
+            "not_proof": [
+                "GitHub Actions API artifact zip endpoint byte-for-byte archive",
+                "external review",
+                "endorsement",
+                "stars",
+                "reposts",
+                "native live autonomy",
+                "broad unknown-repository repair",
+                "external benchmark standing",
+                "independent external held-out benchmark",
+            ],
+        }
+        (mirror_dir / "manifest.json").write_text(
+            json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "add", "."], cwd=worktree, check=True)
+        subprocess.run(
+            [
+                "git",
+                "-c",
+                "user.name=OpenMako Test",
+                "-c",
+                "user.email=openmako-test@example.invalid",
+                "commit",
+                "-q",
+                "-m",
+                "publish autonomous mirror",
+            ],
+            cwd=worktree,
+            check=True,
+        )
+        subprocess.run(["git", "branch", "-M", "public-evidence"], cwd=worktree, check=True)
+        subprocess.run(["git", "remote", "add", "origin", str(remote)], cwd=worktree, check=True)
+        subprocess.run(["git", "push", "-q", "origin", "HEAD:public-evidence"], cwd=worktree, check=True)
+
+    public_evidence_remote = tmp_path / "public-evidence.git"
+    write_autonomous_public_evidence_mirror(
+        public_evidence_remote,
+        artifact_digest=f"sha256:{artifact_zip_sha256}",
+    )
+    public_mirror_env = env.copy()
+    public_mirror_env.pop("OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP")
+    public_mirror_env.update(
+        {
+            "OPENMAKO_PUBLIC_EVIDENCE_REMOTE": str(public_evidence_remote),
+            "OPENMAKO_PUBLIC_EVIDENCE_BRANCH": "public-evidence",
+            "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP_HTTP_STATUS": "401",
+        }
+    )
+    public_mirror_result = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=public_mirror_env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert public_mirror_result.returncode == 0, public_mirror_result.stderr
+    assert "remote-autonomous-learning-snapshot: verified-by=public-evidence-branch" in public_mirror_result.stdout
+    assert "remote-autonomous-learning-snapshot: api-or-zip-unavailable=artifact_zip_requires_auth" in public_mirror_result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-content-mirror=verified-by-public-evidence-branch" in public_mirror_result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-zip-contract=api-zip-endpoint-unverified-by-public-evidence-branch" in public_mirror_result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-summary-task-proof-files=5" in public_mirror_result.stdout
+    assert "remote-autonomous-learning-snapshot: PASS" in public_mirror_result.stdout
+
     class ArtifactZipAuthRequiredHandler(http.server.BaseHTTPRequestHandler):
         def do_GET(self) -> None:
             self.send_response(401)
@@ -2025,6 +2148,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
             artifacts_json.write_text(json.dumps(auth_required_artifacts), encoding="utf-8")
             live_env = env.copy()
             live_env.pop("OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP")
+            live_env["OPENMAKO_PUBLIC_EVIDENCE_REMOTE"] = str(tmp_path / "missing-public-evidence.git")
             auth_required = subprocess.run(
                 ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
                 cwd=ROOT,
@@ -2043,7 +2167,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "rerun-auth-command=OPENMAKO_GITHUB_TOKEN=<token>" in auth_required.stdout
     assert "fixture-rerun-command=" in auth_required.stdout
     assert "OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP=autonomous-learning-gate-summary.zip" in auth_required.stdout
-    assert "not-proof=external review; endorsement; stars; reposts; live autonomy" in auth_required.stdout
+    assert "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; external review; endorsement" in auth_required.stdout
     assert "requires authenticated API access" in auth_required.stderr
     assert "no GitHub token was provided" in auth_required.stderr
     assert "remote-autonomous-learning-snapshot: PASS" not in auth_required.stdout
@@ -2708,12 +2832,12 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "remote-autonomous-learning-snapshot: artifact-summary-task-source-manifest=scripts/autonomous_task_source_provenance.json" in guide
     assert "remote-autonomous-learning-snapshot: artifact-summary-task-source-manifest-sha256=..." in guide
     assert "remote-autonomous-learning-snapshot: artifact-summary-external-heldout=false" in guide
-    assert "stale, still running, failed, missing, rate limited, missing the named artifact,\nexpired, missing an artifact digest, unreadable as an artifact zip, blocked by\nan artifact zip 401 that needs authenticated API access, or missing the expected\n`last_summary.json` contract fields" in guide
-    assert "fails closed if the artifact\nmanifest copy is missing, the manifest hash does not match the summary, the\nsummary provenance does not match the artifact manifest, or a segment's\nmanifest `selected_tests` no longer matches the summary's selected tests and\nobserved pass count" in guide
-    assert "remote artifact snapshot applies the same minimum\nsegment count, pytest node-id shape, no-option, no-whitespace, and no-duplicate\nselected-test constraints to the artifact-contained manifest" in guide
-    assert "self-consistent\nbut weakened artifact summary still fails closed" in guide
-    assert "Set `OPENMAKO_GITHUB_TOKEN`,\n`GITHUB_TOKEN`, or `GH_TOKEN` for live artifact zip reads, or set\n`OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` to verify the same contract against a saved\nartifact fixture" in guide
-    assert "Passing it is current public CI artifact evidence only, not\nexternal review, endorsement, stars, reposts, live autonomy, broad\nunknown-repository repair, external benchmark standing" in guide
+    assert "stale, still running, failed, missing, rate limited, missing the named artifact,\nexpired, missing an artifact digest, missing both a readable artifact zip and a\ncommit-bound `public-evidence` autonomous artifact-content mirror, or missing\nthe expected `last_summary.json` contract fields" in guide
+    assert "fails closed if the\nartifact manifest copy is missing, the manifest hash does not match the summary,\nthe summary provenance does not match the artifact manifest, or a segment's\nmanifest `selected_tests` no longer matches the summary's selected tests and\nobserved pass count" in guide
+    assert "remote artifact snapshot applies the same minimum\nsegment count, pytest node-id shape, no-option, no-whitespace, and no-duplicate\nselected-test constraints to the artifact-contained or public-mirrored manifest" in guide
+    assert "so a self-consistent but weakened artifact summary still fails closed" in guide
+    assert "Set\n`OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN` for live artifact zip\nreads, or set `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` to verify the same contract\nagainst a saved artifact fixture" in guide
+    assert "Passing via the public mirror is public CI\nartifact and public-mirror evidence only, not the GitHub Actions API artifact\nzip endpoint byte-for-byte archive, external review, endorsement, stars,\nreposts, live autonomy, broad unknown-repository repair, external benchmark\nstanding" in guide
     assert "independent external\nheld-out benchmark evidence" in guide
     assert (
         "bash scripts/saved_autonomous_artifact_snapshot.sh runs.json artifacts.json "

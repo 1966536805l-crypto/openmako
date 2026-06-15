@@ -41,6 +41,7 @@ import hashlib
 import json
 import re
 import sys
+import zipfile
 from pathlib import Path
 
 root = Path(sys.argv[1]).resolve(strict=False)
@@ -49,6 +50,7 @@ repo = sys.argv[3]
 branch = sys.argv[4]
 summary_path = root / "autonomous" / remote_sha / "last_summary.json"
 latest_path = root / "autonomous" / "latest.json"
+mirror_path = root / "autonomous" / remote_sha / "public_mirror" / "manifest.json"
 
 
 def fail(reason: str, detail: str = "") -> None:
@@ -60,11 +62,89 @@ def fail(reason: str, detail: str = "") -> None:
         print(f"remote-autonomous-public-evidence-snapshot: detail={detail}")
     print(
         "remote-autonomous-public-evidence-snapshot: "
-        "not-proof=GitHub Actions artifact zip contents; external review; endorsement; "
+        "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; external review; endorsement; "
         "stars; reposts; native live autonomy; broad unknown-repository repair; "
         "external benchmark standing; independent external held-out benchmark"
     )
     raise SystemExit(1)
+
+
+def is_sha256_digest(value: object) -> bool:
+    return isinstance(value, str) and re.fullmatch(r"sha256:[0-9a-f]{64}", value) is not None
+
+
+def verify_public_mirror() -> dict:
+    if not mirror_path.is_file():
+        fail("autonomous_public_mirror_manifest_missing", str(mirror_path.relative_to(root)))
+    try:
+        mirror = json.loads(mirror_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        fail("autonomous_public_mirror_manifest_invalid_json", str(exc))
+    if mirror.get("schema_version") != "autonomous-public-evidence-artifact-mirror/v0.1":
+        fail("autonomous_public_mirror_schema_mismatch")
+    if mirror.get("status") != "passed":
+        fail("autonomous_public_mirror_status_mismatch")
+    if mirror.get("git_commit") != remote_sha:
+        fail("autonomous_public_mirror_commit_mismatch")
+    if mirror.get("mirror_scope") != "github-actions-upload-directory-content":
+        fail("autonomous_public_mirror_scope_mismatch")
+    files = mirror.get("files")
+    if not isinstance(files, dict) or not files:
+        fail("autonomous_public_mirror_files_malformed")
+    for required in ("last_summary.json", "task_source_provenance_manifest.json"):
+        if required not in files:
+            fail("autonomous_public_mirror_required_file_missing", required)
+    pytest_logs = [name for name in files if name.startswith("pytest_logs/") and name.endswith(".log")]
+    if len(pytest_logs) < 3:
+        fail("autonomous_public_mirror_pytest_logs_missing")
+    if mirror.get("file_count") != len(files):
+        fail("autonomous_public_mirror_file_count_mismatch")
+    archive_relative = mirror.get("archive_path")
+    if archive_relative != "public_mirror/autonomous-learning-gate-public-mirror.zip":
+        fail("autonomous_public_mirror_archive_path_mismatch")
+    archive_path = mirror_path.parent.parent / archive_relative
+    if not archive_path.is_file():
+        fail("autonomous_public_mirror_archive_missing", str(archive_relative))
+    archive_sha256 = "sha256:" + hashlib.sha256(archive_path.read_bytes()).hexdigest()
+    if mirror.get("archive_sha256") != archive_sha256:
+        fail("autonomous_public_mirror_archive_digest_mismatch")
+    meta = mirror.get("github_actions_artifact")
+    if not isinstance(meta, dict):
+        fail("autonomous_public_mirror_artifact_metadata_malformed")
+    if meta.get("name") != "autonomous-learning-gate-summary":
+        fail("autonomous_public_mirror_artifact_name_mismatch")
+    if not str(meta.get("run_id") or "").isdigit():
+        fail("autonomous_public_mirror_artifact_run_id_malformed")
+    if not str(meta.get("run_attempt") or "").isdigit():
+        fail("autonomous_public_mirror_artifact_run_attempt_malformed")
+    if not str(meta.get("artifact_id") or "").isdigit():
+        fail("autonomous_public_mirror_artifact_id_malformed")
+    if not is_sha256_digest(meta.get("artifact_digest")):
+        fail("autonomous_public_mirror_artifact_digest_missing_or_malformed")
+    artifact_url = meta.get("artifact_url")
+    if not isinstance(artifact_url, str) or not artifact_url.startswith("https://"):
+        fail("autonomous_public_mirror_artifact_url_malformed")
+    not_proof = mirror.get("not_proof")
+    if (
+        not isinstance(not_proof, list)
+        or "GitHub Actions API artifact zip endpoint byte-for-byte archive" not in not_proof
+        or "independent external held-out benchmark" not in not_proof
+    ):
+        fail("autonomous_public_mirror_boundary_mismatch")
+    try:
+        with zipfile.ZipFile(archive_path) as archive:
+            names = sorted(name for name in archive.namelist() if not name.endswith("/"))
+            if names != sorted(files):
+                fail("autonomous_public_mirror_archive_file_list_mismatch")
+            for name in names:
+                if name.startswith("/") or ".." in Path(name).parts:
+                    fail("autonomous_public_mirror_archive_unsafe_path", name)
+                digest = "sha256:" + hashlib.sha256(archive.read(name)).hexdigest()
+                if files.get(name) != digest:
+                    fail("autonomous_public_mirror_archive_file_digest_mismatch", name)
+    except zipfile.BadZipFile as exc:
+        fail("autonomous_public_mirror_archive_bad_zip", str(exc))
+    return mirror
 
 
 if not summary_path.is_file():
@@ -181,19 +261,26 @@ if latest_path.is_file():
     latest = json.loads(latest_path.read_text(encoding="utf-8"))
     if latest.get("latest_autonomous_commit") != remote_sha:
         fail("latest_index_commit_mismatch")
+mirror = verify_public_mirror()
+mirror_meta = mirror["github_actions_artifact"]
 
 print(f"remote-autonomous-public-evidence-snapshot: repo={repo}")
 print(f"remote-autonomous-public-evidence-snapshot: branch={branch}")
 print(f"remote-autonomous-public-evidence-snapshot: remote-main-sha={remote_sha}")
 print(f"remote-autonomous-public-evidence-snapshot: summary=autonomous/{remote_sha}/last_summary.json")
 print(f"remote-autonomous-public-evidence-snapshot: status={summary['status']}")
+print("remote-autonomous-public-evidence-snapshot: public-mirror-zip=present")
+print("remote-autonomous-public-evidence-snapshot: public-mirror-scope=github-actions-upload-directory-content")
+print(f"remote-autonomous-public-evidence-snapshot: public-mirror-file-count={mirror['file_count']}")
+print(f"remote-autonomous-public-evidence-snapshot: artifact-id={mirror_meta['artifact_id']}")
+print(f"remote-autonomous-public-evidence-snapshot: artifact-digest={mirror_meta['artifact_digest']}")
 print(f"remote-autonomous-public-evidence-snapshot: selected-test-count={len(all_selected)}")
 print(f"remote-autonomous-public-evidence-snapshot: upstream-task-proof-count={len(upstream_proofs)}")
 print(f"remote-autonomous-public-evidence-snapshot: cross-upstream-task-proof-count={len(cross_proofs)}")
 print(f"remote-autonomous-public-evidence-snapshot: latest-index={'present' if latest else 'missing'}")
 print(
     "remote-autonomous-public-evidence-snapshot: "
-    "not-proof=GitHub Actions artifact zip contents; external review; endorsement; "
+    "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; external review; endorsement; "
     "stars; reposts; native live autonomy; broad unknown-repository repair; "
     "external benchmark standing; independent external held-out benchmark"
 )

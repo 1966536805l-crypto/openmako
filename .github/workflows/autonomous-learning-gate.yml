@@ -54,6 +54,7 @@ jobs:
           bash scripts/autonomous_learning_gate.sh
 
       - name: Upload autonomous-learning summary and logs
+        id: upload-autonomous-artifact
         if: always()
         uses: actions/upload-artifact@v7
         with:
@@ -67,5 +68,11 @@ jobs:
           OPENMAKO_AUTONOMOUS_LEARNING_GATE_DIR: .quantagent/autonomous_learning_gate
           OPENMAKO_PUBLIC_EVIDENCE_REMOTE: origin
           OPENMAKO_PUBLIC_EVIDENCE_BRANCH: public-evidence
+          OPENMAKO_AUTONOMOUS_RUN_ID: ${{ github.run_id }}
+          OPENMAKO_AUTONOMOUS_RUN_ATTEMPT: ${{ github.run_attempt }}
+          OPENMAKO_AUTONOMOUS_ARTIFACT_NAME: autonomous-learning-gate-summary
+          OPENMAKO_AUTONOMOUS_ARTIFACT_ID: ${{ steps.upload-autonomous-artifact.outputs.artifact-id }}
+          OPENMAKO_AUTONOMOUS_ARTIFACT_DIGEST: ${{ steps.upload-autonomous-artifact.outputs.artifact-digest }}
+          OPENMAKO_AUTONOMOUS_ARTIFACT_URL: ${{ steps.upload-autonomous-artifact.outputs.artifact-url }}
         run: |
           bash scripts/publish_autonomous_public_evidence_branch.sh

@@ -8,6 +8,8 @@ REPO="${OPENMAKO_GITHUB_REPO:-1966536805l-crypto/openmako}"
 REMOTE="${OPENMAKO_REMOTE:-openmako}"
 WORKFLOW="${OPENMAKO_AUTONOMOUS_WORKFLOW:-autonomous-learning-gate.yml}"
 ARTIFACT_NAME="${OPENMAKO_AUTONOMOUS_ARTIFACT_NAME:-autonomous-learning-gate-summary}"
+EVIDENCE_REMOTE="${OPENMAKO_PUBLIC_EVIDENCE_REMOTE:-https://github.com/1966536805l-crypto/openmako.git}"
+EVIDENCE_BRANCH="${OPENMAKO_PUBLIC_EVIDENCE_BRANCH:-public-evidence}"
 
 if [ -n "${OPENMAKO_REMOTE_MAIN_SHA:-}" ]; then
   remote_sha="$OPENMAKO_REMOTE_MAIN_SHA"
@@ -20,23 +22,29 @@ if [ -z "$remote_sha" ]; then
   exit 2
 fi
 
-python3 - "$REPO" "$WORKFLOW" "$ARTIFACT_NAME" "$remote_sha" <<'PY'
+python3 - "$REPO" "$WORKFLOW" "$ARTIFACT_NAME" "$remote_sha" "$EVIDENCE_REMOTE" "$EVIDENCE_BRANCH" <<'PY'
+from __future__ import annotations
+
 import json
 import hashlib
 import os
 import re
+import subprocess
 import sys
+import tempfile
 import urllib.error
 import urllib.request
 import zipfile
 from io import BytesIO
 from datetime import datetime, timezone
+from pathlib import Path
 
 
-repo, workflow, artifact_name, remote_sha = sys.argv[1:5]
+repo, workflow, artifact_name, remote_sha, evidence_remote, evidence_branch = sys.argv[1:7]
 runs_fixture = os.environ.get("OPENMAKO_AUTONOMOUS_RUNS_JSON")
 artifacts_fixture = os.environ.get("OPENMAKO_AUTONOMOUS_ARTIFACTS_JSON")
 artifact_zip_fixture = os.environ.get("OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP")
+artifact_zip_http_status_fixture = os.environ.get("OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP_HTTP_STATUS")
 workflow_runs_url = (
     f"https://api.github.com/repos/{repo}/actions/workflows/"
     f"{workflow}/runs?branch=main&per_page=1"
@@ -113,10 +121,24 @@ def print_boundary_snapshot(reason: str, response_headers=None, *, include_auth_
         print_auth_hint()
     print(
         "remote-autonomous-learning-snapshot: "
-        "not-proof=external review; endorsement; stars; reposts; live autonomy; "
+        "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; "
+        "external review; endorsement; stars; reposts; live autonomy; "
         "broad unknown-repository repair; external benchmark standing; "
         "independent external held-out benchmark"
     )
+
+
+def unavailable_marker(reason: str, response_headers=None, *, include_auth_hint: bool = False) -> dict:
+    print_boundary_snapshot(reason, response_headers, include_auth_hint=include_auth_hint)
+    return {"__openmako_unavailable__": reason}
+
+
+def get_unavailable_reason(payload: object) -> str:
+    if isinstance(payload, dict):
+        reason = payload.get("__openmako_unavailable__")
+        if isinstance(reason, str):
+            return reason
+    return ""
 
 
 def read_json_url(url: str, unavailable_reason: str) -> dict:
@@ -127,22 +149,19 @@ def read_json_url(url: str, unavailable_reason: str) -> dict:
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
         if exc.code == 403 and "rate limit" in body.lower():
-            print_boundary_snapshot("github_api_rate_limit", exc.headers)
             print(
                 "remote-autonomous-learning-snapshot: GitHub API rate limit; "
-                "re-check later or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN "
-                "for authenticated API reads",
+                "trying public evidence mirror fallback",
                 file=sys.stderr,
             )
-            sys.exit(2)
+            return unavailable_marker("github_api_rate_limit", exc.headers)
         if exc.code == 401:
-            print_boundary_snapshot("github_api_requires_auth", exc.headers, include_auth_hint=True)
             print(
                 "remote-autonomous-learning-snapshot: GitHub API requires authenticated reads; "
-                "set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN or use saved fixtures",
+                "trying public evidence mirror fallback",
                 file=sys.stderr,
             )
-            sys.exit(2)
+            return unavailable_marker("github_api_requires_auth", exc.headers, include_auth_hint=True)
         print_boundary_snapshot(f"github_api_error_{exc.code}")
         print(
             f"remote-autonomous-learning-snapshot: GitHub API error {exc.code}: {body}",
@@ -171,11 +190,23 @@ def read_json_fixture(path: str, unavailable_reason: str) -> dict:
         sys.exit(2)
 
 
-def read_artifact_zip(url: str) -> bytes:
+def read_artifact_zip(url: str) -> tuple[bytes | None, str]:
+    if artifact_zip_http_status_fixture:
+        if artifact_zip_http_status_fixture == "401":
+            return None, "artifact_zip_requires_auth"
+        if artifact_zip_http_status_fixture == "403-rate-limit":
+            return None, "github_api_rate_limit"
+        print_boundary_snapshot("artifact_zip_status_fixture_unsupported")
+        print(
+            "remote-autonomous-learning-snapshot: unsupported OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP_HTTP_STATUS="
+            f"{artifact_zip_http_status_fixture}",
+            file=sys.stderr,
+        )
+        sys.exit(2)
     if artifact_zip_fixture:
         try:
             with open(artifact_zip_fixture, "rb") as handle:
-                return handle.read()
+                return handle.read(), ""
         except Exception as exc:
             print_boundary_snapshot("artifact_zip_fixture_unreadable")
             print(
@@ -188,18 +219,17 @@ def read_artifact_zip(url: str) -> bytes:
     request = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
-            return response.read()
+            return response.read(), ""
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
         if exc.code == 403 and "rate limit" in body.lower():
             print_boundary_snapshot("github_api_rate_limit", exc.headers)
             print(
                 "remote-autonomous-learning-snapshot: GitHub API rate limit while reading artifact zip; "
-                "re-check later or set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN "
-                "for authenticated API reads",
+                "verifying public evidence mirror instead",
                 file=sys.stderr,
             )
-            sys.exit(2)
+            return None, "github_api_rate_limit"
         if exc.code == 401:
             print_boundary_snapshot("artifact_zip_requires_auth", exc.headers, include_auth_hint=True)
             if token:
@@ -212,10 +242,10 @@ def read_artifact_zip(url: str) -> bytes:
                 "remote-autonomous-learning-snapshot: GitHub artifact zip download "
                 "requires authenticated API access; "
                 f"{token_message}; set OPENMAKO_GITHUB_TOKEN/GITHUB_TOKEN/GH_TOKEN "
-                "or provide OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP",
+                "or provide OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP; verifying public evidence mirror instead",
                 file=sys.stderr,
             )
-            sys.exit(2)
+            return None, "artifact_zip_requires_auth"
         print_boundary_snapshot(f"artifact_zip_api_error_{exc.code}")
         print(
             f"remote-autonomous-learning-snapshot: GitHub artifact zip error {exc.code}: {body}",
@@ -683,10 +713,157 @@ def validate_artifact_summary(payload: dict, archive_text_files: dict[str, str])
         sys.exit(1)
 
 
+def is_sha256_digest(value: object) -> bool:
+    return isinstance(value, str) and re.fullmatch(r"sha256:[0-9a-f]{64}", value) is not None
+
+
+def fail_public_mirror(message: str) -> None:
+    print(f"remote-autonomous-learning-snapshot: {message}", file=sys.stderr)
+    sys.exit(1)
+
+
+def verify_public_evidence_mirror(
+    reason: str,
+    *,
+    expected_run_id: object | None = None,
+    expected_artifact_id: object | None = None,
+    expected_artifact_digest: object | None = None,
+) -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        evidence_dir = Path(tmp) / "evidence"
+        clone = subprocess.run(
+            [
+                "git",
+                "clone",
+                "--depth",
+                "1",
+                "--branch",
+                evidence_branch,
+                evidence_remote,
+                str(evidence_dir),
+            ],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if clone.returncode != 0:
+            print_boundary_snapshot("public_evidence_mirror_unreadable")
+            print(
+                "remote-autonomous-learning-snapshot: could not clone public evidence mirror: "
+                + clone.stderr.strip(),
+                file=sys.stderr,
+            )
+            sys.exit(2)
+        mirror_path = evidence_dir / "autonomous" / remote_sha / "public_mirror" / "manifest.json"
+        if not mirror_path.is_file():
+            fail_public_mirror("public evidence autonomous artifact mirror is missing")
+        try:
+            mirror = json.loads(mirror_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            fail_public_mirror(f"public evidence autonomous artifact mirror manifest is invalid JSON: {exc}")
+        if mirror.get("schema_version") != "autonomous-public-evidence-artifact-mirror/v0.1":
+            fail_public_mirror("public evidence autonomous artifact mirror schema_version mismatch")
+        if mirror.get("status") != "passed":
+            fail_public_mirror("public evidence autonomous artifact mirror status mismatch")
+        if mirror.get("git_commit") != remote_sha:
+            fail_public_mirror("public evidence autonomous artifact mirror commit mismatch")
+        if mirror.get("mirror_scope") != "github-actions-upload-directory-content":
+            fail_public_mirror("public evidence autonomous artifact mirror scope mismatch")
+        files = mirror.get("files")
+        if not isinstance(files, dict) or not files:
+            fail_public_mirror("public evidence autonomous artifact mirror files contract is malformed")
+        for required in ("last_summary.json", "task_source_provenance_manifest.json"):
+            if required not in files:
+                fail_public_mirror(f"public evidence autonomous artifact mirror required file missing: {required}")
+        pytest_logs = [name for name in files if name.startswith("pytest_logs/") and name.endswith(".log")]
+        if len(pytest_logs) < 3:
+            fail_public_mirror("public evidence autonomous artifact mirror pytest logs missing")
+        if mirror.get("file_count") != len(files):
+            fail_public_mirror("public evidence autonomous artifact mirror file count mismatch")
+        archive_relative = mirror.get("archive_path")
+        if archive_relative != "public_mirror/autonomous-learning-gate-public-mirror.zip":
+            fail_public_mirror("public evidence autonomous artifact mirror archive path mismatch")
+        archive_path = mirror_path.parent.parent / archive_relative
+        if not archive_path.is_file():
+            fail_public_mirror("public evidence autonomous artifact mirror archive missing")
+        archive_bytes = archive_path.read_bytes()
+        archive_sha256 = "sha256:" + hashlib.sha256(archive_bytes).hexdigest()
+        if mirror.get("archive_sha256") != archive_sha256:
+            fail_public_mirror("public evidence autonomous artifact mirror archive digest mismatch")
+        meta = mirror.get("github_actions_artifact")
+        if not isinstance(meta, dict):
+            fail_public_mirror("public evidence autonomous artifact mirror artifact metadata missing")
+        if meta.get("name") != artifact_name:
+            fail_public_mirror("public evidence autonomous artifact mirror artifact name mismatch")
+        run_id = str(meta.get("run_id") or "")
+        artifact_id = str(meta.get("artifact_id") or "")
+        artifact_digest = meta.get("artifact_digest")
+        if not run_id.isdigit():
+            fail_public_mirror("public evidence autonomous artifact mirror run id missing or malformed")
+        if not str(meta.get("run_attempt") or "").isdigit():
+            fail_public_mirror("public evidence autonomous artifact mirror run attempt missing or malformed")
+        if not artifact_id.isdigit():
+            fail_public_mirror("public evidence autonomous artifact mirror artifact id missing or malformed")
+        if not is_sha256_digest(artifact_digest):
+            fail_public_mirror("public evidence autonomous artifact mirror artifact digest missing or malformed")
+        if expected_run_id is not None and run_id != str(expected_run_id):
+            fail_public_mirror("public evidence autonomous artifact mirror run id mismatch")
+        if expected_artifact_id is not None and artifact_id != str(expected_artifact_id):
+            fail_public_mirror("public evidence autonomous artifact mirror artifact id mismatch")
+        if expected_artifact_digest is not None and artifact_digest != expected_artifact_digest:
+            fail_public_mirror("public evidence autonomous artifact mirror artifact digest mismatch")
+        not_proof = mirror.get("not_proof")
+        if (
+            not isinstance(not_proof, list)
+            or "GitHub Actions API artifact zip endpoint byte-for-byte archive" not in not_proof
+            or "independent external held-out benchmark" not in not_proof
+        ):
+            fail_public_mirror("public evidence autonomous artifact mirror boundary mismatch")
+        try:
+            with zipfile.ZipFile(archive_path) as archive:
+                names = sorted(name for name in archive.namelist() if not name.endswith("/"))
+                if names != sorted(files):
+                    fail_public_mirror("public evidence autonomous artifact mirror archive file list mismatch")
+                for name in names:
+                    if name.startswith("/") or ".." in Path(name).parts:
+                        fail_public_mirror(f"public evidence autonomous artifact mirror archive unsafe path: {name}")
+                    digest = "sha256:" + hashlib.sha256(archive.read(name)).hexdigest()
+                    if files.get(name) != digest:
+                        fail_public_mirror(f"public evidence autonomous artifact mirror archive digest mismatch: {name}")
+        except zipfile.BadZipFile as exc:
+            fail_public_mirror(f"public evidence autonomous artifact mirror archive is not a zip: {exc}")
+
+        artifact_summary, artifact_text_files = read_artifact_bundle_from_zip(archive_bytes)
+        validate_artifact_summary(artifact_summary, artifact_text_files)
+
+    print("remote-autonomous-learning-snapshot: verified-by=public-evidence-branch")
+    print(f"remote-autonomous-learning-snapshot: api-or-zip-unavailable={reason}")
+    print(f"remote-autonomous-learning-snapshot: artifact-name={artifact_name}")
+    print(f"remote-autonomous-learning-snapshot: artifact-id={artifact_id}")
+    print(f"remote-autonomous-learning-snapshot: artifact-digest={artifact_digest}")
+    print("remote-autonomous-learning-snapshot: artifact-content-mirror=verified-by-public-evidence-branch")
+    print(f"remote-autonomous-learning-snapshot: artifact-mirror-archive-sha256={archive_sha256}")
+    print(f"remote-autonomous-learning-snapshot: artifact-mirror-file-count={len(files)}")
+    print("remote-autonomous-learning-snapshot: artifact-zip-contract=api-zip-endpoint-unverified-by-public-evidence-branch")
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; external review; endorsement; stars; reposts; "
+        "live autonomy; broad unknown-repository repair; external benchmark standing; "
+        "independent external held-out benchmark"
+    )
+    print("remote-autonomous-learning-snapshot: PASS")
+
+
 if runs_fixture:
     runs_data = read_json_fixture(runs_fixture, "workflow_runs_fixture_unreadable")
 else:
     runs_data = read_json_url(workflow_runs_url, "workflow_runs_unreadable")
+
+runs_unavailable = get_unavailable_reason(runs_data)
+if runs_unavailable:
+    verify_public_evidence_mirror(runs_unavailable)
+    sys.exit(0)
 
 runs = runs_data.get("workflow_runs") or []
 if not runs:
@@ -713,7 +890,8 @@ if html_url:
     print(f"remote-autonomous-learning-snapshot: url={html_url}")
 print(
     "remote-autonomous-learning-snapshot: "
-    "not-proof=external review; endorsement; stars; reposts; live autonomy; "
+    "not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; "
+    "external review; endorsement; stars; reposts; live autonomy; "
     "broad unknown-repository repair; external benchmark standing; "
     "independent external held-out benchmark"
 )
@@ -739,6 +917,11 @@ if artifacts_fixture:
     artifacts_data = read_json_fixture(artifacts_fixture, "artifacts_fixture_unreadable")
 else:
     artifacts_data = read_json_url(artifacts_url, "artifacts_unreadable")
+
+artifacts_unavailable = get_unavailable_reason(artifacts_data)
+if artifacts_unavailable:
+    verify_public_evidence_mirror(artifacts_unavailable, expected_run_id=run_id)
+    sys.exit(0)
 
 artifacts = artifacts_data.get("artifacts") or []
 matching = [artifact for artifact in artifacts if artifact.get("name") == artifact_name]
@@ -774,6 +957,9 @@ if not artifact_id:
 if not artifact_digest:
     print("remote-autonomous-learning-snapshot: autonomous-learning artifact digest is missing", file=sys.stderr)
     sys.exit(1)
+if not is_sha256_digest(artifact_digest):
+    print("remote-autonomous-learning-snapshot: unsupported artifact digest format", file=sys.stderr)
+    sys.exit(1)
 if artifacts_fixture:
     if not isinstance(artifact_workflow_run, dict):
         print(
@@ -797,7 +983,15 @@ if artifacts_fixture:
 archive_url = artifact.get("archive_download_url") or (
     f"https://api.github.com/repos/{repo}/actions/artifacts/{artifact_id}/zip"
 )
-artifact_zip = read_artifact_zip(archive_url)
+artifact_zip, zip_unavailable_reason = read_artifact_zip(archive_url)
+if artifact_zip is None:
+    verify_public_evidence_mirror(
+        zip_unavailable_reason,
+        expected_run_id=run_id,
+        expected_artifact_id=artifact_id,
+        expected_artifact_digest=artifact_digest,
+    )
+    sys.exit(0)
 artifact_zip_sha256 = hashlib.sha256(artifact_zip).hexdigest()
 print(f"remote-autonomous-learning-snapshot: artifact-zip-sha256={artifact_zip_sha256}")
 if artifact_digest.startswith("sha256:"):

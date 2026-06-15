@@ -19,7 +19,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import re
 import sys
+import zipfile
 from pathlib import Path
 
 summary_dir = Path(sys.argv[1]).resolve(strict=False)
@@ -140,20 +143,116 @@ cp -R "$SUMMARY_DIR"/. "$evidence_dir/autonomous/$GIT_COMMIT/"
 python3 - "$evidence_dir" "$GIT_COMMIT" <<'PY'
 from __future__ import annotations
 
+import hashlib
 import json
+import os
+import re
 import sys
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
 root = Path(sys.argv[1])
 git_commit = sys.argv[2]
+autonomous_dir = root / "autonomous" / git_commit
+mirror_dir = autonomous_dir / "public_mirror"
+mirror_dir.mkdir(parents=True, exist_ok=True)
+archive_path = mirror_dir / "autonomous-learning-gate-public-mirror.zip"
+manifest_path = mirror_dir / "manifest.json"
+
+files: dict[str, str] = {}
+for path in sorted(autonomous_dir.rglob("*")):
+    if not path.is_file():
+        continue
+    rel = str(path.relative_to(autonomous_dir))
+    if rel.startswith("public_mirror/"):
+        continue
+    files[rel] = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+for required in ("last_summary.json", "task_source_provenance_manifest.json"):
+    if required not in files:
+        raise SystemExit(f"publish-autonomous-public-evidence-branch: mirror missing required output {required}")
+pytest_logs = [name for name in files if name.startswith("pytest_logs/") and name.endswith(".log")]
+if len(pytest_logs) < 3:
+    raise SystemExit("publish-autonomous-public-evidence-branch: mirror missing pytest logs")
+
+with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+    for rel in sorted(files):
+        source = autonomous_dir / rel
+        info = zipfile.ZipInfo(rel)
+        info.date_time = (1980, 1, 1, 0, 0, 0)
+        info.compress_type = zipfile.ZIP_DEFLATED
+        info.external_attr = 0o644 << 16
+        archive.writestr(info, source.read_bytes())
+archive_sha256 = "sha256:" + hashlib.sha256(archive_path.read_bytes()).hexdigest()
+
+def required_env(name: str, label: str) -> str:
+    value = os.environ.get(name, "").strip()
+    if not value:
+        raise SystemExit(f"publish-autonomous-public-evidence-branch: autonomous artifact {label} missing")
+    return value
+
+artifact_name = required_env("OPENMAKO_AUTONOMOUS_ARTIFACT_NAME", "name")
+run_id = required_env("OPENMAKO_AUTONOMOUS_RUN_ID", "run id")
+run_attempt = required_env("OPENMAKO_AUTONOMOUS_RUN_ATTEMPT", "run attempt")
+artifact_id = required_env("OPENMAKO_AUTONOMOUS_ARTIFACT_ID", "id")
+artifact_digest = required_env("OPENMAKO_AUTONOMOUS_ARTIFACT_DIGEST", "digest")
+artifact_url = required_env("OPENMAKO_AUTONOMOUS_ARTIFACT_URL", "url")
+if artifact_name != "autonomous-learning-gate-summary":
+    raise SystemExit("publish-autonomous-public-evidence-branch: autonomous artifact name mismatch")
+if not run_id.isdigit():
+    raise SystemExit("publish-autonomous-public-evidence-branch: autonomous artifact run id malformed")
+if not run_attempt.isdigit():
+    raise SystemExit("publish-autonomous-public-evidence-branch: autonomous artifact run attempt malformed")
+if not artifact_id.isdigit():
+    raise SystemExit("publish-autonomous-public-evidence-branch: autonomous artifact id malformed")
+artifact_digest = artifact_digest.lower()
+if re.fullmatch(r"[0-9a-f]{64}", artifact_digest):
+    artifact_digest = "sha256:" + artifact_digest
+if not re.fullmatch(r"sha256:[0-9a-f]{64}", artifact_digest):
+    raise SystemExit("publish-autonomous-public-evidence-branch: autonomous artifact digest missing/malformed")
+if not artifact_url.startswith("https://"):
+    raise SystemExit("publish-autonomous-public-evidence-branch: autonomous artifact url malformed")
+
+manifest = {
+    "schema_version": "autonomous-public-evidence-artifact-mirror/v0.1",
+    "status": "passed",
+    "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+    "git_commit": git_commit,
+    "mirror_scope": "github-actions-upload-directory-content",
+    "source_summary": "last_summary.json",
+    "archive_path": "public_mirror/autonomous-learning-gate-public-mirror.zip",
+    "archive_sha256": archive_sha256,
+    "file_count": len(files),
+    "files": files,
+    "github_actions_artifact": {
+        "name": artifact_name,
+        "run_id": run_id,
+        "run_attempt": run_attempt,
+        "artifact_id": artifact_id,
+        "artifact_digest": artifact_digest,
+        "artifact_url": artifact_url,
+    },
+    "not_proof": [
+        "GitHub Actions API artifact zip endpoint byte-for-byte archive",
+        "external review",
+        "endorsement",
+        "stars",
+        "reposts",
+        "native live autonomy",
+        "broad unknown-repository repair",
+        "external benchmark standing",
+        "independent external held-out benchmark",
+    ],
+}
+manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
 latest = {
     "schema_version": "openmako-public-evidence-index/v0.1",
     "latest_autonomous_commit": git_commit,
     "autonomous_summary": f"autonomous/{git_commit}/last_summary.json",
     "updated_at_utc": datetime.now(timezone.utc).isoformat(),
     "not_proof": [
-        "GitHub Actions artifact zip contents",
+        "GitHub Actions API artifact zip endpoint byte-for-byte archive",
         "external review",
         "endorsement",
         "stars",

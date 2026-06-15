@@ -243,21 +243,23 @@ remote-autonomous-learning-snapshot: PASS
 
 The command fails closed if the latest autonomous-learning workflow run is
 stale, still running, failed, missing, rate limited, missing the named artifact,
-expired, missing an artifact digest, unreadable as an artifact zip, blocked by
-an artifact zip 401 that needs authenticated API access, or missing the expected
-`last_summary.json` contract fields. It also fails closed if the artifact
-manifest copy is missing, the manifest hash does not match the summary, the
-summary provenance does not match the artifact manifest, or a segment's
+expired, missing an artifact digest, missing both a readable artifact zip and a
+commit-bound `public-evidence` autonomous artifact-content mirror, or missing
+the expected `last_summary.json` contract fields. It also fails closed if the
+artifact manifest copy is missing, the manifest hash does not match the summary,
+the summary provenance does not match the artifact manifest, or a segment's
 manifest `selected_tests` no longer matches the summary's selected tests and
 observed pass count. The remote artifact snapshot applies the same minimum
 segment count, pytest node-id shape, no-option, no-whitespace, and no-duplicate
-selected-test constraints to the artifact-contained manifest, so a self-consistent
-but weakened artifact summary still fails closed. Set `OPENMAKO_GITHUB_TOKEN`,
-`GITHUB_TOKEN`, or `GH_TOKEN` for live artifact zip reads, or set
-`OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` to verify the same contract against a saved
-artifact fixture. Passing it is current public CI artifact evidence only, not
-external review, endorsement, stars, reposts, live autonomy, broad
-unknown-repository repair, external benchmark standing, or independent external
+selected-test constraints to the artifact-contained or public-mirrored manifest,
+so a self-consistent but weakened artifact summary still fails closed. Set
+`OPENMAKO_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN` for live artifact zip
+reads, or set `OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP` to verify the same contract
+against a saved artifact fixture. Passing via the public mirror is public CI
+artifact and public-mirror evidence only, not the GitHub Actions API artifact
+zip endpoint byte-for-byte archive, external review, endorsement, stars,
+reposts, live autonomy, broad unknown-repository repair, external benchmark
+standing, or independent external
 held-out benchmark evidence.
 
 If the live GitHub API is rate-limited but the run metadata, artifact metadata,

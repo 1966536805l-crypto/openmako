@@ -432,6 +432,14 @@ class CliWrapperTest(unittest.TestCase):
         env["OPENMAKO_PUBLIC_EVIDENCE_REMOTE"] = str(remote)
         env["OPENMAKO_PUBLIC_EVIDENCE_BRANCH"] = "public-evidence"
         env["OPENMAKO_AUTONOMOUS_LEARNING_GATE_DIR"] = str(summary_dir)
+        env["OPENMAKO_AUTONOMOUS_RUN_ID"] = "27437928257"
+        env["OPENMAKO_AUTONOMOUS_RUN_ATTEMPT"] = "1"
+        env["OPENMAKO_AUTONOMOUS_ARTIFACT_NAME"] = "autonomous-learning-gate-summary"
+        env["OPENMAKO_AUTONOMOUS_ARTIFACT_ID"] = "7600712280"
+        env["OPENMAKO_AUTONOMOUS_ARTIFACT_DIGEST"] = "sha256:" + "2" * 64
+        env["OPENMAKO_AUTONOMOUS_ARTIFACT_URL"] = (
+            "https://github.com/1966536805l-crypto/openmako/actions/runs/27437928257/artifacts/7600712280"
+        )
         return subprocess.run(
             ["bash", "scripts/publish_autonomous_public_evidence_branch.sh"],
             cwd=str(ROOT),
@@ -944,9 +952,74 @@ class CliWrapperTest(unittest.TestCase):
             )
             self.assertIn(f"summary=autonomous/{current_commit}/last_summary.json", snapshot.stdout)
             self.assertIn("selected-test-count=8", snapshot.stdout)
+            self.assertIn("public-mirror-zip=present", snapshot.stdout)
+            self.assertIn("public-mirror-scope=github-actions-upload-directory-content", snapshot.stdout)
+            self.assertIn("public-mirror-file-count=", snapshot.stdout)
+            self.assertIn("artifact-id=7600712280", snapshot.stdout)
+            self.assertIn("artifact-digest=sha256:" + "2" * 64, snapshot.stdout)
             self.assertIn("upstream-task-proof-count=1", snapshot.stdout)
             self.assertIn("cross-upstream-task-proof-count=4", snapshot.stdout)
             self.assertIn("remote-autonomous-public-evidence-snapshot: PASS", snapshot.stdout)
+
+            evidence_clone = tmp_path / "evidence-clone"
+            subprocess.run(
+                ["git", "clone", "-q", "--branch", "public-evidence", str(remote), str(evidence_clone)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+            manifest_path = evidence_clone / "autonomous" / current_commit / "public_mirror" / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self.assertEqual(
+                manifest["schema_version"],
+                "autonomous-public-evidence-artifact-mirror/v0.1",
+            )
+            self.assertEqual(manifest["github_actions_artifact"]["artifact_digest"], "sha256:" + "2" * 64)
+            self.assertIn("last_summary.json", manifest["files"])
+            self.assertIn("task_source_provenance_manifest.json", manifest["files"])
+            manifest["github_actions_artifact"]["artifact_digest"] = "sha256:bad"
+            manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            subprocess.run(
+                ["git", "add", "."],
+                cwd=evidence_clone,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-c",
+                    "user.name=OpenMako Test",
+                    "-c",
+                    "user.email=openmako-test@example.invalid",
+                    "commit",
+                    "-q",
+                    "-m",
+                    "tamper autonomous mirror",
+                ],
+                cwd=evidence_clone,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "push", "-q", "origin", "HEAD:public-evidence"],
+                cwd=evidence_clone,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+            tampered_snapshot = self.run_remote_autonomous_public_evidence_snapshot(remote)
+            self.assertEqual(tampered_snapshot.returncode, 1)
+            self.assertIn(
+                "autonomous_public_mirror_artifact_digest_missing_or_malformed",
+                tampered_snapshot.stdout,
+            )
 
             summary_path = summary_dir / "last_summary.json"
             summary = json.loads(summary_path.read_text(encoding="utf-8"))
