@@ -1,6 +1,6 @@
 {
-  "autonomous_summary": "autonomous/2eadf2f55cd5897757b44f558ccae93955051a6c/last_summary.json",
-  "latest_autonomous_commit": "2eadf2f55cd5897757b44f558ccae93955051a6c",
+  "autonomous_summary": "autonomous/6bab7394208adbe6726991afdc2139db9bbed5ab/last_summary.json",
+  "latest_autonomous_commit": "6bab7394208adbe6726991afdc2139db9bbed5ab",
   "not_proof": [
     "GitHub Actions API artifact zip endpoint byte-for-byte archive",
     "external review",
@@ -13,5 +13,5 @@
     "independent external held-out benchmark"
   ],
   "schema_version": "openmako-public-evidence-index/v0.1",
-  "updated_at_utc": "2026-06-15T00:29:28.535752+00:00"
+  "updated_at_utc": "2026-06-15T01:08:31.931107+00:00"
 }
