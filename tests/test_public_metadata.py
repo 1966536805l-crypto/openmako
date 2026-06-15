@@ -1899,6 +1899,68 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
             "reposts",
         ],
     }
+    linked_external_heldout_summary = {
+        "schema_version": "external-heldout-benchmark-gate/v0.1",
+        "status": "passed",
+        "external_source_heldout": True,
+        "heldout_from_autonomous_gate": True,
+        "independent_external_benchmark": False,
+        "observed_pytest": {
+            "exit_code": 0,
+            "passed": 2,
+            "skipped": 0,
+            "warnings": 0,
+        },
+        "selected_tests": [
+            (
+                "tests/test_upstream_function_file_bundle_regression.py::"
+                "UpstreamFunctionFileBundleRegressionTest::"
+                "test_vendored_mcp_function_level_repair_reuses_without_non_target_drift"
+            ),
+            (
+                "tests/test_upstream_function_file_bundle_regression.py::"
+                "UpstreamFunctionFileBundleRegressionTest::"
+                "test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift"
+            ),
+        ],
+        "source": {
+            "package": "mcp-python-sdk",
+            "license": "MIT",
+            "manifest_sha256": "8ca78f36a6ffea447eb924136c0ede1002a018f1fe1597c51a630283d295f45a",
+        },
+        "task_proofs": [
+            {"schema_version": "external-heldout-repair-proof/v0.1", "task_id": "validation"},
+            {"schema_version": "external-heldout-repair-proof/v0.1", "task_id": "wrapper"},
+        ],
+        "not_proof": [
+            "external benchmark standing",
+            "external review",
+            "endorsement",
+            "stars",
+            "reposts",
+            "native live autonomy",
+            "broad unknown-repository repair",
+            "current remote CI proof",
+            "owner license decision",
+        ],
+    }
+    linked_text = json.dumps(linked_external_heldout_summary, indent=2, sort_keys=True) + "\n"
+    artifact_summary["linked_external_heldout"] = {
+        "schema_version": "autonomous-linked-external-heldout/v0.1",
+        "status": "passed",
+        "summary_path": "linked_external_heldout/last_summary.json",
+        "summary_sha256": hashlib.sha256(linked_text.encode("utf-8")).hexdigest(),
+        "source_package": "mcp-python-sdk",
+        "source_license": "MIT",
+        "source_manifest_sha256": linked_external_heldout_summary["source"]["manifest_sha256"],
+        "selected_tests": linked_external_heldout_summary["selected_tests"],
+        "observed_pytest": linked_external_heldout_summary["observed_pytest"],
+        "task_proof_count": 2,
+        "external_source_heldout": True,
+        "heldout_from_autonomous_gate": True,
+        "independent_external_benchmark": False,
+        "not_proof": linked_external_heldout_summary["not_proof"],
+    }
     artifact_payload = {
         "artifacts": [
             {
@@ -1927,6 +1989,7 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     ) -> str:
         with zipfile.ZipFile(artifact_zip, "w") as archive:
             archive.writestr("last_summary.json", json.dumps(summary))
+            archive.writestr("linked_external_heldout/last_summary.json", linked_text)
             archive.writestr(
                 "task_source_provenance_manifest.json",
                 manifest_text
@@ -3380,6 +3443,8 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
         "  echo '.                                                                        [100%]'\n"
         "  if [[ \"$args\" == *test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair* ]]; then\n"
         "    echo '4 passed in 0.01s'\n"
+        "  elif [[ \"$args\" == *test_vendored_mcp_function_level_repair_reuses_without_non_target_drift* ]]; then\n"
+        "    echo '2 passed in 0.01s'\n"
         "  elif [[ \"$args\" == *test_upstream_function_file_bundle_regression* ]]; then\n"
         "    echo '1 passed in 0.01s'\n"
         "  else\n"
@@ -3406,6 +3471,66 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
         "        for proof in fixture[segment]:\n"
         "            path = segment_dir / (proof['test_name'] + '.json')\n"
         "            path.write_text(json.dumps(proof, indent=2, sort_keys=True) + '\\n', encoding='utf-8')\n"
+        "external_proof_root = os.environ.get('OPENMAKO_EXTERNAL_HELDOUT_TASK_PROOF_DIR')\n"
+        "if external_proof_root and 'test_vendored_mcp_function_level_repair_reuses_without_non_target_drift' in sys.argv[2]:\n"
+        "    proof_dir = Path(external_proof_root)\n"
+        "    proof_dir.mkdir(parents=True, exist_ok=True)\n"
+        "    boundaries = [\n"
+        "        'native benchmark ingestion',\n"
+        "        'live patch proof',\n"
+        "        'broad unknown-repository repair',\n"
+        "        'external benchmark standing',\n"
+        "        'current remote CI proof',\n"
+        "    ]\n"
+        "    counts = {\n"
+        "        'no_learning_solved': 0,\n"
+        "        'approved_learning_solved': 2,\n"
+        "        'hidden_stage2_tasks': 2,\n"
+        "        'stability_solved': 4,\n"
+        "    }\n"
+        "    for task_id, function_name in {\n"
+        "        'vendored_mcp_tool_name_validation_function_repair': 'validate_tool_name',\n"
+        "        'vendored_mcp_tool_name_wrapper_seed_repair': 'validate_and_warn_tool_name',\n"
+        "    }.items():\n"
+        "        before = {'command': ['python', '-m', 'pytest', 'before'], 'returncode': 1}\n"
+        "        agent = {'command': ['run_agent_loop', task_id], 'ok': True, 'returncode': 0}\n"
+        "        after = {'command': ['python', '-m', 'pytest', 'after'], 'returncode': 0}\n"
+        "        proof = {\n"
+        "            'schema_version': 'external-heldout-repair-proof/v0.1',\n"
+        "            'task_id': task_id,\n"
+        "            'source_package': 'mcp-python-sdk',\n"
+        "            'source_repository': 'https://github.com/modelcontextprotocol/python-sdk',\n"
+        "            'external_source_heldout': True,\n"
+        "            'heldout_from_autonomous_gate': True,\n"
+        "            'independent_external_benchmark': False,\n"
+        "            'target_path': 'mcp/shared/tool_name_validation.py',\n"
+        "            'function_name': function_name,\n"
+        "            'source_sha256': '0' * 64,\n"
+        "            'broken_source_sha256': '1' * 64,\n"
+        "            'repaired_source_sha256': '2' * 64,\n"
+        "            'before_failure': before,\n"
+        "            'after_test': after,\n"
+        "            'patch_scope': {\n"
+        "                'files_touched': ['mcp/shared/tool_name_validation.py'],\n"
+        "                'stage1_changed_files': ['mcp/shared/tool_name_validation.py'],\n"
+        "                'approved_learning_changed_files': [\n"
+        "                    ['mcp/shared/tool_name_validation.py'],\n"
+        "                    ['mcp/shared/tool_name_validation.py'],\n"
+        "                ],\n"
+        "                'approved_learning_out_of_scope_files': [[], []],\n"
+        "            },\n"
+        "            'diff': {\n"
+        "                'unified_diff': ['@@', '+def ' + function_name + '(name):', '+    return name'],\n"
+        "                'line_count': 3,\n"
+        "                'contains_target_function': True,\n"
+        "            },\n"
+        "            'agent_diagnosis': {'observations': ['missing validation branch']},\n"
+        "            'command_log': [before, agent, after],\n"
+        "            'final_claim': 'vendored MCP held-out repair task completed with supplied evidence',\n"
+        "            'evidence_boundary': {'not_proof': boundaries},\n"
+        "            'observed_counts': counts,\n"
+        "        }\n"
+        "        (proof_dir / (task_id + '.json')).write_text(json.dumps(proof, indent=2, sort_keys=True) + '\\n', encoding='utf-8')\n"
         "PY\n"
         "  exit 0\n"
         "fi\n"

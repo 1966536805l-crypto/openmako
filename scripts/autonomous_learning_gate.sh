@@ -13,6 +13,7 @@ SUMMARY_JSON="${OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON:-.quantagent/auto
 SUMMARY_DIR="$(dirname -- "$SUMMARY_JSON")"
 PYTEST_LOG_DIR="$SUMMARY_DIR/pytest_logs"
 TASK_PROOF_DIR="$SUMMARY_DIR/task_proofs"
+LINKED_EXTERNAL_HELDOUT_SUMMARY_JSON="${OPENMAKO_AUTONOMOUS_LINKED_EXTERNAL_HELDOUT_SUMMARY_JSON:-$SUMMARY_DIR/linked_external_heldout/last_summary.json}"
 TASK_SOURCE_MANIFEST="${OPENMAKO_AUTONOMOUS_TASK_SOURCE_MANIFEST:-scripts/autonomous_task_source_provenance.json}"
 export OPENMAKO_AUTONOMOUS_TASK_PROOF_DIR="$TASK_PROOF_DIR"
 CURRENT_SEGMENT=""
@@ -126,6 +127,83 @@ payload = {
     ],
 }
 path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
+record_linked_external_heldout() {
+  "$PYTHON_BIN" - "$SUMMARY_JSON" "$LINKED_EXTERNAL_HELDOUT_SUMMARY_JSON" <<'PY'
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+summary_path = Path(sys.argv[1])
+heldout_path = Path(sys.argv[2])
+if not heldout_path.is_file():
+    raise SystemExit(f"autonomous-learning-gate: linked external-heldout summary missing: {heldout_path}")
+summary = json.loads(summary_path.read_text(encoding="utf-8"))
+heldout_text = heldout_path.read_text(encoding="utf-8")
+heldout = json.loads(heldout_text)
+errors = []
+if heldout.get("schema_version") != "external-heldout-benchmark-gate/v0.1":
+    errors.append("schema_version")
+if heldout.get("status") != "passed":
+    errors.append("status")
+if heldout.get("external_source_heldout") is not True:
+    errors.append("external_source_heldout")
+if heldout.get("heldout_from_autonomous_gate") is not True:
+    errors.append("heldout_from_autonomous_gate")
+if heldout.get("independent_external_benchmark") is not False:
+    errors.append("independent_external_benchmark")
+observed = heldout.get("observed_pytest")
+if not isinstance(observed, dict) or observed.get("exit_code") != 0 or observed.get("passed") != 2:
+    errors.append("observed_pytest")
+selected = heldout.get("selected_tests")
+if not isinstance(selected, list) or len(selected) != 2 or len(selected) != len(set(selected)):
+    errors.append("selected_tests")
+task_proofs = heldout.get("task_proofs")
+if not isinstance(task_proofs, list) or len(task_proofs) != 2:
+    errors.append("task_proofs")
+not_proof = set(heldout.get("not_proof") or [])
+required_not_proof = {
+    "external benchmark standing",
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "native live autonomy",
+    "broad unknown-repository repair",
+    "current remote CI proof",
+    "owner license decision",
+}
+if not required_not_proof.issubset(not_proof):
+    errors.append("not_proof")
+if errors:
+    raise SystemExit(
+        "autonomous-learning-gate: linked external-heldout invalid fields="
+        + ",".join(errors)
+    )
+try:
+    relative = str(heldout_path.relative_to(summary_path.parent))
+except ValueError:
+    relative = str(heldout_path)
+summary["linked_external_heldout"] = {
+    "schema_version": "autonomous-linked-external-heldout/v0.1",
+    "status": "passed",
+    "summary_path": relative,
+    "summary_sha256": hashlib.sha256(heldout_text.encode("utf-8")).hexdigest(),
+    "source_package": heldout.get("source", {}).get("package"),
+    "source_license": heldout.get("source", {}).get("license"),
+    "source_manifest_sha256": heldout.get("source", {}).get("manifest_sha256"),
+    "selected_tests": selected,
+    "observed_pytest": observed,
+    "task_proof_count": len(task_proofs),
+    "external_source_heldout": True,
+    "heldout_from_autonomous_gate": True,
+    "independent_external_benchmark": False,
+    "not_proof": heldout.get("not_proof"),
+}
+summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 PY
 }
 
@@ -612,6 +690,54 @@ required_not_proof = {
 if not isinstance(not_proof, list) or set(not_proof) != required_not_proof:
     errors.append("not_proof")
 
+linked = payload.get("linked_external_heldout")
+if not isinstance(linked, dict):
+    errors.append("linked_external_heldout")
+    linked = {}
+if linked.get("schema_version") != "autonomous-linked-external-heldout/v0.1":
+    errors.append("linked_external_heldout.schema_version")
+if linked.get("status") != "passed":
+    errors.append("linked_external_heldout.status")
+summary_path_value = linked.get("summary_path")
+if not isinstance(summary_path_value, str) or summary_path_value != "linked_external_heldout/last_summary.json":
+    errors.append("linked_external_heldout.summary_path")
+else:
+    linked_summary_path = path.parent / summary_path_value
+    try:
+        linked_summary_text = linked_summary_path.read_text(encoding="utf-8")
+        linked_payload = json.loads(linked_summary_text)
+    except Exception:
+        linked_summary_text = ""
+        linked_payload = {}
+        errors.append("linked_external_heldout.summary_path")
+    if hashlib.sha256(linked_summary_text.encode("utf-8")).hexdigest() != linked.get("summary_sha256"):
+        errors.append("linked_external_heldout.summary_sha256")
+    if linked_payload.get("external_source_heldout") is not True:
+        errors.append("linked_external_heldout.external_source_heldout")
+    if linked_payload.get("heldout_from_autonomous_gate") is not True:
+        errors.append("linked_external_heldout.heldout_from_autonomous_gate")
+    if linked_payload.get("independent_external_benchmark") is not False:
+        errors.append("linked_external_heldout.independent_external_benchmark")
+if linked.get("external_source_heldout") is not True:
+    errors.append("linked_external_heldout.external_source_heldout")
+if linked.get("heldout_from_autonomous_gate") is not True:
+    errors.append("linked_external_heldout.heldout_from_autonomous_gate")
+if linked.get("independent_external_benchmark") is not False:
+    errors.append("linked_external_heldout.independent_external_benchmark")
+observed = linked.get("observed_pytest")
+if not isinstance(observed, dict) or observed.get("exit_code") != 0 or observed.get("passed") != 2:
+    errors.append("linked_external_heldout.observed_pytest")
+if linked.get("task_proof_count") != 2:
+    errors.append("linked_external_heldout.task_proof_count")
+if not isinstance(linked.get("selected_tests"), list) or len(linked.get("selected_tests")) != 2:
+    errors.append("linked_external_heldout.selected_tests")
+if linked.get("source_package") != "mcp-python-sdk":
+    errors.append("linked_external_heldout.source_package")
+if linked.get("source_license") != "MIT":
+    errors.append("linked_external_heldout.source_license")
+if not isinstance(linked.get("source_manifest_sha256"), str) or not re.fullmatch(r"[0-9a-f]{64}", linked["source_manifest_sha256"]):
+    errors.append("linked_external_heldout.source_manifest_sha256")
+
 if errors:
     print("autonomous-learning-gate: invalid summary fields=" + ",".join(errors), file=sys.stderr)
     raise SystemExit(1)
@@ -753,6 +879,11 @@ run_pytest_segment "cross_upstream_no_seed_reuse" "${#CROSS_UPSTREAM_TESTS[@]}" 
   "${CROSS_UPSTREAM_TESTS[@]}" \
   -q
 
+echo "autonomous-learning-gate: running linked external-heldout repair evidence"
+OPENMAKO_EXTERNAL_HELDOUT_BENCHMARK_SUMMARY_JSON="$LINKED_EXTERNAL_HELDOUT_SUMMARY_JSON" \
+  bash scripts/external_heldout_benchmark_gate.sh
+record_linked_external_heldout
+
 collect_task_proofs
 update_summary_status passed
 maybe_corrupt_summary_for_test
@@ -765,4 +896,5 @@ fi
 echo "autonomous-learning-gate: PASS"
 echo "autonomous-learning-gate: summary=$SUMMARY_JSON"
 echo "autonomous-learning-gate: task-source-provenance=repo-authored-regression-pack external-heldout=false"
+echo "autonomous-learning-gate: linked-external-heldout=true summary=$LINKED_EXTERNAL_HELDOUT_SUMMARY_JSON"
 echo "autonomous-learning-gate: not-proof=native live autonomy, broad unknown-repository repair, external benchmark standing, remote CI proof, external review, independent external held-out benchmark, endorsement, stars, reposts"

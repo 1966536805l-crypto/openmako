@@ -94,6 +94,8 @@ def verify_public_mirror() -> dict:
     for required in ("last_summary.json", "task_source_provenance_manifest.json"):
         if required not in files:
             fail("autonomous_public_mirror_required_file_missing", required)
+    if "linked_external_heldout/last_summary.json" not in files:
+        fail("autonomous_public_mirror_linked_external_heldout_missing")
     pytest_logs = [name for name in files if name.startswith("pytest_logs/") and name.endswith(".log")]
     if len(pytest_logs) < 3:
         fail("autonomous_public_mirror_pytest_logs_missing")
@@ -204,6 +206,37 @@ if provenance.get("independence_claim") != "repo-authored-regression-pack":
     fail("autonomous_summary_independence_claim_mismatch")
 if provenance.get("external_heldout") is not False:
     fail("autonomous_summary_external_heldout_mismatch")
+linked = summary.get("linked_external_heldout")
+if not isinstance(linked, dict):
+    fail("autonomous_summary_linked_external_heldout_missing")
+if linked.get("schema_version") != "autonomous-linked-external-heldout/v0.1":
+    fail("autonomous_summary_linked_external_heldout_schema_mismatch")
+if linked.get("status") != "passed":
+    fail("autonomous_summary_linked_external_heldout_not_passed")
+if linked.get("summary_path") != "linked_external_heldout/last_summary.json":
+    fail("autonomous_summary_linked_external_heldout_path_mismatch")
+linked_summary_path = summary_path.parent / "linked_external_heldout" / "last_summary.json"
+if not linked_summary_path.is_file():
+    fail("autonomous_linked_external_heldout_summary_missing")
+linked_summary_text = linked_summary_path.read_text(encoding="utf-8")
+if hashlib.sha256(linked_summary_text.encode("utf-8")).hexdigest() != linked.get("summary_sha256"):
+    fail("autonomous_linked_external_heldout_summary_digest_mismatch")
+try:
+    linked_summary = json.loads(linked_summary_text)
+except Exception as exc:
+    fail("autonomous_linked_external_heldout_summary_invalid_json", str(exc))
+if linked_summary.get("schema_version") != "external-heldout-benchmark-gate/v0.1":
+    fail("autonomous_linked_external_heldout_summary_schema_mismatch")
+if linked_summary.get("status") != "passed":
+    fail("autonomous_linked_external_heldout_summary_not_passed")
+if linked.get("external_source_heldout") is not True or linked_summary.get("external_source_heldout") is not True:
+    fail("autonomous_linked_external_heldout_flag_mismatch")
+if linked.get("heldout_from_autonomous_gate") is not True or linked_summary.get("heldout_from_autonomous_gate") is not True:
+    fail("autonomous_linked_external_heldout_autonomy_boundary_mismatch")
+if linked.get("independent_external_benchmark") is not False or linked_summary.get("independent_external_benchmark") is not False:
+    fail("autonomous_linked_external_heldout_benchmark_boundary_mismatch")
+if linked.get("task_proof_count") != 2 or len(linked_summary.get("task_proofs") or []) != 2:
+    fail("autonomous_linked_external_heldout_task_proof_count_mismatch")
 node_id_re = re.compile(r"^tests/[A-Za-z0-9_./]+\.py::[A-Za-z_][A-Za-z0-9_]*::test_[A-Za-z0-9_]+$")
 all_selected: set[str] = set()
 def selected_tests_sha256(selected: list[str]) -> str:
@@ -300,6 +333,12 @@ print(f"remote-autonomous-public-evidence-snapshot: artifact-digest={mirror_meta
 print(f"remote-autonomous-public-evidence-snapshot: selected-test-count={len(all_selected)}")
 print(f"remote-autonomous-public-evidence-snapshot: upstream-task-proof-count={len(upstream_proofs)}")
 print(f"remote-autonomous-public-evidence-snapshot: cross-upstream-task-proof-count={len(cross_proofs)}")
+print("remote-autonomous-public-evidence-snapshot: linked-external-heldout=true")
+print(f"remote-autonomous-public-evidence-snapshot: linked-external-heldout-task-proof-count={linked['task_proof_count']}")
+print(
+    "remote-autonomous-public-evidence-snapshot: "
+    f"linked-external-heldout-independent-benchmark={str(linked['independent_external_benchmark']).lower()}"
+)
 print(f"remote-autonomous-public-evidence-snapshot: latest-index={'present' if latest else 'missing'}")
 print(
     "remote-autonomous-public-evidence-snapshot: "

@@ -544,6 +544,71 @@ class CliWrapperTest(unittest.TestCase):
                 "reposts",
             ],
         }
+        linked_dir = summary_dir / "linked_external_heldout"
+        linked_dir.mkdir(parents=True, exist_ok=True)
+        linked_summary = {
+            "schema_version": "external-heldout-benchmark-gate/v0.1",
+            "status": "passed",
+            "external_source_heldout": True,
+            "heldout_from_autonomous_gate": True,
+            "independent_external_benchmark": False,
+            "observed_pytest": {
+                "exit_code": 0,
+                "passed": 2,
+                "skipped": 0,
+                "warnings": 0,
+            },
+            "selected_tests": [
+                (
+                    "tests/test_upstream_function_file_bundle_regression.py::"
+                    "UpstreamFunctionFileBundleRegressionTest::"
+                    "test_vendored_mcp_function_level_repair_reuses_without_non_target_drift"
+                ),
+                (
+                    "tests/test_upstream_function_file_bundle_regression.py::"
+                    "UpstreamFunctionFileBundleRegressionTest::"
+                    "test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift"
+                ),
+            ],
+            "source": {
+                "package": "mcp-python-sdk",
+                "license": "MIT",
+                "manifest_sha256": "8ca78f36a6ffea447eb924136c0ede1002a018f1fe1597c51a630283d295f45a",
+            },
+            "task_proofs": [
+                {"schema_version": "external-heldout-repair-proof/v0.1", "task_id": "validation"},
+                {"schema_version": "external-heldout-repair-proof/v0.1", "task_id": "wrapper"},
+            ],
+            "not_proof": [
+                "external benchmark standing",
+                "external review",
+                "endorsement",
+                "stars",
+                "reposts",
+                "native live autonomy",
+                "broad unknown-repository repair",
+                "current remote CI proof",
+                "owner license decision",
+            ],
+        }
+        linked_text = json.dumps(linked_summary, indent=2, sort_keys=True) + "\n"
+        (linked_dir / "last_summary.json").write_text(linked_text, encoding="utf-8")
+        summary["linked_external_heldout"] = {
+            "schema_version": "autonomous-linked-external-heldout/v0.1",
+            "status": "passed",
+            "summary_path": "linked_external_heldout/last_summary.json",
+            "summary_sha256": hashlib.sha256(linked_text.encode("utf-8")).hexdigest(),
+            "source_package": "mcp-python-sdk",
+            "source_license": "MIT",
+            "source_manifest_sha256": linked_summary["source"]["manifest_sha256"],
+            "selected_tests": linked_summary["selected_tests"],
+            "observed_pytest": linked_summary["observed_pytest"],
+            "task_proof_count": 2,
+            "external_source_heldout": True,
+            "heldout_from_autonomous_gate": True,
+            "independent_external_benchmark": False,
+            "not_proof": linked_summary["not_proof"],
+        }
         (summary_dir / "last_summary.json").write_text(
             json.dumps(summary, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",

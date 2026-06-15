@@ -272,11 +272,11 @@ def read_artifact_bundle_from_zip(data: bytes) -> tuple[dict, dict[str, str]]:
             candidates = [
                 name
                 for name in archive_text_files
-                if name.endswith("last_summary.json") and not name.endswith("/")
+                if name == "last_summary.json"
             ]
             if len(candidates) != 1:
                 print(
-                    "remote-autonomous-learning-snapshot: artifact zip must contain exactly one "
+                    "remote-autonomous-learning-snapshot: artifact zip must contain exactly one root "
                     f"last_summary.json, found={len(candidates)}",
                     file=sys.stderr,
                 )
@@ -715,6 +715,122 @@ def validate_artifact_summary(payload: dict, archive_text_files: dict[str, str])
         "remote-autonomous-learning-snapshot: "
         "artifact-summary-external-heldout="
         f"{str(provenance.get('external_heldout')).lower()}"
+    )
+
+    linked = payload.get("linked_external_heldout")
+    if not isinstance(linked, dict):
+        errors.append("linked_external_heldout")
+        linked = {}
+    if linked.get("schema_version") != "autonomous-linked-external-heldout/v0.1":
+        errors.append("linked_external_heldout.schema_version")
+    if linked.get("status") != "passed":
+        errors.append("linked_external_heldout.status")
+    linked_summary_path = linked.get("summary_path")
+    if linked_summary_path != "linked_external_heldout/last_summary.json":
+        errors.append("linked_external_heldout.summary_path")
+        linked_summary = {}
+    else:
+        linked_matches = [
+            name
+            for name in archive_text_files
+            if name == linked_summary_path or name.endswith("/" + linked_summary_path)
+        ]
+        if len(linked_matches) != 1:
+            errors.append("artifact.linked_external_heldout.summary")
+            linked_summary = {}
+        else:
+            linked_summary_name = linked_matches[0]
+            print(
+                "remote-autonomous-learning-snapshot: "
+                f"artifact-linked-external-heldout-summary={linked_summary_name}"
+            )
+            linked_summary_text = archive_text_files[linked_summary_name]
+            if hashlib.sha256(linked_summary_text.encode("utf-8")).hexdigest() != linked.get("summary_sha256"):
+                errors.append("linked_external_heldout.summary_sha256")
+            try:
+                linked_summary = json.loads(linked_summary_text)
+            except json.JSONDecodeError:
+                errors.append("artifact.linked_external_heldout.summary")
+                linked_summary = {}
+    if linked_summary.get("schema_version") != "external-heldout-benchmark-gate/v0.1":
+        errors.append("linked_external_heldout.summary.schema_version")
+    if linked_summary.get("status") != "passed":
+        errors.append("linked_external_heldout.summary.status")
+    if linked.get("external_source_heldout") is not True or linked_summary.get("external_source_heldout") is not True:
+        errors.append("linked_external_heldout.external_source_heldout")
+    if linked.get("heldout_from_autonomous_gate") is not True or linked_summary.get("heldout_from_autonomous_gate") is not True:
+        errors.append("linked_external_heldout.heldout_from_autonomous_gate")
+    if linked.get("independent_external_benchmark") is not False or linked_summary.get("independent_external_benchmark") is not False:
+        errors.append("linked_external_heldout.independent_external_benchmark")
+    linked_observed = linked.get("observed_pytest")
+    linked_summary_observed = linked_summary.get("observed_pytest")
+    if (
+        not isinstance(linked_observed, dict)
+        or linked_observed.get("exit_code") != 0
+        or linked_observed.get("passed") != 2
+        or linked_observed != linked_summary_observed
+    ):
+        errors.append("linked_external_heldout.observed_pytest")
+    linked_selected = linked.get("selected_tests")
+    linked_summary_selected = linked_summary.get("selected_tests")
+    if (
+        not isinstance(linked_selected, list)
+        or len(linked_selected) != 2
+        or len(linked_selected) != len(set(linked_selected))
+        or linked_selected != linked_summary_selected
+    ):
+        errors.append("linked_external_heldout.selected_tests")
+    linked_proofs = linked_summary.get("task_proofs")
+    if not isinstance(linked_proofs, list) or len(linked_proofs) != 2 or linked.get("task_proof_count") != 2:
+        errors.append("linked_external_heldout.task_proof_count")
+    source = linked_summary.get("source")
+    if not isinstance(source, dict):
+        source = {}
+        errors.append("linked_external_heldout.source")
+    if linked.get("source_package") != "mcp-python-sdk" or source.get("package") != "mcp-python-sdk":
+        errors.append("linked_external_heldout.source_package")
+    if linked.get("source_license") != "MIT" or source.get("license") != "MIT":
+        errors.append("linked_external_heldout.source_license")
+    if (
+        not isinstance(linked.get("source_manifest_sha256"), str)
+        or not re.fullmatch(r"[0-9a-f]{64}", linked["source_manifest_sha256"])
+        or linked.get("source_manifest_sha256") != source.get("manifest_sha256")
+    ):
+        errors.append("linked_external_heldout.source_manifest_sha256")
+    linked_not_proof = set(linked.get("not_proof") or [])
+    required_linked_not_proof = {
+        "external benchmark standing",
+        "external review",
+        "endorsement",
+        "stars",
+        "reposts",
+        "native live autonomy",
+        "broad unknown-repository repair",
+        "current remote CI proof",
+        "owner license decision",
+    }
+    if not required_linked_not_proof.issubset(linked_not_proof):
+        errors.append("linked_external_heldout.not_proof")
+
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-linked-external-heldout="
+        f"{str(linked.get('external_source_heldout')).lower()}"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-linked-external-heldout-task-proofs="
+        f"{linked.get('task_proof_count')}"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-linked-external-heldout-selected-tests="
+        f"{len(linked.get('selected_tests') or [])}"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-linked-external-heldout-independent-benchmark="
+        f"{str(linked.get('independent_external_benchmark')).lower()}"
     )
 
     if errors:

@@ -83,6 +83,34 @@ if len(task_proofs.get("upstream_hidden_pack_reuse") or []) < 1:
     raise SystemExit("publish-autonomous-public-evidence-branch: upstream task proof missing")
 if len(task_proofs.get("cross_upstream_no_seed_reuse") or []) < 4:
     raise SystemExit("publish-autonomous-public-evidence-branch: cross-upstream task proofs missing")
+linked = summary.get("linked_external_heldout")
+if not isinstance(linked, dict):
+    raise SystemExit("publish-autonomous-public-evidence-branch: linked external-heldout evidence missing")
+if linked.get("schema_version") != "autonomous-linked-external-heldout/v0.1":
+    raise SystemExit("publish-autonomous-public-evidence-branch: linked external-heldout schema mismatch")
+if linked.get("status") != "passed":
+    raise SystemExit("publish-autonomous-public-evidence-branch: linked external-heldout is not passed")
+if linked.get("summary_path") != "linked_external_heldout/last_summary.json":
+    raise SystemExit("publish-autonomous-public-evidence-branch: linked external-heldout summary path mismatch")
+linked_summary_path = summary_dir / "linked_external_heldout" / "last_summary.json"
+if not linked_summary_path.is_file():
+    raise SystemExit("publish-autonomous-public-evidence-branch: linked external-heldout summary missing")
+linked_summary_text = linked_summary_path.read_text(encoding="utf-8")
+if hashlib.sha256(linked_summary_text.encode("utf-8")).hexdigest() != linked.get("summary_sha256"):
+    raise SystemExit("publish-autonomous-public-evidence-branch: linked external-heldout summary digest mismatch")
+linked_summary = json.loads(linked_summary_text)
+if linked_summary.get("schema_version") != "external-heldout-benchmark-gate/v0.1":
+    raise SystemExit("publish-autonomous-public-evidence-branch: linked external-heldout summary schema mismatch")
+if linked_summary.get("status") != "passed":
+    raise SystemExit("publish-autonomous-public-evidence-branch: linked external-heldout summary is not passed")
+if linked_summary.get("external_source_heldout") is not True or linked.get("external_source_heldout") is not True:
+    raise SystemExit("publish-autonomous-public-evidence-branch: linked external-heldout flag mismatch")
+if linked_summary.get("heldout_from_autonomous_gate") is not True or linked.get("heldout_from_autonomous_gate") is not True:
+    raise SystemExit("publish-autonomous-public-evidence-branch: linked external-heldout autonomy boundary mismatch")
+if linked_summary.get("independent_external_benchmark") is not False or linked.get("independent_external_benchmark") is not False:
+    raise SystemExit("publish-autonomous-public-evidence-branch: linked external-heldout benchmark boundary mismatch")
+if linked.get("task_proof_count") != 2 or len(linked_summary.get("task_proofs") or []) != 2:
+    raise SystemExit("publish-autonomous-public-evidence-branch: linked external-heldout task proof count mismatch")
 required_not_proof = {
     "native live autonomy",
     "broad unknown-repository repair",
@@ -171,6 +199,8 @@ for path in sorted(autonomous_dir.rglob("*")):
 for required in ("last_summary.json", "task_source_provenance_manifest.json"):
     if required not in files:
         raise SystemExit(f"publish-autonomous-public-evidence-branch: mirror missing required output {required}")
+if "linked_external_heldout/last_summary.json" not in files:
+    raise SystemExit("publish-autonomous-public-evidence-branch: mirror missing linked external-heldout summary")
 pytest_logs = [name for name in files if name.startswith("pytest_logs/") and name.endswith(".log")]
 if len(pytest_logs) < 3:
     raise SystemExit("publish-autonomous-public-evidence-branch: mirror missing pytest logs")
