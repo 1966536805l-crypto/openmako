@@ -1,0 +1,70 @@
+{
+  "after_test_count": 2,
+  "before_failure_count": 2,
+  "external_source_heldout": true,
+  "final_claims": {
+    "vendored_mcp_tool_name_validation_function_repair": "For this vendored MCP held-out repair task, the agent loop changed only mcp/shared/tool_name_validation.py and the local package tests passed.",
+    "vendored_mcp_tool_name_wrapper_seed_repair": "For this vendored MCP held-out repair task, the agent loop changed only mcp/shared/tool_name_validation.py and the local package tests passed."
+  },
+  "generated_at_utc": "2026-06-15T10:12:00.077113+00:00",
+  "heldout_from_autonomous_gate": true,
+  "independent_external_benchmark": false,
+  "invocation": {
+    "git_commit": "17186f8ca3311b3f0a28d9076fd314c1b1b1c05a",
+    "proof_command": "bash scripts/heldout_reproduction_packet.sh",
+    "source_summary_json": ".quantagent/autonomous_learning_gate/linked_external_heldout/last_summary.json"
+  },
+  "labels": {
+    "vendored_mcp_tool_name_validation_function_repair": "supported_repair_claim",
+    "vendored_mcp_tool_name_wrapper_seed_repair": "supported_repair_claim"
+  },
+  "not_proof": [
+    "independent external benchmark standing",
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "native live autonomy",
+    "broad unknown-repository repair",
+    "GitHub Actions artifact zip contents"
+  ],
+  "raw_evidence_files": {
+    ".quantagent/autonomous_learning_gate/linked_external_heldout/last_summary.json": "sha256:363e872b4acb63bf3bc49140ce2563051e972d5c6d25866e492baef439f966c1",
+    ".quantagent/autonomous_learning_gate/linked_external_heldout/pytest.log": "sha256:17dc965c4691a25e8ec1e68ab4f2c4fd0e185e060ce152922feb2afc57b3d8e1",
+    ".quantagent/autonomous_learning_gate/linked_external_heldout/task_proofs/vendored_mcp_tool_name_validation_function_repair.json": "sha256:bb086c461eb238f5d2ab9b4f28eb604cb91fefef1447c35f0ab81d0fba66f5e0",
+    ".quantagent/autonomous_learning_gate/linked_external_heldout/task_proofs/vendored_mcp_tool_name_wrapper_seed_repair.json": "sha256:db2c2dada278c79db710859c44f99a8d5060b7edd6ded492f4178eaaf4868342"
+  },
+  "schema_version": "heldout-reproduction-packet/v0.1",
+  "selected_tests": [
+    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_function_level_repair_reuses_without_non_target_drift",
+    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift"
+  ],
+  "source": {
+    "license": "MIT",
+    "license_path": "third_party/mcp_python_sdk/LICENSE",
+    "license_sha256": "5e13dbbc1d120fc2a03cecde7c91424ae2d7de11b63d58ded2f4431e261ee50d",
+    "manifest_entry_count": 5,
+    "manifest_path": "third_party/mcp_python_sdk/MANIFEST.sha256",
+    "manifest_sha256": "8ca78f36a6ffea447eb924136c0ede1002a018f1fe1597c51a630283d295f45a",
+    "package": "mcp-python-sdk",
+    "repository": "https://github.com/modelcontextprotocol/python-sdk",
+    "selected_source_files": {
+      "third_party/mcp_python_sdk/src/mcp/shared/tool_name_validation.py": {
+        "bytes": 4531,
+        "sha256": "99312f833b0cb246b2ca294b68890fee521a0388def1c9e48fdc5821cea1b60a"
+      }
+    }
+  },
+  "source_summary": {
+    "path": ".quantagent/autonomous_learning_gate/linked_external_heldout/last_summary.json",
+    "schema_version": "external-heldout-benchmark-gate/v0.1",
+    "sha256": "sha256:363e872b4acb63bf3bc49140ce2563051e972d5c6d25866e492baef439f966c1"
+  },
+  "status": "passed",
+  "target_diff_count": 2,
+  "task_proof_count": 2,
+  "task_source_manifest": {
+    "path": "scripts/external_heldout_task_source_provenance.json",
+    "sha256": "3299acd85b831d5b733736806aa11a4ff8b2c344dd84e1647eb1bbe86f1df3f6"
+  }
+}
