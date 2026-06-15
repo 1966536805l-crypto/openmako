@@ -77,6 +77,19 @@ class CodingBenchTest(unittest.TestCase):
         self.assertEqual(payload["summary"]["total"], 1)
         self.assertEqual(payload["summary"]["cheated"], 0)
         self.assertIn("[PASS] add_numbers", markdown)
+        evidence = run.results[0].repair_evidence
+        self.assertEqual(evidence["schema_version"], "openmako-coding-bench-repair-evidence/v0.1")
+        self.assertEqual(evidence["label"], "supported_repair_claim")
+        self.assertEqual(evidence["before_failure"]["returncode"], 1)
+        self.assertEqual(evidence["after_test"]["returncode"], 0)
+        self.assertEqual(evidence["patch_scope"]["changed_files"], ["subject.py"])
+        self.assertEqual(evidence["diff"]["changed_files"], ["subject.py"])
+        self.assertGreater(evidence["diff"]["line_count"], 0)
+        self.assertIn("+    return a + b", "\n".join(evidence["diff"]["unified_diff_by_file"]["subject.py"]))
+        self.assertIn("CodingBench task add_numbers is supported as solved", evidence["final_claim"])
+        self.assertIn("broad unknown-repository repair", evidence["evidence_boundary"]["not_proof"])
+        self.assertIn("remote CI proof", evidence["evidence_boundary"]["not_proof"])
+        self.assertEqual(payload["results"][0]["repair_evidence"]["label"], "supported_repair_claim")
 
     def test_coding_bench_run_ids_do_not_collide_for_back_to_back_runs(self) -> None:
         with self.make_project() as tmp:
@@ -299,6 +312,7 @@ class CodingBenchTest(unittest.TestCase):
         self.assertEqual(result.patch_metrics.workspace_modified_files, ("subject.py",))
         self.assertEqual(result.patch_metrics.workspace_deleted_files, ())
         self.assertEqual(run.summary()["cheated"], 1)
+        self.assertEqual(result.repair_evidence, {})
 
     def test_coding_bench_same_step_learning_context_ablation_solves_without_cheating(self) -> None:
         with self.make_project() as tmp:
@@ -909,6 +923,9 @@ class CodingBenchTest(unittest.TestCase):
         self.assertEqual(result.status, "failed")
         self.assertEqual(result.failure_class, "no_patch")
         self.assertEqual(result.patch_metrics.changed_files, ())
+        self.assertEqual(result.repair_evidence["label"], "unsupported_repair_claim")
+        self.assertEqual(result.repair_evidence["after_test"]["returncode"], 1)
+        self.assertIn("not supported as solved", result.repair_evidence["final_claim"])
 
     def test_coding_bench_failed_result_classifies_validation_failure_with_changed_files(self) -> None:
         with self.make_project() as tmp:

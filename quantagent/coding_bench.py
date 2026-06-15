@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import difflib
 import hashlib
 import json
 import os
@@ -98,6 +99,7 @@ class CodingBenchResult:
     tags: tuple[str, ...] = ()
     failure_class: str = ""
     patch_metrics: CodingBenchPatchMetrics = field(default_factory=CodingBenchPatchMetrics)
+    repair_evidence: Mapping[str, Any] = field(default_factory=dict)
 
     @property
     def iterations(self) -> int:
@@ -117,6 +119,7 @@ class CodingBenchResult:
             "tags": list(self.tags),
             "failure_class": self.failure_class,
             "patch_metrics": self.patch_metrics.to_dict(),
+            "repair_evidence": dict(self.repair_evidence),
         }
 
 
@@ -471,6 +474,7 @@ def run_coding_bench_task(task: CodingBenchTask, workspace: str | Path, *, agent
                 patch_metrics=_patch_metrics(workspace_path, task_hashes_before, workspace_hashes_before, out_of_scope_files=out_of_scope_files),
             )
         if validation.ok:
+            patch_metrics = _patch_metrics(workspace_path, task_hashes_before, workspace_hashes_before, out_of_scope_files=out_of_scope_files)
             return CodingBenchResult(
                 task.id,
                 task.instruction,
@@ -481,7 +485,16 @@ def run_coding_bench_task(task: CodingBenchTask, workspace: str | Path, *, agent
                 attempts=tuple(attempts),
                 message=f"solved in {index} iteration(s)",
                 tags=task.tags,
-                patch_metrics=_patch_metrics(workspace_path, task_hashes_before, workspace_hashes_before, out_of_scope_files=out_of_scope_files),
+                patch_metrics=patch_metrics,
+                repair_evidence=_repair_evidence_packet(
+                    task,
+                    workspace_path,
+                    status="solved",
+                    solved=True,
+                    baseline=baseline,
+                    attempts=attempts,
+                    patch_metrics=patch_metrics,
+                ),
             )
         last_failure = _failure_text(validation)
 
@@ -509,6 +522,16 @@ def run_coding_bench_task(task: CodingBenchTask, workspace: str | Path, *, agent
         tags=task.tags,
         failure_class=failure_class,
         patch_metrics=patch_metrics,
+        repair_evidence=_repair_evidence_packet(
+            task,
+            workspace_path,
+            status="failed",
+            solved=False,
+            baseline=baseline,
+            attempts=attempts,
+            patch_metrics=patch_metrics,
+            failure_class=failure_class,
+        ),
     )
 
 
@@ -730,6 +753,128 @@ def _patch_metrics(
         workspace_modified_files=diff["modified"],
         workspace_deleted_files=diff["deleted"],
     )
+
+
+def _repair_evidence_packet(
+    task: CodingBenchTask,
+    workspace: Path,
+    *,
+    status: str,
+    solved: bool,
+    baseline: CodingBenchCommandResult,
+    attempts: Sequence[CodingBenchAttempt],
+    patch_metrics: CodingBenchPatchMetrics,
+    failure_class: str = "",
+) -> dict[str, Any]:
+    label = "supported_repair_claim" if solved and patch_metrics.changed_files and not patch_metrics.out_of_scope_files else "unsupported_repair_claim"
+    last_attempt = attempts[-1] if attempts else None
+    changed_hashes_before = {name: _sha256_text(task.files.get(name, "")) for name in patch_metrics.changed_files}
+    changed_hashes_after = {name: _file_hash(workspace / name) for name in patch_metrics.changed_files}
+    return {
+        "schema_version": "openmako-coding-bench-repair-evidence/v0.1",
+        "label": label,
+        "task_id": task.id,
+        "status": status,
+        "solved": solved,
+        "before_failure": baseline.to_dict(),
+        "agent_diagnosis": _agent_diagnosis_from_attempt(last_attempt),
+        "diff": _repair_diff_payload(task, workspace, patch_metrics.changed_files),
+        "after_test": last_attempt.validation.to_dict() if last_attempt else {},
+        "command_log": _repair_command_log(baseline, attempts),
+        "patch_scope": patch_metrics.to_dict(),
+        "source_hashes": {
+            "before": changed_hashes_before,
+            "after": changed_hashes_after,
+        },
+        "final_claim": _repair_final_claim(task.id, solved=solved, changed_files=patch_metrics.changed_files),
+        "evidence_boundary": {
+            "proves": [
+                "baseline validation failed before the agent command",
+                "the agent command ran in an isolated CodingBench workspace",
+                "post-agent validation command result was recorded",
+                "workspace patch scope was compared against task files",
+            ],
+            "not_proof": [
+                "native live autonomy",
+                "broad unknown-repository repair",
+                "third-party benchmark standing",
+                "external review",
+                "endorsement",
+                "stars",
+                "reposts",
+                "remote CI proof",
+            ],
+        },
+        "failure_class": failure_class,
+    }
+
+
+def _agent_diagnosis_from_attempt(attempt: CodingBenchAttempt | None) -> dict[str, Any]:
+    if attempt is None:
+        return {}
+    payload = _json_object_from_output(attempt.agent.stdout_preview)
+    return {
+        "returncode": attempt.agent.returncode,
+        "timed_out": attempt.agent.timed_out,
+        "stdout_preview": attempt.agent.stdout_preview,
+        "stderr_preview": attempt.agent.stderr_preview,
+        "reported_status": payload.get("status", "") if payload else "",
+        "reported_failure_class": payload.get("failure_class", "") if payload else "",
+    }
+
+
+def _repair_diff_payload(
+    task: CodingBenchTask,
+    workspace: Path,
+    changed_files: Sequence[str],
+) -> dict[str, Any]:
+    diffs: dict[str, list[str]] = {}
+    total_line_count = 0
+    for name in changed_files:
+        before = task.files.get(name, "")
+        after_path = workspace / name
+        after = after_path.read_text(encoding="utf-8") if after_path.exists() else ""
+        diff_lines = list(
+            difflib.unified_diff(
+                before.splitlines(keepends=True),
+                after.splitlines(keepends=True),
+                fromfile=f"before/{name}",
+                tofile=f"after/{name}",
+            )
+        )
+        rendered = [line.rstrip("\n") for line in diff_lines]
+        diffs[name] = rendered
+        total_line_count += len(rendered)
+    return {
+        "line_count": total_line_count,
+        "changed_files": list(changed_files),
+        "unified_diff_by_file": diffs,
+    }
+
+
+def _repair_command_log(
+    baseline: CodingBenchCommandResult,
+    attempts: Sequence[CodingBenchAttempt],
+) -> list[dict[str, Any]]:
+    log: list[dict[str, Any]] = [{"phase": "before_failure", "result": baseline.to_dict()}]
+    for attempt in attempts:
+        log.append({"phase": f"agent_attempt_{attempt.index}", "result": attempt.agent.to_dict()})
+        log.append({"phase": f"after_test_{attempt.index}", "result": attempt.validation.to_dict()})
+    return log
+
+
+def _repair_final_claim(task_id: str, *, solved: bool, changed_files: Sequence[str]) -> str:
+    if not solved:
+        return f"CodingBench task {task_id} is not supported as solved by this run."
+    files = ", ".join(changed_files) if changed_files else "no files"
+    return (
+        f"CodingBench task {task_id} is supported as solved for this isolated "
+        f"workspace run; changed files: {files}."
+    )
+
+
+def _sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def _workspace_file_hashes(root: Path) -> dict[str, str]:
