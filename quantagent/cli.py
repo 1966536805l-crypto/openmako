@@ -35,7 +35,7 @@ from .broker_gateway import BrokerGatewaySpec, build_broker_gateway_snapshot, re
 from .checkpoints import create_checkpoint, list_checkpoints, load_checkpoint, render_checkpoint_detail, render_checkpoints, restore_checkpoint
 from .channel_gateway import bind_sender_agent, create_pairing_code, handle_channel_message, list_channel_bindings, list_channel_gateway_events, pair_sender, resolve_sender_owner
 from .code_eval_fixtures import list_code_eval_fixtures, render_code_eval_fixture_list, render_code_eval_json, render_code_eval_markdown, render_code_eval_solve_json, render_code_eval_solve_markdown, run_code_eval_pack, run_code_eval_solve_pack
-from .coding_bench import CodingBenchTask, builtin_coding_bench_tasks, load_coding_bench_tasks, render_coding_bench_json, render_coding_bench_markdown, render_coding_bench_stability_json, render_coding_bench_stability_markdown, run_coding_bench, run_coding_bench_stability, run_coding_bench_task
+from .coding_bench import CodingBenchTask, builtin_coding_bench_tasks, coding_bench_task_source, load_coding_bench_tasks, render_coding_bench_json, render_coding_bench_markdown, render_coding_bench_stability_json, render_coding_bench_stability_markdown, run_coding_bench, run_coding_bench_stability, run_coding_bench_task, verify_coding_bench_task_manifest
 from .code_index import build_code_index, diagnose_code_index, editor_diagnostics, related_files, render_code_index_health, render_code_search_hits, render_editor_diagnostics, render_related_files, search_code_index, write_code_index
 from .config import load_config
 from .chat_ui import choose_context_decision, run_chat
@@ -5338,6 +5338,9 @@ def cmd_coding_bench(args: argparse.Namespace) -> int:
         tasks = load_coding_bench_tasks(args.task_file) if args.task_file else builtin_coding_bench_tasks()
         if args.limit is not None:
             tasks = tasks[: max(args.limit, 0)]
+        if args.task_manifest:
+            task_source = coding_bench_task_source(tasks, task_file=args.task_file or None, limit=args.limit)
+            verify_coding_bench_task_manifest(task_source, args.task_manifest)
         if args.coding_bench_command == "list":
             if args.json:
                 print(json.dumps([task.to_dict() for task in tasks], ensure_ascii=False, indent=2, sort_keys=True))
@@ -5354,6 +5357,7 @@ def cmd_coding_bench(args: argparse.Namespace) -> int:
                     agent_command=getattr(args, "agent_command", ""),
                     agent=getattr(args, "agent", ""),
                     task_file=args.task_file or None,
+                    task_manifest=args.task_manifest or None,
                     limit=args.limit,
                     repeats=repeats,
                     keep_workspaces=args.keep_workspaces,
@@ -5371,6 +5375,7 @@ def cmd_coding_bench(args: argparse.Namespace) -> int:
                 agent_command=getattr(args, "agent_command", ""),
                 agent=getattr(args, "agent", ""),
                 task_file=args.task_file or None,
+                task_manifest=args.task_manifest or None,
                 limit=args.limit,
                 keep_workspaces=args.keep_workspaces,
             )
@@ -8189,6 +8194,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_project(p)
     p.add_argument("--json", action="store_true")
     p.add_argument("--task-file", default="", help="JSON task file; defaults to built-in 30-task pack")
+    p.add_argument("--task-manifest", default="", help="Approved task-source manifest JSON; fails closed if the evaluated task pack differs")
     p.add_argument("--limit", type=int, default=None, help="Limit tasks for a smoke run")
     coding_bench_sub = p.add_subparsers(dest="coding_bench_command", required=True)
     bp = coding_bench_sub.add_parser("list")

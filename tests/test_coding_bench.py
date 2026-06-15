@@ -11,7 +11,10 @@ from pathlib import Path
 
 from quantagent.cli import main
 from quantagent.coding_bench import (
+    CODING_BENCH_APPROVED_TASK_MANIFEST_SCHEMA_VERSION,
     builtin_coding_bench_tasks,
+    coding_bench_task_source,
+    load_coding_bench_tasks,
     render_coding_bench_json,
     render_coding_bench_markdown,
     render_coding_bench_stability_json,
@@ -25,6 +28,25 @@ from quantagent.skills import install_skill
 class CodingBenchTest(unittest.TestCase):
     def make_project(self) -> tempfile.TemporaryDirectory[str]:
         return tempfile.TemporaryDirectory(prefix="mako coding bench ")
+
+    def write_approved_task_manifest(self, task_file: Path, *, limit: int | None = None) -> Path:
+        tasks = load_coding_bench_tasks(task_file)
+        if limit is not None:
+            tasks = tasks[: max(limit, 0)]
+        source = coding_bench_task_source(tasks, task_file=task_file, limit=limit)
+        manifest = {
+            "schema_version": CODING_BENCH_APPROVED_TASK_MANIFEST_SCHEMA_VERSION,
+            "source_kind": source["source_kind"],
+            "task_count": source["task_count"],
+            "task_ids": source["task_ids"],
+            "task_ids_sha256": source["task_ids_sha256"],
+            "task_payload_sha256": source["task_payload_sha256"],
+            "task_file_sha256": source["task_file"]["sha256"],
+            "limit": source["limit"],
+        }
+        manifest_path = task_file.with_suffix(".manifest.json")
+        manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return manifest_path
 
     def test_builtin_tasks_are_30_broken_programming_fixtures(self) -> None:
         tasks = builtin_coding_bench_tasks()
@@ -189,6 +211,157 @@ class CodingBenchTest(unittest.TestCase):
             expected_task_file_sha256,
         )
         self.assertTrue(payload["task_source"]["identity_lock"]["task_file_sha256_locked"])
+
+    def test_coding_bench_verifies_approved_task_manifest(self) -> None:
+        with self.make_project() as tmp:
+            project = Path(tmp)
+            task_file = project / "tasks.json"
+            task_file.write_text(
+                json.dumps(
+                    {
+                        "tasks": [
+                            {
+                                "id": "manifest_guard",
+                                "instruction": "Repair subject.py add_numbers so the tests pass.",
+                                "files": {
+                                    "subject.py": "def add_numbers(a, b):\n    return a - b\n",
+                                    "test_subject.py": "import unittest\nfrom subject import add_numbers\n\nclass TestSubject(unittest.TestCase):\n    def test_sum(self):\n        self.assertEqual(add_numbers(2, 3), 5)\n",
+                                },
+                                "test_command": "{python} -m unittest test_subject -q",
+                                "max_iterations": 1,
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            manifest = self.write_approved_task_manifest(task_file)
+            agent = project / "manifest_agent.py"
+            agent.write_text(
+                "import sys\n"
+                "from pathlib import Path\n"
+                "workspace = Path(sys.argv[1])\n"
+                "Path(sys.argv[3]).read_text(encoding='utf-8')\n"
+                "(workspace / 'subject.py').write_text('def add_numbers(a, b):\\n    return a + b\\n', encoding='utf-8')\n",
+                encoding="utf-8",
+            )
+
+            run = run_coding_bench(
+                project,
+                agent_command="{python} " + shlex.quote(str(agent)) + " {workspace} {instruction} {failure_file}",
+                task_file=task_file,
+                task_manifest=manifest,
+            )
+            payload = json.loads(render_coding_bench_json(run))
+
+        self.assertEqual(run.summary()["solved"], 1)
+        self.assertTrue(payload["task_source"]["identity_lock"]["approved_manifest_locked"])
+        self.assertEqual(payload["task_source"]["approved_manifest"]["status"], "verified")
+        self.assertEqual(payload["task_source"]["approved_manifest"]["path"], str(manifest.resolve()))
+        self.assertIn("task_payload_sha256", payload["task_source"]["approved_manifest"]["verified_fields"])
+
+    def test_coding_bench_task_manifest_rejects_semantically_weakened_task_file(self) -> None:
+        with self.make_project() as tmp:
+            project = Path(tmp)
+            task_file = project / "tasks.json"
+            original_payload = {
+                "tasks": [
+                    {
+                        "id": "weak_test_replacement_guard",
+                        "instruction": "Repair subject.py add_numbers so the tests pass.",
+                        "files": {
+                            "subject.py": "def add_numbers(a, b):\n    return a - b\n",
+                            "test_subject.py": "import unittest\nfrom subject import add_numbers\n\nclass TestSubject(unittest.TestCase):\n    def test_sum(self):\n        self.assertEqual(add_numbers(2, 3), 5)\n",
+                        },
+                        "test_command": "{python} -m unittest test_subject -q",
+                        "max_iterations": 1,
+                    }
+                ]
+            }
+            task_file.write_text(json.dumps(original_payload), encoding="utf-8")
+            manifest = self.write_approved_task_manifest(task_file)
+            weakened_payload = json.loads(json.dumps(original_payload))
+            weakened_payload["tasks"][0]["files"]["test_subject.py"] = (
+                "import unittest\nfrom subject import add_numbers\n\n"
+                "class TestSubject(unittest.TestCase):\n"
+                "    def test_sum(self):\n"
+                "        self.assertEqual(add_numbers(2, 3), -1)\n"
+            )
+            task_file.write_text(json.dumps(weakened_payload), encoding="utf-8")
+            bench_dir = project / ".quantagent" / "coding_bench"
+
+            with self.assertRaisesRegex(ValueError, "task manifest mismatch: .*task_payload_sha256"):
+                run_coding_bench(
+                    project,
+                    agent_command="{python} -c 'print(0)'",
+                    task_file=task_file,
+                    task_manifest=manifest,
+                )
+
+        self.assertFalse(bench_dir.exists())
+
+    def test_coding_bench_cli_manifest_rejects_replaced_task_pack_before_listing(self) -> None:
+        with self.make_project() as tmp:
+            project = Path(tmp)
+            task_file = project / "tasks.json"
+            task_file.write_text(
+                json.dumps(
+                    {
+                        "tasks": [
+                            {
+                                "id": "cli_manifest_guard",
+                                "instruction": "Repair subject.py add_numbers so the tests pass.",
+                                "files": {
+                                    "subject.py": "def add_numbers(a, b):\n    return a - b\n",
+                                    "test_subject.py": "import unittest\nfrom subject import add_numbers\n\nclass TestSubject(unittest.TestCase):\n    def test_sum(self):\n        self.assertEqual(add_numbers(2, 3), 5)\n",
+                                },
+                                "test_command": "{python} -m unittest test_subject -q",
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            manifest = self.write_approved_task_manifest(task_file)
+            task_file.write_text(
+                json.dumps(
+                    {
+                        "tasks": [
+                            {
+                                "id": "cli_manifest_guard_replaced",
+                                "instruction": "Different task pack should not pass the old manifest.",
+                                "files": {
+                                    "subject.py": "def value():\n    return 1\n",
+                                    "test_subject.py": "import unittest\nfrom subject import value\n\nclass TestSubject(unittest.TestCase):\n    def test_value(self):\n        self.assertEqual(value(), 1)\n",
+                                },
+                                "test_command": "{python} -m unittest test_subject -q",
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                code = main(
+                    [
+                        "--no-trust-prompt",
+                        "coding-bench",
+                        "--project",
+                        tmp,
+                        "--task-file",
+                        str(task_file),
+                        "--task-manifest",
+                        str(manifest),
+                        "list",
+                        "--json",
+                    ]
+                )
+            output = stdout.getvalue()
+
+        self.assertEqual(code, 2)
+        self.assertIn("coding-bench error: coding bench task manifest mismatch", output)
+        self.assertIn("task_ids_sha256", output)
 
     def test_coding_bench_marks_test_file_modification_as_cheated(self) -> None:
         with self.make_project() as tmp:

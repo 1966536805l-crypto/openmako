@@ -19,6 +19,8 @@ from typing import Any, Mapping, Sequence
 
 DEFAULT_MAX_ITERATIONS = 5
 DEFAULT_TIMEOUT_SECONDS = 120.0
+CODING_BENCH_TASK_SOURCE_SCHEMA_VERSION = "openmako-coding-bench-task-source/v0.1"
+CODING_BENCH_APPROVED_TASK_MANIFEST_SCHEMA_VERSION = "openmako-coding-bench-approved-task-manifest/v0.1"
 
 
 @dataclass(frozen=True)
@@ -216,6 +218,7 @@ def run_coding_bench(
     agent_command: str = "",
     agent: str = "",
     task_file: str | Path | None = None,
+    task_manifest: str | Path | None = None,
     limit: int | None = None,
     keep_workspaces: bool = False,
 ) -> CodingBenchRun:
@@ -235,6 +238,8 @@ def run_coding_bench(
     if limit is not None:
         tasks = tasks[: max(limit, 0)]
         task_source = _coding_bench_task_source(tasks, task_file=task_file, limit=limit)
+    if task_manifest:
+        task_source = _task_source_with_approved_manifest(task_source, task_manifest)
     run_id = _new_coding_bench_run_id("cbench")
     artifact_dir = coding_bench_dir(project_path) / "runs" / run_id
     workspace_root = artifact_dir / "workspaces"
@@ -329,6 +334,7 @@ def run_coding_bench_stability(
     agent_command: str = "",
     agent: str = "",
     task_file: str | Path | None = None,
+    task_manifest: str | Path | None = None,
     limit: int | None = None,
     repeats: int = 3,
     keep_workspaces: bool = False,
@@ -352,6 +358,7 @@ def run_coding_bench_stability(
             project_path,
             agent_command=agent_command,
             task_file=task_file,
+            task_manifest=task_manifest,
             limit=limit,
             keep_workspaces=keep_workspaces,
         )
@@ -608,12 +615,21 @@ def _coding_bench_task_source(
     task_file: str | Path | None,
     limit: int | None = None,
 ) -> dict[str, Any]:
+    return coding_bench_task_source(tasks, task_file=task_file, limit=limit)
+
+
+def coding_bench_task_source(
+    tasks: Sequence[CodingBenchTask],
+    *,
+    task_file: str | Path | None,
+    limit: int | None = None,
+) -> dict[str, Any]:
     task_ids = [task.id for task in tasks]
     task_payload = [task.to_dict() for task in tasks]
     task_payload_json = json.dumps(task_payload, ensure_ascii=False, sort_keys=True)
     task_file_path = Path(task_file).expanduser().resolve(strict=False) if task_file else None
     source: dict[str, Any] = {
-        "schema_version": "openmako-coding-bench-task-source/v0.1",
+        "schema_version": CODING_BENCH_TASK_SOURCE_SCHEMA_VERSION,
         "source_kind": "task_file" if task_file_path else "builtin",
         "task_count": len(tasks),
         "task_ids": task_ids,
@@ -624,6 +640,7 @@ def _coding_bench_task_source(
             "task_ids_locked": True,
             "task_payload_locked": True,
             "task_file_sha256_locked": bool(task_file_path),
+            "approved_manifest_locked": False,
         },
         "evidence_boundary": {
             "proves": [
@@ -651,6 +668,67 @@ def _coding_bench_task_source(
             "sha256": _file_hash(task_file_path),
         }
     return source
+
+
+def verify_coding_bench_task_manifest(task_source: Mapping[str, Any], task_manifest: str | Path) -> dict[str, Any]:
+    manifest_path = Path(task_manifest).expanduser().resolve(strict=False)
+    if not manifest_path.is_file():
+        raise ValueError(f"coding bench task manifest does not exist: {task_manifest}")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict):
+        raise ValueError("coding bench task manifest must be a JSON object")
+
+    expected: dict[str, Any] = {
+        "schema_version": CODING_BENCH_APPROVED_TASK_MANIFEST_SCHEMA_VERSION,
+        "source_kind": task_source.get("source_kind"),
+        "task_count": task_source.get("task_count"),
+        "task_ids": task_source.get("task_ids"),
+        "task_ids_sha256": task_source.get("task_ids_sha256"),
+        "task_payload_sha256": task_source.get("task_payload_sha256"),
+        "limit": task_source.get("limit"),
+    }
+    task_file = task_source.get("task_file")
+    if isinstance(task_file, Mapping):
+        expected["task_file_sha256"] = task_file.get("sha256")
+
+    mismatches = [
+        key
+        for key, expected_value in expected.items()
+        if _manifest_field(manifest, key) != expected_value
+    ]
+    if mismatches:
+        raise ValueError("coding bench task manifest mismatch: " + ", ".join(sorted(mismatches)))
+
+    return {
+        "path": str(manifest_path),
+        "sha256": _file_hash(manifest_path),
+        "schema_version": manifest["schema_version"],
+        "status": "verified",
+        "verified_fields": sorted(expected),
+    }
+
+
+def _task_source_with_approved_manifest(task_source: Mapping[str, Any], task_manifest: str | Path) -> dict[str, Any]:
+    manifest_evidence = verify_coding_bench_task_manifest(task_source, task_manifest)
+    locked_source = dict(task_source)
+    identity_lock = dict(locked_source.get("identity_lock") or {})
+    identity_lock["approved_manifest_locked"] = True
+    locked_source["identity_lock"] = identity_lock
+    locked_source["approved_manifest"] = manifest_evidence
+    boundary = dict(locked_source.get("evidence_boundary") or {})
+    proves = list(boundary.get("proves") or [])
+    proves.append("the evaluated CodingBench task source matches the approved task manifest")
+    boundary["proves"] = proves
+    locked_source["evidence_boundary"] = boundary
+    return locked_source
+
+
+def _manifest_field(manifest: Mapping[str, Any], key: str) -> Any:
+    if key == "task_file_sha256":
+        task_file = manifest.get("task_file")
+        if isinstance(task_file, Mapping) and "sha256" in task_file:
+            return task_file.get("sha256")
+    return manifest.get(key)
 
 
 def _run_shell(command: str, cwd: Path, timeout_seconds: float) -> CodingBenchCommandResult:
