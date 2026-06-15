@@ -1,0 +1,114 @@
+{
+  "benchmark": {
+    "benchmark_id": "openmako-independent-external-heldout-v0.1",
+    "case_count": 2,
+    "case_ids": [
+      "mcp-python-sdk-tool-name-validation-function-repair",
+      "mcp-python-sdk-tool-name-wrapper-seed-repair"
+    ],
+    "path": "benchmarks/independent_external_heldout/v0.1/cases.json",
+    "sha256": "sha256:8544c5aede0d4a5c951434e316be5798ddf08e2906079220269e477878ec6d98"
+  },
+  "case_results": [
+    {
+      "after_test_returncode": 0,
+      "before_failure_returncode": 1,
+      "label": "supported_repair_claim",
+      "target_diff": true,
+      "task_id": "vendored_mcp_tool_name_validation_function_repair"
+    },
+    {
+      "after_test_returncode": 0,
+      "before_failure_returncode": 1,
+      "label": "supported_repair_claim",
+      "target_diff": true,
+      "task_id": "vendored_mcp_tool_name_wrapper_seed_repair"
+    }
+  ],
+  "external_source": {
+    "license": "MIT",
+    "manifest_path": "third_party/mcp_python_sdk/MANIFEST.sha256",
+    "manifest_sha256": "8ca78f36a6ffea447eb924136c0ede1002a018f1fe1597c51a630283d295f45a",
+    "package": "mcp-python-sdk",
+    "repository": "https://github.com/modelcontextprotocol/python-sdk",
+    "selected_source_files": {
+      "third_party/mcp_python_sdk/LICENSE": {
+        "sha256": "5e13dbbc1d120fc2a03cecde7c91424ae2d7de11b63d58ded2f4431e261ee50d"
+      },
+      "third_party/mcp_python_sdk/src/mcp/shared/tool_name_validation.py": {
+        "sha256": "99312f833b0cb246b2ca294b68890fee521a0388def1c9e48fdc5821cea1b60a"
+      }
+    }
+  },
+  "external_source_heldout": true,
+  "generated_at_utc": "2026-06-15T10:54:06.454800+00:00",
+  "heldout_from_autonomous_gate": true,
+  "heldout_reproduction_packet": {
+    "path": "/tmp/tmp.6ezEWpg1pp/heldout_reproduction_packet/packet.json",
+    "sha256": "sha256:346df54a4b745f43f809e0394f41165cbffb80588c35c592aed07c5e17ead5e9"
+  },
+  "independence_scope": {
+    "external_source_heldout": true,
+    "heldout_from_autonomous_gate": true,
+    "independent_from_autonomous_task_manifest": true,
+    "repo_defined_benchmark_packet": true,
+    "third_party_benchmark_standing": false
+  },
+  "independent_external_heldout_benchmark": true,
+  "independent_from_autonomous_task_manifest": true,
+  "invocation": {
+    "git_commit": "e75212112c6459ca87f88e75b4830677edbfc8de",
+    "proof_command": "bash scripts/independent_external_heldout_benchmark_gate.sh"
+  },
+  "not_proof": [
+    "third-party benchmark standing",
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "native live autonomy",
+    "broad unknown-repository repair",
+    "GitHub Actions artifact zip contents"
+  ],
+  "observed_pytest": {
+    "exit_code": 0,
+    "passed": 2,
+    "skipped": 0,
+    "warnings": 0
+  },
+  "raw_evidence_files": {
+    "outputs/external_heldout_benchmark_gate/last_summary.json": "sha256:708419cf233aad469715ef95c2d6d386d75a04ead26e75628a1c81044fe71cf2",
+    "outputs/external_heldout_benchmark_gate/pytest.log": "sha256:d14513b80c5e155aa0337a1db809dbc4f00602b6b34c0e47fa39be6564ca7281",
+    "outputs/external_heldout_benchmark_gate/task_proofs/vendored_mcp_tool_name_validation_function_repair.json": "sha256:5ae0c6b3f2755e9f1723de0fcd07414608eae8bf01285e6b9ef310c36aa19148",
+    "outputs/external_heldout_benchmark_gate/task_proofs/vendored_mcp_tool_name_wrapper_seed_repair.json": "sha256:4003e3cdeeacb1509550a3bbe57d8efe377446d5754c57e983a4d7e92dcd7e2f"
+  },
+  "repo_defined_benchmark_packet": true,
+  "schema_version": "independent-external-heldout-benchmark-gate/v0.1",
+  "selected_test_semantic_lock": {
+    "checked_methods": [
+      {
+        "method": "test_vendored_mcp_function_level_repair_reuses_without_non_target_drift",
+        "required_call_count": 8,
+        "required_source_fragment_count": 5
+      },
+      {
+        "method": "test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift",
+        "required_call_count": 9,
+        "required_source_fragment_count": 5
+      }
+    ],
+    "expected_node_ids_sha256": "11e79c05b4886d752d902ff5acffa1904246b2b7e6144d71d7cb2dd689b3617b",
+    "schema_version": "openmako-selected-test-semantic-lock/v0.1"
+  },
+  "selected_tests": [
+    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_function_level_repair_reuses_without_non_target_drift",
+    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift"
+  ],
+  "selected_tests_sha256": "11e79c05b4886d752d902ff5acffa1904246b2b7e6144d71d7cb2dd689b3617b",
+  "source_summary": {
+    "path": "/tmp/tmp.6ezEWpg1pp/external_heldout_benchmark_gate/last_summary.json",
+    "sha256": "sha256:708419cf233aad469715ef95c2d6d386d75a04ead26e75628a1c81044fe71cf2"
+  },
+  "status": "passed",
+  "third_party_benchmark_standing": false
+}
