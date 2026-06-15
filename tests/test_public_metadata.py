@@ -225,6 +225,13 @@ def _selected_tests_sha256(selected: list[str]) -> str:
     return hashlib.sha256(("\n".join(selected) + "\n").encode("utf-8")).hexdigest()
 
 
+def _selected_test_files_sha256(selected: list[str]) -> dict[str, str]:
+    return {
+        path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
+        for path in sorted({node.split("::", 1)[0] for node in selected})
+    }
+
+
 def _pyproject_description() -> str:
     text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     match = re.search(r'^description = "([^"]+)"$', text, flags=re.MULTILINE)
@@ -525,6 +532,7 @@ def test_autonomous_public_evidence_branch_scripts_are_fail_closed_and_boundary_
     assert "autonomous_summary_commit_mismatch" in remote_text
     assert "autonomous_summary_segment_not_passed" in remote_text
     assert "autonomous_task_source_manifest_digest_mismatch" in remote_text
+    assert "autonomous_summary_selected_test_file_digest_mismatch" in remote_text
     assert "autonomous_pytest_log_tail_mismatch" in remote_text
     assert "autonomous_upstream_task_proof_missing" in remote_text
     assert "autonomous_cross_upstream_task_proofs_missing" in remote_text
@@ -1723,6 +1731,8 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "task_source_provenance_manifest.json" in text
     assert "task_source_provenance" in text
     assert "selected_tests_sha256" in text
+    assert "selected_test_files_sha256" in text
+    assert "task_source_provenance.segments.{segment}.selected_test_files_sha256" in text
     assert "autonomous-task-source-provenance/v0.1" in text
     assert "repo-authored-regression-pack" in text
     assert "not an independent external held-out benchmark" in text
@@ -2300,6 +2310,35 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert (
         "task_source_provenance.segments.stage1_trajectory_reuse_matrix.selected_tests_sha256"
         in replacement_manifest.stderr
+    )
+
+    stale_file_hash_manifest_payload = json.loads(json.dumps(task_source_provenance))
+    stale_file_hash_manifest_payload["segments"]["stage1_trajectory_reuse_matrix"][
+        "selected_test_files_sha256"
+    ]["tests/test_learning_effect_e2e.py"] = "0" * 64
+    stale_file_hash_manifest_text = (
+        json.dumps(stale_file_hash_manifest_payload, indent=2, sort_keys=True) + "\n"
+    )
+    broken_summary = json.loads(json.dumps(artifact_summary))
+    broken_summary["task_source_provenance"] = stale_file_hash_manifest_payload
+    broken_summary["task_source_manifest"]["sha256"] = hashlib.sha256(
+        stale_file_hash_manifest_text.encode("utf-8")
+    ).hexdigest()
+    write_artifact_summary(broken_summary, manifest_text=stale_file_hash_manifest_text)
+    stale_file_hash_manifest = subprocess.run(
+        ["bash", "scripts/remote_autonomous_learning_snapshot.sh"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert stale_file_hash_manifest.returncode == 1
+    assert "artifact summary contract mismatch" in stale_file_hash_manifest.stderr
+    assert (
+        "task_source_provenance.segments.stage1_trajectory_reuse_matrix.selected_test_files_sha256"
+        in stale_file_hash_manifest.stderr
     )
 
     broken_summary = dict(artifact_summary)
@@ -3243,6 +3282,9 @@ def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() 
     assert "minimum_count" in text
     assert "duplicate selected_tests across segments" in text
     assert "selected_tests_sha256" in text
+    assert "selected_test_files_sha256" in text
+    assert "invalid selected_test_files_sha256 for {segment}" in text
+    assert "task_source_provenance.segments.{segment}.selected_test_files_sha256" in text
     assert 'item.startswith("-")' in text
     assert '"${STAGE1_TESTS[@]}"' in text
     assert '"${UPSTREAM_TESTS[@]}"' in text
@@ -3253,6 +3295,10 @@ def test_autonomous_learning_gate_script_wraps_high_intensity_learning_checks() 
     assert "invalid selected_tests_sha256 for {segment}" in text
     assert "task_source_provenance.segments.{segment}.selected_tests_sha256" in text
     assert "test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2" not in text
+    for segment, entry in provenance["segments"].items():
+        assert entry["selected_test_files_sha256"] == _selected_test_files_sha256(
+            entry["selected_tests"]
+        ), segment
     assert "test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2" not in text
     assert "test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2" not in text
     assert "autonomous-learning-gate: running upstream hidden-pack reuse stress test" in text
@@ -3474,6 +3520,14 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
     replacement = run_with_manifest(replacement_manifest, "replacement-manifest.json")
     assert replacement.returncode == 1
     assert "invalid selected_tests_sha256 for stage1_trajectory_reuse_matrix" in replacement.stderr
+
+    stale_file_hash_manifest = json.loads(json.dumps(_autonomous_task_source_provenance_fixture()))
+    stale_file_hash_manifest["segments"]["stage1_trajectory_reuse_matrix"][
+        "selected_test_files_sha256"
+    ]["tests/test_learning_effect_e2e.py"] = "0" * 64
+    stale_file_hash = run_with_manifest(stale_file_hash_manifest, "stale-file-hash-manifest.json")
+    assert stale_file_hash.returncode == 1
+    assert "invalid selected_test_files_sha256 for stage1_trajectory_reuse_matrix" in stale_file_hash.stderr
 
     corrupt_summary = tmp_path / "corrupt-summary.json"
     corrupt_env = env.copy()

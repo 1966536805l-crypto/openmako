@@ -170,6 +170,13 @@ node_id_re = re.compile(r"^tests/[A-Za-z0-9_./]+\.py::[A-Za-z_][A-Za-z0-9_]*::te
 def selected_tests_sha256(selected):
     return hashlib.sha256(("\n".join(selected) + "\n").encode("utf-8")).hexdigest()
 
+def selected_test_files_sha256(selected):
+    files = sorted({item.split("::", 1)[0] for item in selected})
+    return {
+        file_path: hashlib.sha256(Path(file_path).read_bytes()).hexdigest()
+        for file_path in files
+    }
+
 seen = set()
 for variable, (segment, minimum_count) in requested.items():
     segment_entry = segments.get(segment) or {}
@@ -192,6 +199,12 @@ for variable, (segment, minimum_count) in requested.items():
         raise SystemExit(f"duplicate selected_tests across segments for {segment}")
     if segment_entry.get("selected_tests_sha256") != selected_tests_sha256(selected):
         raise SystemExit(f"invalid selected_tests_sha256 for {segment}")
+    try:
+        selected_file_hashes = selected_test_files_sha256(selected)
+    except Exception as exc:
+        raise SystemExit(f"invalid selected_test_files_sha256 for {segment}: {exc}")
+    if segment_entry.get("selected_test_files_sha256") != selected_file_hashes:
+        raise SystemExit(f"invalid selected_test_files_sha256 for {segment}")
     seen.update(selected)
     print(f"{variable}=(" + " ".join(shlex.quote(item) for item in selected) + ")")
 PY
@@ -530,6 +543,13 @@ node_id_re = re.compile(r"^tests/[A-Za-z0-9_./]+\.py::[A-Za-z_][A-Za-z0-9_]*::te
 def selected_tests_sha256(selected):
     return hashlib.sha256(("\n".join(selected) + "\n").encode("utf-8")).hexdigest()
 
+def selected_test_files_sha256(selected):
+    files = sorted({item.split("::", 1)[0] for item in selected})
+    return {
+        file_path: hashlib.sha256(Path(file_path).read_bytes()).hexdigest()
+        for file_path in files
+    }
+
 all_selected_tests = set()
 for segment, (source_kind, minimum_count) in required_provenance_segments.items():
     segment_entry = provenance_segments.get(segment) or {}
@@ -560,6 +580,12 @@ for segment, (source_kind, minimum_count) in required_provenance_segments.items(
         or selected_tests_digest != selected_tests_sha256(selected_tests)
     ):
         errors.append(f"task_source_provenance.segments.{segment}.selected_tests_sha256")
+    try:
+        selected_file_hashes = selected_test_files_sha256(selected_tests)
+    except Exception:
+        selected_file_hashes = None
+    if segment_entry.get("selected_test_files_sha256") != selected_file_hashes:
+        errors.append(f"task_source_provenance.segments.{segment}.selected_test_files_sha256")
     duplicate_across_segments = all_selected_tests.intersection(selected_tests)
     if duplicate_across_segments:
         errors.append(f"task_source_provenance.segments.{segment}.selected_tests")

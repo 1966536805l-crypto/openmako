@@ -206,6 +206,16 @@ if provenance.get("external_heldout") is not False:
     fail("autonomous_summary_external_heldout_mismatch")
 node_id_re = re.compile(r"^tests/[A-Za-z0-9_./]+\.py::[A-Za-z_][A-Za-z0-9_]*::test_[A-Za-z0-9_]+$")
 all_selected: set[str] = set()
+def selected_tests_sha256(selected: list[str]) -> str:
+    return hashlib.sha256(("\n".join(selected) + "\n").encode("utf-8")).hexdigest()
+
+def selected_test_files_sha256(selected: list[str]) -> dict[str, str]:
+    files = sorted({item.split("::", 1)[0] for item in selected})
+    return {
+        file_path: hashlib.sha256((Path.cwd() / file_path).read_bytes()).hexdigest()
+        for file_path in files
+    }
+
 for segment in expected_segments:
     entry = tests.get(segment)
     if not isinstance(entry, dict):
@@ -222,6 +232,19 @@ for segment in expected_segments:
     if overlap:
         fail("autonomous_summary_selected_tests_overlap", ",".join(sorted(overlap)))
     all_selected.update(selected)
+    provenance_entry = provenance.get("segments", {}).get(segment)
+    if not isinstance(provenance_entry, dict):
+        fail("autonomous_summary_provenance_segment_missing", segment)
+    if provenance_entry.get("selected_tests") != selected:
+        fail("autonomous_summary_selected_tests_manifest_mismatch", segment)
+    if provenance_entry.get("selected_tests_sha256") != selected_tests_sha256(selected):
+        fail("autonomous_summary_selected_tests_digest_mismatch", segment)
+    try:
+        expected_file_hashes = selected_test_files_sha256(selected)
+    except Exception as exc:
+        fail("autonomous_summary_selected_test_file_unreadable", f"{segment}:{exc}")
+    if provenance_entry.get("selected_test_files_sha256") != expected_file_hashes:
+        fail("autonomous_summary_selected_test_file_digest_mismatch", segment)
     observed = entry.get("observed_pytest")
     if not isinstance(observed, dict) or observed.get("exit_code") != 0 or observed.get("passed") != len(selected):
         fail("autonomous_summary_observed_pytest_mismatch", segment)

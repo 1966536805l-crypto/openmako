@@ -581,6 +581,13 @@ def validate_artifact_summary(payload: dict, archive_text_files: dict[str, str])
     def selected_tests_sha256(selected):
         return hashlib.sha256(("\n".join(selected) + "\n").encode("utf-8")).hexdigest()
 
+    def selected_test_files_sha256(selected):
+        files = sorted({item.split("::", 1)[0] for item in selected})
+        return {
+            file_path: hashlib.sha256(Path(file_path).read_bytes()).hexdigest()
+            for file_path in files
+        }
+
     all_selected_tests = set()
     for segment, (source_kind, minimum_count) in required_provenance_segments.items():
         segment_entry = provenance_segments.get(segment)
@@ -616,6 +623,12 @@ def validate_artifact_summary(payload: dict, archive_text_files: dict[str, str])
             or selected_tests_digest != selected_tests_sha256(selected_tests)
         ):
             errors.append(f"task_source_provenance.segments.{segment}.selected_tests_sha256")
+        try:
+            selected_file_hashes = selected_test_files_sha256(selected_tests)
+        except Exception:
+            selected_file_hashes = None
+        if segment_entry.get("selected_test_files_sha256") != selected_file_hashes:
+            errors.append(f"task_source_provenance.segments.{segment}.selected_test_files_sha256")
         duplicate_across_segments = all_selected_tests.intersection(selected_tests)
         if duplicate_across_segments:
             errors.append(f"task_source_provenance.segments.{segment}.selected_tests")
