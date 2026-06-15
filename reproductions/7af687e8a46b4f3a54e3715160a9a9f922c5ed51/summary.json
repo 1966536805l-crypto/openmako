@@ -1,0 +1,29 @@
+{
+  "generated_at_utc": "2026-06-15T05:53:30.059746+00:00",
+  "git_commit": "7af687e8a46b4f3a54e3715160a9a9f922c5ed51",
+  "log_line_count": 257,
+  "log_path": "fresh_clone.log",
+  "log_sha256": "sha256:bcabbcab9357fa0c042eb610fe408ec2cc8b55be6b4a95c3d2d3db6a6ac6e6ff",
+  "markers": {
+    "checkout_sha": "fresh-clone-reproduction: checkout-sha=7af687e8a46b4f3a54e3715160a9a9f922c5ed51",
+    "fresh_clone": "fresh-clone-reproduction: PASS",
+    "install": "fresh-clone-reproduction: install=PASS",
+    "public_review": "fresh-clone-reproduction: public-review=PASS",
+    "release_readiness": "fresh-clone-reproduction: release-readiness=PASS",
+    "remote_autonomous_public_evidence": "fresh-clone-reproduction: remote-autonomous-public-evidence=PASS",
+    "remote_public_evidence": "fresh-clone-reproduction: remote-public-evidence=PASS",
+    "requested_ref": "fresh-clone-reproduction: requested-ref=7af687e8a46b4f3a54e3715160a9a9f922c5ed51"
+  },
+  "not_proof": [
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "independent external benchmark standing",
+    "GitHub Actions artifact zip contents",
+    "native live autonomy",
+    "broad unknown-repository repair"
+  ],
+  "schema_version": "fresh-clone-reproduction-public-evidence/v0.1",
+  "status": "passed"
+}
