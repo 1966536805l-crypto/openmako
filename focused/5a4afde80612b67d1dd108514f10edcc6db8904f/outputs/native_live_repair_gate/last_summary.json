@@ -1,0 +1,77 @@
+{
+  "after_test": {
+    "command": [
+      "/opt/hostedtoolcache/Python/3.11.15/x64/bin/python3",
+      "-m",
+      "unittest",
+      "-q",
+      "test_subject"
+    ],
+    "exit_code": 0,
+    "stderr_sha256": "sha256:2a50b4749107e50e3993c9a59df48e8d8cebd81e26a286e83bb83d7fe81b2d90",
+    "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "agent_loop": {
+    "event_trajectory_artifact": "agent_loop_events.jsonl",
+    "failure_class": "",
+    "final_mode": "build",
+    "input_provenance": "native_live_repair_gate",
+    "learning_context": "off",
+    "observations": [
+      "route",
+      "goal_guard",
+      "runtime_context",
+      "status",
+      "context",
+      "audit",
+      "implement",
+      "validate",
+      "unit_tests",
+      "final_review"
+    ],
+    "ok": true,
+    "patch_artifact": "agent_loop_patch.diff",
+    "result_artifact": "agent_result.json",
+    "status": "done",
+    "trajectory_artifact": "agent_loop_trajectory.jsonl"
+  },
+  "before_failure": {
+    "command": [
+      "/opt/hostedtoolcache/Python/3.11.15/x64/bin/python3",
+      "-m",
+      "unittest",
+      "-q",
+      "test_subject"
+    ],
+    "exit_code": 1,
+    "stderr_sha256": "sha256:a3019295df59f5d2ae85128bbaa1c956f9d16dec52780d2be2cf092b1d1fd995",
+    "stdout_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "diff": {
+    "artifact": "agent_loop_patch.diff",
+    "contains_expected_source_change": true,
+    "edited_files": [
+      "subject.py"
+    ],
+    "sha256": "sha256:b95d141a84c2e8dbf8e07eb262466715d93e9f1f278176cb9a83c846ecde25e2",
+    "test_file_preserved": true
+  },
+  "finished_at_utc": "2026-06-15T11:25:19.799140+00:00",
+  "git_commit": "5a4afde80612b67d1dd108514f10edcc6db8904f",
+  "native_live_repair": true,
+  "not_proof": [
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "third-party benchmark standing",
+    "broad unknown-repository repair",
+    "native Claude Code, Codex, Cursor, or SWE-bench export ingestion",
+    "live desktop or browser control"
+  ],
+  "proof_command": "bash scripts/native_live_repair_gate.sh",
+  "repair_task": "Fix add_numbers so it returns arithmetic sum for ints and floats.",
+  "schema_version": "native-live-repair-gate/v0.1",
+  "source_workspace": "temporary-local-project",
+  "status": "passed"
+}
