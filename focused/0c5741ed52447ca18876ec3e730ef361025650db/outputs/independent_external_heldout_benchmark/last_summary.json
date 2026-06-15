@@ -1,0 +1,98 @@
+{
+  "benchmark": {
+    "benchmark_id": "openmako-independent-external-heldout-v0.1",
+    "case_count": 2,
+    "case_ids": [
+      "mcp-python-sdk-tool-name-validation-function-repair",
+      "mcp-python-sdk-tool-name-wrapper-seed-repair"
+    ],
+    "path": "benchmarks/independent_external_heldout/v0.1/cases.json",
+    "sha256": "sha256:411ed9ae37b6e60ce3a1efc470964c43ef83df07ba744960182b0332d423ea22"
+  },
+  "case_results": [
+    {
+      "after_test_returncode": 0,
+      "before_failure_returncode": 1,
+      "label": "supported_repair_claim",
+      "target_diff": true,
+      "task_id": "vendored_mcp_tool_name_validation_function_repair"
+    },
+    {
+      "after_test_returncode": 0,
+      "before_failure_returncode": 1,
+      "label": "supported_repair_claim",
+      "target_diff": true,
+      "task_id": "vendored_mcp_tool_name_wrapper_seed_repair"
+    }
+  ],
+  "external_source": {
+    "license": "MIT",
+    "manifest_path": "third_party/mcp_python_sdk/MANIFEST.sha256",
+    "manifest_sha256": "8ca78f36a6ffea447eb924136c0ede1002a018f1fe1597c51a630283d295f45a",
+    "package": "mcp-python-sdk",
+    "repository": "https://github.com/modelcontextprotocol/python-sdk",
+    "selected_source_files": {
+      "third_party/mcp_python_sdk/LICENSE": {
+        "sha256": "5e13dbbc1d120fc2a03cecde7c91424ae2d7de11b63d58ded2f4431e261ee50d"
+      },
+      "third_party/mcp_python_sdk/src/mcp/shared/tool_name_validation.py": {
+        "sha256": "99312f833b0cb246b2ca294b68890fee521a0388def1c9e48fdc5821cea1b60a"
+      }
+    }
+  },
+  "external_source_heldout": true,
+  "generated_at_utc": "2026-06-15T04:46:29.531041+00:00",
+  "heldout_from_autonomous_gate": true,
+  "heldout_reproduction_packet": {
+    "path": "/tmp/tmp.LwCz76Cr84/heldout_reproduction_packet/packet.json",
+    "sha256": "sha256:cf3b9dccd5fa6b6e0f1a454982ebc15d1ffad0df4e4b242bd0c53dd085ad7ea2"
+  },
+  "independence_scope": {
+    "external_source_heldout": true,
+    "heldout_from_autonomous_gate": true,
+    "independent_from_autonomous_task_manifest": true,
+    "repo_defined_benchmark_packet": true,
+    "third_party_benchmark_standing": false
+  },
+  "independent_external_heldout_benchmark": true,
+  "independent_from_autonomous_task_manifest": true,
+  "invocation": {
+    "git_commit": "0c5741ed52447ca18876ec3e730ef361025650db",
+    "proof_command": "bash scripts/independent_external_heldout_benchmark_gate.sh"
+  },
+  "not_proof": [
+    "third-party benchmark standing",
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "native live autonomy",
+    "broad unknown-repository repair",
+    "GitHub Actions artifact zip contents"
+  ],
+  "observed_pytest": {
+    "exit_code": 0,
+    "passed": 2,
+    "skipped": 0,
+    "warnings": 0
+  },
+  "raw_evidence_files": {
+    "outputs/external_heldout_benchmark_gate/last_summary.json": "sha256:43afd96a0aec23fe73d4ef18bcb059fe8ea763f849528f7c099baad8e255abca",
+    "outputs/external_heldout_benchmark_gate/pytest.log": "sha256:07eb4504a39b7ca21a3246504ba43640c45acab0e77184059abae0e43902346c",
+    "outputs/external_heldout_benchmark_gate/task_proofs/vendored_mcp_tool_name_validation_function_repair.json": "sha256:f5324ee0395ee33684940130e4bb35e1cce3b781caa1758fe0f1454341a96f57",
+    "outputs/external_heldout_benchmark_gate/task_proofs/vendored_mcp_tool_name_wrapper_seed_repair.json": "sha256:04caf1c48dd9cabc8f0f2df8a2572c42884733ad3347907c4a98a9039ebf475e"
+  },
+  "repo_defined_benchmark_packet": true,
+  "schema_version": "independent-external-heldout-benchmark-gate/v0.1",
+  "selected_tests": [
+    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_function_level_repair_reuses_without_non_target_drift",
+    "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift"
+  ],
+  "selected_tests_sha256": "11e79c05b4886d752d902ff5acffa1904246b2b7e6144d71d7cb2dd689b3617b",
+  "source_summary": {
+    "path": "/tmp/tmp.LwCz76Cr84/external_heldout_benchmark_gate/last_summary.json",
+    "sha256": "sha256:43afd96a0aec23fe73d4ef18bcb059fe8ea763f849528f7c099baad8e255abca"
+  },
+  "status": "passed",
+  "third_party_benchmark_standing": false
+}
