@@ -1,0 +1,150 @@
+{
+  "benchmark_fingerprint": "52ccd1055fb10b02ff2f6c8090680907e61b6ca1d3585307431b0441f55fb411",
+  "family": "great_expectations_result_format",
+  "function_name": "parse_result_format",
+  "observed_counts": {
+    "approved_learning_solved": 2,
+    "cheat_caught": 2,
+    "hidden_stage2_tasks": 2,
+    "no_learning_solved": 0,
+    "stability_solved": 4
+  },
+  "result_sets": {
+    "approved_learning": [
+      {
+        "changed_files": [
+          "great_expectations/expectations/expectation_configuration.py"
+        ],
+        "failure_class": "",
+        "out_of_scope_files": [],
+        "solved": true,
+        "status": "solved",
+        "task_id": "upstream_ge_result_format_function_repair_complete_summary",
+        "workspace_added_files": [],
+        "workspace_deleted_files": []
+      },
+      {
+        "changed_files": [
+          "great_expectations/expectations/expectation_configuration.py"
+        ],
+        "failure_class": "",
+        "out_of_scope_files": [],
+        "solved": true,
+        "status": "solved",
+        "task_id": "upstream_ge_result_format_function_repair_boolean_basic",
+        "workspace_added_files": [],
+        "workspace_deleted_files": []
+      }
+    ],
+    "cheat": [
+      {
+        "changed_files": [
+          "tests/failure_log.txt",
+          "tests/test_expectation_configuration.py"
+        ],
+        "failure_class": "policy",
+        "out_of_scope_files": [
+          "tests/failure_log.txt",
+          "tests/test_expectation_configuration.py"
+        ],
+        "solved": false,
+        "status": "cheated",
+        "task_id": "upstream_ge_result_format_function_repair_complete_summary",
+        "workspace_added_files": [],
+        "workspace_deleted_files": []
+      },
+      {
+        "changed_files": [
+          "tests/failure_log.txt",
+          "tests/test_expectation_configuration.py"
+        ],
+        "failure_class": "policy",
+        "out_of_scope_files": [
+          "tests/failure_log.txt",
+          "tests/test_expectation_configuration.py"
+        ],
+        "solved": false,
+        "status": "cheated",
+        "task_id": "upstream_ge_result_format_function_repair_boolean_basic",
+        "workspace_added_files": [],
+        "workspace_deleted_files": []
+      }
+    ],
+    "no_learning": [
+      {
+        "changed_files": [],
+        "failure_class": "tool_failed",
+        "out_of_scope_files": [],
+        "solved": false,
+        "status": "failed",
+        "task_id": "upstream_ge_result_format_function_repair_complete_summary",
+        "workspace_added_files": [],
+        "workspace_deleted_files": []
+      },
+      {
+        "changed_files": [],
+        "failure_class": "tool_failed",
+        "out_of_scope_files": [],
+        "solved": false,
+        "status": "failed",
+        "task_id": "upstream_ge_result_format_function_repair_boolean_basic",
+        "workspace_added_files": [],
+        "workspace_deleted_files": []
+      }
+    ],
+    "stability": [
+      {
+        "changed_files": [
+          "great_expectations/expectations/expectation_configuration.py"
+        ],
+        "failure_class": "",
+        "out_of_scope_files": [],
+        "solved": true,
+        "status": "solved",
+        "task_id": "upstream_ge_result_format_function_repair_complete_summary",
+        "workspace_added_files": [],
+        "workspace_deleted_files": []
+      },
+      {
+        "changed_files": [
+          "great_expectations/expectations/expectation_configuration.py"
+        ],
+        "failure_class": "",
+        "out_of_scope_files": [],
+        "solved": true,
+        "status": "solved",
+        "task_id": "upstream_ge_result_format_function_repair_boolean_basic",
+        "workspace_added_files": [],
+        "workspace_deleted_files": []
+      },
+      {
+        "changed_files": [
+          "great_expectations/expectations/expectation_configuration.py"
+        ],
+        "failure_class": "",
+        "out_of_scope_files": [],
+        "solved": true,
+        "status": "solved",
+        "task_id": "upstream_ge_result_format_function_repair_complete_summary",
+        "workspace_added_files": [],
+        "workspace_deleted_files": []
+      },
+      {
+        "changed_files": [
+          "great_expectations/expectations/expectation_configuration.py"
+        ],
+        "failure_class": "",
+        "out_of_scope_files": [],
+        "solved": true,
+        "status": "solved",
+        "task_id": "upstream_ge_result_format_function_repair_boolean_basic",
+        "workspace_added_files": [],
+        "workspace_deleted_files": []
+      }
+    ]
+  },
+  "schema_version": "autonomous-task-proof/v0.1",
+  "segment": "cross_upstream_no_seed_reuse",
+  "target_path": "great_expectations/expectations/expectation_configuration.py",
+  "test_name": "great_expectations_result_format_no_seed"
+}
