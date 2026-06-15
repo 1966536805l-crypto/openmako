@@ -372,13 +372,21 @@ class CliWrapperTest(unittest.TestCase):
                 "independent external held-out benchmark",
             ],
         }
+        linked_summary = {
+            "schema_version": "external-heldout-benchmark-gate/v0.1",
+            "status": "passed",
+        }
         with zipfile.ZipFile(focused_zip, "w") as archive:
             archive.writestr("summary.json", json.dumps(focused_summary, sort_keys=True) + "\n")
             archive.writestr("outputs/audit.json", "audit\n")
         with zipfile.ZipFile(autonomous_zip, "w") as archive:
             archive.writestr(
-                "autonomous_learning_gate/last_summary.json",
+                "last_summary.json",
                 json.dumps(autonomous_summary, sort_keys=True) + "\n",
+            )
+            archive.writestr(
+                "linked_external_heldout/last_summary.json",
+                json.dumps(linked_summary, sort_keys=True) + "\n",
             )
         focused_digest = "sha256:" + hashlib.sha256(focused_zip.read_bytes()).hexdigest()
         autonomous_digest = "sha256:" + hashlib.sha256(autonomous_zip.read_bytes()).hexdigest()

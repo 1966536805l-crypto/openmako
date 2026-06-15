@@ -68,12 +68,12 @@ def validate_zip(kind: str, zip_path: str, summary_leaf: str, schema: str) -> di
                         f"publish-artifact-zip-proof-branch: unsafe {kind} zip member={name}"
                     )
             summary_candidates = [
-                name for name in files if PurePosixPath(name).name == summary_leaf
+                name for name in files if name == summary_leaf
             ]
             if len(summary_candidates) != 1:
                 raise SystemExit(
                     f"publish-artifact-zip-proof-branch: {kind} artifact zip must "
-                    f"contain exactly one {summary_leaf}"
+                    f"contain exactly one root {summary_leaf}"
                 )
             summary_path = summary_candidates[0]
             summary = json.loads(archive.read(summary_path).decode("utf-8"))
@@ -213,11 +213,11 @@ def read_zip_contract(
                     f"publish-artifact-zip-proof-branch: unsafe {kind} zip member={name}"
                 )
         summary_candidates = [
-            name for name in files if PurePosixPath(name).name == summary_leaf
+            name for name in files if name == summary_leaf
         ]
         if len(summary_candidates) != 1:
             raise SystemExit(
-                f"publish-artifact-zip-proof-branch: {kind} summary count mismatch"
+                f"publish-artifact-zip-proof-branch: {kind} root summary count mismatch"
             )
         summary_path = summary_candidates[0]
         summary = json.loads(archive.read(summary_path).decode("utf-8"))
