@@ -1,0 +1,29 @@
+{
+  "generated_at_utc": "2026-06-15T01:45:39.016514+00:00",
+  "git_commit": "ec33570f71179034cbf4219882154761beccd689",
+  "log_line_count": 243,
+  "log_path": "fresh_clone.log",
+  "log_sha256": "sha256:d44069084217eb3b11343c5e40a68da7ae0740b04f67e066d6143e402be8b7ff",
+  "markers": {
+    "checkout_sha": "fresh-clone-reproduction: checkout-sha=ec33570f71179034cbf4219882154761beccd689",
+    "fresh_clone": "fresh-clone-reproduction: PASS",
+    "install": "fresh-clone-reproduction: install=PASS",
+    "public_review": "fresh-clone-reproduction: public-review=PASS",
+    "release_readiness": "fresh-clone-reproduction: release-readiness=PASS",
+    "remote_autonomous_public_evidence": "fresh-clone-reproduction: remote-autonomous-public-evidence=PASS",
+    "remote_public_evidence": "fresh-clone-reproduction: remote-public-evidence=PASS",
+    "requested_ref": "fresh-clone-reproduction: requested-ref=ec33570f71179034cbf4219882154761beccd689"
+  },
+  "not_proof": [
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "independent external benchmark standing",
+    "GitHub Actions artifact zip contents",
+    "native live autonomy",
+    "broad unknown-repository repair"
+  ],
+  "schema_version": "fresh-clone-reproduction-public-evidence/v0.1",
+  "status": "passed"
+}
