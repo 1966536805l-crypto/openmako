@@ -1,0 +1,42 @@
+{
+  "artifacts": {
+    "autonomous": {
+      "artifact_digest": "sha256:e9c47cd02b1171b60cf3c63edb6c95f9c38b0e465e04e6badceb64001a27a89b",
+      "artifact_id": "7629332466",
+      "kind": "autonomous",
+      "name": "autonomous-learning-gate-summary",
+      "run_id": "27524605186",
+      "summary_path": "last_summary.json",
+      "zip_path": "autonomous/autonomous-learning-gate-summary.zip",
+      "zip_sha256": "sha256:e9c47cd02b1171b60cf3c63edb6c95f9c38b0e465e04e6badceb64001a27a89b",
+      "zip_size_bytes": 77835
+    },
+    "focused": {
+      "artifact_digest": "sha256:875f84d65ee7d236b3db9aa03008fea3db187ed8bd9971489fe9fc19e3a70a5d",
+      "artifact_id": "7629301825",
+      "kind": "focused",
+      "name": "focused-public-review-gate",
+      "run_id": "27524605204",
+      "summary_path": "summary.json",
+      "zip_path": "focused/focused-public-review-gate.zip",
+      "zip_sha256": "sha256:875f84d65ee7d236b3db9aa03008fea3db187ed8bd9971489fe9fc19e3a70a5d",
+      "zip_size_bytes": 86980
+    }
+  },
+  "download_method": "github-connector-download",
+  "generated_at_utc": "2026-06-15T04:55:56.484843+00:00",
+  "git_commit": "0c5741ed52447ca18876ec3e730ef361025650db",
+  "not_proof": [
+    "unauthenticated GitHub Actions API artifact zip download",
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "native live autonomy",
+    "broad unknown-repository repair",
+    "external benchmark standing",
+    "independent external held-out benchmark"
+  ],
+  "schema_version": "openmako-artifact-zip-proof/v0.1",
+  "status": "passed"
+}
