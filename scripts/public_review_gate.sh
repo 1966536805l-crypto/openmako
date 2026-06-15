@@ -89,6 +89,12 @@ OPENMAKO_HELDOUT_REPRODUCTION_PUBLIC_ROOT="$TMP_DIR" \
 OPENMAKO_HELDOUT_REPRODUCTION_PUBLIC_PREFIX="outputs" \
   bash scripts/heldout_reproduction_packet.sh
 
+echo "public-review-gate: running independent external-heldout benchmark packet"
+OPENMAKO_INDEPENDENT_EXTERNAL_HELDOUT_SOURCE_SUMMARY_JSON="$TMP_DIR/external_heldout_benchmark_gate/last_summary.json" \
+OPENMAKO_INDEPENDENT_EXTERNAL_HELDOUT_PACKET_JSON="$TMP_DIR/heldout_reproduction_packet/packet.json" \
+OPENMAKO_INDEPENDENT_EXTERNAL_HELDOUT_SUMMARY_JSON="$TMP_DIR/independent_external_heldout_benchmark/last_summary.json" \
+  bash scripts/independent_external_heldout_benchmark_gate.sh
+
 echo "public-review-gate: running public metadata boundary tests"
 "$PYTHON_BIN" -m pytest -p no:cacheprovider \
   tests/test_public_metadata.py \
@@ -248,6 +254,7 @@ required_outputs = [
     "outputs/config_only_repair.json",
     "outputs/external_heldout_benchmark_gate/last_summary.json",
     "outputs/heldout_reproduction_packet/packet.json",
+    "outputs/independent_external_heldout_benchmark/last_summary.json",
     "outputs/external_source_benchmark_gate/last_summary.json",
     "outputs/runtime_shadowing_risk.json",
     "outputs/swtbench_patch_artifact.json",

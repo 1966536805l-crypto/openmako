@@ -1,0 +1,61 @@
+{
+  "benchmark_id": "openmako-independent-external-heldout-v0.1",
+  "cases": [
+    {
+      "case_id": "mcp-python-sdk-tool-name-validation-function-repair",
+      "expected_label": "supported_repair_claim",
+      "expected_task_id": "vendored_mcp_tool_name_validation_function_repair",
+      "function_name": "validate_tool_name",
+      "selected_test": "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_function_level_repair_reuses_without_non_target_drift",
+      "target_path": "mcp/shared/tool_name_validation.py"
+    },
+    {
+      "case_id": "mcp-python-sdk-tool-name-wrapper-seed-repair",
+      "expected_label": "supported_repair_claim",
+      "expected_task_id": "vendored_mcp_tool_name_wrapper_seed_repair",
+      "function_name": "validate_and_warn_tool_name",
+      "selected_test": "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift",
+      "target_path": "mcp/shared/tool_name_validation.py"
+    }
+  ],
+  "case_count": 2,
+  "external_source": {
+    "license": "MIT",
+    "manifest_path": "third_party/mcp_python_sdk/MANIFEST.sha256",
+    "manifest_sha256": "8ca78f36a6ffea447eb924136c0ede1002a018f1fe1597c51a630283d295f45a",
+    "package": "mcp-python-sdk",
+    "repository": "https://github.com/modelcontextprotocol/python-sdk",
+    "selected_source_files": {
+      "third_party/mcp_python_sdk/LICENSE": {
+        "sha256": "5e13dbbc1d120fc2a03cecde7c91424ae2d7de11b63d58ded2f4431e261ee50d"
+      },
+      "third_party/mcp_python_sdk/src/mcp/shared/tool_name_validation.py": {
+        "sha256": "99312f833b0cb246b2ca294b68890fee521a0388def1c9e48fdc5821cea1b60a"
+      }
+    }
+  },
+  "independence_scope": {
+    "external_source_heldout": true,
+    "heldout_from_autonomous_gate": true,
+    "independent_from_autonomous_task_manifest": true,
+    "repo_defined_benchmark_packet": true,
+    "third_party_benchmark_standing": false
+  },
+  "not_proof": [
+    "third-party benchmark standing",
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "native live autonomy",
+    "broad unknown-repository repair",
+    "GitHub Actions artifact zip contents"
+  ],
+  "schema_version": "independent-external-heldout-benchmark-cases/v0.1",
+  "selected_test_file": {
+    "path": "tests/test_upstream_function_file_bundle_regression.py",
+    "sha256": "314018517a8df6b6b686004faa020a1d09d8529dd7a326497ba1ed26f2d4ad9e"
+  },
+  "selected_tests_sha256": "11e79c05b4886d752d902ff5acffa1904246b2b7e6144d71d7cb2dd689b3617b",
+  "source_boundary": "This is an OpenMako-defined external-source held-out benchmark packet over frozen MCP Python SDK source. It is independent from the autonomous-learning task manifest and carries raw repair evidence, but it is not third-party benchmark standing, external review, endorsement, stars, reposts, native live autonomy, or broad unknown-repository repair proof."
+}

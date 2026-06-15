@@ -28,8 +28,10 @@ def _copy_minimal_gate_repo(tmp_path: Path) -> Path:
     fixed_paths = [
         "scripts/external_heldout_benchmark_gate.sh",
         "scripts/heldout_reproduction_packet.sh",
+        "scripts/independent_external_heldout_benchmark_gate.sh",
         "scripts/autonomous_task_source_provenance.json",
         "scripts/external_heldout_task_source_provenance.json",
+        "benchmarks/independent_external_heldout/v0.1/cases.json",
         "docs/UPSTREAM_ATTRIBUTION.md",
         "tests/test_upstream_function_file_bundle_regression.py",
         "third_party/mcp_python_sdk/MANIFEST.sha256",
@@ -65,6 +67,25 @@ def _run_packet(target_root: Path) -> subprocess.CompletedProcess[str]:
     env["OPENMAKO_HELDOUT_REPRODUCTION_PACKET_JSON"] = str(target_root / "packet.json")
     return subprocess.run(
         ["bash", "scripts/heldout_reproduction_packet.sh"],
+        cwd=target_root,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+def _run_independent_benchmark_gate(target_root: Path) -> subprocess.CompletedProcess[str]:
+    env = os.environ.copy()
+    env["OPENMAKO_INDEPENDENT_EXTERNAL_HELDOUT_SUMMARY_JSON"] = str(
+        target_root / "independent_summary.json"
+    )
+    env["OPENMAKO_INDEPENDENT_EXTERNAL_HELDOUT_SOURCE_SUMMARY_JSON"] = str(
+        target_root / "summary.json"
+    )
+    env["OPENMAKO_INDEPENDENT_EXTERNAL_HELDOUT_PACKET_JSON"] = str(target_root / "packet.json")
+    return subprocess.run(
+        ["bash", "scripts/independent_external_heldout_benchmark_gate.sh"],
         cwd=target_root,
         env=env,
         text=True,
@@ -251,6 +272,14 @@ def _refresh_task_source_manifest_test_file_digest(target_root: Path) -> None:
     manifest.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def _refresh_independent_benchmark_test_file_digest(target_root: Path) -> None:
+    benchmark = target_root / "benchmarks/independent_external_heldout/v0.1/cases.json"
+    payload = json.loads(benchmark.read_text(encoding="utf-8"))
+    test_path = target_root / payload["selected_test_file"]["path"]
+    payload["selected_test_file"]["sha256"] = _sha256(test_path)
+    benchmark.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
 def test_external_heldout_gate_fails_closed_on_manifest_digest_mismatch(tmp_path: Path) -> None:
     target_root = _copy_minimal_gate_repo(tmp_path)
     source = target_root / "third_party/mcp_python_sdk/src/mcp/shared/tool_name_validation.py"
@@ -410,6 +439,7 @@ def test_heldout_reproduction_packet_records_raw_evidence_hashes(tmp_path: Path)
         [_valid_task_proof(), _valid_wrapper_task_proof()],
     )
     _refresh_task_source_manifest_test_file_digest(target_root)
+    _refresh_independent_benchmark_test_file_digest(target_root)
 
     gate = _run_gate(target_root)
     packet_result = _run_packet(target_root)
@@ -442,6 +472,7 @@ def test_heldout_reproduction_packet_fails_closed_on_missing_raw_proof(tmp_path:
         [_valid_task_proof(), _valid_wrapper_task_proof()],
     )
     _refresh_task_source_manifest_test_file_digest(target_root)
+    _refresh_independent_benchmark_test_file_digest(target_root)
 
     gate = _run_gate(target_root)
     proof = target_root / "task_proofs" / "proof_0.json"
@@ -452,3 +483,100 @@ def test_heldout_reproduction_packet_fails_closed_on_missing_raw_proof(tmp_path:
     assert packet_result.returncode != 0
     assert "missing raw evidence file" in packet_result.stderr
     assert "heldout-reproduction-packet: PASS" not in packet_result.stdout
+
+
+def test_independent_external_heldout_benchmark_gate_records_frozen_packet(
+    tmp_path: Path,
+) -> None:
+    target_root = _copy_minimal_gate_repo(tmp_path)
+    _write_fake_passing_selected_test_with_task_proofs(
+        target_root,
+        [_valid_task_proof(), _valid_wrapper_task_proof()],
+    )
+    _refresh_task_source_manifest_test_file_digest(target_root)
+    _refresh_independent_benchmark_test_file_digest(target_root)
+
+    gate = _run_gate(target_root)
+    packet_result = _run_packet(target_root)
+    independent = _run_independent_benchmark_gate(target_root)
+
+    assert gate.returncode == 0, gate.stderr
+    assert packet_result.returncode == 0, packet_result.stderr
+    assert independent.returncode == 0, independent.stderr
+    assert "independent-external-heldout-benchmark-gate: PASS" in independent.stdout
+    summary = json.loads((target_root / "independent_summary.json").read_text(encoding="utf-8"))
+    assert summary["schema_version"] == "independent-external-heldout-benchmark-gate/v0.1"
+    assert summary["status"] == "passed"
+    assert summary["benchmark"]["case_count"] == 2
+    assert summary["independent_external_heldout_benchmark"] is True
+    assert summary["independent_from_autonomous_task_manifest"] is True
+    assert summary["repo_defined_benchmark_packet"] is True
+    assert summary["third_party_benchmark_standing"] is False
+    assert summary["observed_pytest"] == {
+        "exit_code": 0,
+        "passed": 2,
+        "skipped": 0,
+        "warnings": 0,
+    }
+    assert set(summary["raw_evidence_files"]) >= {
+        "summary.json",
+        "pytest.log",
+        "task_proofs/proof_0.json",
+        "task_proofs/proof_1.json",
+    }
+    assert "third-party benchmark standing" in summary["not_proof"]
+
+
+def test_independent_external_heldout_benchmark_gate_fails_on_weakened_case_definition(
+    tmp_path: Path,
+) -> None:
+    target_root = _copy_minimal_gate_repo(tmp_path)
+    _write_fake_passing_selected_test_with_task_proofs(
+        target_root,
+        [_valid_task_proof(), _valid_wrapper_task_proof()],
+    )
+    _refresh_task_source_manifest_test_file_digest(target_root)
+    _refresh_independent_benchmark_test_file_digest(target_root)
+    benchmark = target_root / "benchmarks/independent_external_heldout/v0.1/cases.json"
+    payload = json.loads(benchmark.read_text(encoding="utf-8"))
+    payload["cases"][0]["expected_task_id"] = "weakened_task_id"
+    benchmark.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    gate = _run_gate(target_root)
+    packet_result = _run_packet(target_root)
+    independent = _run_independent_benchmark_gate(target_root)
+
+    assert gate.returncode == 0, gate.stderr
+    assert packet_result.returncode == 0, packet_result.stderr
+    assert independent.returncode != 0
+    assert "task proof ids mismatch" in independent.stderr
+    assert "independent-external-heldout-benchmark-gate: PASS" not in independent.stdout
+
+
+def test_independent_external_heldout_benchmark_gate_fails_on_selected_test_replacement(
+    tmp_path: Path,
+) -> None:
+    target_root = _copy_minimal_gate_repo(tmp_path)
+    _write_fake_passing_selected_test_with_task_proofs(
+        target_root,
+        [_valid_task_proof(), _valid_wrapper_task_proof()],
+    )
+    _refresh_task_source_manifest_test_file_digest(target_root)
+    _refresh_independent_benchmark_test_file_digest(target_root)
+    benchmark = target_root / "benchmarks/independent_external_heldout/v0.1/cases.json"
+    payload = json.loads(benchmark.read_text(encoding="utf-8"))
+    payload["cases"][1]["selected_test"] = payload["cases"][0]["selected_test"]
+    payload["selected_tests_sha256"] = hashlib.sha256(
+        ("\n".join(case["selected_test"] for case in payload["cases"]) + "\n").encode()
+    ).hexdigest()
+    benchmark.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    gate = _run_gate(target_root)
+    packet_result = _run_packet(target_root)
+    independent = _run_independent_benchmark_gate(target_root)
+
+    assert gate.returncode == 0, gate.stderr
+    assert packet_result.returncode == 0, packet_result.stderr
+    assert independent.returncode != 0
+    assert "source summary selected_tests mismatch" in independent.stderr
+    assert "independent-external-heldout-benchmark-gate: PASS" not in independent.stdout
