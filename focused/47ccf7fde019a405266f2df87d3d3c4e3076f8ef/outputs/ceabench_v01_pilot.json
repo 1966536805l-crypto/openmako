@@ -1,0 +1,140 @@
+{
+  "case_count": 112,
+  "generated_from": {
+    "adversarial_matrix_path": "tests/fixtures/evidence_court/adversarial_claim_matrix.json",
+    "adversarial_matrix_sha256": "378b968ae52c914af5e92b0fb35ab277f56c99135ac323d72fe031cb8718c0be",
+    "seed_index_path": "benchmarks/ceabench/v0.1/cases.json",
+    "seed_index_sha256": "232245a8f7205c93f4a9d290e271cb10907166eb228346990a90a461e6b86512"
+  },
+  "matched_count": 112,
+  "mismatch_count": 0,
+  "mismatches": [],
+  "not_proof": [
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "leaderboard standing",
+    "native product-log ingestion",
+    "live autonomy",
+    "broad unknown-repository repair",
+    "independent external benchmark",
+    "human agreement statistics",
+    "model ranking",
+    "native benchmark export ingestion"
+  ],
+  "pilot_version": "v0.1",
+  "schema_version": "ceabench-empirical-pilot/v0.1",
+  "score": 1.0,
+  "source_layers": {
+    "adversarial_claim_matrix": {
+      "case_count": 105,
+      "family_counts": {
+        "combo-failed-validation-missing-edit": 1,
+        "combo-missing-diff-ci-tamper": 1,
+        "combo-missing-test-agent-risk": 1,
+        "combo-scope-validation-failure": 1,
+        "combo-stale-validation-missing-diff": 1,
+        "missing-diff-content": 15,
+        "missing-edited-file": 15,
+        "missing-final-claim": 5,
+        "missing-test-evidence": 10,
+        "pass-source-repair": 20,
+        "post-edit-validation-failure": 10,
+        "scope-violation": 10,
+        "test-only-tamper-risk": 15
+      },
+      "family_summary": {
+        "combo-failed-validation-missing-edit": {
+          "cases": 1,
+          "matched": 1
+        },
+        "combo-missing-diff-ci-tamper": {
+          "cases": 1,
+          "matched": 1
+        },
+        "combo-missing-test-agent-risk": {
+          "cases": 1,
+          "matched": 1
+        },
+        "combo-scope-validation-failure": {
+          "cases": 1,
+          "matched": 1
+        },
+        "combo-stale-validation-missing-diff": {
+          "cases": 1,
+          "matched": 1
+        },
+        "missing-diff-content": {
+          "cases": 15,
+          "matched": 15
+        },
+        "missing-edited-file": {
+          "cases": 15,
+          "matched": 15
+        },
+        "missing-final-claim": {
+          "cases": 5,
+          "matched": 5
+        },
+        "missing-test-evidence": {
+          "cases": 10,
+          "matched": 10
+        },
+        "pass-source-repair": {
+          "cases": 20,
+          "matched": 20
+        },
+        "post-edit-validation-failure": {
+          "cases": 10,
+          "matched": 10
+        },
+        "scope-violation": {
+          "cases": 10,
+          "matched": 10
+        },
+        "test-only-tamper-risk": {
+          "cases": 15,
+          "matched": 15
+        }
+      },
+      "matched_count": 105,
+      "mismatch_count": 0,
+      "multi_finding_case_count": 5,
+      "schema_version": "openmako-adversarial-claim-matrix/v0.1"
+    },
+    "seed_case_index": {
+      "case_count": 7,
+      "matched_count": 7,
+      "metric_summary": {
+        "boundary_discipline_score": {
+          "cases": 1,
+          "matched": 1
+        },
+        "claim_evidence_alignment_accuracy": {
+          "cases": 1,
+          "matched": 1
+        },
+        "contradiction_catch_rate": {
+          "cases": 1,
+          "matched": 1
+        },
+        "evidence_coverage_vector": {
+          "cases": 1,
+          "matched": 1
+        },
+        "tamper_risk_sensitivity": {
+          "cases": 2,
+          "matched": 2
+        },
+        "unsupported_completion_catch_rate": {
+          "cases": 1,
+          "matched": 1
+        }
+      },
+      "mismatch_count": 0,
+      "schema_version": "ceabench-score/v0.1"
+    }
+  },
+  "status": "passed"
+}
