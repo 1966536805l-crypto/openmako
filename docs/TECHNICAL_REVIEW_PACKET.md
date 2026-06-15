@@ -9,11 +9,32 @@ promotion request, star request, or repost request.
 The current public claim is narrow:
 
 > OpenMako v0.1 demonstrates one learning-effect repair check inside an
-> external-source benchmark gate, plus an Evidence Court CLI for auditing
-> supplied records.
+> external-source benchmark gate, two held-out function-level source repair
+> checks inside an external-heldout benchmark gate, a repo-defined independent
+> external-heldout benchmark packet, public focused/autonomous evidence
+> snapshots, and an Evidence Court CLI for auditing supplied records.
 
 Do not treat older planning docs, local-only benchmark notes, archived quant
 experiments, or agent-written summaries as public capability evidence.
+
+A recent fully closed public-evidence target is:
+
+- Main commit: `0c5741ed52447ca18876ec3e730ef361025650db`
+- Public-evidence branch commit: `c68f7508b82b62f73a4034a552c6eb1eb84e554f`
+- Focused CI run: https://github.com/1966536805l-crypto/openmako/actions/runs/27524605204
+- Autonomous-learning CI run: https://github.com/1966536805l-crypto/openmako/actions/runs/27524605186
+- Focused artifact ZIP proof:
+  `sha256:875f84d65ee7d236b3db9aa03008fea3db187ed8bd9971489fe9fc19e3a70a5d`
+- Autonomous artifact ZIP proof:
+  `sha256:e9c47cd02b1171b60cf3c63edb6c95f9c38b0e465e04e6badceb64001a27a89b`
+- Fresh-clone reproduction log:
+  `sha256:5a05302adabfa85b274b17dd6d366e52540b97471047c461e46aee0d38b4d4d8`
+
+Use the current `main` HEAD for a new review. The concrete values above are a
+recent closed evidence example, not a promise that later commits have the same
+run IDs or artifact hashes. These records are public reproducibility evidence
+only. They are not external review, endorsement, stars, reposts, native live
+autonomy, broad unknown-repository repair, or third-party benchmark standing.
 
 ## Public Evidence To Inspect
 
@@ -28,6 +49,8 @@ experiments, or agent-written summaries as public capability evidence.
   https://github.com/1966536805l-crypto/openmako/actions/workflows/focused.yml
 - Evidence Court demo CI:
   https://github.com/1966536805l-crypto/openmako/actions/workflows/evidence-court-demo.yml
+- Public evidence branch:
+  https://github.com/1966536805l-crypto/openmako/tree/public-evidence
 - Reproduction guide:
   https://github.com/1966536805l-crypto/openmako/blob/main/docs/REPRODUCE_V0_1.md
 - Reviewer outreach draft:
@@ -40,6 +63,7 @@ experiments, or agent-written summaries as public capability evidence.
 ```bash
 git clone https://github.com/1966536805l-crypto/openmako.git
 cd openmako
+git checkout 0c5741ed52447ca18876ec3e730ef361025650db
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip
@@ -48,10 +72,12 @@ python -m pip install -e . pytest
 ```
 
 That script runs the planner focused public test, the external-source benchmark
-gate, metadata boundary checks, the supplied Evidence Court bad-run audit, the
-artifact-provenance fixture, the SWTBench patch-artifact fixture, the config-only
-repair fixture, runtime shadowing and verifier/CI tamper fixtures, and the
-supplied transcript adapter matrix.
+gate, the external-heldout benchmark gate, the repo-defined independent
+external-heldout benchmark packet, metadata boundary checks, the supplied
+Evidence Court bad-run audit, the artifact-provenance fixture, the SWTBench
+patch-artifact fixture, the config-only repair fixture, runtime shadowing and
+verifier/CI tamper fixtures, and the supplied transcript adapter matrix.
+
 To run only the external-source benchmark gate:
 
 For exact expected output and smaller checks, see `docs/REPRODUCE_V0_1.md`.
@@ -64,6 +90,40 @@ Expected public snapshot signal:
 
 ```text
 external-source-benchmark-gate: PASS
+```
+
+To reproduce the current public evidence branch and fresh-clone evidence:
+
+```bash
+OPENMAKO_REPRO_REF=0c5741ed52447ca18876ec3e730ef361025650db \
+OPENMAKO_REPRO_LOG=/tmp/openmako-fresh-clone.log \
+bash scripts/fresh_clone_reproduction.sh
+
+OPENMAKO_REMOTE=https://github.com/1966536805l-crypto/openmako.git \
+OPENMAKO_PUBLIC_EVIDENCE_REMOTE=https://github.com/1966536805l-crypto/openmako.git \
+bash scripts/remote_public_evidence_snapshot.sh
+
+OPENMAKO_REMOTE=https://github.com/1966536805l-crypto/openmako.git \
+OPENMAKO_PUBLIC_EVIDENCE_REMOTE=https://github.com/1966536805l-crypto/openmako.git \
+bash scripts/remote_autonomous_public_evidence_snapshot.sh
+
+OPENMAKO_REMOTE=https://github.com/1966536805l-crypto/openmako.git \
+OPENMAKO_PUBLIC_EVIDENCE_REMOTE=https://github.com/1966536805l-crypto/openmako.git \
+bash scripts/remote_artifact_zip_proof_snapshot.sh
+
+OPENMAKO_REMOTE=https://github.com/1966536805l-crypto/openmako.git \
+OPENMAKO_PUBLIC_EVIDENCE_REMOTE=https://github.com/1966536805l-crypto/openmako.git \
+bash scripts/remote_fresh_clone_reproduction_snapshot.sh
+```
+
+Expected high-level signal:
+
+```text
+fresh-clone-reproduction: PASS
+remote-public-evidence-snapshot: PASS
+remote-autonomous-public-evidence-snapshot: PASS
+remote-artifact-zip-proof-snapshot: PASS
+remote-fresh-clone-reproduction-snapshot: PASS
 ```
 
 ## Reproduce The Evidence Court Demo

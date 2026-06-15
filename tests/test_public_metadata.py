@@ -2811,9 +2811,15 @@ def test_technical_review_packet_is_evidence_first_not_promotional() -> None:
     assert "external-source benchmark\ngate" in packet
     assert "bash scripts/external_source_benchmark_gate.sh" in packet
     assert "external-source-benchmark-gate: PASS" in packet
-    assert "the\nartifact-provenance fixture, the SWTBench patch-artifact fixture" in packet
-    assert "SWTBench patch-artifact fixture, the config-only\nrepair fixture, runtime" in packet
-    assert "shadowing and verifier/CI tamper fixtures, and the\nsupplied transcript adapter matrix" in packet
+    assert "0c5741ed52447ca18876ec3e730ef361025650db" in packet
+    assert "remote-artifact-zip-proof-snapshot: PASS" in packet
+    assert "remote-fresh-clone-reproduction-snapshot: PASS" in packet
+    assert "third-party benchmark standing" in packet
+    assert "artifact-provenance fixture" in packet
+    assert "SWTBench\npatch-artifact fixture" in packet
+    assert "config-only repair fixture" in packet
+    assert "runtime shadowing and\nverifier/CI tamper fixtures" in packet
+    assert "supplied transcript adapter matrix" in packet
     assert "./bin/openmako --no-trust-prompt evidence-court record from-jsonl" in packet
     assert "./bin/openmako --no-trust-prompt evidence-court audit --ci --json run.json" in packet
     assert "examples/evidence_court/artifact_provenance.json" in packet
@@ -2883,7 +2889,11 @@ def test_reproduce_v01_guide_is_command_first_and_boundary_limited() -> None:
     assert "external-heldout-benchmark-gate: PASS" in guide
     assert "public-review-gate: checking external-heldout gate fail-closed negatives" in guide
     assert "python -m pytest -p no:cacheprovider tests/test_external_heldout_benchmark_gate.py -q" in guide
-    assert "11 passed" in guide
+    assert "16 passed" in guide
+    assert "bash scripts/independent_external_heldout_benchmark_gate.sh" in guide
+    assert "third-party-benchmark-standing=false" in guide
+    assert "remote-artifact-zip-proof-snapshot: PASS" in guide
+    assert "remote-fresh-clone-reproduction-snapshot: PASS" in guide
     assert "bash scripts/external_source_benchmark_gate.sh" in guide
     assert "bash scripts/external_heldout_benchmark_gate.sh" in guide
     assert "`external_source=true` and\n`independent_external_heldout=false`" in guide
@@ -4194,6 +4204,8 @@ def test_reviewer_outreach_draft_requests_criticism_not_promotion() -> None:
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in draft
     assert "docs/PUBLIC_SHARE_PACKET.md" in draft
     assert "I'm not asking for endorsement, stars, reposts, or promotion." in draft
+    assert "0c5741ed52447ca18876ec3e730ef361025650db" in draft
+    assert "fresh-clone log sha256=5a05302adabfa85b274b17dd6d366e52540b97471047c461e46aee0d38b4d4d8" in draft
     assert "## Who To Send First" in draft
     assert "Maintainers or reviewers of coding-agent eval, benchmark, or CI tooling." in draft
     assert "agent reliability, test evidence, or\n   benchmark methodology" in draft

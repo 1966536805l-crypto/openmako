@@ -12,14 +12,24 @@ I'm looking for technical boundary criticism on OpenMako v0.1.0:
 https://github.com/1966536805l-crypto/openmako/issues/2
 
 The narrow claim is that OpenMako is an evidence harness for coding-agent repair
-runs, with one focused public learning-effect gate and an Evidence Court CLI for
-auditing supplied records.
+runs, with focused public evidence gates, two external-source held-out repair
+checks, a repo-defined independent held-out packet, public artifact/fresh-clone
+proof, and an Evidence Court CLI for auditing supplied records.
 
 If you have time, the useful check is whether README, tests, release notes, and
 GitHub Actions prove only that claim, or whether any wording still overclaims.
 The review packet is here:
 
 https://github.com/1966536805l-crypto/openmako/blob/main/docs/TECHNICAL_REVIEW_PACKET.md
+
+The current exact-commit reproduction target is:
+
+```text
+main=0c5741ed52447ca18876ec3e730ef361025650db
+focused CI=https://github.com/1966536805l-crypto/openmako/actions/runs/27524605204
+autonomous CI=https://github.com/1966536805l-crypto/openmako/actions/runs/27524605186
+fresh-clone log sha256=5a05302adabfa85b274b17dd6d366e52540b97471047c461e46aee0d38b4d4d8
+```
 
 If you decide to discuss it publicly after review, this share packet keeps the
 claim narrow:

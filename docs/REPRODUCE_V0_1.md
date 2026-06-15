@@ -19,6 +19,7 @@ experiments, or local-only benchmark notes as proof for this claim.
 ```bash
 git clone https://github.com/1966536805l-crypto/openmako.git
 cd openmako
+git checkout 0c5741ed52447ca18876ec3e730ef361025650db
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip
@@ -31,6 +32,48 @@ To reproduce from a throwaway public clone with a venv and a hashable log:
 OPENMAKO_REPRO_REF=<openmako-main-sha> \
 OPENMAKO_REPRO_LOG=/tmp/openmako-fresh-clone.log \
 bash scripts/fresh_clone_reproduction.sh
+```
+
+A recent fully closed public-evidence reproduction target is:
+
+```text
+openmako-main-sha=0c5741ed52447ca18876ec3e730ef361025650db
+public-evidence-sha=c68f7508b82b62f73a4034a552c6eb1eb84e554f
+focused-run-id=27524605204
+autonomous-run-id=27524605186
+fresh-clone-log-sha256=5a05302adabfa85b274b17dd6d366e52540b97471047c461e46aee0d38b4d4d8
+```
+
+Use the current `main` HEAD for a new review; the concrete values above are a
+recent closed example, not a promise that later commits have the same run IDs or
+artifact hashes. After running the public gate or fresh-clone wrapper, reviewers
+can verify the published public-evidence branch for the same commit:
+
+```bash
+OPENMAKO_REMOTE=https://github.com/1966536805l-crypto/openmako.git \
+OPENMAKO_PUBLIC_EVIDENCE_REMOTE=https://github.com/1966536805l-crypto/openmako.git \
+bash scripts/remote_public_evidence_snapshot.sh
+
+OPENMAKO_REMOTE=https://github.com/1966536805l-crypto/openmako.git \
+OPENMAKO_PUBLIC_EVIDENCE_REMOTE=https://github.com/1966536805l-crypto/openmako.git \
+bash scripts/remote_autonomous_public_evidence_snapshot.sh
+
+OPENMAKO_REMOTE=https://github.com/1966536805l-crypto/openmako.git \
+OPENMAKO_PUBLIC_EVIDENCE_REMOTE=https://github.com/1966536805l-crypto/openmako.git \
+bash scripts/remote_artifact_zip_proof_snapshot.sh
+
+OPENMAKO_REMOTE=https://github.com/1966536805l-crypto/openmako.git \
+OPENMAKO_PUBLIC_EVIDENCE_REMOTE=https://github.com/1966536805l-crypto/openmako.git \
+bash scripts/remote_fresh_clone_reproduction_snapshot.sh
+```
+
+Expected public-evidence signals:
+
+```text
+remote-public-evidence-snapshot: PASS
+remote-autonomous-public-evidence-snapshot: PASS
+remote-artifact-zip-proof-snapshot: PASS
+remote-fresh-clone-reproduction-snapshot: PASS
 ```
 
 This script stops on install failure before running the release, public, or
@@ -62,7 +105,7 @@ external-heldout-benchmark-gate: PASS
 public-review-gate: running public metadata boundary tests
 <N> passed
 public-review-gate: checking external-heldout gate fail-closed negatives
-11 passed
+16 passed
 public-review-gate: checking adversarial claim matrix generator
 public-review-gate: running Evidence Court intensity matrix
 316 passed
@@ -164,8 +207,27 @@ python -m pytest -p no:cacheprovider tests/test_external_heldout_benchmark_gate.
 Expected local result on the public snapshot:
 
 ```text
-4 passed
+16 passed
 ```
+
+Repo-defined independent external-heldout benchmark packet only:
+
+```bash
+bash scripts/independent_external_heldout_benchmark_gate.sh
+```
+
+Expected local result on the public snapshot:
+
+```text
+independent-external-heldout-benchmark-gate: repo-defined-benchmark-packet=true
+independent-external-heldout-benchmark-gate: third-party-benchmark-standing=false
+independent-external-heldout-benchmark-gate: PASS
+```
+
+This is a frozen, repository-defined external-source held-out packet. It is not
+third-party benchmark standing, external review, endorsement, stars, reposts,
+native live autonomy, broad unknown-repository repair, or GitHub Actions
+artifact ZIP contents.
 
 Slower local autonomous-learning stress gate:
 
