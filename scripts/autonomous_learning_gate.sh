@@ -23,6 +23,8 @@ CURRENT_SEGMENT_STARTED_AT=0
 
 init_summary() {
   rm -rf "$TASK_PROOF_DIR"
+  rm -rf "$(dirname -- "$LINKED_EXTERNAL_HELDOUT_SUMMARY_JSON")"
+  rm -rf "$(dirname -- "$LINKED_INDEPENDENT_EXTERNAL_HELDOUT_SUMMARY_JSON")"
   mkdir -p "$SUMMARY_DIR"
   mkdir -p "$PYTEST_LOG_DIR"
   mkdir -p "$TASK_PROOF_DIR"

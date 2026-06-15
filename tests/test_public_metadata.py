@@ -3649,6 +3649,26 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
     env["PYTHON"] = str(fake_python)
 
     summary = tmp_path / "summary.json"
+    stale_packet = (
+        tmp_path
+        / "linked_independent_external_heldout"
+        / "heldout_reproduction_packet"
+        / "packet.json"
+    )
+    stale_packet.parent.mkdir(parents=True)
+    stale_packet.write_text(
+        json.dumps(
+            {
+                "schema_version": "heldout-reproduction-packet/v0.1",
+                "status": "passed",
+                "invocation": {"git_commit": "0" * 40},
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     env["OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON"] = str(summary)
     result = subprocess.run(
         ["bash", "scripts/autonomous_learning_gate.sh"],
@@ -3721,6 +3741,8 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
     assert payload["linked_independent_external_heldout"][
         "third_party_benchmark_standing"
     ] is False
+    rebuilt_packet = json.loads(stale_packet.read_text(encoding="utf-8"))
+    assert rebuilt_packet["invocation"]["git_commit"] == payload["invocation"]["git_commit"]
 
     def run_with_manifest(manifest_payload: dict, filename: str) -> subprocess.CompletedProcess[str]:
         manifest_path = tmp_path / filename
