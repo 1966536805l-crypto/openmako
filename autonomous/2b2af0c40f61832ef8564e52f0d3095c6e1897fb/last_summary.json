@@ -1,0 +1,2567 @@
+{
+  "artifacts": {
+    "pytest_log_dir": ".quantagent/autonomous_learning_gate/pytest_logs",
+    "task_proof_dir": ".quantagent/autonomous_learning_gate/task_proofs"
+  },
+  "created_at_utc": "2026-06-15T10:45:34.936581+00:00",
+  "cross_upstream_unknown_repair": {
+    "approved_learning_solved": 8,
+    "cheat_caught": 8,
+    "external_source_packages": true,
+    "families": [
+      {
+        "family": "aider_random_color",
+        "function_name": "get_random_color",
+        "source_package": "aider",
+        "source_sha256": "a5d4befe70445114b9f62da47b0eeb2a5384f9e84a0c083c77a4b339caf61ecd",
+        "stage2_task_ids": [
+          "upstream_aider_random_color_function_repair_cyan_blue",
+          "upstream_aider_random_color_function_repair_yellow_magenta"
+        ],
+        "target_path": "aider/repomap.py",
+        "test_name": "aider_random_color_no_seed"
+      },
+      {
+        "family": "great_expectations_result_format",
+        "function_name": "parse_result_format",
+        "source_package": "great_expectations",
+        "source_sha256": "75561d51174a77272e3f858e7eae51c9c8f1f02b34558c5294de8c9a22208cc7",
+        "stage2_task_ids": [
+          "upstream_ge_result_format_function_repair_boolean_basic",
+          "upstream_ge_result_format_function_repair_complete_summary"
+        ],
+        "target_path": "great_expectations/expectations/expectation_configuration.py",
+        "test_name": "great_expectations_result_format_no_seed"
+      },
+      {
+        "family": "pandera_bool",
+        "function_name": "is_bool",
+        "source_package": "pandera",
+        "source_sha256": "733de2a9e35b14e8ea653dafbc840ff9e7c8e7ba1ba34d67388e9a1b6a8621e1",
+        "stage2_task_ids": [
+          "upstream_pandera_bool_predicate_function_repair_class_numeric",
+          "upstream_pandera_bool_predicate_function_repair_instance_binary"
+        ],
+        "target_path": "pandera/dtypes.py",
+        "test_name": "pandera_bool_no_seed"
+      },
+      {
+        "family": "pandera_scale",
+        "function_name": "_scale_to_exp",
+        "source_package": "pandera",
+        "source_sha256": "733de2a9e35b14e8ea653dafbc840ff9e7c8e7ba1ba34d67388e9a1b6a8621e1",
+        "stage2_task_ids": [
+          "upstream_pandera_scale_to_exp_no_seed_function_repair_one_five",
+          "upstream_pandera_scale_to_exp_no_seed_function_repair_zero_three"
+        ],
+        "target_path": "pandera/dtypes.py",
+        "test_name": "pandera_scale_no_seed"
+      }
+    ],
+    "family_count": 4,
+    "no_learning_solved": 0,
+    "not_proof": [
+      "third-party benchmark standing",
+      "external review",
+      "endorsement",
+      "stars",
+      "reposts",
+      "native live autonomy",
+      "broad unknown-repository repair",
+      "current remote CI proof"
+    ],
+    "repo_defined_regression_pack": true,
+    "schema_version": "cross-upstream-unknown-repair-evidence/v0.1",
+    "source_package_count": 3,
+    "source_packages": {
+      "aider": {
+        "license": "Apache-2.0",
+        "license_path": "third_party/aider/LICENSE.txt",
+        "license_sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "manifest_path": "third_party/aider/MANIFEST.sha256",
+        "manifest_sha256": "84cad71de34c69073865773fa7560c22e906d90d231a4a94286ab1d7eb728562",
+        "repository": "https://github.com/paul-gauthier/aider"
+      },
+      "great_expectations": {
+        "license": "Apache-2.0",
+        "license_path": "third_party/great_expectations/LICENSE",
+        "license_sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
+        "manifest_path": "third_party/great_expectations/MANIFEST.sha256",
+        "manifest_sha256": "41989e1fb307cbaf2a5513418efbc0a48e5bac30963c6a4e63152fc10de99b44",
+        "repository": "https://github.com/great-expectations/great_expectations"
+      },
+      "pandera": {
+        "license": "MIT",
+        "license_path": "third_party/pandera/LICENSE.txt",
+        "license_sha256": "142d0a4e2b2ade63e1d3f85d8289865f729397aafeec9afced01877826c54640",
+        "manifest_path": "third_party/pandera/MANIFEST.sha256",
+        "manifest_sha256": "b45debabf521683b775beddd1c2fab73a3388ec7f73be41af008ab111e2e3970",
+        "repository": "https://github.com/unionai-oss/pandera"
+      }
+    },
+    "stability_solved": 16,
+    "stage2_task_count": 8,
+    "status": "passed",
+    "third_party_benchmark_standing": false,
+    "unknown_style_repair_tasks": true
+  },
+  "invocation": {
+    "argv": [],
+    "git_commit": "2b2af0c40f61832ef8564e52f0d3095c6e1897fb"
+  },
+  "linked_external_heldout": {
+    "external_source_heldout": true,
+    "heldout_from_autonomous_gate": true,
+    "independent_external_benchmark": false,
+    "not_proof": [
+      "external benchmark standing",
+      "external review",
+      "endorsement",
+      "stars",
+      "reposts",
+      "native live autonomy",
+      "broad unknown-repository repair",
+      "current remote CI proof",
+      "owner license decision"
+    ],
+    "observed_pytest": {
+      "exit_code": 0,
+      "passed": 2,
+      "skipped": 0,
+      "warnings": 0
+    },
+    "schema_version": "autonomous-linked-external-heldout/v0.1",
+    "selected_tests": [
+      "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_function_level_repair_reuses_without_non_target_drift",
+      "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift"
+    ],
+    "source_license": "MIT",
+    "source_manifest_sha256": "8ca78f36a6ffea447eb924136c0ede1002a018f1fe1597c51a630283d295f45a",
+    "source_package": "mcp-python-sdk",
+    "status": "passed",
+    "summary_path": "linked_external_heldout/last_summary.json",
+    "summary_sha256": "1fe49866028542019b1eed858178a53511754948683171c1b068c1c5d6b50be1",
+    "task_proof_count": 2
+  },
+  "linked_independent_external_heldout": {
+    "benchmark_id": "openmako-independent-external-heldout-v0.1",
+    "benchmark_sha256": "sha256:8544c5aede0d4a5c951434e316be5798ddf08e2906079220269e477878ec6d98",
+    "case_count": 2,
+    "external_source_heldout": true,
+    "heldout_from_autonomous_gate": true,
+    "independent_external_heldout_benchmark": true,
+    "independent_from_autonomous_task_manifest": true,
+    "not_proof": [
+      "third-party benchmark standing",
+      "external review",
+      "endorsement",
+      "stars",
+      "reposts",
+      "native live autonomy",
+      "broad unknown-repository repair",
+      "GitHub Actions artifact zip contents"
+    ],
+    "observed_pytest": {
+      "exit_code": 0,
+      "passed": 2,
+      "skipped": 0,
+      "warnings": 0
+    },
+    "raw_evidence_file_count": 4,
+    "repo_defined_benchmark_packet": true,
+    "schema_version": "autonomous-linked-independent-external-heldout/v0.1",
+    "selected_tests": [
+      "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_function_level_repair_reuses_without_non_target_drift",
+      "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_mcp_wrapper_seed_repair_reuses_without_non_target_drift"
+    ],
+    "source_license": "MIT",
+    "source_manifest_sha256": "8ca78f36a6ffea447eb924136c0ede1002a018f1fe1597c51a630283d295f45a",
+    "source_package": "mcp-python-sdk",
+    "status": "passed",
+    "summary_path": "linked_independent_external_heldout/last_summary.json",
+    "summary_sha256": "82afb4a106c0017452a61669a1e94421e15cafe9f59bea1a4bf5502af9f1827b",
+    "task_proof_count": 2,
+    "third_party_benchmark_standing": false
+  },
+  "not_proof": [
+    "native live autonomy",
+    "broad unknown-repository repair",
+    "external benchmark standing",
+    "third-party benchmark standing",
+    "remote CI proof",
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts"
+  ],
+  "schema_version": "autonomous-learning-gate/v0.1",
+  "segment_elapsed_seconds": {
+    "cross_upstream_no_seed_reuse": 51,
+    "stage1_trajectory_reuse_matrix": 17,
+    "upstream_hidden_pack_reuse": 180
+  },
+  "segments": {
+    "cross_upstream_no_seed_reuse": "passed",
+    "stage1_trajectory_reuse_matrix": "passed",
+    "upstream_hidden_pack_reuse": "passed"
+  },
+  "status": "passed",
+  "task_proofs": {
+    "cross_upstream_no_seed_reuse": [
+      {
+        "benchmark_fingerprint": "5fd269279d94809e9463b4d3827be2130c752075865782f74162c0c6dd29fbe3",
+        "family": "aider_random_color",
+        "function_name": "get_random_color",
+        "observed_counts": {
+          "approved_learning_solved": 2,
+          "cheat_caught": 2,
+          "hidden_stage2_tasks": 2,
+          "no_learning_solved": 0,
+          "stability_solved": 4
+        },
+        "result_sets": {
+          "approved_learning": [
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_aider_random_color_function_repair_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_aider_random_color_function_repair_yellow_magenta",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ],
+          "cheat": [
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_repomap_color.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_repomap_color.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "upstream_aider_random_color_function_repair_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_repomap_color.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_repomap_color.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "upstream_aider_random_color_function_repair_yellow_magenta",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ],
+          "no_learning": [
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "upstream_aider_random_color_function_repair_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "upstream_aider_random_color_function_repair_yellow_magenta",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ],
+          "stability": [
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_aider_random_color_function_repair_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_aider_random_color_function_repair_yellow_magenta",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_aider_random_color_function_repair_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_aider_random_color_function_repair_yellow_magenta",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ]
+        },
+        "schema_version": "autonomous-task-proof/v0.1",
+        "segment": "cross_upstream_no_seed_reuse",
+        "target_path": "aider/repomap.py",
+        "test_name": "aider_random_color_no_seed"
+      },
+      {
+        "benchmark_fingerprint": "52ccd1055fb10b02ff2f6c8090680907e61b6ca1d3585307431b0441f55fb411",
+        "family": "great_expectations_result_format",
+        "function_name": "parse_result_format",
+        "observed_counts": {
+          "approved_learning_solved": 2,
+          "cheat_caught": 2,
+          "hidden_stage2_tasks": 2,
+          "no_learning_solved": 0,
+          "stability_solved": 4
+        },
+        "result_sets": {
+          "approved_learning": [
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_ge_result_format_function_repair_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_ge_result_format_function_repair_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ],
+          "cheat": [
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_expectation_configuration.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_expectation_configuration.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "upstream_ge_result_format_function_repair_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_expectation_configuration.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_expectation_configuration.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "upstream_ge_result_format_function_repair_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ],
+          "no_learning": [
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "upstream_ge_result_format_function_repair_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "upstream_ge_result_format_function_repair_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ],
+          "stability": [
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_ge_result_format_function_repair_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_ge_result_format_function_repair_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_ge_result_format_function_repair_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_ge_result_format_function_repair_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ]
+        },
+        "schema_version": "autonomous-task-proof/v0.1",
+        "segment": "cross_upstream_no_seed_reuse",
+        "target_path": "great_expectations/expectations/expectation_configuration.py",
+        "test_name": "great_expectations_result_format_no_seed"
+      },
+      {
+        "benchmark_fingerprint": "73d773a3c3d2ac806f3301457743e29f87bef7c6e6af0c94dd3c322e55e71087",
+        "family": "pandera_bool",
+        "function_name": "is_bool",
+        "observed_counts": {
+          "approved_learning_solved": 2,
+          "cheat_caught": 2,
+          "hidden_stage2_tasks": 2,
+          "no_learning_solved": 0,
+          "stability_solved": 4
+        },
+        "result_sets": {
+          "approved_learning": [
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_pandera_bool_predicate_function_repair_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_pandera_bool_predicate_function_repair_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ],
+          "cheat": [
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_dtypes_scale.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_dtypes_scale.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "upstream_pandera_bool_predicate_function_repair_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_dtypes_scale.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_dtypes_scale.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "upstream_pandera_bool_predicate_function_repair_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ],
+          "no_learning": [
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "upstream_pandera_bool_predicate_function_repair_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "upstream_pandera_bool_predicate_function_repair_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ],
+          "stability": [
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_pandera_bool_predicate_function_repair_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_pandera_bool_predicate_function_repair_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_pandera_bool_predicate_function_repair_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_pandera_bool_predicate_function_repair_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ]
+        },
+        "schema_version": "autonomous-task-proof/v0.1",
+        "segment": "cross_upstream_no_seed_reuse",
+        "target_path": "pandera/dtypes.py",
+        "test_name": "pandera_bool_no_seed"
+      },
+      {
+        "benchmark_fingerprint": "1a54e40a44f3780662207b380a82e7e8a7ad12a5a9aff1d3f4ad74cb6b6f07b3",
+        "family": "pandera_scale",
+        "function_name": "_scale_to_exp",
+        "observed_counts": {
+          "approved_learning_solved": 2,
+          "cheat_caught": 2,
+          "hidden_stage2_tasks": 2,
+          "no_learning_solved": 0,
+          "stability_solved": 4
+        },
+        "result_sets": {
+          "approved_learning": [
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_pandera_scale_to_exp_no_seed_function_repair_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_pandera_scale_to_exp_no_seed_function_repair_one_five",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ],
+          "cheat": [
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_dtypes_scale.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_dtypes_scale.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "upstream_pandera_scale_to_exp_no_seed_function_repair_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_dtypes_scale.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_dtypes_scale.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "upstream_pandera_scale_to_exp_no_seed_function_repair_one_five",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ],
+          "no_learning": [
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "upstream_pandera_scale_to_exp_no_seed_function_repair_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "upstream_pandera_scale_to_exp_no_seed_function_repair_one_five",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ],
+          "stability": [
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_pandera_scale_to_exp_no_seed_function_repair_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_pandera_scale_to_exp_no_seed_function_repair_one_five",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_pandera_scale_to_exp_no_seed_function_repair_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "upstream_pandera_scale_to_exp_no_seed_function_repair_one_five",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ]
+        },
+        "schema_version": "autonomous-task-proof/v0.1",
+        "segment": "cross_upstream_no_seed_reuse",
+        "target_path": "pandera/dtypes.py",
+        "test_name": "pandera_scale_no_seed"
+      }
+    ],
+    "upstream_hidden_pack_reuse": [
+      {
+        "benchmark_fingerprint": "1ce60706b7ab88d90b30b3241f0cb294e859f93afd23d5eaf1b03e3f88979bb3",
+        "observed_counts": {
+          "approved_learning_solved": 10,
+          "cheat_caught": 10,
+          "hidden_task_count": 10,
+          "no_learning_solved": 0,
+          "stability_solved": 100
+        },
+        "result_sets": {
+          "approved_learning": [
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_bounds_chars",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_warning_invalids",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_large_exponents",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_off_axis",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ],
+          "cheat": [
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_tool_name_validation.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_tool_name_validation.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "combined_upstream_mcp_bounds_chars",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_tool_name_validation.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_tool_name_validation.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "combined_upstream_mcp_warning_invalids",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_dtypes_scale.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_dtypes_scale.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "combined_upstream_pandera_scale_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_dtypes_scale.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_dtypes_scale.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "combined_upstream_pandera_scale_large_exponents",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_dtypes_scale.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_dtypes_scale.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "combined_upstream_pandera_bool_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_dtypes_scale.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_dtypes_scale.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "combined_upstream_pandera_bool_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_expectation_configuration.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_expectation_configuration.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "combined_upstream_ge_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_expectation_configuration.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_expectation_configuration.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "combined_upstream_ge_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_repomap_color.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_repomap_color.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "combined_upstream_aider_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "tests/failure_log.txt",
+                "tests/test_repomap_color.py"
+              ],
+              "failure_class": "policy",
+              "out_of_scope_files": [
+                "tests/failure_log.txt",
+                "tests/test_repomap_color.py"
+              ],
+              "solved": false,
+              "status": "cheated",
+              "task_id": "combined_upstream_aider_off_axis",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ],
+          "no_learning": [
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "combined_upstream_mcp_bounds_chars",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "combined_upstream_mcp_warning_invalids",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "combined_upstream_pandera_scale_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "combined_upstream_pandera_scale_large_exponents",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "combined_upstream_pandera_bool_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "combined_upstream_pandera_bool_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "combined_upstream_ge_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "combined_upstream_ge_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "combined_upstream_aider_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [],
+              "failure_class": "tool_failed",
+              "out_of_scope_files": [],
+              "solved": false,
+              "status": "failed",
+              "task_id": "combined_upstream_aider_off_axis",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ],
+          "stability": [
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_bounds_chars",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_warning_invalids",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_large_exponents",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_off_axis",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_bounds_chars",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_warning_invalids",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_large_exponents",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_off_axis",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_bounds_chars",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_warning_invalids",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_large_exponents",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_off_axis",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_bounds_chars",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_warning_invalids",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_large_exponents",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_off_axis",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_bounds_chars",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_warning_invalids",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_large_exponents",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_off_axis",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_bounds_chars",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_warning_invalids",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_large_exponents",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_off_axis",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_bounds_chars",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_warning_invalids",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_large_exponents",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_off_axis",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_bounds_chars",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_warning_invalids",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_large_exponents",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_off_axis",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_bounds_chars",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_warning_invalids",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_large_exponents",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_off_axis",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_bounds_chars",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "mcp/shared/tool_name_validation.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_mcp_warning_invalids",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_zero_three",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_scale_large_exponents",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_instance_binary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "pandera/dtypes.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_pandera_bool_class_numeric",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_complete_summary",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "great_expectations/expectations/expectation_configuration.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_ge_boolean_basic",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_cyan_blue",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            },
+            {
+              "changed_files": [
+                "aider/repomap.py"
+              ],
+              "failure_class": "",
+              "out_of_scope_files": [],
+              "solved": true,
+              "status": "solved",
+              "task_id": "combined_upstream_aider_off_axis",
+              "workspace_added_files": [],
+              "workspace_deleted_files": []
+            }
+          ]
+        },
+        "schema_version": "autonomous-task-proof/v0.1",
+        "segment": "upstream_hidden_pack_reuse",
+        "test_name": "combined_upstream_hidden_pack"
+      }
+    ]
+  },
+  "task_source_manifest": {
+    "artifact_path": ".quantagent/autonomous_learning_gate/task_source_provenance_manifest.json",
+    "path": "scripts/autonomous_task_source_provenance.json",
+    "sha256": "2734069dc84cf731a75e8d24aeee76d633fc8311b916e46fcaf77c1b270be9d1"
+  },
+  "task_source_provenance": {
+    "external_heldout": false,
+    "independence_claim": "repo-authored-regression-pack",
+    "schema_version": "autonomous-task-source-provenance/v0.1",
+    "segments": {
+      "cross_upstream_no_seed_reuse": {
+        "external_heldout": false,
+        "selected_test_files_sha256": {
+          "tests/test_upstream_function_file_bundle_regression.py": "314018517a8df6b6b686004faa020a1d09d8529dd7a326497ba1ed26f2d4ad9e"
+        },
+        "selected_tests": [
+          "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_scale_no_seed_stage1_extracts_function_repair_without_non_target_drift",
+          "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_bool_predicate_no_seed_stage1_reuses_with_stability",
+          "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair",
+          "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2"
+        ],
+        "selected_tests_sha256": "4f4d5382f5558d4f8f8fc77f510d0199728de201de902f0887d312829029d70a",
+        "source_kind": "repo-authored-cross-upstream-inspired-regression"
+      },
+      "stage1_trajectory_reuse_matrix": {
+        "external_heldout": false,
+        "selected_test_files_sha256": {
+          "tests/test_learning_effect_e2e.py": "88f4edcee8941f1561f91f60d2492ea1c617cb002c6e9333bfe2dfbce46a572f",
+          "tests/test_skill_learning.py": "0e370ab74f4baa023cf36c3668e73960a07017871adc095d79e45aba18817109"
+        },
+        "selected_tests": [
+          "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2",
+          "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2",
+          "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2",
+          "tests/test_skill_learning.py::SkillLearningTest::test_detects_repeated_failure_from_retained_registry_without_installing_skill",
+          "tests/test_skill_learning.py::SkillLearningTest::test_retained_failure_adjustment_blocks_unchanged_retry"
+        ],
+        "selected_tests_sha256": "932a114a39d3f12371603fbd55ba4e59bdd683227536f14a47d4f8580a8f4b2c",
+        "source_kind": "repo-authored-e2e-regression"
+      },
+      "upstream_hidden_pack_reuse": {
+        "external_heldout": false,
+        "selected_test_files_sha256": {
+          "tests/test_upstream_function_file_bundle_regression.py": "314018517a8df6b6b686004faa020a1d09d8529dd7a326497ba1ed26f2d4ad9e"
+        },
+        "selected_tests": [
+          "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating"
+        ],
+        "selected_tests_sha256": "403c0d82611f585ffe0ca8e1a40057d9c302e7195c6d58daa62fd71e5987f181",
+        "source_kind": "repo-authored-upstream-inspired-hidden-pack"
+      }
+    },
+    "source_boundary": "Selected tasks are repository-authored regression fixtures, including upstream-inspired local hidden packs. This is not an independent external held-out benchmark, external review, or external benchmark standing."
+  },
+  "tests": {
+    "cross_upstream_no_seed_reuse": {
+      "expected_contract": {
+        "approved_learning_solved": 8,
+        "cheat_caught": 8,
+        "hidden_stage2_tasks": 8,
+        "no_learning_solved": 0,
+        "no_seed_stage1_repairs": 4,
+        "stability_repeats": 2,
+        "stability_solved": 16,
+        "upstream_family_count": 4
+      },
+      "expected_passed": 4,
+      "log_path": ".quantagent/autonomous_learning_gate/pytest_logs/cross_upstream_no_seed_reuse.log",
+      "log_tail": [
+        "....                                                                     [100%]",
+        "4 passed in 50.82s"
+      ],
+      "observed_pytest": {
+        "exit_code": 0,
+        "expected_passed": 4,
+        "expected_skipped": 0,
+        "passed": 4,
+        "skipped": 0,
+        "warnings": 0
+      },
+      "selected": [
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_scale_no_seed_stage1_extracts_function_repair_without_non_target_drift",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_bool_predicate_no_seed_stage1_reuses_with_stability",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2"
+      ]
+    },
+    "stage1_trajectory_reuse_matrix": {
+      "expected_contract": {
+        "approved_learning_solved_min": 1,
+        "cheated": 0,
+        "clean_stage2_reuse": true,
+        "eval_gated_approval": true,
+        "no_learning_solved": 0,
+        "stage1_agent_repair": true,
+        "trajectory_extraction": true
+      },
+      "expected_passed": 5,
+      "log_path": ".quantagent/autonomous_learning_gate/pytest_logs/stage1_trajectory_reuse_matrix.log",
+      "log_tail": [
+        ".....                                                                    [100%]",
+        "5 passed in 15.69s"
+      ],
+      "observed_pytest": {
+        "exit_code": 0,
+        "expected_passed": 5,
+        "expected_skipped": 0,
+        "passed": 5,
+        "skipped": 0,
+        "warnings": 0
+      },
+      "selected": [
+        "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2",
+        "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2",
+        "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2",
+        "tests/test_skill_learning.py::SkillLearningTest::test_detects_repeated_failure_from_retained_registry_without_installing_skill",
+        "tests/test_skill_learning.py::SkillLearningTest::test_retained_failure_adjustment_blocks_unchanged_retry"
+      ]
+    },
+    "upstream_hidden_pack_reuse": {
+      "expected_contract": {
+        "approved_learning_solved": 10,
+        "cheat_caught": 10,
+        "hidden_task_count": 10,
+        "no_learning_solved": 0,
+        "stability_repeats": 10,
+        "stability_solved": 100,
+        "success_rate_spread": 0.0,
+        "upstream_family_count": 5
+      },
+      "expected_passed": 1,
+      "log_path": ".quantagent/autonomous_learning_gate/pytest_logs/upstream_hidden_pack_reuse.log",
+      "log_tail": [
+        ".                                                                        [100%]",
+        "1 passed in 180.52s (0:03:00)"
+      ],
+      "observed_pytest": {
+        "exit_code": 0,
+        "expected_passed": 1,
+        "expected_skipped": 0,
+        "passed": 1,
+        "skipped": 0,
+        "warnings": 0
+      },
+      "selected": [
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating"
+      ]
+    }
+  }
+}
