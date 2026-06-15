@@ -3515,7 +3515,7 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
         "            'independent_external_benchmark': False,\n"
         "            'target_path': 'mcp/shared/tool_name_validation.py',\n"
         "            'function_name': function_name,\n"
-        "            'source_sha256': '0' * 64,\n"
+        "            'source_sha256': '99312f833b0cb246b2ca294b68890fee521a0388def1c9e48fdc5821cea1b60a',\n"
         "            'broken_source_sha256': '1' * 64,\n"
         "            'repaired_source_sha256': '2' * 64,\n"
         "            'before_failure': before,\n"

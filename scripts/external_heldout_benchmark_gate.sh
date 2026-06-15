@@ -242,6 +242,9 @@ def validate_task_proofs(proofs: list[dict[str, Any]]) -> list[str]:
     if STATUS != "passed":
         return []
     invalid: list[str] = []
+    expected_source_sha256 = manifest_entries[
+        "third_party/mcp_python_sdk/src/mcp/shared/tool_name_validation.py"
+    ]
     expected_tasks = {
         "vendored_mcp_tool_name_validation_function_repair": {
             "function_name": "validate_tool_name",
@@ -291,6 +294,8 @@ def validate_task_proofs(proofs: list[dict[str, Any]]) -> list[str]:
         for digest_field in ("source_sha256", "broken_source_sha256", "repaired_source_sha256"):
             if not isinstance(proof.get(digest_field), str) or not re.fullmatch(r"[0-9a-f]{64}", proof[digest_field]):
                 invalid.append(f"{prefix}.{digest_field}")
+        if proof.get("source_sha256") != expected_source_sha256:
+            invalid.append(f"{prefix}.source_sha256_manifest")
         if proof.get("broken_source_sha256") == proof.get("repaired_source_sha256"):
             invalid.append(f"{prefix}.repair_changed_source")
         if not isinstance(before_failure, dict):

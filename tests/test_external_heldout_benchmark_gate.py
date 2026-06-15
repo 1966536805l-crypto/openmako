@@ -14,6 +14,7 @@ SELECTED_TEST = (
     "UpstreamFunctionFileBundleRegressionTest::"
     "test_vendored_mcp_function_level_repair_reuses_without_non_target_drift"
 )
+MCP_TOOL_NAME_SOURCE_SHA256 = "99312f833b0cb246b2ca294b68890fee521a0388def1c9e48fdc5821cea1b60a"
 
 
 def _copy_file(source: Path, target_root: Path, rel_path: str) -> None:
@@ -222,7 +223,7 @@ def _valid_task_proof() -> dict:
         "schema_version": "external-heldout-repair-proof/v0.1",
         "source_package": "mcp-python-sdk",
         "source_repository": "https://github.com/modelcontextprotocol/python-sdk",
-        "source_sha256": "3" * 64,
+        "source_sha256": MCP_TOOL_NAME_SOURCE_SHA256,
         "target_path": "mcp/shared/tool_name_validation.py",
         "task_id": "vendored_mcp_tool_name_validation_function_repair",
     }
@@ -429,6 +430,25 @@ def test_external_heldout_gate_fails_closed_on_command_log_mismatch(tmp_path: Pa
 
     assert result.returncode != 0
     assert ".command_log.before_failure" in result.stderr
+    assert "external-heldout-benchmark-gate: PASS" not in result.stdout
+
+
+def test_external_heldout_gate_fails_closed_on_source_sha_manifest_mismatch(
+    tmp_path: Path,
+) -> None:
+    target_root = _copy_minimal_gate_repo(tmp_path)
+    proof = _valid_task_proof()
+    proof["source_sha256"] = "0" * 64
+    _write_fake_passing_selected_test_with_task_proofs(
+        target_root,
+        [proof, _valid_wrapper_task_proof()],
+    )
+    _refresh_task_source_manifest_test_file_digest(target_root)
+
+    result = _run_gate(target_root)
+
+    assert result.returncode != 0
+    assert ".source_sha256_manifest" in result.stderr
     assert "external-heldout-benchmark-gate: PASS" not in result.stdout
 
 
