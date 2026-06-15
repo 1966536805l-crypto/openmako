@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import io
 import json
 import shlex
@@ -77,6 +78,17 @@ class CodingBenchTest(unittest.TestCase):
         self.assertEqual(payload["summary"]["total"], 1)
         self.assertEqual(payload["summary"]["cheated"], 0)
         self.assertIn("[PASS] add_numbers", markdown)
+        self.assertEqual(payload["task_source"]["schema_version"], "openmako-coding-bench-task-source/v0.1")
+        self.assertEqual(payload["task_source"]["source_kind"], "builtin")
+        self.assertEqual(payload["task_source"]["task_count"], 1)
+        self.assertEqual(payload["task_source"]["task_ids"], ["add_numbers"])
+        self.assertEqual(payload["task_source"]["limit"], 1)
+        self.assertRegex(payload["task_source"]["task_ids_sha256"], r"^[0-9a-f]{64}$")
+        self.assertRegex(payload["task_source"]["task_payload_sha256"], r"^[0-9a-f]{64}$")
+        self.assertTrue(payload["task_source"]["identity_lock"]["task_ids_locked"])
+        self.assertTrue(payload["task_source"]["identity_lock"]["task_payload_locked"])
+        self.assertFalse(payload["task_source"]["identity_lock"]["task_file_sha256_locked"])
+        self.assertIn("broad unknown-repository repair", payload["task_source"]["evidence_boundary"]["not_proof"])
         evidence = run.results[0].repair_evidence
         self.assertEqual(evidence["schema_version"], "openmako-coding-bench-repair-evidence/v0.1")
         self.assertEqual(evidence["label"], "supported_repair_claim")
@@ -144,6 +156,7 @@ class CodingBenchTest(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
+            expected_task_file_sha256 = hashlib.sha256(task_file.read_bytes()).hexdigest()
             command = (
                 "{python} -m quantagent.cli --no-trust-prompt agent --project {workspace} "
                 "--json --max-steps 12 --learning-context off {instruction}"
@@ -166,6 +179,16 @@ class CodingBenchTest(unittest.TestCase):
         self.assertEqual(result.patch_metrics.workspace_modified_files, ("subject.py",))
         self.assertFalse(root_result_exists)
         self.assertTrue(communication_result_exists)
+        payload = json.loads(render_coding_bench_json(run))
+        self.assertEqual(payload["task_source"]["source_kind"], "task_file")
+        self.assertEqual(payload["task_source"]["task_count"], 1)
+        self.assertEqual(payload["task_source"]["task_ids"], ["combine_score_fast_repair"])
+        self.assertEqual(payload["task_source"]["task_file"]["path"], str(task_file.resolve()))
+        self.assertEqual(
+            payload["task_source"]["task_file"]["sha256"],
+            expected_task_file_sha256,
+        )
+        self.assertTrue(payload["task_source"]["identity_lock"]["task_file_sha256_locked"])
 
     def test_coding_bench_marks_test_file_modification_as_cheated(self) -> None:
         with self.make_project() as tmp:

@@ -131,6 +131,7 @@ class CodingBenchRun:
     agent_command: str
     results: tuple[CodingBenchResult, ...] = ()
     artifact_dir: str = ""
+    task_source: Mapping[str, Any] = field(default_factory=dict)
 
     def summary(self) -> dict[str, Any]:
         total = len(self.results)
@@ -159,6 +160,7 @@ class CodingBenchRun:
             "project": self.project,
             "agent_command": self.agent_command,
             "artifact_dir": self.artifact_dir,
+            "task_source": dict(self.task_source),
             "summary": self.summary(),
             "results": [result.to_dict() for result in self.results],
         }
@@ -229,8 +231,10 @@ def run_coding_bench(
 
     project_path = Path(project).expanduser().resolve(strict=False)
     tasks = load_coding_bench_tasks(task_file) if task_file else builtin_coding_bench_tasks()
+    task_source = _coding_bench_task_source(tasks, task_file=task_file)
     if limit is not None:
         tasks = tasks[: max(limit, 0)]
+        task_source = _coding_bench_task_source(tasks, task_file=task_file, limit=limit)
     run_id = _new_coding_bench_run_id("cbench")
     artifact_dir = coding_bench_dir(project_path) / "runs" / run_id
     workspace_root = artifact_dir / "workspaces"
@@ -246,6 +250,7 @@ def run_coding_bench(
         agent_command=resolved_agent_command,
         results=tuple(results),
         artifact_dir=str(artifact_dir),
+        task_source=task_source,
     )
     artifact_dir.mkdir(parents=True, exist_ok=True)
     (artifact_dir / "run.json").write_text(render_coding_bench_json(run), encoding="utf-8")
@@ -595,6 +600,57 @@ def render_coding_bench_stability_markdown(run: CodingBenchStabilityRun) -> str:
         for name, count in summary["failure_classes"].items():
             lines.append(f"- {name}: {count}")
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _coding_bench_task_source(
+    tasks: Sequence[CodingBenchTask],
+    *,
+    task_file: str | Path | None,
+    limit: int | None = None,
+) -> dict[str, Any]:
+    task_ids = [task.id for task in tasks]
+    task_payload = [task.to_dict() for task in tasks]
+    task_payload_json = json.dumps(task_payload, ensure_ascii=False, sort_keys=True)
+    task_file_path = Path(task_file).expanduser().resolve(strict=False) if task_file else None
+    source: dict[str, Any] = {
+        "schema_version": "openmako-coding-bench-task-source/v0.1",
+        "source_kind": "task_file" if task_file_path else "builtin",
+        "task_count": len(tasks),
+        "task_ids": task_ids,
+        "task_ids_sha256": _sha256_text("\n".join(task_ids) + ("\n" if task_ids else "")),
+        "task_payload_sha256": _sha256_text(task_payload_json),
+        "limit": limit,
+        "identity_lock": {
+            "task_ids_locked": True,
+            "task_payload_locked": True,
+            "task_file_sha256_locked": bool(task_file_path),
+        },
+        "evidence_boundary": {
+            "proves": [
+                "the CodingBench run records the exact evaluated task ids",
+                "the CodingBench run records a sha256 over the evaluated task payload",
+                "task-file runs record the task file sha256 used to create the run",
+            ],
+            "not_proof": [
+                "native live autonomy",
+                "broad unknown-repository repair",
+                "third-party benchmark standing",
+                "external review",
+                "endorsement",
+                "stars",
+                "reposts",
+                "remote CI proof",
+            ],
+        },
+    }
+    if task_file_path:
+        if not task_file_path.is_file():
+            raise ValueError(f"coding bench task file does not exist: {task_file}")
+        source["task_file"] = {
+            "path": str(task_file_path),
+            "sha256": _file_hash(task_file_path),
+        }
+    return source
 
 
 def _run_shell(command: str, cwd: Path, timeout_seconds: float) -> CodingBenchCommandResult:
