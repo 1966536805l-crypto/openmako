@@ -336,6 +336,41 @@ if not isinstance(upstream_proofs, list) or len(upstream_proofs) < 1:
     fail("autonomous_upstream_task_proof_missing")
 if not isinstance(cross_proofs, list) or len(cross_proofs) < 4:
     fail("autonomous_cross_upstream_task_proofs_missing")
+unknown_repair = summary.get("cross_upstream_unknown_repair")
+if not isinstance(unknown_repair, dict):
+    fail("autonomous_cross_upstream_unknown_repair_missing")
+if unknown_repair.get("schema_version") != "cross-upstream-unknown-repair-evidence/v0.1":
+    fail("autonomous_cross_upstream_unknown_repair_schema_mismatch")
+if unknown_repair.get("status") != "passed":
+    fail("autonomous_cross_upstream_unknown_repair_not_passed")
+expected_unknown_counts = {
+    "source_package_count": 3,
+    "family_count": 4,
+    "stage2_task_count": 8,
+    "no_learning_solved": 0,
+    "approved_learning_solved": 8,
+    "stability_solved": 16,
+    "cheat_caught": 8,
+}
+for key, expected in expected_unknown_counts.items():
+    if unknown_repair.get(key) != expected:
+        fail("autonomous_cross_upstream_unknown_repair_count_mismatch", key)
+if unknown_repair.get("repo_defined_regression_pack") is not True:
+    fail("autonomous_cross_upstream_unknown_repair_repo_boundary_mismatch")
+if unknown_repair.get("external_source_packages") is not True:
+    fail("autonomous_cross_upstream_unknown_repair_external_source_mismatch")
+if unknown_repair.get("unknown_style_repair_tasks") is not True:
+    fail("autonomous_cross_upstream_unknown_repair_task_boundary_mismatch")
+if unknown_repair.get("third_party_benchmark_standing") is not False:
+    fail("autonomous_cross_upstream_unknown_repair_standing_mismatch")
+unknown_packages = unknown_repair.get("source_packages")
+if not isinstance(unknown_packages, dict) or set(unknown_packages) != {"aider", "great_expectations", "pandera"}:
+    fail("autonomous_cross_upstream_unknown_repair_source_packages_mismatch")
+unknown_families = unknown_repair.get("families")
+if not isinstance(unknown_families, list) or len(unknown_families) != 4:
+    fail("autonomous_cross_upstream_unknown_repair_family_count_mismatch")
+if "third-party benchmark standing" not in set(unknown_repair.get("not_proof") or []):
+    fail("autonomous_cross_upstream_unknown_repair_boundary_missing")
 required_not_proof = {
     "native live autonomy",
     "broad unknown-repository repair",
@@ -370,6 +405,19 @@ print(f"remote-autonomous-public-evidence-snapshot: artifact-digest={mirror_meta
 print(f"remote-autonomous-public-evidence-snapshot: selected-test-count={len(all_selected)}")
 print(f"remote-autonomous-public-evidence-snapshot: upstream-task-proof-count={len(upstream_proofs)}")
 print(f"remote-autonomous-public-evidence-snapshot: cross-upstream-task-proof-count={len(cross_proofs)}")
+print("remote-autonomous-public-evidence-snapshot: cross-upstream-unknown-repair=true")
+print(
+    "remote-autonomous-public-evidence-snapshot: "
+    f"cross-upstream-unknown-repair-source-package-count={unknown_repair['source_package_count']}"
+)
+print(
+    "remote-autonomous-public-evidence-snapshot: "
+    f"cross-upstream-unknown-repair-stage2-task-count={unknown_repair['stage2_task_count']}"
+)
+print(
+    "remote-autonomous-public-evidence-snapshot: "
+    f"cross-upstream-unknown-repair-third-party-standing={str(unknown_repair['third_party_benchmark_standing']).lower()}"
+)
 print("remote-autonomous-public-evidence-snapshot: linked-external-heldout=true")
 print(f"remote-autonomous-public-evidence-snapshot: linked-external-heldout-task-proof-count={linked['task_proof_count']}")
 print(

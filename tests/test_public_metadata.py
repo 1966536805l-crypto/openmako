@@ -113,7 +113,7 @@ def _proof_result(
     out_of_scope_files: list[str] | None = None,
 ) -> dict:
     return {
-        "changed_files": changed_files or ["subject.py"],
+        "changed_files": ["subject.py"] if changed_files is None else changed_files,
         "failure_class": failure_class,
         "out_of_scope_files": out_of_scope_files or [],
         "solved": solved,
@@ -130,15 +130,23 @@ def _task_proof(
     test_name: str,
     task_ids: list[str],
     observed_counts: dict,
+    target_path: str = "subject.py",
+    family: str | None = None,
+    function_name: str | None = None,
 ) -> dict:
     repeat_count = 10 if segment == "upstream_hidden_pack_reuse" else 2
     stability_ids = [task_id for task_id in task_ids for _ in range(repeat_count)]
-    return {
+    proof = {
         "benchmark_fingerprint": "0" * 64,
         "observed_counts": observed_counts,
         "result_sets": {
             "approved_learning": [
-                _proof_result(task_id, status="solved", solved=True)
+                _proof_result(
+                    task_id,
+                    status="solved",
+                    solved=True,
+                    changed_files=[target_path],
+                )
                 for task_id in task_ids
             ],
             "cheat": [
@@ -157,7 +165,12 @@ def _task_proof(
                 for task_id in task_ids
             ],
             "stability": [
-                _proof_result(task_id, status="solved", solved=True)
+                _proof_result(
+                    task_id,
+                    status="solved",
+                    solved=True,
+                    changed_files=[target_path],
+                )
                 for task_id in stability_ids
             ],
         },
@@ -165,15 +178,27 @@ def _task_proof(
         "segment": segment,
         "test_name": test_name,
     }
+    if family is not None:
+        proof["family"] = family
+    if function_name is not None:
+        proof["function_name"] = function_name
+    if target_path != "subject.py":
+        proof["target_path"] = target_path
+    return proof
 
 
 def _autonomous_task_proofs_fixture() -> dict:
     upstream_ids = [f"combined_task_{index}" for index in range(10)]
     cross_specs = [
-        ("pandera_scale_no_seed", "pandera_scale"),
-        ("pandera_bool_no_seed", "pandera_bool"),
-        ("great_expectations_result_format_no_seed", "ge_result_format"),
-        ("aider_random_color_no_seed", "aider_random_color"),
+        ("pandera_scale_no_seed", "pandera_scale", "pandera/dtypes.py", "_scale_to_exp"),
+        ("pandera_bool_no_seed", "pandera_bool", "pandera/dtypes.py", "is_bool"),
+        (
+            "great_expectations_result_format_no_seed",
+            "great_expectations_result_format",
+            "great_expectations/expectations/expectation_configuration.py",
+            "parse_result_format",
+        ),
+        ("aider_random_color_no_seed", "aider_random_color", "aider/repomap.py", "get_random_color"),
     ]
     return {
         "upstream_hidden_pack_reuse": [
@@ -202,8 +227,115 @@ def _autonomous_task_proofs_fixture() -> dict:
                     "no_learning_solved": 0,
                     "stability_solved": 4,
                 },
+                target_path=target_path,
+                family=family,
+                function_name=function_name,
             )
-            for test_name, family in cross_specs
+            for test_name, family, target_path, function_name in cross_specs
+        ],
+    }
+
+
+def _cross_upstream_unknown_repair_fixture() -> dict:
+    return {
+        "schema_version": "cross-upstream-unknown-repair-evidence/v0.1",
+        "status": "passed",
+        "source_package_count": 3,
+        "family_count": 4,
+        "stage2_task_count": 8,
+        "no_learning_solved": 0,
+        "approved_learning_solved": 8,
+        "stability_solved": 16,
+        "cheat_caught": 8,
+        "source_packages": {
+            "aider": {
+                "repository": "https://github.com/paul-gauthier/aider",
+                "license": "Apache-2.0",
+                "license_path": "third_party/aider/LICENSE.txt",
+                "license_sha256": "1" * 64,
+                "manifest_path": "third_party/aider/MANIFEST.sha256",
+                "manifest_sha256": "2" * 64,
+            },
+            "great_expectations": {
+                "repository": "https://github.com/great-expectations/great_expectations",
+                "license": "Apache-2.0",
+                "license_path": "third_party/great_expectations/LICENSE",
+                "license_sha256": "3" * 64,
+                "manifest_path": "third_party/great_expectations/MANIFEST.sha256",
+                "manifest_sha256": "4" * 64,
+            },
+            "pandera": {
+                "repository": "https://github.com/unionai-oss/pandera",
+                "license": "MIT",
+                "license_path": "third_party/pandera/LICENSE.txt",
+                "license_sha256": "5" * 64,
+                "manifest_path": "third_party/pandera/MANIFEST.sha256",
+                "manifest_sha256": "6" * 64,
+            },
+        },
+        "families": [
+            {
+                "test_name": "aider_random_color_no_seed",
+                "family": "aider_random_color",
+                "source_package": "aider",
+                "target_path": "aider/repomap.py",
+                "function_name": "get_random_color",
+                "stage2_task_ids": [
+                    "aider_random_color_stage2_a",
+                    "aider_random_color_stage2_b",
+                ],
+                "source_sha256": "7" * 64,
+            },
+            {
+                "test_name": "great_expectations_result_format_no_seed",
+                "family": "great_expectations_result_format",
+                "source_package": "great_expectations",
+                "target_path": "great_expectations/expectations/expectation_configuration.py",
+                "function_name": "parse_result_format",
+                "stage2_task_ids": [
+                    "great_expectations_result_format_stage2_a",
+                    "great_expectations_result_format_stage2_b",
+                ],
+                "source_sha256": "8" * 64,
+            },
+            {
+                "test_name": "pandera_bool_no_seed",
+                "family": "pandera_bool",
+                "source_package": "pandera",
+                "target_path": "pandera/dtypes.py",
+                "function_name": "is_bool",
+                "stage2_task_ids": [
+                    "pandera_bool_stage2_a",
+                    "pandera_bool_stage2_b",
+                ],
+                "source_sha256": "9" * 64,
+            },
+            {
+                "test_name": "pandera_scale_no_seed",
+                "family": "pandera_scale",
+                "source_package": "pandera",
+                "target_path": "pandera/dtypes.py",
+                "function_name": "_scale_to_exp",
+                "stage2_task_ids": [
+                    "pandera_scale_stage2_a",
+                    "pandera_scale_stage2_b",
+                ],
+                "source_sha256": "a" * 64,
+            },
+        ],
+        "repo_defined_regression_pack": True,
+        "external_source_packages": True,
+        "unknown_style_repair_tasks": True,
+        "third_party_benchmark_standing": False,
+        "not_proof": [
+            "third-party benchmark standing",
+            "external review",
+            "endorsement",
+            "stars",
+            "reposts",
+            "native live autonomy",
+            "broad unknown-repository repair",
+            "current remote CI proof",
         ],
     }
 
@@ -1723,6 +1855,9 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "artifact-summary-cross-upstream-hidden-stage2-tasks=" in text
     assert "artifact-summary-cross-upstream-stability-solved=" in text
     assert "artifact-summary-cross-upstream-cheat-caught=" in text
+    assert "artifact-summary-cross-upstream-unknown-repair-source-packages=" in text
+    assert "artifact-summary-cross-upstream-unknown-repair-stage2-tasks=" in text
+    assert "artifact-summary-cross-upstream-unknown-repair-third-party-standing=" in text
     assert "artifact-summary-task-proof-files=" in text
     assert "artifact-summary-task-source-provenance=" in text
     assert "artifact-summary-task-source-manifest=" in text
@@ -1885,10 +2020,11 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
                     "cheat_caught": 8,
                 },
             },
-        },
-        "task_proofs": _autonomous_task_proofs_fixture(),
-        "task_source_manifest": task_source_manifest,
-        "task_source_provenance": task_source_provenance,
+            },
+            "task_proofs": _autonomous_task_proofs_fixture(),
+            "cross_upstream_unknown_repair": _cross_upstream_unknown_repair_fixture(),
+            "task_source_manifest": task_source_manifest,
+            "task_source_provenance": task_source_provenance,
         "not_proof": [
             "native live autonomy",
             "broad unknown-repository repair",
@@ -2155,6 +2291,9 @@ def test_remote_autonomous_learning_snapshot_script_is_fail_closed_and_artifact_
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-hidden-stage2-tasks=8" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-stability-solved=16" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-cheat-caught=8" in result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-unknown-repair-source-packages=3" in result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-unknown-repair-stage2-tasks=8" in result.stdout
+    assert "remote-autonomous-learning-snapshot: artifact-summary-cross-upstream-unknown-repair-third-party-standing=false" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-task-proof-files=5" in result.stdout
     assert "remote-autonomous-learning-snapshot: artifact-summary-task-source-provenance=repo-authored-regression-pack" in result.stdout
     assert (
@@ -3732,6 +3871,28 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
         )
         == 8
     )
+    unknown_repair = payload["cross_upstream_unknown_repair"]
+    assert unknown_repair["schema_version"] == "cross-upstream-unknown-repair-evidence/v0.1"
+    assert unknown_repair["status"] == "passed"
+    assert unknown_repair["source_package_count"] == 3
+    assert unknown_repair["family_count"] == 4
+    assert unknown_repair["stage2_task_count"] == 8
+    assert unknown_repair["no_learning_solved"] == 0
+    assert unknown_repair["approved_learning_solved"] == 8
+    assert unknown_repair["stability_solved"] == 16
+    assert unknown_repair["cheat_caught"] == 8
+    assert unknown_repair["repo_defined_regression_pack"] is True
+    assert unknown_repair["external_source_packages"] is True
+    assert unknown_repair["unknown_style_repair_tasks"] is True
+    assert unknown_repair["third_party_benchmark_standing"] is False
+    assert set(unknown_repair["source_packages"]) == {"aider", "great_expectations", "pandera"}
+    assert {family["test_name"] for family in unknown_repair["families"]} == {
+        "aider_random_color_no_seed",
+        "great_expectations_result_format_no_seed",
+        "pandera_bool_no_seed",
+        "pandera_scale_no_seed",
+    }
+    assert "third-party benchmark standing" in unknown_repair["not_proof"]
     assert "remote CI proof" in payload["not_proof"]
     assert "third-party benchmark standing" in payload["not_proof"]
     assert payload["linked_independent_external_heldout"]["status"] == "passed"

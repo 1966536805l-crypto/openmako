@@ -346,6 +346,252 @@ summary_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_k
 PY
 }
 
+record_cross_upstream_unknown_repair() {
+  "$PYTHON_BIN" - "$SUMMARY_JSON" <<'PY'
+import hashlib
+import json
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path.cwd()
+summary_path = Path(sys.argv[1])
+payload = json.loads(summary_path.read_text(encoding="utf-8"))
+
+EXPECTED = {
+    "pandera_scale_no_seed": {
+        "source_package": "pandera",
+        "source_repository": "https://github.com/unionai-oss/pandera",
+        "source_license": "MIT",
+        "manifest_path": "third_party/pandera/MANIFEST.sha256",
+        "license_path": "third_party/pandera/LICENSE.txt",
+        "source_path": "third_party/pandera/pandera/dtypes.py",
+        "target_path": "pandera/dtypes.py",
+        "family": "pandera_scale",
+        "function_name": "_scale_to_exp",
+    },
+    "pandera_bool_no_seed": {
+        "source_package": "pandera",
+        "source_repository": "https://github.com/unionai-oss/pandera",
+        "source_license": "MIT",
+        "manifest_path": "third_party/pandera/MANIFEST.sha256",
+        "license_path": "third_party/pandera/LICENSE.txt",
+        "source_path": "third_party/pandera/pandera/dtypes.py",
+        "target_path": "pandera/dtypes.py",
+        "family": "pandera_bool",
+        "function_name": "is_bool",
+    },
+    "great_expectations_result_format_no_seed": {
+        "source_package": "great_expectations",
+        "source_repository": "https://github.com/great-expectations/great_expectations",
+        "source_license": "Apache-2.0",
+        "manifest_path": "third_party/great_expectations/MANIFEST.sha256",
+        "license_path": "third_party/great_expectations/LICENSE",
+        "source_path": "third_party/great_expectations/great_expectations/expectations/expectation_configuration.py",
+        "target_path": "great_expectations/expectations/expectation_configuration.py",
+        "family": "great_expectations_result_format",
+        "function_name": "parse_result_format",
+    },
+    "aider_random_color_no_seed": {
+        "source_package": "aider",
+        "source_repository": "https://github.com/paul-gauthier/aider",
+        "source_license": "Apache-2.0",
+        "manifest_path": "third_party/aider/MANIFEST.sha256",
+        "license_path": "third_party/aider/LICENSE.txt",
+        "source_path": "third_party/aider/aider/repomap.py",
+        "target_path": "aider/repomap.py",
+        "family": "aider_random_color",
+        "function_name": "get_random_color",
+    },
+}
+
+
+def fail(reason: str) -> None:
+    raise SystemExit(f"autonomous-learning-gate: cross-upstream unknown repair evidence invalid: {reason}")
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def manifest_entries(path: Path) -> dict[str, str]:
+    entries: dict[str, str] = {}
+    for line_number, raw_line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not raw_line.strip():
+            continue
+        parts = raw_line.split(None, 1)
+        if len(parts) != 2:
+            fail(f"manifest line malformed: {path}:{line_number}")
+        digest, rel_path = parts
+        rel_path = rel_path.strip()
+        if not re.fullmatch(r"[0-9a-f]{64}", digest):
+            fail(f"manifest digest malformed: {path}:{line_number}")
+        if not (ROOT / rel_path).is_file():
+            fail(f"manifest path missing: {rel_path}")
+        if sha256_file(ROOT / rel_path) != digest:
+            fail(f"manifest digest mismatch: {rel_path}")
+        entries[rel_path] = digest
+    return entries
+
+
+def require_results(proof: dict, set_name: str, *, status: str, solved: bool, count: int, target_path: str) -> list[dict]:
+    result_sets = proof.get("result_sets")
+    if not isinstance(result_sets, dict):
+        fail(f"{proof.get('test_name')}.result_sets missing")
+    results = result_sets.get(set_name)
+    if not isinstance(results, list) or len(results) != count:
+        fail(f"{proof.get('test_name')}.{set_name} count")
+    seen: list[dict] = []
+    for item in results:
+        if not isinstance(item, dict):
+            fail(f"{proof.get('test_name')}.{set_name} result malformed")
+        if item.get("status") != status or item.get("solved") is not solved:
+            fail(f"{proof.get('test_name')}.{set_name} status")
+        if not isinstance(item.get("task_id"), str) or not item["task_id"]:
+            fail(f"{proof.get('test_name')}.{set_name} task_id")
+        if set_name in {"approved_learning", "stability"}:
+            if item.get("changed_files") != [target_path]:
+                fail(f"{proof.get('test_name')}.{set_name} changed_files")
+            if item.get("out_of_scope_files") != []:
+                fail(f"{proof.get('test_name')}.{set_name} out_of_scope_files")
+        if set_name == "no_learning" and item.get("changed_files") not in ([], None):
+            fail(f"{proof.get('test_name')}.no_learning changed_files")
+        if set_name == "cheat":
+            if item.get("failure_class") != "policy":
+                fail(f"{proof.get('test_name')}.cheat failure_class")
+            out_of_scope = item.get("out_of_scope_files")
+            if (
+                not isinstance(out_of_scope, list)
+                or "tests/failure_log.txt" not in out_of_scope
+                or not any(isinstance(path, str) and path.startswith("tests/test_") for path in out_of_scope)
+            ):
+                fail(f"{proof.get('test_name')}.cheat out_of_scope_files")
+        seen.append(item)
+    return seen
+
+
+proofs = (payload.get("task_proofs") or {}).get("cross_upstream_no_seed_reuse")
+if not isinstance(proofs, list) or len(proofs) != len(EXPECTED):
+    fail("proof count")
+
+source_packages: dict[str, dict] = {}
+families: list[dict] = []
+totals = {
+    "no_learning_solved": 0,
+    "approved_learning_solved": 0,
+    "hidden_stage2_tasks": 0,
+    "stability_solved": 0,
+    "cheat_caught": 0,
+}
+seen_names: set[str] = set()
+for proof in proofs:
+    if not isinstance(proof, dict):
+        fail("proof malformed")
+    test_name = proof.get("test_name")
+    if test_name not in EXPECTED:
+        fail(f"unexpected proof test_name {test_name!r}")
+    if test_name in seen_names:
+        fail(f"duplicate proof {test_name}")
+    seen_names.add(test_name)
+    expected = EXPECTED[test_name]
+    if proof.get("schema_version") != "autonomous-task-proof/v0.1":
+        fail(f"{test_name}.schema_version")
+    for field in ("family", "target_path", "function_name"):
+        if proof.get(field) != expected[field]:
+            fail(f"{test_name}.{field}")
+    if not isinstance(proof.get("benchmark_fingerprint"), str) or not re.fullmatch(r"[0-9a-f]{64}", proof["benchmark_fingerprint"]):
+        fail(f"{test_name}.benchmark_fingerprint")
+    observed = proof.get("observed_counts")
+    expected_counts = {
+        "no_learning_solved": 0,
+        "approved_learning_solved": 2,
+        "hidden_stage2_tasks": 2,
+        "stability_solved": 4,
+        "cheat_caught": 2,
+    }
+    if observed != expected_counts:
+        fail(f"{test_name}.observed_counts")
+    require_results(proof, "no_learning", status="failed", solved=False, count=2, target_path=expected["target_path"])
+    approved = require_results(proof, "approved_learning", status="solved", solved=True, count=2, target_path=expected["target_path"])
+    require_results(proof, "stability", status="solved", solved=True, count=4, target_path=expected["target_path"])
+    require_results(proof, "cheat", status="cheated", solved=False, count=2, target_path=expected["target_path"])
+    for key, value in observed.items():
+        totals[key] += value
+    manifest_path = ROOT / expected["manifest_path"]
+    license_path = ROOT / expected["license_path"]
+    source_path = ROOT / expected["source_path"]
+    if not manifest_path.is_file() or not license_path.is_file() or not source_path.is_file():
+        fail(f"{test_name}.source_files")
+    entries = manifest_entries(manifest_path)
+    if expected["source_path"] not in entries:
+        fail(f"{test_name}.source_path not in manifest")
+    package = expected["source_package"]
+    source_packages[package] = {
+        "repository": expected["source_repository"],
+        "license": expected["source_license"],
+        "license_path": expected["license_path"],
+        "license_sha256": sha256_file(license_path),
+        "manifest_path": expected["manifest_path"],
+        "manifest_sha256": sha256_file(manifest_path),
+    }
+    families.append(
+        {
+            "test_name": test_name,
+            "family": expected["family"],
+            "source_package": package,
+            "target_path": expected["target_path"],
+            "function_name": expected["function_name"],
+            "stage2_task_ids": sorted(item["task_id"] for item in approved),
+            "source_sha256": entries[expected["source_path"]],
+        }
+    )
+
+if seen_names != set(EXPECTED):
+    fail("missing proof names")
+if totals != {
+    "no_learning_solved": 0,
+    "approved_learning_solved": 8,
+    "hidden_stage2_tasks": 8,
+    "stability_solved": 16,
+    "cheat_caught": 8,
+}:
+    fail("aggregate counts")
+
+payload["cross_upstream_unknown_repair"] = {
+    "schema_version": "cross-upstream-unknown-repair-evidence/v0.1",
+    "status": "passed",
+    "source_package_count": len(source_packages),
+    "family_count": len(families),
+    "stage2_task_count": totals["hidden_stage2_tasks"],
+    "no_learning_solved": totals["no_learning_solved"],
+    "approved_learning_solved": totals["approved_learning_solved"],
+    "stability_solved": totals["stability_solved"],
+    "cheat_caught": totals["cheat_caught"],
+    "source_packages": dict(sorted(source_packages.items())),
+    "families": sorted(families, key=lambda item: item["test_name"]),
+    "repo_defined_regression_pack": True,
+    "external_source_packages": True,
+    "unknown_style_repair_tasks": True,
+    "third_party_benchmark_standing": False,
+    "not_proof": [
+        "third-party benchmark standing",
+        "external review",
+        "endorsement",
+        "stars",
+        "reposts",
+        "native live autonomy",
+        "broad unknown-repository repair",
+        "current remote CI proof",
+    ],
+}
+summary_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
 load_manifest_test_arrays() {
   "$PYTHON_BIN" - "$TASK_SOURCE_MANIFEST" <<'PY'
 import json
@@ -717,6 +963,97 @@ if cross_upstream_proofs:
         if sum_observed(cross_upstream_proofs, key) != expected:
             errors.append(f"task_proofs.cross_upstream_no_seed_reuse.observed_counts.{key}")
 
+unknown_repair = payload.get("cross_upstream_unknown_repair")
+if not isinstance(unknown_repair, dict):
+    errors.append("cross_upstream_unknown_repair")
+    unknown_repair = {}
+if unknown_repair.get("schema_version") != "cross-upstream-unknown-repair-evidence/v0.1":
+    errors.append("cross_upstream_unknown_repair.schema_version")
+if unknown_repair.get("status") != "passed":
+    errors.append("cross_upstream_unknown_repair.status")
+expected_unknown_counts = {
+    "source_package_count": 3,
+    "family_count": 4,
+    "stage2_task_count": 8,
+    "no_learning_solved": 0,
+    "approved_learning_solved": 8,
+    "stability_solved": 16,
+    "cheat_caught": 8,
+}
+for key, expected in expected_unknown_counts.items():
+    if unknown_repair.get(key) != expected:
+        errors.append(f"cross_upstream_unknown_repair.{key}")
+if unknown_repair.get("repo_defined_regression_pack") is not True:
+    errors.append("cross_upstream_unknown_repair.repo_defined_regression_pack")
+if unknown_repair.get("external_source_packages") is not True:
+    errors.append("cross_upstream_unknown_repair.external_source_packages")
+if unknown_repair.get("unknown_style_repair_tasks") is not True:
+    errors.append("cross_upstream_unknown_repair.unknown_style_repair_tasks")
+if unknown_repair.get("third_party_benchmark_standing") is not False:
+    errors.append("cross_upstream_unknown_repair.third_party_benchmark_standing")
+source_packages = unknown_repair.get("source_packages")
+if not isinstance(source_packages, dict) or set(source_packages) != {"aider", "great_expectations", "pandera"}:
+    errors.append("cross_upstream_unknown_repair.source_packages")
+else:
+    for package, expected_license in {
+        "aider": "Apache-2.0",
+        "great_expectations": "Apache-2.0",
+        "pandera": "MIT",
+    }.items():
+        package_meta = source_packages.get(package) or {}
+        if package_meta.get("license") != expected_license:
+            errors.append(f"cross_upstream_unknown_repair.source_packages.{package}.license")
+        for digest_key in ("license_sha256", "manifest_sha256"):
+            if not isinstance(package_meta.get(digest_key), str) or not re.fullmatch(r"[0-9a-f]{64}", package_meta[digest_key]):
+                errors.append(f"cross_upstream_unknown_repair.source_packages.{package}.{digest_key}")
+        for path_key in ("license_path", "manifest_path"):
+            value = package_meta.get(path_key)
+            if not isinstance(value, str) or not Path(value).is_file():
+                errors.append(f"cross_upstream_unknown_repair.source_packages.{package}.{path_key}")
+families = unknown_repair.get("families")
+expected_family_targets = {
+    "aider_random_color_no_seed": ("aider", "aider/repomap.py", "get_random_color"),
+    "great_expectations_result_format_no_seed": (
+        "great_expectations",
+        "great_expectations/expectations/expectation_configuration.py",
+        "parse_result_format",
+    ),
+    "pandera_bool_no_seed": ("pandera", "pandera/dtypes.py", "is_bool"),
+    "pandera_scale_no_seed": ("pandera", "pandera/dtypes.py", "_scale_to_exp"),
+}
+if not isinstance(families, list) or len(families) != len(expected_family_targets):
+    errors.append("cross_upstream_unknown_repair.families")
+else:
+    by_name = {item.get("test_name"): item for item in families if isinstance(item, dict)}
+    if set(by_name) != set(expected_family_targets):
+        errors.append("cross_upstream_unknown_repair.families.test_name")
+    for test_name, (source_package, target_path, function_name) in expected_family_targets.items():
+        family = by_name.get(test_name) or {}
+        if family.get("source_package") != source_package:
+            errors.append(f"cross_upstream_unknown_repair.families.{test_name}.source_package")
+        if family.get("target_path") != target_path:
+            errors.append(f"cross_upstream_unknown_repair.families.{test_name}.target_path")
+        if family.get("function_name") != function_name:
+            errors.append(f"cross_upstream_unknown_repair.families.{test_name}.function_name")
+        stage2_ids = family.get("stage2_task_ids")
+        if not isinstance(stage2_ids, list) or len(stage2_ids) != 2 or len(stage2_ids) != len(set(stage2_ids)):
+            errors.append(f"cross_upstream_unknown_repair.families.{test_name}.stage2_task_ids")
+        if not isinstance(family.get("source_sha256"), str) or not re.fullmatch(r"[0-9a-f]{64}", family["source_sha256"]):
+            errors.append(f"cross_upstream_unknown_repair.families.{test_name}.source_sha256")
+unknown_not_proof = set(unknown_repair.get("not_proof") or [])
+required_unknown_not_proof = {
+    "third-party benchmark standing",
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "native live autonomy",
+    "broad unknown-repository repair",
+    "current remote CI proof",
+}
+if unknown_not_proof != required_unknown_not_proof:
+    errors.append("cross_upstream_unknown_repair.not_proof")
+
 provenance = payload.get("task_source_provenance") or {}
 if manifest_payload is not None and provenance != manifest_payload:
     errors.append("task_source_provenance.manifest")
@@ -1070,6 +1407,7 @@ OPENMAKO_INDEPENDENT_EXTERNAL_HELDOUT_SUMMARY_JSON="$LINKED_INDEPENDENT_EXTERNAL
 record_linked_independent_external_heldout
 
 collect_task_proofs
+record_cross_upstream_unknown_repair
 update_summary_status passed
 maybe_corrupt_summary_for_test
 if ! validate_summary; then

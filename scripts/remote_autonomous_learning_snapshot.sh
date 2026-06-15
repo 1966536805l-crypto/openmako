@@ -552,6 +552,43 @@ def validate_artifact_summary(payload: dict, archive_text_files: dict[str, str])
             if sum_observed(cross_upstream_proofs, key) != expected:
                 errors.append(f"task_proofs.cross_upstream_no_seed_reuse.observed_counts.{key}")
 
+    unknown_repair = payload.get("cross_upstream_unknown_repair")
+    if not isinstance(unknown_repair, dict):
+        errors.append("cross_upstream_unknown_repair")
+        unknown_repair = {}
+    if unknown_repair.get("schema_version") != "cross-upstream-unknown-repair-evidence/v0.1":
+        errors.append("cross_upstream_unknown_repair.schema_version")
+    if unknown_repair.get("status") != "passed":
+        errors.append("cross_upstream_unknown_repair.status")
+    expected_unknown_counts = {
+        "source_package_count": 3,
+        "family_count": 4,
+        "stage2_task_count": 8,
+        "no_learning_solved": 0,
+        "approved_learning_solved": 8,
+        "stability_solved": 16,
+        "cheat_caught": 8,
+    }
+    for key, expected in expected_unknown_counts.items():
+        if unknown_repair.get(key) != expected:
+            errors.append(f"cross_upstream_unknown_repair.{key}")
+    if unknown_repair.get("repo_defined_regression_pack") is not True:
+        errors.append("cross_upstream_unknown_repair.repo_defined_regression_pack")
+    if unknown_repair.get("external_source_packages") is not True:
+        errors.append("cross_upstream_unknown_repair.external_source_packages")
+    if unknown_repair.get("unknown_style_repair_tasks") is not True:
+        errors.append("cross_upstream_unknown_repair.unknown_style_repair_tasks")
+    if unknown_repair.get("third_party_benchmark_standing") is not False:
+        errors.append("cross_upstream_unknown_repair.third_party_benchmark_standing")
+    unknown_packages = unknown_repair.get("source_packages")
+    if not isinstance(unknown_packages, dict) or set(unknown_packages) != {"aider", "great_expectations", "pandera"}:
+        errors.append("cross_upstream_unknown_repair.source_packages")
+    unknown_families = unknown_repair.get("families")
+    if not isinstance(unknown_families, list) or len(unknown_families) != 4:
+        errors.append("cross_upstream_unknown_repair.families")
+    if "third-party benchmark standing" not in set(unknown_repair.get("not_proof") or []):
+        errors.append("cross_upstream_unknown_repair.not_proof")
+
     provenance = payload.get("task_source_provenance")
     if not isinstance(provenance, dict):
         errors.append("task_source_provenance")
@@ -695,6 +732,21 @@ def validate_artifact_summary(payload: dict, archive_text_files: dict[str, str])
         "remote-autonomous-learning-snapshot: "
         "artifact-summary-task-proof-files="
         f"{len(upstream_proofs) + len(cross_upstream_proofs)}"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-cross-upstream-unknown-repair-source-packages="
+        f"{unknown_repair.get('source_package_count')}"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-cross-upstream-unknown-repair-stage2-tasks="
+        f"{unknown_repair.get('stage2_task_count')}"
+    )
+    print(
+        "remote-autonomous-learning-snapshot: "
+        "artifact-summary-cross-upstream-unknown-repair-third-party-standing="
+        f"{str(unknown_repair.get('third_party_benchmark_standing')).lower()}"
     )
     print(
         "remote-autonomous-learning-snapshot: "

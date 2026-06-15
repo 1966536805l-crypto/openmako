@@ -83,6 +83,41 @@ if len(task_proofs.get("upstream_hidden_pack_reuse") or []) < 1:
     raise SystemExit("publish-autonomous-public-evidence-branch: upstream task proof missing")
 if len(task_proofs.get("cross_upstream_no_seed_reuse") or []) < 4:
     raise SystemExit("publish-autonomous-public-evidence-branch: cross-upstream task proofs missing")
+unknown_repair = summary.get("cross_upstream_unknown_repair")
+if not isinstance(unknown_repair, dict):
+    raise SystemExit("publish-autonomous-public-evidence-branch: cross-upstream unknown repair evidence missing")
+if unknown_repair.get("schema_version") != "cross-upstream-unknown-repair-evidence/v0.1":
+    raise SystemExit("publish-autonomous-public-evidence-branch: cross-upstream unknown repair schema mismatch")
+if unknown_repair.get("status") != "passed":
+    raise SystemExit("publish-autonomous-public-evidence-branch: cross-upstream unknown repair evidence is not passed")
+expected_unknown_counts = {
+    "source_package_count": 3,
+    "family_count": 4,
+    "stage2_task_count": 8,
+    "no_learning_solved": 0,
+    "approved_learning_solved": 8,
+    "stability_solved": 16,
+    "cheat_caught": 8,
+}
+for key, expected in expected_unknown_counts.items():
+    if unknown_repair.get(key) != expected:
+        raise SystemExit(f"publish-autonomous-public-evidence-branch: cross-upstream unknown repair {key} mismatch")
+if unknown_repair.get("repo_defined_regression_pack") is not True:
+    raise SystemExit("publish-autonomous-public-evidence-branch: cross-upstream unknown repair regression-pack boundary mismatch")
+if unknown_repair.get("external_source_packages") is not True:
+    raise SystemExit("publish-autonomous-public-evidence-branch: cross-upstream unknown repair external-source boundary mismatch")
+if unknown_repair.get("unknown_style_repair_tasks") is not True:
+    raise SystemExit("publish-autonomous-public-evidence-branch: cross-upstream unknown repair task boundary mismatch")
+if unknown_repair.get("third_party_benchmark_standing") is not False:
+    raise SystemExit("publish-autonomous-public-evidence-branch: cross-upstream unknown repair standing boundary mismatch")
+packages = unknown_repair.get("source_packages")
+if not isinstance(packages, dict) or set(packages) != {"aider", "great_expectations", "pandera"}:
+    raise SystemExit("publish-autonomous-public-evidence-branch: cross-upstream unknown repair source package mismatch")
+families = unknown_repair.get("families")
+if not isinstance(families, list) or len(families) != 4:
+    raise SystemExit("publish-autonomous-public-evidence-branch: cross-upstream unknown repair family count mismatch")
+if "third-party benchmark standing" not in set(unknown_repair.get("not_proof") or []):
+    raise SystemExit("publish-autonomous-public-evidence-branch: cross-upstream unknown repair not_proof boundary missing")
 linked = summary.get("linked_external_heldout")
 if not isinstance(linked, dict):
     raise SystemExit("publish-autonomous-public-evidence-branch: linked external-heldout evidence missing")
@@ -225,6 +260,12 @@ for path in sorted(autonomous_dir.rglob("*")):
 for required in ("last_summary.json", "task_source_provenance_manifest.json"):
     if required not in files:
         raise SystemExit(f"publish-autonomous-public-evidence-branch: mirror missing required output {required}")
+summary = json.loads((autonomous_dir / "last_summary.json").read_text(encoding="utf-8"))
+unknown_repair = summary.get("cross_upstream_unknown_repair")
+if not isinstance(unknown_repair, dict) or unknown_repair.get("status") != "passed":
+    raise SystemExit("publish-autonomous-public-evidence-branch: mirror summary missing cross-upstream unknown repair evidence")
+if unknown_repair.get("source_package_count") != 3 or unknown_repair.get("stage2_task_count") != 8:
+    raise SystemExit("publish-autonomous-public-evidence-branch: mirror cross-upstream unknown repair counts mismatch")
 if "linked_external_heldout/last_summary.json" not in files:
     raise SystemExit("publish-autonomous-public-evidence-branch: mirror missing linked external-heldout summary")
 if "linked_independent_external_heldout/last_summary.json" not in files:
