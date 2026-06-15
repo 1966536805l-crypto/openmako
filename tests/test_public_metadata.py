@@ -4588,7 +4588,23 @@ def test_large_repost_ready_script_requires_review_record_and_gates() -> None:
             "--confirm-external-review",
         ],
         cwd=ROOT,
-        env={**os.environ, "OPENMAKO_CURL_BIN": "/bin/echo"},
+        env={
+            **os.environ,
+            "OPENMAKO_CURL_BIN": "/bin/echo",
+            "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_COMMIT": "17186f8ca3311b3f0a28d9076fd314c1b1b1c05a",
+            "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_FOCUSED_RUN_ID": "27538962476",
+            "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_FRESH_CLONE_LOG_SHA256": (
+                "sha256:116260a0f9fb14356d668923aa1f8dfbfdb484afddcc77c6cb31c6c52a289b5e"
+            ),
+            "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_FOCUSED_ARTIFACT_ID": "7634975253",
+            "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_AUTONOMOUS_ARTIFACT_ID": "7635047141",
+            "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_FOCUSED_ZIP_SHA256": (
+                "sha256:975d117317bc93ebc1bc8c5044209ead598a7a3d076d1714b1ace01e1f6519a3"
+            ),
+            "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_AUTONOMOUS_ZIP_SHA256": (
+                "sha256:b9d566d8ad809466926378720f4a9b1970c74f49edaab5492239592b2cac1c5f"
+            ),
+        },
         check=False,
         text=True,
         capture_output=True,
