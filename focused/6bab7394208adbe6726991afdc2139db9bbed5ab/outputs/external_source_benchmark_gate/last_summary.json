@@ -1,0 +1,65 @@
+{
+  "expected_passed": 2,
+  "external_source": true,
+  "generated_at_utc": "2026-06-15T01:04:09.481055+00:00",
+  "independent_external_heldout": false,
+  "invocation": {
+    "git_commit": "6bab7394208adbe6726991afdc2139db9bbed5ab",
+    "summary_json": "/tmp/tmp.3JK9AUQdl6/external_source_benchmark_gate/last_summary.json"
+  },
+  "log_path": "/tmp/tmp.3JK9AUQdl6/external_source_benchmark_gate/pytest.log",
+  "log_tail": [
+    "..                                                                       [100%]",
+    "2 passed in 40.91s"
+  ],
+  "not_proof": [
+    "independent external held-out benchmark",
+    "external benchmark standing",
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "native live autonomy",
+    "broad unknown-repository repair",
+    "current remote CI proof"
+  ],
+  "observed_pytest": {
+    "exit_code": 0,
+    "passed": 2,
+    "skipped": 0,
+    "warnings": 0
+  },
+  "schema_version": "external-source-benchmark-gate/v0.1",
+  "selected_tests": [
+    "tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest::test_openclaw_selected_js_no_seed_repair_changes_only_target_file",
+    "tests/test_external_benchmark_multimodule_regression.py::ExternalBenchmarkMultimoduleRegressionTest::test_package_level_http_manifest_js_trajectory_skill_reuses_on_hidden_tasks"
+  ],
+  "source": {
+    "license": "MIT",
+    "license_path": "third_party/openclaw/LICENSE",
+    "license_sha256": "9efd316ecf1c4c60f6fd5d26433142fff2b6794d7d328e9bc6179b29bf9c82a4",
+    "manifest_entry_count": 24,
+    "manifest_path": "third_party/openclaw/MANIFEST.sha256",
+    "manifest_sha256": "ad32aed6121049319799abbd7daa1c13fed6b0a7a7cc132df79903888b55c3f7",
+    "package": "openclaw",
+    "readme_path": "third_party/openclaw/README.md",
+    "readme_sha256": "5fa55344b100d68b92ef509ffb7951b67f2cae40ab23d98350a1e293613cb819",
+    "repository": "https://github.com/openclaw/openclaw",
+    "selected_source_files": {
+      "third_party/openclaw/LICENSE": {
+        "bytes": 1076,
+        "sha256": "9efd316ecf1c4c60f6fd5d26433142fff2b6794d7d328e9bc6179b29bf9c82a4"
+      },
+      "third_party/openclaw/README.md": {
+        "bytes": 1718,
+        "sha256": "5fa55344b100d68b92ef509ffb7951b67f2cae40ab23d98350a1e293613cb819"
+      },
+      "third_party/openclaw/selected/parse-finite-number-C3Woj8eC.js": {
+        "bytes": 1200,
+        "sha256": "54f6e0229585ef6dd26b01e5aa773213fc9659f1353160a34b1e3272dcaa99d8"
+      }
+    },
+    "version": "2026.5.20"
+  },
+  "status": "passed"
+}

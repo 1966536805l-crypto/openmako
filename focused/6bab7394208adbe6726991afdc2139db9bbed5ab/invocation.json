@@ -1,0 +1,7 @@
+{
+  "git_commit": "6bab7394208adbe6726991afdc2139db9bbed5ab",
+  "proof_command": "bash scripts/public_review_gate.sh",
+  "schema_version": "public-review-gate-invocation/v0.1",
+  "started_at_utc": "2026-06-15T01:03:27.577679+00:00",
+  "status": "started"
+}
