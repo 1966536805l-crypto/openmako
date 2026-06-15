@@ -1,0 +1,39 @@
+{
+  "external_heldout": false,
+  "independence_claim": "repo-authored-regression-pack",
+  "schema_version": "autonomous-task-source-provenance/v0.1",
+  "segments": {
+    "cross_upstream_no_seed_reuse": {
+      "external_heldout": false,
+      "selected_tests": [
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_scale_no_seed_stage1_extracts_function_repair_without_non_target_drift",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_pandera_bool_predicate_no_seed_stage1_reuses_with_stability",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_great_expectations_result_format_no_seed_stage1_extracts_function_repair",
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_vendored_aider_random_color_no_seed_stage1_reuses_on_opaque_stage2"
+      ],
+      "selected_tests_sha256": "4f4d5382f5558d4f8f8fc77f510d0199728de201de902f0887d312829029d70a",
+      "source_kind": "repo-authored-cross-upstream-inspired-regression"
+    },
+    "stage1_trajectory_reuse_matrix": {
+      "external_heldout": false,
+      "selected_tests": [
+        "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_real_hidden_stage1_agent_runs_extract_then_reuse_on_clean_stage2",
+        "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_multi_file_stage1_extracts_then_reuses_on_clean_stage2",
+        "tests/test_learning_effect_e2e.py::LearningEffectE2ETest::test_no_seed_package_module_file_bundle_extracts_then_reuses_on_clean_stage2",
+        "tests/test_skill_learning.py::SkillLearningTest::test_detects_repeated_failure_from_retained_registry_without_installing_skill",
+        "tests/test_skill_learning.py::SkillLearningTest::test_retained_failure_adjustment_blocks_unchanged_retry"
+      ],
+      "selected_tests_sha256": "932a114a39d3f12371603fbd55ba4e59bdd683227536f14a47d4f8580a8f4b2c",
+      "source_kind": "repo-authored-e2e-regression"
+    },
+    "upstream_hidden_pack_reuse": {
+      "external_heldout": false,
+      "selected_tests": [
+        "tests/test_upstream_function_file_bundle_regression.py::UpstreamFunctionFileBundleRegressionTest::test_fixed_version_combined_upstream_hidden_pack_reuses_without_cheating"
+      ],
+      "selected_tests_sha256": "403c0d82611f585ffe0ca8e1a40057d9c302e7195c6d58daa62fd71e5987f181",
+      "source_kind": "repo-authored-upstream-inspired-hidden-pack"
+    }
+  },
+  "source_boundary": "Selected tasks are repository-authored regression fixtures, including upstream-inspired local hidden packs. This is not an independent external held-out benchmark, external review, or external benchmark standing."
+}
