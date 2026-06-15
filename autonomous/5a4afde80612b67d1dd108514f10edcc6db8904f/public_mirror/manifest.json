@@ -1,0 +1,48 @@
+{
+  "archive_path": "public_mirror/autonomous-learning-gate-public-mirror.zip",
+  "archive_sha256": "sha256:62410d0461b7c21ff16e15aac7a230acd69432055e7b402ce22959cc9426bb2c",
+  "file_count": 16,
+  "files": {
+    "last_summary.json": "sha256:b99b7d3025e51c0434f977ed6f4b204044cb0e23d409b680562129afaa509430",
+    "linked_external_heldout/last_summary.json": "sha256:599217470b6fa61c140761d06230d3dca5728545347cd3f127b77c03c4e0254e",
+    "linked_external_heldout/pytest.log": "sha256:b2444be1041fe45c5bd2f40dcf554f0373c9e278d0a5a2359bc2bacc6495b6e8",
+    "linked_external_heldout/task_proofs/vendored_mcp_tool_name_validation_function_repair.json": "sha256:6106b3e13204050acaa6a39821b6e1e10ca2f88bde441856f564cecf96517276",
+    "linked_external_heldout/task_proofs/vendored_mcp_tool_name_wrapper_seed_repair.json": "sha256:870bd7af1f58ce7fa319a46657a66a2afa47ce3b2e1a6e27e390455997c796aa",
+    "linked_independent_external_heldout/heldout_reproduction_packet/packet.json": "sha256:6aba4f7c95e783d9dfdb863cb8c90b28956464cbb4f44af6e6750556d978c156",
+    "linked_independent_external_heldout/last_summary.json": "sha256:a1afb339c62e6de605453ecfdbfc5512675a4a44c04bb730c2f7877be03b2ca1",
+    "pytest_logs/cross_upstream_no_seed_reuse.log": "sha256:8700e70b21e9c5d3e42e4623a09635dbc49a5aeb35c9be9493be3d1dfc46417b",
+    "pytest_logs/stage1_trajectory_reuse_matrix.log": "sha256:58c2f8119db2d86497236ff41e8aca587364f2ffcb7b59424a1f84548d437a83",
+    "pytest_logs/upstream_hidden_pack_reuse.log": "sha256:68f8a2afe1eaab08cc2404ed95ea6116d2fde142f7ce605b1e1d7233aa04c6a3",
+    "task_proofs/cross_upstream_no_seed_reuse/aider_random_color_no_seed.json": "sha256:904b042426bf090f4713bb0634228de8173de7cbd54be9af57df8ae5f76ace02",
+    "task_proofs/cross_upstream_no_seed_reuse/great_expectations_result_format_no_seed.json": "sha256:aacad01b4bdc57d39e958e39ed524df8d433cc19c6ab43daa396a2c81539d26b",
+    "task_proofs/cross_upstream_no_seed_reuse/pandera_bool_no_seed.json": "sha256:19a7e9a526e7d59197ffc1c4ca68bf4dba40699a0f9be750fbc62a31a8381eb7",
+    "task_proofs/cross_upstream_no_seed_reuse/pandera_scale_no_seed.json": "sha256:f32e8558fb36d21c75d6b59a1ddcf97153b96c67e2b28d9f0f95131397caeff0",
+    "task_proofs/upstream_hidden_pack_reuse/combined_upstream_hidden_pack.json": "sha256:bf023f7c1d1e8df0c379bd2f2918ecbc8ec41eb0a8ff041acaced18363e61912",
+    "task_source_provenance_manifest.json": "sha256:2734069dc84cf731a75e8d24aeee76d633fc8311b916e46fcaf77c1b270be9d1"
+  },
+  "generated_at_utc": "2026-06-15T11:29:09.611013+00:00",
+  "git_commit": "5a4afde80612b67d1dd108514f10edcc6db8904f",
+  "github_actions_artifact": {
+    "artifact_digest": "sha256:4031d51bc7651c7a9d134849f3e7f90eb533f607e083bcfe6fb04df1220d41b5",
+    "artifact_id": "7636732303",
+    "artifact_url": "https://github.com/1966536805l-crypto/openmako/actions/runs/27542881720/artifacts/7636732303",
+    "name": "autonomous-learning-gate-summary",
+    "run_attempt": "1",
+    "run_id": "27542881720"
+  },
+  "mirror_scope": "github-actions-upload-directory-content",
+  "not_proof": [
+    "GitHub Actions API artifact zip endpoint byte-for-byte archive",
+    "external review",
+    "endorsement",
+    "stars",
+    "reposts",
+    "native live autonomy",
+    "broad unknown-repository repair",
+    "external benchmark standing",
+    "third-party benchmark standing"
+  ],
+  "schema_version": "autonomous-public-evidence-artifact-mirror/v0.1",
+  "source_summary": "last_summary.json",
+  "status": "passed"
+}
