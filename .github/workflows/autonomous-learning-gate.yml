@@ -9,10 +9,12 @@ on:
       - ".github/workflows/autonomous-learning-gate.yml"
       - "scripts/autonomous_task_source_provenance.json"
       - "scripts/autonomous_learning_gate.sh"
+      - "scripts/independent_external_heldout_benchmark_gate.sh"
       - "scripts/publish_autonomous_public_evidence_branch.sh"
       - "scripts/remote_autonomous_learning_snapshot.sh"
       - "scripts/remote_autonomous_public_evidence_snapshot.sh"
       - "scripts/supplied_transcript_adapter_matrix.sh"
+      - "benchmarks/independent_external_heldout/v0.1/cases.json"
       - "PROGRESS.md"
       - "quantagent/agent_loop_core.py"
       - "quantagent/coding_bench.py"
@@ -24,6 +26,7 @@ on:
       - "tests/test_learning_effect_e2e.py"
       - "tests/test_skill_learning.py"
       - "tests/test_upstream_function_file_bundle_regression.py"
+      - "tests/test_external_heldout_benchmark_gate.py"
       - "tests/test_public_metadata.py"
 
 env:
