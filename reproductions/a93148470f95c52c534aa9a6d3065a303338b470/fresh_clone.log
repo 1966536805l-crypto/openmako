@@ -1,0 +1,257 @@
+fresh-clone-reproduction: clone-url=https://github.com/1966536805l-crypto/openmako.git
+fresh-clone-reproduction: workdir=/tmp/openmako-fresh-clone.oqskHb
+fresh-clone-reproduction: requested-ref=a93148470f95c52c534aa9a6d3065a303338b470
+Cloning into '/tmp/openmako-fresh-clone.oqskHb/repo'...
+Note: switching to 'a93148470f95c52c534aa9a6d3065a303338b470'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at a931484 Record CodingBench repair evidence packets
+fresh-clone-reproduction: checkout-sha=a93148470f95c52c534aa9a6d3065a303338b470
+Requirement already satisfied: pip in /private/tmp/openmako-fresh-clone.oqskHb/venv/lib/python3.9/site-packages (21.2.4)
+Collecting pip
+  Using cached pip-26.0.1-py3-none-any.whl (1.8 MB)
+Installing collected packages: pip
+  Attempting uninstall: pip
+    Found existing installation: pip 21.2.4
+    Uninstalling pip-21.2.4:
+      Successfully uninstalled pip-21.2.4
+Successfully installed pip-26.0.1
+Obtaining file:///private/tmp/openmako-fresh-clone.oqskHb/repo
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Collecting pytest
+  Using cached pytest-8.4.2-py3-none-any.whl.metadata (7.7 kB)
+Collecting exceptiongroup>=1 (from pytest)
+  Using cached exceptiongroup-1.3.1-py3-none-any.whl.metadata (6.7 kB)
+Collecting iniconfig>=1 (from pytest)
+  Using cached iniconfig-2.1.0-py3-none-any.whl.metadata (2.7 kB)
+Collecting packaging>=20 (from pytest)
+  Using cached packaging-26.2-py3-none-any.whl.metadata (3.5 kB)
+Collecting pluggy<2,>=1.5 (from pytest)
+  Using cached pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+Collecting pygments>=2.7.2 (from pytest)
+  Using cached pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting tomli>=1 (from pytest)
+  Using cached tomli-2.4.1-py3-none-any.whl.metadata (10 kB)
+Collecting typing-extensions>=4.6.0 (from exceptiongroup>=1->pytest)
+  Using cached typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+Using cached pytest-8.4.2-py3-none-any.whl (365 kB)
+Using cached pluggy-1.6.0-py3-none-any.whl (20 kB)
+Using cached exceptiongroup-1.3.1-py3-none-any.whl (16 kB)
+Using cached iniconfig-2.1.0-py3-none-any.whl (6.0 kB)
+Using cached packaging-26.2-py3-none-any.whl (100 kB)
+Using cached pygments-2.20.0-py3-none-any.whl (1.2 MB)
+Using cached tomli-2.4.1-py3-none-any.whl (14 kB)
+Using cached typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+Building wheels for collected packages: open-mako
+  Building editable for open-mako (pyproject.toml): started
+  Building editable for open-mako (pyproject.toml): finished with status 'done'
+  Created wheel for open-mako: filename=open_mako-0.1.0-0.editable-py3-none-any.whl size=4996 sha256=498f3f188eda086e7a7204242b110e3ca603876237b7d85ee1d89889a34eed00
+  Stored in directory: /private/var/folders/wk/hk8lvznn0zj_15drldygjl3h0000gn/T/pip-ephem-wheel-cache-yekv8v7t/wheels/2e/47/5b/6a86ac894f5c4cbe34dc88f49a07ecd0ebe0ef9a00e3d16cf2
+Successfully built open-mako
+Installing collected packages: typing-extensions, tomli, pygments, pluggy, packaging, open-mako, iniconfig, exceptiongroup, pytest
+
+Successfully installed exceptiongroup-1.3.1 iniconfig-2.1.0 open-mako-0.1.0 packaging-26.2 pluggy-1.6.0 pygments-2.20.0 pytest-8.4.2 tomli-2.4.1 typing-extensions-4.15.0
+fresh-clone-reproduction: install=PASS
+release-readiness-gate: START
+release-readiness-gate: root-license=LICENSE
+release-readiness-gate: pyproject-license=present
+release-readiness-gate: not-proof=legal advice; owner license decision; external review; endorsement; release announcement
+release-readiness-gate: PASS
+fresh-clone-reproduction: release-readiness=PASS
+public-review-gate: running planner focused public test
+.                                                                        [100%]
+1 passed in 0.08s
+public-review-gate: running external-source benchmark gate
+external-source-benchmark-gate: running selected OpenClaw source and package-level regression tests
+..                                                                       [100%]
+2 passed in 19.58s
+external-source-benchmark-gate: source-package=openclaw
+external-source-benchmark-gate: source-license=MIT
+external-source-benchmark-gate: source-manifest-sha256=ad32aed6121049319799abbd7daa1c13fed6b0a7a7cc132df79903888b55c3f7
+external-source-benchmark-gate: selected-tests=2
+external-source-benchmark-gate: observed-passed=2
+external-source-benchmark-gate: summary=/var/folders/wk/hk8lvznn0zj_15drldygjl3h0000gn/T/tmp.RiORuExTxb/external_source_benchmark_gate/last_summary.json
+external-source-benchmark-gate: PASS
+external-source-benchmark-gate: not-proof=independent external held-out benchmark; external benchmark standing; external review; endorsement; stars; reposts; native live autonomy; broad unknown-repository repair; current remote CI proof
+public-review-gate: running external-heldout benchmark gate
+external-heldout-benchmark-gate: running MCP Python SDK held-out repair regression
+..                                                                       [100%]
+2 passed in 23.76s
+external-heldout-benchmark-gate: source-package=mcp-python-sdk
+external-heldout-benchmark-gate: source-license=MIT
+external-heldout-benchmark-gate: source-manifest-sha256=8ca78f36a6ffea447eb924136c0ede1002a018f1fe1597c51a630283d295f45a
+external-heldout-benchmark-gate: selected-tests=2
+external-heldout-benchmark-gate: observed-passed=2
+external-heldout-benchmark-gate: task-proof-files=2
+external-heldout-benchmark-gate: external-source-heldout=true
+external-heldout-benchmark-gate: heldout-from-autonomous-gate=true
+external-heldout-benchmark-gate: summary=/var/folders/wk/hk8lvznn0zj_15drldygjl3h0000gn/T/tmp.RiORuExTxb/external_heldout_benchmark_gate/last_summary.json
+external-heldout-benchmark-gate: PASS
+external-heldout-benchmark-gate: not-proof=external benchmark standing; external review; endorsement; stars; reposts; native live autonomy; broad unknown-repository repair; current remote CI proof; owner license decision
+public-review-gate: building held-out reproduction packet
+heldout-reproduction-packet: packet=/var/folders/wk/hk8lvznn0zj_15drldygjl3h0000gn/T/tmp.RiORuExTxb/heldout_reproduction_packet/packet.json
+heldout-reproduction-packet: source-summary=/var/folders/wk/hk8lvznn0zj_15drldygjl3h0000gn/T/tmp.RiORuExTxb/external_heldout_benchmark_gate/last_summary.json
+heldout-reproduction-packet: task-proof-count=2
+heldout-reproduction-packet: PASS
+heldout-reproduction-packet: not-proof=independent external benchmark standing; external review; endorsement; stars; reposts; native live autonomy; broad unknown-repository repair; GitHub Actions artifact zip contents
+public-review-gate: running independent external-heldout benchmark packet
+independent-external-heldout-benchmark-gate: benchmark=benchmarks/independent_external_heldout/v0.1/cases.json
+independent-external-heldout-benchmark-gate: benchmark-sha256=sha256:411ed9ae37b6e60ce3a1efc470964c43ef83df07ba744960182b0332d423ea22
+independent-external-heldout-benchmark-gate: case-count=2
+independent-external-heldout-benchmark-gate: observed-passed=2
+independent-external-heldout-benchmark-gate: independent-from-autonomous-task-manifest=true
+independent-external-heldout-benchmark-gate: repo-defined-benchmark-packet=true
+independent-external-heldout-benchmark-gate: third-party-benchmark-standing=false
+independent-external-heldout-benchmark-gate: summary=/var/folders/wk/hk8lvznn0zj_15drldygjl3h0000gn/T/tmp.RiORuExTxb/independent_external_heldout_benchmark/last_summary.json
+independent-external-heldout-benchmark-gate: PASS
+independent-external-heldout-benchmark-gate: not-proof=third-party benchmark standing; external review; endorsement; stars; reposts; native live autonomy; broad unknown-repository repair; GitHub Actions artifact zip contents
+public-review-gate: running public metadata boundary tests
+............................................................             [100%]
+60 passed in 9.49s
+public-review-gate: scoring CEABench v0.1 seed packet
+public-review-gate: scoring CEABench v0.1 empirical pilot
+public-review-gate: checking external-heldout gate fail-closed negatives
+.................                                                        [100%]
+17 passed in 4.08s
+public-review-gate: checking native product-log ingestion
+......                                                                   [100%]
+6 passed in 2.91s
+public-review-gate: checking adversarial claim matrix generator
+public-review-gate: running Evidence Court intensity matrix
+........................................................................ [ 22%]
+........................................................................ [ 45%]
+........................................................................ [ 68%]
+........................................................................ [ 91%]
+............................                                             [100%]
+316 passed in 0.28s
+public-review-gate: recording Evidence Court bad-run fixture
+public-review-gate: auditing supplied Evidence Court record
+public-review-gate: auditing artifact provenance fixture
+public-review-gate: auditing SWTBench patch artifact fixture
+public-review-gate: auditing config-only repair fixture
+public-review-gate: auditing runtime shadowing fixture
+public-review-gate: auditing verifier tamper-risk fixture
+public-review-gate: auditing verifier attack fixture
+public-review-gate: auditing CI workflow tamper fixture
+public-review-gate: running supplied transcript adapter matrix
+adapter-matrix: recording codex
+adapter-matrix: auditing codex
+adapter-matrix: recording codex missing-exit-status-evidence
+adapter-matrix: recording codex missing-diff-content-evidence
+adapter-matrix: auditing codex missing-diff-content-evidence
+adapter-matrix: recording codex test-only-source-diff-evidence
+adapter-matrix: auditing codex test-only-source-diff-evidence
+adapter-matrix: recording codex partial-source-diff-evidence
+adapter-matrix: auditing codex partial-source-diff-evidence
+adapter-matrix: recording codex stale-validation-after-source-edit
+adapter-matrix: auditing codex stale-validation-after-source-edit
+adapter-matrix: recording codex missing-test-proof
+adapter-matrix: auditing codex missing-test-proof
+adapter-matrix: recording codex missing-edited-file-evidence
+adapter-matrix: auditing codex missing-edited-file-evidence
+adapter-matrix: recording claude
+adapter-matrix: auditing claude
+adapter-matrix: recording claude missing-exit-status-evidence
+adapter-matrix: recording claude missing-diff-content-evidence
+adapter-matrix: auditing claude missing-diff-content-evidence
+adapter-matrix: recording claude test-only-source-diff-evidence
+adapter-matrix: auditing claude test-only-source-diff-evidence
+adapter-matrix: recording claude partial-source-diff-evidence
+adapter-matrix: auditing claude partial-source-diff-evidence
+adapter-matrix: recording claude stale-validation-after-source-edit
+adapter-matrix: auditing claude stale-validation-after-source-edit
+adapter-matrix: recording claude missing-test-proof
+adapter-matrix: auditing claude missing-test-proof
+adapter-matrix: recording claude missing-edited-file-evidence
+adapter-matrix: auditing claude missing-edited-file-evidence
+adapter-matrix: recording openhands
+adapter-matrix: auditing openhands
+adapter-matrix: recording openhands missing-exit-status-evidence
+adapter-matrix: recording openhands missing-diff-content-evidence
+adapter-matrix: auditing openhands missing-diff-content-evidence
+adapter-matrix: recording openhands test-only-source-diff-evidence
+adapter-matrix: auditing openhands test-only-source-diff-evidence
+adapter-matrix: recording openhands partial-source-diff-evidence
+adapter-matrix: auditing openhands partial-source-diff-evidence
+adapter-matrix: recording openhands stale-validation-after-source-edit
+adapter-matrix: auditing openhands stale-validation-after-source-edit
+adapter-matrix: recording openhands missing-test-proof
+adapter-matrix: auditing openhands missing-test-proof
+adapter-matrix: recording openhands missing-edited-file-evidence
+adapter-matrix: auditing openhands missing-edited-file-evidence
+adapter-matrix: recording swe-agent
+adapter-matrix: auditing swe-agent
+adapter-matrix: recording swe-agent missing-exit-status-evidence
+adapter-matrix: recording swe-agent missing-diff-content-evidence
+adapter-matrix: auditing swe-agent missing-diff-content-evidence
+adapter-matrix: recording swe-agent test-only-source-diff-evidence
+adapter-matrix: auditing swe-agent test-only-source-diff-evidence
+adapter-matrix: recording swe-agent partial-source-diff-evidence
+adapter-matrix: auditing swe-agent partial-source-diff-evidence
+adapter-matrix: recording swe-agent stale-validation-after-source-edit
+adapter-matrix: auditing swe-agent stale-validation-after-source-edit
+adapter-matrix: recording swe-agent missing-test-proof
+adapter-matrix: auditing swe-agent missing-test-proof
+adapter-matrix: recording swe-agent missing-edited-file-evidence
+adapter-matrix: auditing swe-agent missing-edited-file-evidence
+adapter-matrix: PASS
+public-review-gate: PASS
+fresh-clone-reproduction: public-review=PASS
+remote-public-evidence-snapshot: repo=https://github.com/1966536805l-crypto/openmako.git
+remote-public-evidence-snapshot: branch=public-evidence
+remote-public-evidence-snapshot: remote-main-sha=a93148470f95c52c534aa9a6d3065a303338b470
+remote-public-evidence-snapshot: summary=focused/a93148470f95c52c534aa9a6d3065a303338b470/summary.json
+remote-public-evidence-snapshot: status=passed
+remote-public-evidence-snapshot: required-output-count=14
+remote-public-evidence-snapshot: heldout-reproduction-packet=present
+remote-public-evidence-snapshot: heldout-task-proof-count=2
+remote-public-evidence-snapshot: public-mirror-zip=present
+remote-public-evidence-snapshot: public-mirror-file-count=21
+remote-public-evidence-snapshot: public-mirror-scope=github-actions-upload-directory-content
+remote-public-evidence-snapshot: latest-index=present
+remote-public-evidence-snapshot: not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; external review; endorsement; stars; reposts; native live autonomy; broad unknown-repository repair; external benchmark standing
+remote-public-evidence-snapshot: PASS
+fresh-clone-reproduction: remote-public-evidence=PASS
+remote-autonomous-public-evidence-snapshot: repo=https://github.com/1966536805l-crypto/openmako.git
+remote-autonomous-public-evidence-snapshot: branch=public-evidence
+remote-autonomous-public-evidence-snapshot: remote-main-sha=a93148470f95c52c534aa9a6d3065a303338b470
+remote-autonomous-public-evidence-snapshot: summary=autonomous/a93148470f95c52c534aa9a6d3065a303338b470/last_summary.json
+remote-autonomous-public-evidence-snapshot: status=passed
+remote-autonomous-public-evidence-snapshot: public-mirror-zip=present
+remote-autonomous-public-evidence-snapshot: public-mirror-scope=github-actions-upload-directory-content
+remote-autonomous-public-evidence-snapshot: public-mirror-file-count=14
+remote-autonomous-public-evidence-snapshot: artifact-id=7630360860
+remote-autonomous-public-evidence-snapshot: artifact-digest=sha256:a3129eb0360966fee3af413875f9644b3e75850ec301f79398f73d23e0870c58
+remote-autonomous-public-evidence-snapshot: selected-test-count=10
+remote-autonomous-public-evidence-snapshot: upstream-task-proof-count=1
+remote-autonomous-public-evidence-snapshot: cross-upstream-task-proof-count=4
+remote-autonomous-public-evidence-snapshot: linked-external-heldout=true
+remote-autonomous-public-evidence-snapshot: linked-external-heldout-task-proof-count=2
+remote-autonomous-public-evidence-snapshot: linked-external-heldout-independent-benchmark=false
+remote-autonomous-public-evidence-snapshot: latest-index=present
+remote-autonomous-public-evidence-snapshot: not-proof=GitHub Actions API artifact zip endpoint byte-for-byte archive; external review; endorsement; stars; reposts; native live autonomy; broad unknown-repository repair; external benchmark standing; independent external held-out benchmark
+remote-autonomous-public-evidence-snapshot: PASS
+fresh-clone-reproduction: remote-autonomous-public-evidence=PASS
+fresh-clone-reproduction: PASS
+fresh-clone-reproduction: not-proof=external review; endorsement; stars; reposts; independent external benchmark standing; GitHub Actions artifact zip contents; live autonomy; broad unknown-repository repair
