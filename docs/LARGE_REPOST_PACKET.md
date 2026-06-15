@@ -24,9 +24,18 @@ https://github.com/1966536805l-crypto/openmako/issues/new?template=external-revi
 The command requires an explicit human confirmation flag, verifies that the
 issue page is reachable, contains the structured external review record fields,
 includes the `External review record:` title prefix plus the required boundary
-checkbox text, and includes a selected review verdict. It then runs the public
-proof gate before printing text. It does not post messages, contact anyone, ask
-for stars, ask for reposts, or record outreach as evidence.
+checkbox text, includes a selected review verdict and public review link, and
+binds the issue text to the current `openmako/main` commit, remote focused CI
+run, fresh-clone reproduction log hash, and focused/autonomous artifact-zip
+proof markers by calling:
+
+```bash
+bash scripts/external_review_record_check.sh REVIEW_RECORD_ISSUE_URL
+```
+
+It then runs the public proof gate before printing text. It does not post
+messages, contact anyone, ask for stars, ask for reposts, or record outreach as
+evidence.
 
 This check cannot prove non-self authorship by itself. Before using this packet,
 inspect the linked public review and confirm that a named external reviewer

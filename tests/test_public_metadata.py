@@ -404,6 +404,11 @@ def test_readme_links_public_proof_issue() -> None:
     assert "External review record form" in readme
     assert "issues/new?template=external-review-record.yml" in readme
     assert "already-public technical feedback only" in readme
+    assert "External review record check" in readme
+    assert "bash scripts/external_review_record_check.sh REVIEW_RECORD_ISSUE_URL" in readme
+    assert "binds to the current `openmako/main` commit" in readme
+    assert "fresh-clone reproduction" in readme
+    assert "artifact-zip proof markers" in readme
     assert "a review request rather than endorsement or promotion" in readme
     assert "Technical review packet" in readme
     assert "docs/TECHNICAL_REVIEW_PACKET.md" in readme
@@ -2994,6 +2999,113 @@ def test_public_evidence_comment_check_script_is_fail_closed_and_marker_aware(tm
     assert "missing public evidence markers=artifact-digest" in missing_digest.stderr
 
 
+def test_external_review_record_check_requires_current_public_evidence_markers(tmp_path: Path) -> None:
+    script = ROOT / "scripts" / "external_review_record_check.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    assert "OPENMAKO_EXTERNAL_REVIEW_RECORD_HTML" in text
+    assert "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_COMMIT" in text
+    assert "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_FOCUSED_RUN_ID" in text
+    assert "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_FRESH_CLONE_LOG_SHA256" in text
+    assert "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_FOCUSED_ARTIFACT_ID" in text
+    assert "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_AUTONOMOUS_ARTIFACT_ID" in text
+    assert "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_FOCUSED_ZIP_SHA256" in text
+    assert "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_AUTONOMOUS_ZIP_SHA256" in text
+    assert "bash scripts/remote_focused_ci_snapshot.sh" in text
+    assert "bash scripts/remote_fresh_clone_reproduction_snapshot.sh" in text
+    assert "bash scripts/remote_artifact_zip_proof_snapshot.sh" in text
+    assert "missing or invalid review record markers=" in text
+    assert "not-proof=endorsement; stars; reposts; native live autonomy" in text
+    assert "broad unknown-repository repair; external benchmark standing" in text
+    assert "third-party benchmark standing" in text
+
+    fixture = tmp_path / "external-review.html"
+    env = os.environ.copy()
+    env.update(
+        {
+            "OPENMAKO_EXTERNAL_REVIEW_RECORD_HTML": str(fixture),
+            "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_COMMIT": "17186f8ca3311b3f0a28d9076fd314c1b1b1c05a",
+            "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_FOCUSED_RUN_ID": "27538962476",
+            "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_FRESH_CLONE_LOG_SHA256": (
+                "sha256:116260a0f9fb14356d668923aa1f8dfbfdb484afddcc77c6cb31c6c52a289b5e"
+            ),
+            "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_FOCUSED_ARTIFACT_ID": "7634975253",
+            "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_AUTONOMOUS_ARTIFACT_ID": "7635047141",
+            "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_FOCUSED_ZIP_SHA256": (
+                "sha256:975d117317bc93ebc1bc8c5044209ead598a7a3d076d1714b1ace01e1f6519a3"
+            ),
+            "OPENMAKO_EXTERNAL_REVIEW_EXPECTED_AUTONOMOUS_ZIP_SHA256": (
+                "sha256:b9d566d8ad809466926378720f4a9b1970c74f49edaab5492239592b2cac1c5f"
+            ),
+        }
+    )
+    fixture.write_text(
+        """
+        <html>
+          <h1>External review record: boundary check</h1>
+          <p>Reviewer @external-reviewer</p>
+          <p>Public review link https://example.org/openmako-boundary-review</p>
+          <p>Review verdict boundary clear</p>
+          <p>Evidence checked by reviewer</p>
+          <p>Boundary confirmation</p>
+          <p>This records an already-public external technical review, not a private message or self-written summary.</p>
+          <p>This issue does not ask for endorsement, promotion, stars, reposts, or broader claims.</p>
+          <p>commit 17186f8ca3311b3f0a28d9076fd314c1b1b1c05a</p>
+          <p>focused run 27538962476</p>
+          <p>fresh clone sha256:116260a0f9fb14356d668923aa1f8dfbfdb484afddcc77c6cb31c6c52a289b5e</p>
+          <p>focused artifact 7634975253</p>
+          <p>autonomous artifact 7635047141</p>
+          <p>focused zip sha256:975d117317bc93ebc1bc8c5044209ead598a7a3d076d1714b1ace01e1f6519a3</p>
+          <p>autonomous zip sha256:b9d566d8ad809466926378720f4a9b1970c74f49edaab5492239592b2cac1c5f</p>
+        </html>
+        """,
+        encoding="utf-8",
+    )
+    result = subprocess.run(
+        [
+            "bash",
+            "scripts/external_review_record_check.sh",
+            "https://github.com/1966536805l-crypto/openmako/issues/42",
+        ],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "external-review-record-check: expected-commit=17186f8ca3311b3f0a28d9076fd314c1b1b1c05a" in result.stdout
+    assert "external-review-record-check: focused-run-id=27538962476" in result.stdout
+    assert "external-review-record-check: focused-artifact-id=7634975253" in result.stdout
+    assert "external-review-record-check: PASS" in result.stdout
+
+    fixture.write_text(
+        fixture.read_text(encoding="utf-8").replace(
+            "sha256:b9d566d8ad809466926378720f4a9b1970c74f49edaab5492239592b2cac1c5f",
+            "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        ),
+        encoding="utf-8",
+    )
+    missing_marker = subprocess.run(
+        [
+            "bash",
+            "scripts/external_review_record_check.sh",
+            "https://github.com/1966536805l-crypto/openmako/issues/42",
+        ],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert missing_marker.returncode == 1
+    assert "missing or invalid review record markers=autonomous-zip-sha256" in missing_marker.stderr
+
+
 def test_agent_trend_radar_maps_sources_to_non_claim_development_bets() -> None:
     radar = (ROOT / "docs" / "AGENT_TREND_RADAR.md").read_text(encoding="utf-8")
 
@@ -4345,7 +4457,11 @@ def test_large_repost_packet_requires_external_review_record() -> None:
     assert "must not be used while OpenMako only has self-written proof" in packet
     assert "issue page is reachable, contains the structured external review record fields" in packet
     assert "includes the `External review record:` title prefix plus the required boundary\ncheckbox text" in packet
-    assert "includes a selected review verdict" in packet
+    assert "includes a selected review verdict and public review link" in packet
+    assert "binds the issue text to the current `openmako/main` commit" in packet
+    assert "fresh-clone reproduction log hash" in packet
+    assert "focused/autonomous artifact-zip\nproof markers" in packet
+    assert "bash scripts/external_review_record_check.sh REVIEW_RECORD_ISSUE_URL" in packet
     assert "requires an explicit human confirmation flag" in packet
     assert "This check cannot prove non-self authorship by itself" in packet
     assert "## Gate" in packet
@@ -4381,32 +4497,18 @@ def test_large_repost_ready_script_requires_review_record_and_gates() -> None:
     assert "REVIEW_RECORD_ISSUE_URL" in text
     assert "--confirm-external-review" in text
     assert "manual external-review authorship confirmation" in text
+    assert "bash scripts/external_review_record_check.sh \"$review_record_url\"" in text
     assert "bash scripts/public_review_gate.sh" in text
     assert "docs/LARGE_REPOST_PACKET.md" in text
-    assert "OPENMAKO_CURL_BIN" in text
     assert "^[0-9]+$" in text or "/issues/[0-9]+$" in text
-    assert "-fsSL --max-time 20" in text
-    assert "issue page does not look like a structured external-review record" in text
-    assert "missing record markers" in text
-    for marker in (
-        "External review record:",
-        "Reviewer",
-        "Public review link",
-        "Review verdict",
-        "Evidence checked by reviewer",
-        "Boundary confirmation",
-        "This records an already-public external technical review, not a private message or self-written summary.",
-        "This issue does not ask for endorsement, promotion, stars, reposts, or broader claims.",
-        "selected review verdict",
-    ):
-        assert marker in text
     assert "missing public external-review record issue URL" in text
     assert "does not post, contact anyone, ask for stars, ask for reposts" in text
     assert text.index("large-repost-ready: verifying external review record issue") < text.index(
+        "bash scripts/external_review_record_check.sh"
+    )
+    assert text.index("bash scripts/external_review_record_check.sh") < text.index(
         "bash scripts/public_review_gate.sh"
     )
-    assert text.index("required_markers = (") < text.index("bash scripts/public_review_gate.sh")
-    assert text.index("selected review verdict") < text.index("bash scripts/public_review_gate.sh")
     assert text.index("bash scripts/public_review_gate.sh") < text.index("message:")
     assert '"Broad Technical Summary", "Short Repost-Ready Note"' in text
     assert 'print(f"## {heading}")' in text
@@ -4491,9 +4593,9 @@ def test_large_repost_ready_script_requires_review_record_and_gates() -> None:
         text=True,
         capture_output=True,
     )
-    assert fake_page.returncode == 2
-    assert "structured external-review record" in fake_page.stderr
-    assert "missing record markers" in fake_page.stderr
+    assert fake_page.returncode == 1
+    assert "missing or invalid review record markers" in fake_page.stderr
+    assert "current-commit" in fake_page.stderr
     assert "large-repost-ready: checking public proof gate" not in fake_page.stdout
 
 

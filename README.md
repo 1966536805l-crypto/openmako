@@ -391,6 +391,7 @@ qagent --help
 | Technical boundary criticism request | [issue #2](https://github.com/1966536805l-crypto/openmako/issues/2), a review request rather than endorsement or promotion |
 | Technical boundary issue form | [open a structured review issue](https://github.com/1966536805l-crypto/openmako/issues/new?template=technical-boundary-check.yml) |
 | External review record form | [record a public external review](https://github.com/1966536805l-crypto/openmako/issues/new?template=external-review-record.yml), for already-public technical feedback only |
+| External review record check | `bash scripts/external_review_record_check.sh REVIEW_RECORD_ISSUE_URL`, a fail-closed check that a public external-review issue is structured, contains a public review link, binds to the current `openmako/main` commit, and includes the current remote focused CI, fresh-clone reproduction, and artifact-zip proof markers; record consistency only, not endorsement, stars, reposts, live autonomy, broad unknown-repository repair, external benchmark standing, or third-party benchmark standing |
 | Technical review packet | [`docs/TECHNICAL_REVIEW_PACKET.md`](docs/TECHNICAL_REVIEW_PACKET.md) |
 | Reproduction guide | [`docs/REPRODUCE_V0_1.md`](docs/REPRODUCE_V0_1.md), exact local commands and expected public gate signals |
 | Contributor guide | [`CONTRIBUTING.md`](CONTRIBUTING.md), public-boundary contribution rules |
