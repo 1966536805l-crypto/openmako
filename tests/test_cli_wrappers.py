@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 
@@ -330,6 +331,112 @@ class CliWrapperTest(unittest.TestCase):
             check=False,
         )
 
+    def write_artifact_zip_proof_fixtures(
+        self,
+        tmp_path: Path,
+        git_commit: str,
+    ) -> tuple[Path, Path, str, str]:
+        focused_zip = tmp_path / "focused-public-review-gate.zip"
+        autonomous_zip = tmp_path / "autonomous-learning-gate-summary.zip"
+        focused_summary = {
+            "schema_version": "public-review-gate-artifact/v0.1",
+            "status": "passed",
+            "invocation": {
+                "git_commit": git_commit,
+                "proof_command": "bash scripts/public_review_gate.sh",
+            },
+            "required_outputs": ["outputs/audit.json"],
+            "output_sha256": {
+                "outputs/audit.json": "sha256:" + hashlib.sha256(b"audit\n").hexdigest(),
+            },
+            "not_proof": [
+                "external review",
+                "GitHub Actions artifact zip contents",
+            ],
+        }
+        autonomous_summary = {
+            "schema_version": "autonomous-learning-gate/v0.1",
+            "status": "passed",
+            "invocation": {
+                "git_commit": git_commit,
+                "argv": [],
+            },
+            "segments": {"stage1_trajectory_reuse_matrix": "passed"},
+            "tests": {},
+            "task_source_provenance": {
+                "independence_claim": "repo-authored-regression-pack",
+                "external_heldout": False,
+            },
+            "not_proof": [
+                "native live autonomy",
+                "independent external held-out benchmark",
+            ],
+        }
+        with zipfile.ZipFile(focused_zip, "w") as archive:
+            archive.writestr("summary.json", json.dumps(focused_summary, sort_keys=True) + "\n")
+            archive.writestr("outputs/audit.json", "audit\n")
+        with zipfile.ZipFile(autonomous_zip, "w") as archive:
+            archive.writestr(
+                "autonomous_learning_gate/last_summary.json",
+                json.dumps(autonomous_summary, sort_keys=True) + "\n",
+            )
+        focused_digest = "sha256:" + hashlib.sha256(focused_zip.read_bytes()).hexdigest()
+        autonomous_digest = "sha256:" + hashlib.sha256(autonomous_zip.read_bytes()).hexdigest()
+        return focused_zip, autonomous_zip, focused_digest, autonomous_digest
+
+    def run_publish_artifact_zip_proof_branch(
+        self,
+        remote: Path | str,
+        focused_zip: Path,
+        autonomous_zip: Path,
+        focused_digest: str,
+        autonomous_digest: str,
+        git_commit: str,
+    ) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["OPENMAKO_PUBLIC_EVIDENCE_REMOTE"] = str(remote)
+        env["OPENMAKO_PUBLIC_EVIDENCE_BRANCH"] = "public-evidence"
+        env["OPENMAKO_ARTIFACT_ZIP_PROOF_REF"] = git_commit
+        env["OPENMAKO_FOCUSED_ARTIFACT_ZIP"] = str(focused_zip)
+        env["OPENMAKO_AUTONOMOUS_ARTIFACT_ZIP"] = str(autonomous_zip)
+        env["OPENMAKO_FOCUSED_RUN_ID"] = "27520864032"
+        env["OPENMAKO_FOCUSED_ARTIFACT_ID"] = "7628017368"
+        env["OPENMAKO_FOCUSED_ARTIFACT_DIGEST"] = focused_digest
+        env["OPENMAKO_FOCUSED_ARTIFACT_NAME"] = "focused-public-review-gate"
+        env["OPENMAKO_AUTONOMOUS_RUN_ID"] = "27520864000"
+        env["OPENMAKO_AUTONOMOUS_ARTIFACT_ID"] = "7628043677"
+        env["OPENMAKO_AUTONOMOUS_ARTIFACT_DIGEST"] = autonomous_digest
+        env["OPENMAKO_AUTONOMOUS_ARTIFACT_NAME"] = "autonomous-learning-gate-summary"
+        return subprocess.run(
+            ["bash", "scripts/publish_artifact_zip_proof_branch.sh"],
+            cwd=str(ROOT),
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+            check=False,
+        )
+
+    def run_remote_artifact_zip_proof_snapshot(
+        self,
+        remote: Path,
+    ) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["OPENMAKO_REMOTE"] = str(remote)
+        env["OPENMAKO_PUBLIC_EVIDENCE_REMOTE"] = str(remote)
+        env["OPENMAKO_PUBLIC_EVIDENCE_BRANCH"] = "public-evidence"
+        return subprocess.run(
+            ["bash", "scripts/remote_artifact_zip_proof_snapshot.sh"],
+            cwd=str(ROOT),
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+            check=False,
+        )
+
     def write_autonomous_learning_artifact(self, summary_dir: Path, git_commit: str) -> None:
         segments = [
             "stage1_trajectory_reuse_matrix",
@@ -352,9 +459,15 @@ class CliWrapperTest(unittest.TestCase):
                 "tests/test_upstream_function_file_bundle_regression.py::CrossUpstreamNoSeedTest::test_delta_reuse",
             ],
         }
+        source_kinds = {
+            "stage1_trajectory_reuse_matrix": "repo-authored-e2e-regression",
+            "upstream_hidden_pack_reuse": "repo-authored-upstream-inspired-hidden-pack",
+            "cross_upstream_no_seed_reuse": "repo-authored-cross-upstream-inspired-regression",
+        }
         (summary_dir / "pytest_logs").mkdir(parents=True, exist_ok=True)
         (summary_dir / "task_proofs").mkdir(parents=True, exist_ok=True)
         tests: dict[str, dict[str, object]] = {}
+        provenance_segments: dict[str, dict[str, object]] = {}
         for segment in segments:
             passed = len(selected_tests[segment])
             log_tail = [
@@ -374,12 +487,25 @@ class CliWrapperTest(unittest.TestCase):
                 },
                 "log_tail": log_tail,
             }
+            test_files = sorted({node_id.split("::", 1)[0] for node_id in selected_tests[segment]})
+            provenance_segments[segment] = {
+                "source_kind": source_kinds[segment],
+                "external_heldout": False,
+                "selected_tests": selected_tests[segment],
+                "selected_tests_sha256": hashlib.sha256(
+                    ("\n".join(selected_tests[segment]) + "\n").encode("utf-8")
+                ).hexdigest(),
+                "selected_test_files_sha256": {
+                    test_file: hashlib.sha256((ROOT / test_file).read_bytes()).hexdigest()
+                    for test_file in test_files
+                },
+            }
         provenance = {
             "schema_version": "autonomous-task-source-provenance/v0.1",
             "independence_claim": "repo-authored-regression-pack",
             "external_heldout": False,
             "source_boundary": "repo-authored regression pack, not an independent external held-out benchmark",
-            "segments": {},
+            "segments": provenance_segments,
         }
         manifest_text = json.dumps(provenance, indent=2, sort_keys=True) + "\n"
         manifest_sha = hashlib.sha256(manifest_text.encode("utf-8")).hexdigest()
@@ -918,6 +1044,96 @@ class CliWrapperTest(unittest.TestCase):
 
             self.assertEqual(tampered.returncode, 1)
             self.assertIn("fresh_clone_reproduction_log_digest_mismatch", tampered.stdout)
+
+    def test_artifact_zip_proof_publish_and_remote_snapshot_verify_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            remote = tmp_path / "remote.git"
+            current_commit = self.current_git_commit()
+
+            subprocess.run(["git", "init", "--bare", "-q", str(remote)], check=True)
+            subprocess.run(
+                ["git", "push", str(remote), f"{current_commit}:refs/heads/main"],
+                cwd=str(ROOT),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+            focused_zip, autonomous_zip, focused_digest, autonomous_digest = (
+                self.write_artifact_zip_proof_fixtures(tmp_path, current_commit)
+            )
+
+            publish = self.run_publish_artifact_zip_proof_branch(
+                remote,
+                focused_zip,
+                autonomous_zip,
+                focused_digest,
+                autonomous_digest,
+                current_commit,
+            )
+
+            self.assertEqual(publish.returncode, 0, publish.stderr)
+            self.assertIn("publish-artifact-zip-proof-branch: PASS", publish.stdout)
+            self.assertIn(f"commit={current_commit}", publish.stdout)
+
+            snapshot = self.run_remote_artifact_zip_proof_snapshot(remote)
+
+            self.assertEqual(snapshot.returncode, 0, snapshot.stderr)
+            self.assertIn(
+                f"remote-artifact-zip-proof-snapshot: remote-main-sha={current_commit}",
+                snapshot.stdout,
+            )
+            self.assertIn(
+                f"manifest=artifact_zip_proofs/{current_commit}/manifest.json",
+                snapshot.stdout,
+            )
+            self.assertIn(
+                "artifact-zip-proof=verified-by-public-evidence-branch",
+                snapshot.stdout,
+            )
+            self.assertIn("remote-artifact-zip-proof-snapshot: PASS", snapshot.stdout)
+
+            evidence_clone = tmp_path / "artifact-proof-clone"
+            subprocess.run(
+                ["git", "clone", "--branch", "public-evidence", str(remote), str(evidence_clone)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+            manifest_path = evidence_clone / "artifact_zip_proofs" / current_commit / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["artifacts"]["focused"]["zip_sha256"] = "sha256:" + "0" * 64
+            manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            subprocess.run(["git", "add", "."], cwd=evidence_clone, check=True)
+            subprocess.run(
+                [
+                    "git",
+                    "-c",
+                    "user.email=openmako-test@example.invalid",
+                    "-c",
+                    "user.name=OpenMako Test",
+                    "commit",
+                    "-q",
+                    "-m",
+                    "tamper artifact zip proof",
+                ],
+                cwd=evidence_clone,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "push", "origin", "HEAD:public-evidence"],
+                cwd=evidence_clone,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+            tampered = self.run_remote_artifact_zip_proof_snapshot(remote)
+
+            self.assertEqual(tampered.returncode, 1)
+            self.assertIn("artifact_zip_proof_artifact_digest_zip_mismatch", tampered.stdout)
 
     def test_autonomous_public_evidence_branch_publish_and_remote_snapshot_verify_contract(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
