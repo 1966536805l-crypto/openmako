@@ -3632,6 +3632,59 @@ def test_autonomous_learning_gate_summary_smoke_executes_validator(tmp_path: Pat
     assert observed_payload["failure"] == {"segment": "summary_validation", "exit_code": 1}
 
 
+def test_autonomous_learning_gate_fails_closed_on_selected_test_file_replacement(
+    tmp_path: Path,
+) -> None:
+    temp_root = tmp_path / "repo"
+    for relative_path in (
+        "scripts/autonomous_learning_gate.sh",
+        "scripts/autonomous_task_source_provenance.json",
+    ):
+        target = temp_root / relative_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((ROOT / relative_path).read_bytes())
+        if relative_path.endswith(".sh"):
+            target.chmod(0o755)
+
+    provenance = _autonomous_task_source_provenance_fixture()
+    selected_test_files = sorted(
+        {
+            node.split("::", 1)[0]
+            for segment in provenance["segments"].values()
+            for node in segment["selected_tests"]
+        }
+    )
+    for relative_path in selected_test_files:
+        target = temp_root / relative_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((ROOT / relative_path).read_bytes())
+
+    replaced_test_file = temp_root / "tests" / "test_learning_effect_e2e.py"
+    replaced_test_file.write_text(
+        replaced_test_file.read_text(encoding="utf-8")
+        + "\n# Replacement content must invalidate selected_test_files_sha256.\n",
+        encoding="utf-8",
+    )
+
+    summary = temp_root / ".quantagent" / "autonomous_learning_gate" / "summary.json"
+    env = os.environ.copy()
+    env["OPENMAKO_AUTONOMOUS_LEARNING_GATE_SUMMARY_JSON"] = str(summary)
+    result = subprocess.run(
+        ["bash", "scripts/autonomous_learning_gate.sh"],
+        cwd=temp_root,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "invalid selected_test_files_sha256 for stage1_trajectory_reuse_matrix" in result.stderr
+    assert "autonomous-learning-gate: PASS" not in result.stdout
+    assert not summary.exists()
+
+
 def test_adversarial_claim_matrix_generator_check_rejects_stale_fixture(tmp_path: Path) -> None:
     fixture = ROOT / "tests" / "fixtures" / "evidence_court" / "adversarial_claim_matrix.json"
     stale_fixture = tmp_path / "adversarial_claim_matrix.json"

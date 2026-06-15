@@ -729,7 +729,10 @@ PY
 
 trap 'on_error $?' ERR
 
-eval "$(load_manifest_test_arrays)"
+if ! manifest_test_arrays="$(load_manifest_test_arrays)"; then
+  exit 1
+fi
+eval "$manifest_test_arrays"
 init_summary
 
 echo "autonomous-learning-gate: running stage1 trajectory reuse matrix"
